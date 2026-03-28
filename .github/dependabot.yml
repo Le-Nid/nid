@@ -2,10 +2,17 @@ version: 2
 
 updates:
   - package-ecosystem: "npm"
-    directory: "/" # adapte si tu as un monorepo
+    directory: "/frontend"
+    target-branch: "develop"
     schedule:
       interval: "daily"
+    open-pull-requests-limit: 10
 
+  - package-ecosystem: "npm"
+    directory: "/backend"
+    target-branch: "develop"
+    schedule:
+      interval: "daily"
     open-pull-requests-limit: 10
 
     # Regroupement des updates
