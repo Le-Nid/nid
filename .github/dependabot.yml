@@ -1,0 +1,38 @@
+version: 2
+
+updates:
+  - package-ecosystem: "npm"
+    directory: "/" # adapte si tu as un monorepo
+    schedule:
+      interval: "daily"
+
+    open-pull-requests-limit: 10
+
+    # Regroupement des updates
+    groups:
+      patch-and-minor:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+      major:
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+
+    # Labels auto
+    labels:
+      - "dependencies"
+      - "dependabot"
+
+    # Assignation auto (optionnel)
+    assignees:
+      - "ton-username"
+
+    # Ignore certains packages (exemple)
+    ignore:
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
