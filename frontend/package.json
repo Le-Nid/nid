@@ -1,0 +1,29 @@
+{
+  "name": "gmail-manager-frontend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint src --ext .ts,.tsx"
+  },
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^6.24.0",
+    "antd": "^5.19.0",
+    "@ant-design/icons": "^5.3.7",
+    "@ant-design/charts": "^2.1.5",
+    "axios": "^1.7.2",
+    "zustand": "^4.5.4",
+    "dayjs": "^1.11.11"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "typescript": "^5.4.5",
+    "vite": "^5.3.1"
+  }
+}

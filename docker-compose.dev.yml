@@ -1,0 +1,32 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    environment:
+      VITE_API_URL: http://localhost:4000
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "4000:4000"
+      - "9229:9229"  # Node debug port
+    volumes:
+      - ./backend/src:/app/src
+    environment:
+      NODE_ENV: development
+
+  postgres:
+    ports:
+      - "5432:5432"  # Expose for local dev tools (DBeaver, etc.)
+
+  redis:
+    ports:
+      - "6379:6379"

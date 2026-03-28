@@ -1,0 +1,91 @@
+# Configuration
+
+## Variables d'environnement
+
+Toutes les variables sont définies dans `.env` à la racine du projet.
+
+### Application
+
+| Variable | Défaut | Description |
+|---|---|---|
+| `FRONTEND_PORT` | `3000` | Port exposé du frontend |
+| `BACKEND_PORT` | `4000` | Port exposé du backend |
+| `FRONTEND_URL` | `http://localhost:3000` | URL publique du frontend (utilisée pour les redirections OAuth2) |
+| `ARCHIVE_PATH` | `/archives` | Chemin interne Docker des archives (mappé vers votre NAS) |
+
+### JWT
+
+| Variable | Description |
+|---|---|
+| `JWT_SECRET` | Secret de signature des access tokens. Générez avec `openssl rand -hex 64` |
+| `JWT_REFRESH_SECRET` | Secret de signature des refresh tokens |
+| `JWT_EXPIRY` | Durée de validité de l'access token (défaut : `15m`) |
+| `JWT_REFRESH_EXPIRY` | Durée de validité du refresh token (défaut : `30d`) |
+
+### Google OAuth2
+
+| Variable | Description |
+|---|---|
+| `GOOGLE_CLIENT_ID` | Client ID de votre application Google Cloud |
+| `GOOGLE_CLIENT_SECRET` | Client Secret de votre application Google Cloud |
+| `GOOGLE_REDIRECT_URI` | URI de callback OAuth2. Doit correspondre exactement à ce qui est configuré dans Google Cloud |
+
+### PostgreSQL
+
+| Variable | Description |
+|---|---|
+| `POSTGRES_USER` | Utilisateur PostgreSQL |
+| `POSTGRES_PASSWORD` | Mot de passe PostgreSQL |
+| `POSTGRES_DB` | Nom de la base de données |
+
+---
+
+## Limites Gmail API
+
+Gmail API impose des quotas. La configuration suivante dans `backend/src/config.ts` est calibrée pour rester sous les limites :
+
+```typescript
+GMAIL_BATCH_SIZE: 100,    // Max 100 requêtes par batch
+GMAIL_THROTTLE_MS: 500,   // Pause entre chaque batch
+```
+
+!!! info "Quota Gmail"
+    La limite officielle est de 250 unités/user/seconde. Le throttling à 500ms entre batches de 100 requêtes est conservateur et évite les erreurs 429.
+
+---
+
+## Volumes Docker
+
+```yaml
+# docker-compose.yml
+volumes:
+  - ./volumes/archives:/archives    # Archives EML
+  - postgres_data:/var/lib/postgresql/data
+  - redis_data:/data
+```
+
+### Pointer vers un NAS Synology
+
+```yaml
+volumes:
+  - /volume1/gmail-archives:/archives
+```
+
+### Pointer vers un NAS TrueNAS
+
+```yaml
+volumes:
+  - /mnt/pool/gmail-archives:/archives
+```
+
+---
+
+## Documentation API (Swagger)
+
+La documentation Swagger est disponible en développement à :
+
+```
+http://localhost:4000/docs
+```
+
+Elle est générée automatiquement par `@fastify/swagger` et liste tous les endpoints avec leurs schémas de requête et réponse.
