@@ -1,89 +1,103 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback } from "react";
 import {
-  Table, Tag, Progress, Button, Typography, Space,
-  Tooltip, Badge, Card, Select, Empty
-} from 'antd'
-import { DeleteOutlined, ReloadOutlined, EyeOutlined } from '@ant-design/icons'
-import { jobsApi } from '../api'
-import { useAccount } from '../hooks/useAccount'
-import JobProgressModal from '../components/JobProgressModal'
-import dayjs from 'dayjs'
-import relativeTime from 'dayjs/plugin/relativeTime'
-import 'dayjs/locale/fr'
+  Table,
+  Tag,
+  Progress,
+  Button,
+  Typography,
+  Space,
+  Tooltip,
+  Badge,
+  Select,
+  Empty,
+} from "antd";
+import { DeleteOutlined, ReloadOutlined, EyeOutlined } from "@ant-design/icons";
+import { jobsApi } from "../api";
+import { useAccount } from "../hooks/useAccount";
+import JobProgressModal from "../components/JobProgressModal";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import "dayjs/locale/fr";
 
-dayjs.extend(relativeTime)
-dayjs.locale('fr')
+dayjs.extend(relativeTime);
+dayjs.locale("fr");
 
-const { Title, Text } = Typography
+const { Title, Text } = Typography;
 
 const STATUS_COLOR: Record<string, string> = {
-  pending:   'default',
-  active:    'processing',
-  completed: 'success',
-  failed:    'error',
-  cancelled: 'warning',
-}
+  pending: "default",
+  active: "processing",
+  completed: "success",
+  failed: "error",
+  cancelled: "warning",
+};
 
 const STATUS_LABEL: Record<string, string> = {
-  pending:   'En attente',
-  active:    'En cours',
-  completed: 'Terminé',
-  failed:    'Échoué',
-  cancelled: 'Annulé',
-}
+  pending: "En attente",
+  active: "En cours",
+  completed: "Terminé",
+  failed: "Échoué",
+  cancelled: "Annulé",
+};
 
 const TYPE_LABEL: Record<string, string> = {
-  bulk_operation: 'Opération bulk',
-  archive_mails:  'Archivage NAS',
-  run_rule:       'Règle auto',
-  sync_dashboard: 'Sync dashboard',
-}
+  bulk_operation: "Opération bulk",
+  archive_mails: "Archivage NAS",
+  run_rule: "Règle auto",
+  sync_dashboard: "Sync dashboard",
+};
 
 export default function JobsPage() {
-  const { accountId }         = useAccount()
-  const [jobs, setJobs]       = useState<any[]>([])
-  const [loading, setLoading] = useState(false)
-  const [statusFilter, setStatusFilter] = useState<string | null>(null)
-  const [watchingJobId, setWatchingJobId] = useState<string | null>(null)
+  const { accountId } = useAccount();
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [watchingJobId, setWatchingJobId] = useState<string | null>(null);
 
-  const hasActiveJobs = jobs.some((j) => ['active', 'pending'].includes(j.status))
+  const hasActiveJobs = jobs.some((j) =>
+    ["active", "pending"].includes(j.status),
+  );
 
   const load = useCallback(async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const params: Record<string, any> = {}
-      if (accountId)   params.accountId = accountId
-      if (statusFilter) params.status   = statusFilter
-      const data = await jobsApi.list(params)
-      setJobs(data)
-    } finally { setLoading(false) }
-  }, [accountId, statusFilter])
+      const params: Record<string, any> = {};
+      if (accountId) params.accountId = accountId;
+      if (statusFilter) params.status = statusFilter;
+      const data = await jobsApi.list(params);
+      setJobs(data);
+    } finally {
+      setLoading(false);
+    }
+  }, [accountId, statusFilter]);
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    load();
+  }, [load]);
 
   // Polling léger uniquement quand des jobs sont actifs
   // (le SSE s'occupe des détails d'un job spécifique via la modal)
   useEffect(() => {
-    if (!hasActiveJobs) return
-    const interval = setInterval(load, 5000)
-    return () => clearInterval(interval)
-  }, [hasActiveJobs, load])
+    if (!hasActiveJobs) return;
+    const interval = setInterval(load, 5000);
+    return () => clearInterval(interval);
+  }, [hasActiveJobs, load]);
 
   const cancelJob = async (jobId: string) => {
-    await jobsApi.cancel(jobId)
-    load()
-  }
+    await jobsApi.cancel(jobId);
+    load();
+  };
 
   const columns = [
     {
-      title: 'Type',
-      dataIndex: 'type',
+      title: "Type",
+      dataIndex: "type",
       width: 160,
       render: (t: string) => <Text strong>{TYPE_LABEL[t] ?? t}</Text>,
     },
     {
-      title: 'Statut',
-      dataIndex: 'status',
+      title: "Statut",
+      dataIndex: "status",
       width: 120,
       render: (s: string) => (
         <Badge
@@ -93,68 +107,77 @@ export default function JobsPage() {
       ),
     },
     {
-      title: 'Progression',
+      title: "Progression",
       width: 240,
       render: (_: any, record: any) => (
-        <Space direction="vertical" size={2} style={{ width: '100%' }}>
+        <Space direction="vertical" size={2} style={{ width: "100%" }}>
           <Progress
             percent={record.progress ?? 0}
             size="small"
             format={() => `${record.processed ?? 0} / ${record.total ?? 0}`}
             status={
-              record.status === 'failed'
-                ? 'exception'
-                : record.status === 'completed'
-                ? 'success'
-                : 'active'
+              record.status === "failed"
+                ? "exception"
+                : record.status === "completed"
+                  ? "success"
+                  : "active"
             }
           />
         </Space>
       ),
     },
     {
-      title: 'Compte',
-      dataIndex: 'gmail_account_id',
+      title: "Compte",
+      dataIndex: "gmail_account_id",
       width: 120,
       ellipsis: true,
       render: (v: string) => (
-        <Text type="secondary" style={{ fontSize: 11 }}>{v?.slice(0, 8)}…</Text>
+        <Text type="secondary" style={{ fontSize: 11 }}>
+          {v?.slice(0, 8)}…
+        </Text>
       ),
     },
     {
-      title: 'Créé',
-      dataIndex: 'created_at',
+      title: "Créé",
+      dataIndex: "created_at",
       width: 130,
       render: (d: string) => (
-        <Tooltip title={dayjs(d).format('DD/MM/YYYY HH:mm:ss')}>
-          <Text type="secondary" style={{ fontSize: 12 }}>{dayjs(d).fromNow()}</Text>
+        <Tooltip title={dayjs(d).format("DD/MM/YYYY HH:mm:ss")}>
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            {dayjs(d).fromNow()}
+          </Text>
         </Tooltip>
       ),
     },
     {
-      title: 'Durée',
+      title: "Durée",
       width: 90,
       render: (_: any, record: any) => {
-        if (!record.completed_at) return <Text type="secondary">—</Text>
-        const diff = dayjs(record.completed_at).diff(dayjs(record.created_at), 'second')
-        return <Text style={{ fontSize: 12 }}>{diff}s</Text>
+        if (!record.completed_at) return <Text type="secondary">—</Text>;
+        const diff = dayjs(record.completed_at).diff(
+          dayjs(record.created_at),
+          "second",
+        );
+        return <Text style={{ fontSize: 12 }}>{diff}s</Text>;
       },
     },
     {
-      title: 'Erreur',
-      dataIndex: 'error',
+      title: "Erreur",
+      dataIndex: "error",
       ellipsis: true,
       render: (e: string) =>
         e ? (
           <Tooltip title={e}>
-            <Tag color="error" style={{ cursor: 'pointer', maxWidth: 120 }}>
-              <Text ellipsis style={{ maxWidth: 100, fontSize: 11 }}>{e}</Text>
+            <Tag color="error" style={{ cursor: "pointer", maxWidth: 120 }}>
+              <Text ellipsis style={{ maxWidth: 100, fontSize: 11 }}>
+                {e}
+              </Text>
             </Tag>
           </Tooltip>
         ) : null,
     },
     {
-      title: '',
+      title: "",
       width: 80,
       render: (_: any, record: any) => (
         <Space size="small">
@@ -169,10 +192,12 @@ export default function JobsPage() {
           </Tooltip>
 
           {/* Annuler si en cours */}
-          {['active', 'pending'].includes(record.status) && (
+          {["active", "pending"].includes(record.status) && (
             <Tooltip title="Annuler">
               <Button
-                danger size="small" type="text"
+                danger
+                size="small"
+                type="text"
                 icon={<DeleteOutlined />}
                 onClick={() => cancelJob(record.id)}
               />
@@ -181,12 +206,14 @@ export default function JobsPage() {
         </Space>
       ),
     },
-  ]
+  ];
 
   return (
     <div>
       <Space style={{ marginBottom: 16 }} align="center" wrap>
-        <Title level={3} style={{ margin: 0 }}>⚙️ Jobs</Title>
+        <Title level={3} style={{ margin: 0 }}>
+          ⚙️ Jobs
+        </Title>
 
         <Select
           allowClear
@@ -195,11 +222,11 @@ export default function JobsPage() {
           value={statusFilter}
           onChange={setStatusFilter}
           options={[
-            { value: 'pending',   label: 'En attente' },
-            { value: 'active',    label: 'En cours' },
-            { value: 'completed', label: 'Terminés' },
-            { value: 'failed',    label: 'Échoués' },
-            { value: 'cancelled', label: 'Annulés' },
+            { value: "pending", label: "En attente" },
+            { value: "active", label: "En cours" },
+            { value: "completed", label: "Terminés" },
+            { value: "failed", label: "Échoués" },
+            { value: "cancelled", label: "Annulés" },
           ]}
         />
 
@@ -208,19 +235,19 @@ export default function JobsPage() {
         </Button>
 
         {hasActiveJobs && (
-          <Badge status="processing" text={
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              Actualisation auto toutes les 5s
-            </Text>
-          } />
+          <Badge
+            status="processing"
+            text={
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                Actualisation auto toutes les 5s
+              </Text>
+            }
+          />
         )}
       </Space>
 
       {jobs.length === 0 && !loading ? (
-        <Empty
-          description="Aucun job"
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-        />
+        <Empty description="Aucun job" image={Empty.PRESENTED_IMAGE_SIMPLE} />
       ) : (
         <Table
           dataSource={jobs}
@@ -228,9 +255,9 @@ export default function JobsPage() {
           rowKey="id"
           loading={loading}
           size="small"
-          pagination={{ pageSize: 25, size: 'small' }}
+          pagination={{ pageSize: 25, size: "small" }}
           rowClassName={(r) =>
-            r.status === 'active' ? 'ant-table-row-active' : ''
+            r.status === "active" ? "ant-table-row-active" : ""
           }
         />
       )}
@@ -241,5 +268,5 @@ export default function JobsPage() {
         onClose={() => setWatchingJobId(null)}
       />
     </div>
-  )
+  );
 }

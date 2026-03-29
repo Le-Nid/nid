@@ -1,110 +1,146 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState } from "react";
 import {
-  Modal, Form, Input, Select, Button, Space, Divider,
-  Typography, Alert, Tag, InputNumber, Switch, Row, Col, Spin
-} from 'antd'
-import { PlusOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons'
+  Modal,
+  Form,
+  Input,
+  Select,
+  Button,
+  Space,
+  Divider,
+  Typography,
+  Alert,
+  InputNumber,
+  Switch,
+  Row,
+  Col,
+} from "antd";
+import { PlusOutlined, DeleteOutlined, EyeOutlined } from "@ant-design/icons";
 import {
-  Rule, RuleCondition, RuleAction, ConditionField,
-  CONDITION_FIELD_LABELS, CONDITION_OPERATOR_LABELS,
-  ACTION_LABELS, SCHEDULE_OPTIONS, ActionType
-} from '../types/rules'
-import { rulesApi } from '../api'
+  Rule,
+  RuleCondition,
+  RuleAction,
+  ConditionField,
+  CONDITION_FIELD_LABELS,
+  CONDITION_OPERATOR_LABELS,
+  ACTION_LABELS,
+  SCHEDULE_OPTIONS,
+  ActionType,
+} from "../types/rules";
+import { rulesApi } from "../api";
 
-const { Text } = Typography
+const { Text } = Typography;
 
 // Opérateurs disponibles selon le champ
 const OPERATORS_FOR_FIELD: Record<ConditionField, string[]> = {
-  from:           ['contains', 'not_contains', 'equals', 'not_equals'],
-  to:             ['contains', 'not_contains', 'equals', 'not_equals'],
-  subject:        ['contains', 'not_contains', 'equals', 'not_equals'],
-  has_attachment: ['is_true'],
-  size_gt:        ['gt'],
-  size_lt:        ['lt'],
-  label:          ['equals', 'not_equals'],
-}
+  from: ["contains", "not_contains", "equals", "not_equals"],
+  to: ["contains", "not_contains", "equals", "not_equals"],
+  subject: ["contains", "not_contains", "equals", "not_equals"],
+  has_attachment: ["is_true"],
+  size_gt: ["gt"],
+  size_lt: ["lt"],
+  label: ["equals", "not_equals"],
+};
 
-const ACTIONS_NEEDING_LABEL: ActionType[] = ['label', 'unlabel']
+const ACTIONS_NEEDING_LABEL: ActionType[] = ["label", "unlabel"];
 
 interface Props {
-  open: boolean
-  accountId: string
-  labels: any[]
-  rule?: Rule | null
-  onClose: () => void
-  onSaved: () => void
+  open: boolean;
+  accountId: string;
+  labels: any[];
+  rule?: Rule | null;
+  onClose: () => void;
+  onSaved: () => void;
 }
 
 const defaultCondition = (): RuleCondition => ({
-  field: 'from',
-  operator: 'contains',
-  value: '',
-})
+  field: "from",
+  operator: "contains",
+  value: "",
+});
 
-export default function RuleFormModal({ open, accountId, labels, rule, onClose, onSaved }: Props) {
-  const [form] = Form.useForm()
-  const [conditions, setConditions] = useState<RuleCondition[]>([defaultCondition()])
-  const [action, setAction] = useState<RuleAction>({ type: 'trash' })
-  const [schedule, setSchedule] = useState<string | null>(null)
-  const [isActive, setIsActive] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [previewing, setPreviewing] = useState(false)
-  const [previewResult, setPreviewResult] = useState<{ query: string; estimatedCount: number } | null>(null)
-  const [error, setError] = useState<string | null>(null)
+export default function RuleFormModal({
+  open,
+  accountId,
+  labels,
+  rule,
+  onClose,
+  onSaved,
+}: Props) {
+  const [form] = Form.useForm();
+  const [conditions, setConditions] = useState<RuleCondition[]>([
+    defaultCondition(),
+  ]);
+  const [action, setAction] = useState<RuleAction>({ type: "trash" });
+  const [schedule, setSchedule] = useState<string | null>(null);
+  const [isActive, setIsActive] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
+  const [previewResult, setPreviewResult] = useState<{
+    query: string;
+    estimatedCount: number;
+  } | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (rule) {
-      form.setFieldsValue({ name: rule.name, description: rule.description })
-      setConditions(rule.conditions)
-      setAction(rule.action)
-      setSchedule(rule.schedule ?? null)
-      setIsActive(rule.is_active)
+      form.setFieldsValue({ name: rule.name, description: rule.description });
+      setConditions(rule.conditions);
+      setAction(rule.action);
+      setSchedule(rule.schedule ?? null);
+      setIsActive(rule.is_active);
     } else {
-      form.resetFields()
-      setConditions([defaultCondition()])
-      setAction({ type: 'trash' })
-      setSchedule(null)
-      setIsActive(true)
+      form.resetFields();
+      setConditions([defaultCondition()]);
+      setAction({ type: "trash" });
+      setSchedule(null);
+      setIsActive(true);
     }
-    setPreviewResult(null)
-    setError(null)
-  }, [rule, open])
+    setPreviewResult(null);
+    setError(null);
+  }, [rule, open]);
 
   const updateCondition = (index: number, patch: Partial<RuleCondition>) => {
     setConditions((prev) => {
-      const updated = [...prev]
-      updated[index] = { ...updated[index], ...patch }
+      const updated = [...prev];
+      updated[index] = { ...updated[index], ...patch };
       // Reset operator si le champ change
       if (patch.field) {
-        const ops = OPERATORS_FOR_FIELD[patch.field]
-        updated[index].operator = ops[0] as any
-        updated[index].value = patch.field === 'has_attachment' ? true : ''
+        const ops = OPERATORS_FOR_FIELD[patch.field];
+        updated[index].operator = ops[0] as any;
+        updated[index].value = patch.field === "has_attachment" ? true : "";
       }
-      return updated
-    })
-    setPreviewResult(null)
-  }
+      return updated;
+    });
+    setPreviewResult(null);
+  };
 
-  const addCondition = () => setConditions((p) => [...p, defaultCondition()])
-  const removeCondition = (i: number) => setConditions((p) => p.filter((_, idx) => idx !== i))
+  const addCondition = () => setConditions((p) => [...p, defaultCondition()]);
+  const removeCondition = (i: number) =>
+    setConditions((p) => p.filter((_, idx) => idx !== i));
 
   const handlePreview = async () => {
-    setPreviewing(true); setPreviewResult(null)
+    setPreviewing(true);
+    setPreviewResult(null);
     try {
-      const result = await rulesApi.preview(accountId, conditions)
-      setPreviewResult(result)
+      const result = await rulesApi.preview(accountId, conditions);
+      setPreviewResult(result);
     } catch {
-      setError('Erreur lors de la prévisualisation')
-    } finally { setPreviewing(false) }
-  }
+      setError("Erreur lors de la prévisualisation");
+    } finally {
+      setPreviewing(false);
+    }
+  };
 
   const handleSave = async () => {
     try {
-      await form.validateFields()
-    } catch { return }
+      await form.validateFields();
+    } catch {
+      return;
+    }
 
-    const values = form.getFieldsValue()
-    setSaving(true); setError(null)
+    const values = form.getFieldsValue();
+    setSaving(true);
+    setError(null);
     try {
       const dto = {
         name: values.name,
@@ -113,37 +149,54 @@ export default function RuleFormModal({ open, accountId, labels, rule, onClose, 
         action,
         schedule: schedule || null,
         is_active: isActive,
-      }
+      };
       if (rule) {
-        await rulesApi.update(accountId, rule.id, dto)
+        await rulesApi.update(accountId, rule.id, dto);
       } else {
-        await rulesApi.create(accountId, dto)
+        await rulesApi.create(accountId, dto);
       }
-      onSaved()
+      onSaved();
     } catch (e: any) {
-      setError(e.response?.data?.error ?? 'Erreur lors de la sauvegarde')
-    } finally { setSaving(false) }
-  }
+      setError(e.response?.data?.error ?? "Erreur lors de la sauvegarde");
+    } finally {
+      setSaving(false);
+    }
+  };
 
-  const userLabels = labels.filter((l) => l.type === 'user')
+  const userLabels = labels.filter((l) => l.type === "user");
 
   return (
     <Modal
       open={open}
       onCancel={onClose}
-      title={rule ? `Modifier : ${rule.name}` : 'Nouvelle règle'}
+      title={rule ? `Modifier : ${rule.name}` : "Nouvelle règle"}
       width={680}
       footer={[
-        <Button key="preview" icon={<EyeOutlined />} onClick={handlePreview} loading={previewing}>
+        <Button
+          key="preview"
+          icon={<EyeOutlined />}
+          onClick={handlePreview}
+          loading={previewing}
+        >
           Prévisualiser
         </Button>,
-        <Button key="cancel" onClick={onClose}>Annuler</Button>,
+        <Button key="cancel" onClick={onClose}>
+          Annuler
+        </Button>,
         <Button key="save" type="primary" onClick={handleSave} loading={saving}>
-          {rule ? 'Mettre à jour' : 'Créer la règle'}
+          {rule ? "Mettre à jour" : "Créer la règle"}
         </Button>,
       ]}
     >
-      {error && <Alert type="error" message={error} showIcon closable style={{ marginBottom: 12 }} />}
+      {error && (
+        <Alert
+          type="error"
+          message={error}
+          showIcon
+          closable
+          style={{ marginBottom: 12 }}
+        />
+      )}
 
       {previewResult && (
         <Alert
@@ -151,9 +204,15 @@ export default function RuleFormModal({ open, accountId, labels, rule, onClose, 
           style={{ marginBottom: 12 }}
           message={
             <span>
-              Requête : <Text code style={{ fontSize: 11 }}>{previewResult.query || '(aucun filtre)'}</Text>
-              <br />
-              ~<strong>{previewResult.estimatedCount.toLocaleString('fr-FR')}</strong> mails correspondants
+              Requête :{" "}
+              <Text code style={{ fontSize: 11 }}>
+                {previewResult.query || "(aucun filtre)"}
+              </Text>
+              <br />~
+              <strong>
+                {previewResult.estimatedCount.toLocaleString("fr-FR")}
+              </strong>{" "}
+              mails correspondants
             </span>
           }
         />
@@ -162,7 +221,11 @@ export default function RuleFormModal({ open, accountId, labels, rule, onClose, 
       <Form form={form} layout="vertical">
         <Row gutter={16}>
           <Col span={16}>
-            <Form.Item name="name" label="Nom de la règle" rules={[{ required: true, message: 'Requis' }]}>
+            <Form.Item
+              name="name"
+              label="Nom de la règle"
+              rules={[{ required: true, message: "Requis" }]}
+            >
               <Input placeholder="Ex : Newsletters → corbeille" />
             </Form.Item>
           </Col>
@@ -177,36 +240,51 @@ export default function RuleFormModal({ open, accountId, labels, rule, onClose, 
         </Form.Item>
       </Form>
 
-      <Divider>Conditions <Text type="secondary" style={{ fontSize: 12 }}>(toutes doivent être vraies)</Text></Divider>
+      <Divider>
+        Conditions{" "}
+        <Text type="secondary" style={{ fontSize: 12 }}>
+          (toutes doivent être vraies)
+        </Text>
+      </Divider>
 
-      <Space direction="vertical" style={{ width: '100%' }} size={8}>
+      <Space direction="vertical" style={{ width: "100%" }} size={8}>
         {conditions.map((cond, i) => (
           <Row key={i} gutter={8} align="middle">
             <Col span={7}>
               <Select
-                size="small" style={{ width: '100%' }}
+                size="small"
+                style={{ width: "100%" }}
                 value={cond.field}
                 onChange={(v) => updateCondition(i, { field: v })}
-                options={Object.entries(CONDITION_FIELD_LABELS).map(([k, v]) => ({ value: k, label: v }))}
+                options={Object.entries(CONDITION_FIELD_LABELS).map(
+                  ([k, v]) => ({ value: k, label: v }),
+                )}
               />
             </Col>
             <Col span={7}>
               <Select
-                size="small" style={{ width: '100%' }}
+                size="small"
+                style={{ width: "100%" }}
                 value={cond.operator}
                 onChange={(v) => updateCondition(i, { operator: v })}
                 options={OPERATORS_FOR_FIELD[cond.field].map((op) => ({
                   value: op,
-                  label: CONDITION_OPERATOR_LABELS[op as keyof typeof CONDITION_OPERATOR_LABELS],
+                  label:
+                    CONDITION_OPERATOR_LABELS[
+                      op as keyof typeof CONDITION_OPERATOR_LABELS
+                    ],
                 }))}
               />
             </Col>
             <Col span={8}>
-              {cond.field === 'has_attachment' ? (
-                <Text type="secondary" style={{ fontSize: 12 }}>est vrai</Text>
-              ) : cond.field === 'size_gt' || cond.field === 'size_lt' ? (
+              {cond.field === "has_attachment" ? (
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  est vrai
+                </Text>
+              ) : cond.field === "size_gt" || cond.field === "size_lt" ? (
                 <InputNumber
-                  size="small" style={{ width: '100%' }}
+                  size="small"
+                  style={{ width: "100%" }}
                   value={Number(cond.value)}
                   onChange={(v) => updateCondition(i, { value: v ?? 0 })}
                   addonAfter="octets"
@@ -216,7 +294,9 @@ export default function RuleFormModal({ open, accountId, labels, rule, onClose, 
                 <Input
                   size="small"
                   value={String(cond.value)}
-                  onChange={(e) => updateCondition(i, { value: e.target.value })}
+                  onChange={(e) =>
+                    updateCondition(i, { value: e.target.value })
+                  }
                   placeholder="Valeur…"
                 />
               )}
@@ -224,7 +304,9 @@ export default function RuleFormModal({ open, accountId, labels, rule, onClose, 
             <Col span={2}>
               {conditions.length > 1 && (
                 <Button
-                  type="text" danger size="small"
+                  type="text"
+                  danger
+                  size="small"
                   icon={<DeleteOutlined />}
                   onClick={() => removeCondition(i)}
                 />
@@ -233,7 +315,12 @@ export default function RuleFormModal({ open, accountId, labels, rule, onClose, 
           </Row>
         ))}
 
-        <Button type="dashed" size="small" icon={<PlusOutlined />} onClick={addCondition}>
+        <Button
+          type="dashed"
+          size="small"
+          icon={<PlusOutlined />}
+          onClick={addCondition}
+        >
           Ajouter une condition
         </Button>
       </Space>
@@ -243,16 +330,19 @@ export default function RuleFormModal({ open, accountId, labels, rule, onClose, 
       <Row gutter={16}>
         <Col span={12}>
           <Select
-            style={{ width: '100%' }}
+            style={{ width: "100%" }}
             value={action.type}
             onChange={(v) => setAction({ type: v })}
-            options={Object.entries(ACTION_LABELS).map(([k, v]) => ({ value: k, label: v }))}
+            options={Object.entries(ACTION_LABELS).map(([k, v]) => ({
+              value: k,
+              label: v,
+            }))}
           />
         </Col>
         {ACTIONS_NEEDING_LABEL.includes(action.type) && (
           <Col span={12}>
             <Select
-              style={{ width: '100%' }}
+              style={{ width: "100%" }}
               placeholder="Choisir un label Gmail"
               value={action.labelId}
               onChange={(v) => setAction((a) => ({ ...a, labelId: v }))}
@@ -268,11 +358,16 @@ export default function RuleFormModal({ open, accountId, labels, rule, onClose, 
         style={{ width: 220 }}
         value={schedule}
         onChange={setSchedule}
-        options={SCHEDULE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+        options={SCHEDULE_OPTIONS.map((o) => ({
+          value: o.value,
+          label: o.label,
+        }))}
       />
       <Text type="secondary" style={{ fontSize: 12, marginLeft: 12 }}>
-        {schedule ? `La règle s'exécutera automatiquement (${schedule})` : 'Exécution manuelle uniquement'}
+        {schedule
+          ? `La règle s'exécutera automatiquement (${schedule})`
+          : "Exécution manuelle uniquement"}
       </Text>
     </Modal>
-  )
+  );
 }

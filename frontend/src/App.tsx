@@ -1,28 +1,27 @@
-import { useEffect } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
-import { Spin } from 'antd'
-import { useAuthStore } from './store/auth.store'
-import LoginPage from './pages/Login'
-import AppLayout from './components/AppLayout'
-import DashboardPage from './pages/Dashboard'
-import MailManagerPage from './pages/MailManager'
-import ArchivePage from './pages/Archive'
-import SettingsPage from './pages/Settings'
-import JobsPage from './pages/Jobs'
-import RulesPage from './pages/Rules'
+import { useEffect } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuthStore } from "./store/auth.store";
+import LoginPage from "./pages/Login";
+import AppLayout from "./components/AppLayout";
+import DashboardPage from "./pages/Dashboard";
+import MailManagerPage from "./pages/MailManager";
+import ArchivePage from "./pages/Archive";
+import SettingsPage from "./pages/Settings";
+import JobsPage from "./pages/Jobs";
+import RulesPage from "./pages/Rules";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const token = useAuthStore((s) => s.token)
-  if (!token) return <Navigate to="/login" replace />
-  return <>{children}</>
+  const token = useAuthStore((s) => s.token);
+  if (!token) return <Navigate to="/login" replace />;
+  return <>{children}</>;
 }
 
 export default function App() {
-  const { token, fetchMe } = useAuthStore()
+  const { token, fetchMe } = useAuthStore();
 
   useEffect(() => {
-    if (token) fetchMe()
-  }, [])
+    if (token) fetchMe();
+  }, []);
 
   return (
     <Routes>
@@ -44,5 +43,5 @@ export default function App() {
         <Route path="settings" element={<SettingsPage />} />
       </Route>
     </Routes>
-  )
+  );
 }
