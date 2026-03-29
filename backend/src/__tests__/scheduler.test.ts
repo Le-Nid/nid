@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest'
 
 // On extrait la logique pure pour la tester sans démarrer le scheduler
 function shouldRun(schedule: string, lastRunAt: Date | null, now: Date): boolean {
+  const validSchedules = ['hourly', 'daily', 'weekly', 'monthly']
+  if (!validSchedules.includes(schedule)) return false
   if (!lastRunAt) return true
   const diffMs = now.getTime() - new Date(lastRunAt).getTime()
   const diffH  = diffMs / 1000 / 3600

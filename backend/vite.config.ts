@@ -39,4 +39,17 @@ export default defineConfig({
   resolve: {
     extensions: ['.ts', '.js'],
   },
-})
+
+  // Vitest configuration
+  test: {
+    globals:     true,
+    environment: 'node',
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov', 'html'],
+      exclude: ['dist/**', 'src/__tests__/**'],
+    },
+    include:  ['src/__tests__/**/*.test.ts'],
+    testTimeout: 10_000,
+  },
+}) as any

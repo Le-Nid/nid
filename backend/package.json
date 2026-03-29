@@ -1,6 +1,7 @@
 {
   "name": "gmail-manager-backend",
   "version": "1.0.0",
+  "type": "module",
   "description": "Gmail Manager backend API — Fastify + TypeScript + Kysely",
   "main": "dist/index.js",
   "engines": {
