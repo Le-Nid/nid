@@ -1,0 +1,100 @@
+version: 2
+
+updates:
+  # ─── Backend npm ────────────────────────────────────────
+  - package-ecosystem: npm
+    directory: /backend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:00"
+      timezone: Europe/Paris
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+      - backend
+    groups:
+      fastify:
+        patterns:
+          - "fastify"
+          - "@fastify/*"
+      vite-tooling:
+        patterns:
+          - "vite"
+          - "vite-*"
+          - "vitest"
+          - "@vitest/*"
+      types:
+        patterns:
+          - "@types/*"
+    ignore:
+      # Majeurs : à gérer manuellement
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # ─── Frontend npm ───────────────────────────────────────
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:00"
+      timezone: Europe/Paris
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+      - frontend
+    groups:
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "react-router-dom"
+          - "@types/react*"
+      antd:
+        patterns:
+          - "antd"
+          - "@ant-design/*"
+      vite-tooling:
+        patterns:
+          - "vite"
+          - "vitest"
+          - "@vitest/*"
+          - "@vitejs/*"
+          - "@testing-library/*"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # ─── GitHub Actions ─────────────────────────────────────
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:00"
+      timezone: Europe/Paris
+    labels:
+      - dependencies
+      - ci
+
+  # ─── Docker base images ──────────────────────────────────
+  - package-ecosystem: docker
+    directory: /backend
+    schedule:
+      interval: monthly
+      time: "08:00"
+      timezone: Europe/Paris
+    labels:
+      - dependencies
+      - docker
+
+  - package-ecosystem: docker
+    directory: /frontend
+    schedule:
+      interval: monthly
+      time: "08:00"
+      timezone: Europe/Paris
+    labels:
+      - dependencies
+      - docker
