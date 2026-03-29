@@ -49,6 +49,33 @@ export const archiveApi = {
     `${api.defaults.baseURL}/api/archive/${accountId}/attachments/${attachmentId}/download`,
 }
 
+// ─── Rules ────────────────────────────────────────────────
+export const rulesApi = {
+  list: (accountId: string) =>
+    api.get(`/api/rules/${accountId}`).then((r) => r.data),
+
+  get: (accountId: string, ruleId: string) =>
+    api.get(`/api/rules/${accountId}/${ruleId}`).then((r) => r.data),
+
+  create: (accountId: string, dto: any) =>
+    api.post(`/api/rules/${accountId}`, dto).then((r) => r.data),
+
+  update: (accountId: string, ruleId: string, dto: any) =>
+    api.put(`/api/rules/${accountId}/${ruleId}`, dto).then((r) => r.data),
+
+  toggle: (accountId: string, ruleId: string) =>
+    api.patch(`/api/rules/${accountId}/${ruleId}/toggle`).then((r) => r.data),
+
+  delete: (accountId: string, ruleId: string) =>
+    api.delete(`/api/rules/${accountId}/${ruleId}`),
+
+  run: (accountId: string, ruleId: string) =>
+    api.post(`/api/rules/${accountId}/${ruleId}/run`).then((r) => r.data),
+
+  preview: (accountId: string, conditions: any[]) =>
+    api.post(`/api/rules/${accountId}/preview`, { conditions }).then((r) => r.data),
+}
+
 // ─── Jobs ─────────────────────────────────────────────────
 export const jobsApi = {
   list: (params: Record<string, any> = {}) =>

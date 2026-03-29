@@ -71,6 +71,7 @@ nav:
     - Authentification: api/auth.md
     - Gmail: api/gmail.md
     - Archives: api/archive.md
+    - Règles: api/rules.md
     - Dashboard: api/dashboard.md
     - Jobs: api/jobs.md
   - Développement:

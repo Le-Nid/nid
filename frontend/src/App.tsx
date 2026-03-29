@@ -9,6 +9,7 @@ import MailManagerPage from './pages/MailManager'
 import ArchivePage from './pages/Archive'
 import SettingsPage from './pages/Settings'
 import JobsPage from './pages/Jobs'
+import RulesPage from './pages/Rules'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token)
@@ -38,6 +39,7 @@ export default function App() {
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="mails" element={<MailManagerPage />} />
         <Route path="archive" element={<ArchivePage />} />
+        <Route path="rules" element={<RulesPage />} />
         <Route path="jobs" element={<JobsPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>

@@ -1,7 +1,8 @@
-FROM node:20-alpine
+FROM node:24-alpine
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
-COPY tsconfig.json ./
+COPY tsconfig.json vite.config.ts vitest.config.ts ./
 EXPOSE 4000
+# vite-node --watch remplace tsx watch — rechargement à chaud natif
 CMD ["npm", "run", "dev"]

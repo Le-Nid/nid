@@ -4,6 +4,8 @@ import { registerPlugins } from './plugins'
 import { registerRoutes } from './routes'
 import { startBulkWorker } from './jobs/workers/bulk.worker'
 import { startArchiveWorker } from './jobs/workers/archive.worker'
+import { startRuleWorker } from './jobs/workers/rule.worker'
+import { startRuleScheduler } from './jobs/scheduler'
 
 const server = Fastify({
   logger: {
@@ -23,6 +25,8 @@ async function bootstrap() {
     // Start BullMQ workers
     startBulkWorker()
     startArchiveWorker()
+    startRuleWorker()
+    startRuleScheduler()
     server.log.info('✅ BullMQ workers started')
 
     await server.listen({ port: config.PORT, host: '0.0.0.0' })

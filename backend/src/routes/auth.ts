@@ -1,46 +1,52 @@
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import bcrypt from 'bcrypt'
-import { getDb } from '../plugins/db'
+import { getDb } from '../db'
 import { getGmailAuthUrl, exchangeGmailCode } from '../auth/oauth.service'
 import { config } from '../config'
 
 const registerSchema = z.object({
-  email: z.string().email(),
+  email:    z.string().email(),
   password: z.string().min(8),
 })
-
-const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string(),
-})
+const loginSchema = registerSchema
 
 export async function authRoutes(app: FastifyInstance) {
   const db = getDb()
 
-  // ─── Local Auth ────────────────────────────────────────
+  // ─── Register ─────────────────────────────────────────────
   app.post('/register', async (request, reply) => {
     const body = registerSchema.parse(request.body)
     const hash = await bcrypt.hash(body.password, 12)
 
-    const [user] = await db`
-      INSERT INTO users (email, password_hash)
-      VALUES (${body.email}, ${hash})
-      RETURNING id, email, created_at
-    `.catch(() => {
-      throw reply.code(409).send({ error: 'Email already registered' })
-    })
+    const existing = await db
+      .selectFrom('users')
+      .select('id')
+      .where('email', '=', body.email)
+      .executeTakeFirst()
+
+    if (existing) return reply.code(409).send({ error: 'Email already registered' })
+
+    const user = await db
+      .insertInto('users')
+      .values({ email: body.email, password_hash: hash })
+      .returning(['id', 'email'])
+      .executeTakeFirstOrThrow()
 
     const token = app.jwt.sign({ sub: user.id, email: user.email })
     return reply.code(201).send({ token, user: { id: user.id, email: user.email } })
   })
 
+  // ─── Login ────────────────────────────────────────────────
   app.post('/login', async (request, reply) => {
     const body = loginSchema.parse(request.body)
 
-    const [user] = await db`
-      SELECT id, email, password_hash FROM users WHERE email = ${body.email}
-    `
+    const user = await db
+      .selectFrom('users')
+      .select(['id', 'email', 'password_hash'])
+      .where('email', '=', body.email)
+      .executeTakeFirst()
+
     if (!user) return reply.code(401).send({ error: 'Invalid credentials' })
 
     const valid = await bcrypt.compare(body.password, user.password_hash)
@@ -50,30 +56,35 @@ export async function authRoutes(app: FastifyInstance) {
     return { token, user: { id: user.id, email: user.email } }
   })
 
+  // ─── Me ───────────────────────────────────────────────────
   app.get('/me', { preHandler: [app.authenticate] }, async (request) => {
-    const { sub: userId } = request.user as { sub: string; email: string }
-    const [user] = await db`
-      SELECT id, email, created_at FROM users WHERE id = ${userId}
-    `
-    const accounts = await db`
-      SELECT id, email, is_active, created_at FROM gmail_accounts WHERE user_id = ${userId}
-    `
+    const { sub: userId } = request.user as { sub: string }
+
+    const user = await db
+      .selectFrom('users')
+      .select(['id', 'email', 'created_at'])
+      .where('id', '=', userId)
+      .executeTakeFirst()
+
+    const accounts = await db
+      .selectFrom('gmail_accounts')
+      .select(['id', 'email', 'is_active', 'created_at'])
+      .where('user_id', '=', userId)
+      .execute()
+
     return { user, gmailAccounts: accounts }
   })
 
-  // ─── Gmail OAuth2 ──────────────────────────────────────
+  // ─── Gmail OAuth2 ──────────────────────────────────────────
   app.get('/gmail/connect', { preHandler: [app.authenticate] }, async (request) => {
     const { sub: userId } = request.user as { sub: string }
-    const url = getGmailAuthUrl(userId)
-    return { url }
+    return { url: getGmailAuthUrl(userId) }
   })
 
   app.get('/gmail/callback', async (request, reply) => {
     const { code, state: userId } = request.query as { code: string; state: string }
-
     try {
       const account = await exchangeGmailCode(code, userId)
-      // Redirect to frontend with success
       return reply.redirect(`${config.FRONTEND_URL}/settings?gmail=connected&account=${account.email}`)
     } catch (err) {
       app.log.error(err)
@@ -82,12 +93,15 @@ export async function authRoutes(app: FastifyInstance) {
   })
 
   app.delete('/gmail/:accountId', { preHandler: [app.authenticate] }, async (request, reply) => {
-    const { sub: userId } = request.user as { sub: string }
-    const { accountId } = request.params as { accountId: string }
+    const { sub: userId }    = request.user as { sub: string }
+    const { accountId }      = request.params as { accountId: string }
 
-    await db`
-      DELETE FROM gmail_accounts WHERE id = ${accountId} AND user_id = ${userId}
-    `
+    await db
+      .deleteFrom('gmail_accounts')
+      .where('id', '=', accountId)
+      .where('user_id', '=', userId)
+      .execute()
+
     return reply.code(204).send()
   })
 }
