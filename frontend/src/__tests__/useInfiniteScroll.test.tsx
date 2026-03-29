@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, waitFor } from '@testing-library/react'
-import React from 'react'
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll'
 
 // Mock IntersectionObserver
@@ -19,8 +18,8 @@ function TestComponent({ onLoadMore, hasMore, loading }: any) {
 
 describe('useInfiniteScroll', () => {
   it('appelle onLoadMore quand le sentinel est visible et hasMore=true', async () => {
-    let observerCallback: IntersectionObserverCallback | null = null
-    window.IntersectionObserver = vi.fn((cb) => {
+    let observerCallback: IntersectionObserverCallback | undefined
+    window.IntersectionObserver = vi.fn((cb: IntersectionObserverCallback) => {
       observerCallback = cb
       return { observe: observeMock, disconnect: disconnectMock, unobserve: vi.fn() }
     }) as any
@@ -33,13 +32,13 @@ describe('useInfiniteScroll', () => {
     await waitFor(() => expect(observeMock).toHaveBeenCalled())
 
     expect(observerCallback).toBeDefined()
-    observerCallback?.([{ isIntersecting: true }] as any, {} as any)
+    observerCallback && observerCallback([{ isIntersecting: true }] as any, {} as any)
     expect(onLoadMore).toHaveBeenCalledOnce()
   })
 
   it("n'appelle pas onLoadMore si loading=true", async () => {
-    let observerCallback: IntersectionObserverCallback | null = null
-    window.IntersectionObserver = vi.fn((cb) => {
+    let observerCallback: IntersectionObserverCallback | undefined
+    window.IntersectionObserver = vi.fn((cb: IntersectionObserverCallback) => {
       observerCallback = cb
       return { observe: observeMock, disconnect: disconnectMock, unobserve: vi.fn() }
     }) as any
@@ -52,13 +51,13 @@ describe('useInfiniteScroll', () => {
     await waitFor(() => expect(observeMock).toHaveBeenCalled())
 
     expect(observerCallback).toBeDefined()
-    observerCallback?.([{ isIntersecting: true }] as any, {} as any)
+    observerCallback && observerCallback([{ isIntersecting: true }] as any, {} as any)
     expect(onLoadMore).not.toHaveBeenCalled()
   })
 
   it("n'appelle pas onLoadMore si hasMore=false", async () => {
-    let observerCallback: IntersectionObserverCallback | null = null
-    window.IntersectionObserver = vi.fn((cb) => {
+    let observerCallback: IntersectionObserverCallback | undefined
+    window.IntersectionObserver = vi.fn((cb: IntersectionObserverCallback) => {
       observerCallback = cb
       return { observe: observeMock, disconnect: disconnectMock, unobserve: vi.fn() }
     }) as any
@@ -71,7 +70,7 @@ describe('useInfiniteScroll', () => {
     await waitFor(() => expect(observeMock).toHaveBeenCalled())
 
     expect(observerCallback).toBeDefined()
-    observerCallback?.([{ isIntersecting: true }] as any, {} as any)
+    observerCallback && observerCallback([{ isIntersecting: true }] as any, {} as any)
     expect(onLoadMore).not.toHaveBeenCalled()
   })
 })
