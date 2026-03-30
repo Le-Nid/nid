@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://befa160.github.io/gmail-manager/architecture/backend/">
+        <link rel="canonical" href="https://befa160.github.io/gmail-manager/api/notifications/">
       
       
-        <link rel="prev" href="../overview/">
+        <link rel="prev" href="../reports/">
       
       
-        <link rel="next" href="../frontend/">
+        <link rel="next" href="../integrity/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Backend - Gmail Manager</title>
+        <title>Notifications - Gmail Manager</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#architecture-backend" class="md-skip">
+        <a href="#api-notifications" class="md-skip">
           Aller au contenu
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Backend
+              Notifications
             
           </span>
         </div>
@@ -262,13 +262,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../overview/" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../architecture/overview/" class="md-tabs__link">
           
   
   
@@ -284,11 +282,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../api/auth/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../auth/" class="md-tabs__link">
           
   
   
@@ -541,6 +541,207 @@
       
   
   
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vue d'ensemble
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/backend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/frontend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frontend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/database/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Base de données
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/jobs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Jobs & Queue
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -562,17 +763,17 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   
   <span class="md-ellipsis">
     
   
-    Architecture
+    API
   
 
     
@@ -583,12 +784,12 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_3">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
   
-    Architecture
+    API
   
 
           </label>
@@ -601,14 +802,322 @@
   
   
     <li class="md-nav__item">
-      <a href="../overview/" class="md-nav__link">
+      <a href="../auth/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Vue d'ensemble
+    Authentification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gmail/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gmail
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../archive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Archives
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Règles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dashboard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../jobs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Jobs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../admin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Admin
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../audit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audit log
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../duplicates/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Doublons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../unsubscribe/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Newsletters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../attachments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pièces jointes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rapports
   
 
     
@@ -645,7 +1154,7 @@
   <span class="md-ellipsis">
     
   
-    Backend
+    Notifications
   
 
     
@@ -663,7 +1172,7 @@
   <span class="md-ellipsis">
     
   
-    Backend
+    Notifications
   
 
     
@@ -689,10 +1198,94 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#stack" class="md-nav__link">
+  <a href="#lister-les-notifications" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Stack
+        Lister les notifications
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Lister les notifications">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get-apinotifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /api/notifications 🔒
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#marquer-comme-lue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Marquer comme lue
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Marquer comme lue">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#patch-apinotificationsnotificationidread" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PATCH /api/notifications/:notificationId/read 🔒
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#marquer-toutes-comme-lues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Marquer toutes comme lues
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Marquer toutes comme lues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#post-apinotificationsread-all" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/notifications/read-all 🔒
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#acces-dans-linterface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accès dans l'interface
       
     </span>
   </a>
@@ -700,43 +1293,49 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#structure-des-plugins-fastify" class="md-nav__link">
+  <a href="#preferences-de-notifications" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Structure des plugins Fastify
+        Préférences de notifications
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Préférences de notifications">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get-apinotificationspreferences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /api/notifications/preferences 🔒
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#gestion-des-tokens-oauth2" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#put-apinotificationspreferences" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Gestion des tokens OAuth2
+        PUT /api/notifications/preferences 🔒
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#throttling-gmail-api" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Throttling Gmail API
-      
-    </span>
-  </a>
+        
+      </ul>
+    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#demarrage-des-workers" class="md-nav__link">
+  <a href="#dispatcher-unifie" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Démarrage des workers
+        Dispatcher unifié
       
     </span>
   </a>
@@ -759,516 +1358,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../frontend/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Frontend
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../database/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Base de données
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../jobs/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Jobs & Queue
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
-        
-          
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    API
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    API
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../api/auth/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Authentification
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../api/gmail/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Gmail
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../api/archive/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Archives
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../api/rules/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Règles
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../api/dashboard/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Dashboard
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../api/jobs/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Jobs
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../api/admin/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Admin
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../api/audit/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Audit log
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../api/duplicates/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Doublons
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../api/unsubscribe/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Newsletters
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../api/attachments/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Pièces jointes
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../api/reports/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Rapports
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../api/notifications/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Notifications
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../api/integrity/" class="md-nav__link">
+      <a href="../integrity/" class="md-nav__link">
         
   
   
@@ -1296,7 +1386,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/webhooks/" class="md-nav__link">
+      <a href="../webhooks/" class="md-nav__link">
         
   
   
@@ -1324,7 +1414,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/config/" class="md-nav__link">
+      <a href="../config/" class="md-nav__link">
         
   
   
@@ -1496,10 +1586,94 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#stack" class="md-nav__link">
+  <a href="#lister-les-notifications" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Stack
+        Lister les notifications
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Lister les notifications">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get-apinotifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /api/notifications 🔒
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#marquer-comme-lue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Marquer comme lue
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Marquer comme lue">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#patch-apinotificationsnotificationidread" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PATCH /api/notifications/:notificationId/read 🔒
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#marquer-toutes-comme-lues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Marquer toutes comme lues
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Marquer toutes comme lues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#post-apinotificationsread-all" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /api/notifications/read-all 🔒
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#acces-dans-linterface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accès dans l'interface
       
     </span>
   </a>
@@ -1507,43 +1681,49 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#structure-des-plugins-fastify" class="md-nav__link">
+  <a href="#preferences-de-notifications" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Structure des plugins Fastify
+        Préférences de notifications
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Préférences de notifications">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get-apinotificationspreferences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /api/notifications/preferences 🔒
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#gestion-des-tokens-oauth2" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#put-apinotificationspreferences" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Gestion des tokens OAuth2
+        PUT /api/notifications/preferences 🔒
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#throttling-gmail-api" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Throttling Gmail API
-      
-    </span>
-  </a>
+        
+      </ul>
+    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#demarrage-des-workers" class="md-nav__link">
+  <a href="#dispatcher-unifie" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Démarrage des workers
+        Dispatcher unifié
       
     </span>
   </a>
@@ -1570,137 +1750,238 @@
   
 
 
-<h1 id="architecture-backend">Architecture Backend<a class="headerlink" href="#architecture-backend" title="Permanent link">&para;</a></h1>
-<h2 id="stack">Stack<a class="headerlink" href="#stack" title="Permanent link">&para;</a></h2>
+<h1 id="api-notifications">API — Notifications<a class="headerlink" href="#api-notifications" title="Permanent link">&para;</a></h1>
+<p>Système de notifications in-app pour informer l'utilisateur des événements (rapports, jobs, etc.).</p>
+<hr />
+<h2 id="lister-les-notifications">Lister les notifications<a class="headerlink" href="#lister-les-notifications" title="Permanent link">&para;</a></h2>
+<h3 id="get-apinotifications">GET /api/notifications 🔒<a class="headerlink" href="#get-apinotifications" title="Permanent link">&para;</a></h3>
+<p>Retourne les notifications de l'utilisateur authentifié, paginées.</p>
+<p><strong>Query params</strong></p>
 <table>
 <thead>
 <tr>
-<th>Librairie</th>
-<th>Rôle</th>
+<th>Param</th>
+<th>Défaut</th>
+<th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>fastify</code></td>
-<td>Framework HTTP, performant et TypeScript-first</td>
+<td><code>page</code></td>
+<td><code>1</code></td>
+<td>Numéro de page</td>
 </tr>
 <tr>
-<td><code>@fastify/jwt</code></td>
-<td>Auth JWT (access token sur chaque requête)</td>
+<td><code>limit</code></td>
+<td><code>20</code></td>
+<td>Résultats par page</td>
 </tr>
 <tr>
-<td><code>@fastify/cors</code></td>
-<td>CORS configuré sur <code>FRONTEND_URL</code> uniquement</td>
+<td><code>unread_only</code></td>
+<td>—</td>
+<td><code>1</code> ou <code>true</code> pour n'afficher que les non lues</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Réponse 200</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">&quot;notifications&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;uuid&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">      </span><span class="nt">&quot;user_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;uuid&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">      </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;weekly_report&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">      </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Rapport hebdomadaire&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">      </span><span class="nt">&quot;body&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;142 mails reçus, 38 archivés cette semaine&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">      </span><span class="nt">&quot;data&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;period&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-W13&quot;</span><span class="w"> </span><span class="p">},</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">      </span><span class="nt">&quot;is_read&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">      </span><span class="nt">&quot;created_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-03-30T08:00:00Z&quot;</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">  </span><span class="p">],</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">  </span><span class="nt">&quot;unreadCount&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">  </span><span class="nt">&quot;page&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">  </span><span class="nt">&quot;limit&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">20</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="p">}</span>
+</code></pre></div></p>
+<hr />
+<h2 id="marquer-comme-lue">Marquer comme lue<a class="headerlink" href="#marquer-comme-lue" title="Permanent link">&para;</a></h2>
+<h3 id="patch-apinotificationsnotificationidread">PATCH /api/notifications/:notificationId/read 🔒<a class="headerlink" href="#patch-apinotificationsnotificationidread" title="Permanent link">&para;</a></h3>
+<p>Marque une notification comme lue.</p>
+<p><strong>Réponse 200</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">&quot;success&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div></p>
+<hr />
+<h2 id="marquer-toutes-comme-lues">Marquer toutes comme lues<a class="headerlink" href="#marquer-toutes-comme-lues" title="Permanent link">&para;</a></h2>
+<h3 id="post-apinotificationsread-all">POST /api/notifications/read-all 🔒<a class="headerlink" href="#post-apinotificationsread-all" title="Permanent link">&para;</a></h3>
+<p>Marque toutes les notifications de l'utilisateur comme lues.</p>
+<p><strong>Réponse 200</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">&quot;updated&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div></p>
+<hr />
+<h2 id="acces-dans-linterface">Accès dans l'interface<a class="headerlink" href="#acces-dans-linterface" title="Permanent link">&para;</a></h2>
+<p>Les notifications sont accessibles via l'icône <strong>🔔</strong> dans le header de l'application. Le badge rouge indique le nombre de notifications non lues.</p>
+<hr />
+<h2 id="preferences-de-notifications">Préférences de notifications<a class="headerlink" href="#preferences-de-notifications" title="Permanent link">&para;</a></h2>
+<h3 id="get-apinotificationspreferences">GET /api/notifications/preferences 🔒<a class="headerlink" href="#get-apinotificationspreferences" title="Permanent link">&para;</a></h3>
+<p>Retourne les préférences de notifications de l'utilisateur. Si aucune préférence n'est définie, les valeurs par défaut sont renvoyées.</p>
+<p><strong>Réponse 200</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">&quot;weekly_report&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nt">&quot;job_completed&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="nt">&quot;job_failed&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span><span class="nt">&quot;rule_executed&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">  </span><span class="nt">&quot;quota_warning&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span><span class="nt">&quot;integrity_alert&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">  </span><span class="nt">&quot;weekly_report_toast&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">  </span><span class="nt">&quot;job_completed_toast&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">  </span><span class="nt">&quot;job_failed_toast&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">  </span><span class="nt">&quot;rule_executed_toast&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">  </span><span class="nt">&quot;quota_warning_toast&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">  </span><span class="nt">&quot;integrity_alert_toast&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="p">}</span>
+</code></pre></div>
+<p>Chaque type de notification possède deux canaux indépendants :</p>
+<table>
+<thead>
+<tr>
+<th>Préférence</th>
+<th>Défaut</th>
+<th>Canal</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>weekly_report</code></td>
+<td><code>true</code></td>
+<td>🔔 In-app</td>
+<td>Rapport hebdomadaire (chaque lundi)</td>
 </tr>
 <tr>
-<td><code>@fastify/swagger</code></td>
-<td>Génération OpenAPI automatique</td>
+<td><code>weekly_report_toast</code></td>
+<td><code>false</code></td>
+<td>💬 Toast</td>
+<td></td>
 </tr>
 <tr>
-<td><code>@fastify/rate-limit</code></td>
-<td>100 req/min par IP par défaut</td>
+<td><code>job_completed</code></td>
+<td><code>true</code></td>
+<td>🔔 In-app</td>
+<td>Quand un job termine</td>
 </tr>
 <tr>
-<td><code>googleapis</code></td>
-<td>Client officiel Gmail API v1</td>
+<td><code>job_completed_toast</code></td>
+<td><code>true</code></td>
+<td>💬 Toast</td>
+<td></td>
 </tr>
 <tr>
-<td><code>bullmq</code></td>
-<td>Queue de jobs asynchrones (Redis-backed)</td>
+<td><code>job_failed</code></td>
+<td><code>true</code></td>
+<td>🔔 In-app</td>
+<td>Quand un job échoue</td>
 </tr>
 <tr>
-<td><code>postgres</code></td>
-<td>Client PostgreSQL léger et typé</td>
+<td><code>job_failed_toast</code></td>
+<td><code>true</code></td>
+<td>💬 Toast</td>
+<td></td>
 </tr>
 <tr>
-<td><code>ioredis</code></td>
-<td>Client Redis (BullMQ + cache)</td>
+<td><code>rule_executed</code></td>
+<td><code>false</code></td>
+<td>🔔 In-app</td>
+<td>Quand une règle s'exécute</td>
 </tr>
 <tr>
-<td><code>zod</code></td>
-<td>Validation des inputs</td>
+<td><code>rule_executed_toast</code></td>
+<td><code>false</code></td>
+<td>💬 Toast</td>
+<td></td>
 </tr>
 <tr>
-<td><code>mailparser</code></td>
-<td>Parsing EML pour lecture archives</td>
+<td><code>quota_warning</code></td>
+<td><code>true</code></td>
+<td>🔔 In-app</td>
+<td>Alerte stockage</td>
 </tr>
 <tr>
-<td><code>bcrypt</code></td>
-<td>Hashage des mots de passe</td>
+<td><code>quota_warning_toast</code></td>
+<td><code>false</code></td>
+<td>💬 Toast</td>
+<td></td>
 </tr>
 <tr>
-<td><code>otplib</code></td>
-<td>Génération et vérification de codes TOTP (2FA)</td>
+<td><code>integrity_alert</code></td>
+<td><code>true</code></td>
+<td>🔔 In-app</td>
+<td>Problème d'intégrité</td>
 </tr>
 <tr>
-<td><code>qrcode</code></td>
-<td>Génération de QR codes pour configuration 2FA</td>
+<td><code>integrity_alert_toast</code></td>
+<td><code>false</code></td>
+<td>💬 Toast</td>
+<td></td>
 </tr>
 </tbody>
 </table>
 <hr />
-<h2 id="structure-des-plugins-fastify">Structure des plugins Fastify<a class="headerlink" href="#structure-des-plugins-fastify" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>src/plugins/
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>├── index.ts      ← Enregistrement de tous les plugins (ordre important)
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>├── db.ts         ← Connexion PostgreSQL, décoration app.db
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>└── redis.ts      ← Connexion Redis, décoration app.redis
+<h3 id="put-apinotificationspreferences">PUT /api/notifications/preferences 🔒<a class="headerlink" href="#put-apinotificationspreferences" title="Permanent link">&para;</a></h3>
+<p>Met à jour une ou plusieurs préférences. Seules les clés fournies sont modifiées.</p>
+<p><strong>Body</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">&quot;weekly_report&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="nt">&quot;job_completed_toast&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="p">}</span>
 </code></pre></div>
-<p>Le décorateur <code>app.authenticate</code> est défini dans <code>plugins/index.ts</code> et utilisé comme <code>preHandler</code> sur toutes les routes protégées :</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nx">app</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;/route-protegee&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">preHandler</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="nx">app</span><span class="p">.</span><span class="nx">authenticate</span><span class="p">]</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">req</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">sub</span><span class="o">:</span><span class="w"> </span><span class="kt">userId</span><span class="p">,</span><span class="w"> </span><span class="nx">role</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">req</span><span class="p">.</span><span class="nx">user</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">sub</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w"> </span><span class="nx">role</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">}</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="c1">// ...</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="p">})</span>
+<p><strong>Réponse 200</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">&quot;ok&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
 </code></pre></div>
-<p>Deux décorateurs supplémentaires assurent l’isolation multi-utilisateurs :</p>
-<ul>
-<li><strong><code>app.requireAccountOwnership</code></strong> — Vérifie que le paramètre <code>:accountId</code> de la route appartient bien à l’utilisateur authentifié (lookup dans <code>gmail_accounts</code>). Utilisé sur toutes les routes Gmail, archive, dashboard et rules.</li>
-<li><strong><code>app.requireAdmin</code></strong> — Vérifie que <code>role === 'admin'</code> dans le payload JWT. Utilisé sur toutes les routes <code>/api/admin/*</code>.</li>
-</ul>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1">// Exemple : route isolée par compte</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nx">app</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;/mails/:accountId&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nx">preHandler</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="nx">app</span><span class="p">.</span><span class="nx">authenticate</span><span class="p">,</span><span class="w"> </span><span class="nx">app</span><span class="p">.</span><span class="nx">requireAccountOwnership</span><span class="p">]</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="p">},</span><span class="w"> </span><span class="nx">handler</span><span class="p">)</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="c1">// Exemple : route admin</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="nx">app</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;/admin/users&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">  </span><span class="nx">preHandler</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="nx">app</span><span class="p">.</span><span class="nx">authenticate</span><span class="p">,</span><span class="w"> </span><span class="nx">app</span><span class="p">.</span><span class="nx">requireAdmin</span><span class="p">]</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="p">},</span><span class="w"> </span><span class="nx">handler</span><span class="p">)</span>
-</code></pre></div>
-<hr />
-<h2 id="gestion-des-tokens-oauth2">Gestion des tokens OAuth2<a class="headerlink" href="#gestion-des-tokens-oauth2" title="Permanent link">&para;</a></h2>
-<p>Deux flux OAuth2 Google coexistent :</p>
-<ol>
-<li><strong>Gmail OAuth2</strong> — Pour connecter un compte Gmail (scopes <code>gmail.modify</code>, <code>gmail.labels</code>, <code>userinfo.email</code>). Les tokens sont stockés chiffrés dans <code>gmail_accounts</code>.</li>
-<li><strong>Google SSO</strong> — Pour l’authentification utilisateur (scopes <code>openid</code>, <code>userinfo.email</code>, <code>userinfo.profile</code>). Crée ou fusionne un compte utilisateur basé sur le <code>google_id</code>. Le redirect URI dédié est configuré via <code>GOOGLE_SSO_REDIRECT_URI</code>.
-Les tokens Google sont stockés chiffrés en base (table <code>gmail_accounts</code>). Le refresh est automatique via l'event <code>tokens</code> du client Google :</li>
-</ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nx">oauth2Client</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;tokens&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">tokens</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="c1">// Mise à jour automatique access_token + expiry en base</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="p">})</span>
-</code></pre></div>
-<div class="admonition warning">
-<p class="admonition-title">Refresh token</p>
-<p>Google ne retourne le <code>refresh_token</code> qu'au <strong>premier</strong> consentement (<code>prompt: 'consent'</code>). Si un utilisateur reconnecte le même compte, on conserve l'ancien refresh_token via <code>COALESCE</code> en SQL. Ne jamais écraser un refresh_token existant par <code>null</code>.</p>
+<div class="admonition info">
+<p class="admonition-title">Upsert</p>
+<p>Si l'utilisateur n'a pas encore de préférences, une ligne est créée avec les valeurs par défaut puis mise à jour.</p>
 </div>
 <hr />
-<h2 id="throttling-gmail-api">Throttling Gmail API<a class="headerlink" href="#throttling-gmail-api" title="Permanent link">&para;</a></h2>
-<p>Le quota Gmail API est de <strong>250 unités/user/seconde</strong>. Chaque <code>messages.get</code> coûte 5 unités.</p>
-<p>La configuration conservatrice retenue :</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nx">GMAIL_BATCH_SIZE</span><span class="o">:</span><span class="w"> </span><span class="kt">100</span><span class="p">,</span><span class="w">   </span><span class="c1">// 100 messages.get en parallèle = 500 unités</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nx">GMAIL_THROTTLE_MS</span><span class="o">:</span><span class="w"> </span><span class="kt">500</span><span class="p">,</span><span class="w">  </span><span class="c1">// Pause 500ms entre chaque batch → ~1000 unités/sec max</span>
-</code></pre></div>
-<p>Avec le throttling, on reste à ~1 000 unités/sec ce qui dépasse le quota si plusieurs users sont actifs simultanément. En production avec plusieurs comptes, réduire <code>GMAIL_BATCH_SIZE</code> à 50 ou augmenter <code>GMAIL_THROTTLE_MS</code> à 1000ms.</p>
-<hr />
-<h2 id="demarrage-des-workers">Démarrage des workers<a class="headerlink" href="#demarrage-des-workers" title="Permanent link">&para;</a></h2>
-<p>Les workers BullMQ doivent être démarrés au boot du backend. À intégrer dans <code>src/index.ts</code> :</p>
-<p>Chaque worker injecte le <code>user_id</code> dans la table <code>jobs</code> pour assurer l’isolation des données par utilisateur.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">startBulkWorker</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;./jobs/workers/bulk.worker&#39;</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">startArchiveWorker</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;./jobs/workers/archive.worker&#39;</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1">// Dans bootstrap()</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="nx">startBulkWorker</span><span class="p">()</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="nx">startArchiveWorker</span><span class="p">()</span>
-</code></pre></div>
+<h2 id="dispatcher-unifie">Dispatcher unifié<a class="headerlink" href="#dispatcher-unifie" title="Permanent link">&para;</a></h2>
+<p>Chaque événement (job terminé, règle exécutée, rapport hebdo…) passe par le dispatcher <code>notify()</code> qui :</p>
+<ol>
+<li>Vérifie la préférence <strong>in-app</strong> → insère dans la table <code>notifications</code> si activé</li>
+<li>Déclenche les <strong>webhooks</strong> configurés pour l'événement correspondant (Discord, Slack, Ntfy, générique)</li>
+</ol>
+<p>Les trois canaux (in-app, toast, webhook) sont indépendants. Le toast est géré côté frontend via le hook <code>useGlobalJobNotifier</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Catégorie notification</th>
+<th>Événement webhook</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>job_completed</code></td>
+<td><code>job.completed</code></td>
+</tr>
+<tr>
+<td><code>job_failed</code></td>
+<td><code>job.failed</code></td>
+</tr>
+<tr>
+<td><code>rule_executed</code></td>
+<td><code>rule.executed</code></td>
+</tr>
+<tr>
+<td><code>quota_warning</code></td>
+<td><code>quota.warning</code></td>
+</tr>
+<tr>
+<td><code>integrity_alert</code></td>
+<td><code>integrity.failed</code></td>
+</tr>
+<tr>
+<td><code>weekly_report</code></td>
+<td><em>(pas de webhook dédié)</em></td>
+</tr>
+</tbody>
+</table>
 
 
 

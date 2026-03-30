@@ -1049,6 +1049,286 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/admin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Admin
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/audit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audit log
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/duplicates/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Doublons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/unsubscribe/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Newsletters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/attachments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pièces jointes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/reports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rapports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/notifications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Notifications
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Intégrité
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/webhooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Webhooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1290,22 +1570,67 @@
 </tr>
 <tr>
 <td>⚙️ <strong>Jobs</strong></td>
-<td>Suivi en temps réel des opérations longues (BullMQ)</td>
+<td>Suivi en temps réel des opérations longues (BullMQ + SSE)</td>
 </tr>
 <tr>
-<td>🔐 <strong>Multi-compte</strong></td>
-<td>Plusieurs comptes Gmail, auth locale JWT</td>
+<td>🔐 <strong>Auth</strong></td>
+<td>JWT local + Google SSO, 2FA/TOTP, multi-utilisateurs avec rôles</td>
+</tr>
+<tr>
+<td>📧 <strong>Unsubscribe</strong></td>
+<td>Scan des headers List-Unsubscribe, désabonnement en un clic</td>
+</tr>
+<tr>
+<td>📎 <strong>Pièces jointes</strong></td>
+<td>Gestionnaire dédié (live Gmail + archives), tri par taille</td>
+</tr>
+<tr>
+<td>🔁 <strong>Doublons</strong></td>
+<td>Détection et suppression des mails archivés en double</td>
+</tr>
+<tr>
+<td>📋 <strong>Templates</strong></td>
+<td>Bibliothèque de règles pré-configurées, activation en un clic</td>
+</tr>
+<tr>
+<td>📈 <strong>Insights</strong></td>
+<td>Rapport hebdomadaire, notifications in-app, préférences de notifications</td>
+</tr>
+<tr>
+<td>📝 <strong>Audit log</strong></td>
+<td>Journal d'activité traçant les actions sensibles</td>
+</tr>
+<tr>
+<td>🔗 <strong>Webhooks</strong></td>
+<td>Notifications Discord, Slack, Ntfy ou HTTP générique</td>
+</tr>
+<tr>
+<td>🛡️ <strong>Intégrité</strong></td>
+<td>Vérification de cohérence archives disque ↔ BDD</td>
+</tr>
+<tr>
+<td>⌨️ <strong>Raccourcis clavier</strong></td>
+<td>Navigation et actions rapides dans Mes mails</td>
+</tr>
+<tr>
+<td>💾 <strong>Export/Import</strong></td>
+<td>Sauvegarde et restauration de la configuration (règles, webhooks)</td>
+</tr>
+<tr>
+<td>🌐 <strong>Internationalisation</strong></td>
+<td>Français / Anglais, sélecteur de langue, persistance du choix</td>
 </tr>
 </tbody>
 </table>
 <hr />
 <h2 id="stack-technique">Stack technique<a class="headerlink" href="#stack-technique" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Frontend   →  React 19 + Ant Design
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Frontend   →  React 19 + Ant Design + react-i18next
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>Backend    →  Fastify + TypeScript
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>Auth       →  JWT local + OAuth2 Gmail
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>Base de données  →  PostgreSQL 16
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>Queue      →  BullMQ + Redis
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>Archives   →  EML + index PostgreSQL
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>i18n       →  Français 🇫🇷 / Anglais 🇬🇧 (extensible)
 </code></pre></div>
 <hr />
 <h2 id="demarrage-rapide">Démarrage rapide<a class="headerlink" href="#demarrage-rapide" title="Permanent link">&para;</a></h2>

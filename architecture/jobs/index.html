@@ -828,10 +828,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#polling-frontend" class="md-nav__link">
+  <a href="#suivi-temps-reel-sse" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Polling frontend
+        Suivi temps réel (SSE)
       
     </span>
   </a>
@@ -1076,6 +1076,286 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/admin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Admin
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/audit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audit log
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/duplicates/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Doublons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/unsubscribe/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Newsletters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/attachments/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pièces jointes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/reports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rapports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/notifications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Notifications
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/integrity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Intégrité
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/webhooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Webhooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1282,10 +1562,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#polling-frontend" class="md-nav__link">
+  <a href="#suivi-temps-reel-sse" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Polling frontend
+        Suivi temps réel (SSE)
       
     </span>
   </a>
@@ -1346,13 +1626,8 @@
 </tr>
 <tr>
 <td><code>run_rule</code></td>
-<td><em>(à implémenter v1.1)</em></td>
-<td>Manuel ou cron</td>
-</tr>
-<tr>
-<td><code>sync_dashboard</code></td>
-<td><em>(à implémenter v1.1)</em></td>
-<td>Cron ou à la demande</td>
+<td><code>rule.worker.ts</code></td>
+<td>Manuel ou cron (depuis la page Règles)</td>
 </tr>
 </tbody>
 </table>
@@ -1402,9 +1677,15 @@
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>         → cancelled (annulation manuelle)
 </code></pre></div>
 <hr />
-<h2 id="polling-frontend">Polling frontend<a class="headerlink" href="#polling-frontend" title="Permanent link">&para;</a></h2>
-<p>La page Jobs poll l'API toutes les <strong>3 secondes</strong> si au moins un job est <code>active</code> ou <code>pending</code>. Ce polling s'arrête automatiquement quand tous les jobs sont dans un état terminal.</p>
-<p>Pour une meilleure UX en v1.3, remplacer par des <strong>WebSockets</strong> (Server-Sent Events ou <code>ws</code>) pour du push en temps réel.</p>
+<h2 id="suivi-temps-reel-sse">Suivi temps réel (SSE)<a class="headerlink" href="#suivi-temps-reel-sse" title="Permanent link">&para;</a></h2>
+<p>Le suivi de progression utilise les <strong>Server-Sent Events</strong> via le endpoint <code>GET /api/jobs/events</code> :</p>
+<ul>
+<li>Le hook <code>useJobSSE</code> ouvre une connexion SSE persistante</li>
+<li>Chaque événement contient <code>{ jobId, status, progress, processed, total }</code></li>
+<li>La connexion se reconnecte automatiquement en cas de coupure</li>
+<li>Un <code>JobProgressModal</code> affiche la barre de progression en temps réel</li>
+<li>Le composant <code>NotificationBell</code> reçoit également les événements pour les notifications toast</li>
+</ul>
 
 
 
