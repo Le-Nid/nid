@@ -64,3 +64,4 @@
 - [ ] Gestion des rôles (admin / user)
 - [ ] Page admin : vue globale des comptes et jobs
 - [ ] Quota et limites par utilisateur
+- [ ] Pouvoir s'authentifier/créer un compte avec le sso de son compte google

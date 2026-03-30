@@ -1,19 +1,29 @@
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { Spin } from "antd";
 import { useAuthStore } from "./store/auth.store";
-import LoginPage from "./pages/Login";
 import AppLayout from "./components/AppLayout";
-import DashboardPage from "./pages/Dashboard";
-import MailManagerPage from "./pages/MailManager";
-import ArchivePage from "./pages/Archive";
-import SettingsPage from "./pages/Settings";
-import JobsPage from "./pages/Jobs";
-import RulesPage from "./pages/Rules";
+
+const LoginPage = lazy(() => import("./pages/Login"));
+const DashboardPage = lazy(() => import("./pages/Dashboard"));
+const MailManagerPage = lazy(() => import("./pages/MailManager"));
+const ArchivePage = lazy(() => import("./pages/Archive"));
+const SettingsPage = lazy(() => import("./pages/Settings"));
+const JobsPage = lazy(() => import("./pages/Jobs"));
+const RulesPage = lazy(() => import("./pages/Rules"));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token);
   if (!token) return <Navigate to="/login" replace />;
   return <>{children}</>;
+}
+
+function RouteFallback() {
+  return (
+    <div style={{ minHeight: "40vh", display: "grid", placeItems: "center" }}>
+      <Spin size="large" />
+    </div>
+  );
 }
 
 export default function App() {
@@ -24,24 +34,26 @@ export default function App() {
   }, []);
 
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <AppLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<Navigate to="/dashboard" replace />} />
-        <Route path="dashboard" element={<DashboardPage />} />
-        <Route path="mails" element={<MailManagerPage />} />
-        <Route path="archive" element={<ArchivePage />} />
-        <Route path="rules" element={<RulesPage />} />
-        <Route path="jobs" element={<JobsPage />} />
-        <Route path="settings" element={<SettingsPage />} />
-      </Route>
-    </Routes>
+    <Suspense fallback={<RouteFallback />}>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <AppLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="mails" element={<MailManagerPage />} />
+          <Route path="archive" element={<ArchivePage />} />
+          <Route path="rules" element={<RulesPage />} />
+          <Route path="jobs" element={<JobsPage />} />
+          <Route path="settings" element={<SettingsPage />} />
+        </Route>
+      </Routes>
+    </Suspense>
   );
 }

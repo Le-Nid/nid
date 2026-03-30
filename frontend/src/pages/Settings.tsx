@@ -23,7 +23,7 @@ export default function SettingsPage() {
     setConnecting(true)
     try {
       const { data } = await api.get('/api/auth/gmail/connect')
-      window.location.href = data.url
+      globalThis.location.href = data.url
     } finally {
       setConnecting(false)
     }

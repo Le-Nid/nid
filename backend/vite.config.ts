@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite'
-import { builtinModules } from 'module'
+import { builtinModules } from 'node:module'
 
 export default defineConfig({
   build: {
@@ -7,7 +7,7 @@ export default defineConfig({
     outDir:            'dist',
     lib: {
       entry:   'src/index.ts',
-      formats: ['cjs'],
+      formats: ['es'],
       fileName: () => 'index.js',
     },
     rollupOptions: {
@@ -28,7 +28,7 @@ export default defineConfig({
         'pino',
         'pino-pretty',
         'zod',
-        'dotenv',
+        /^dotenv(\/.*)?$/,
       ],
     },
     // Pas de minification pour un serveur Node (debug plus facile + pas de gain réel)

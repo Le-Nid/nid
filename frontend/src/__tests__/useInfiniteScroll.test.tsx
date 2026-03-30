@@ -10,6 +10,22 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
+function mockIntersectionObserver(
+  setCallback: (cb: IntersectionObserverCallback) => void
+) {
+  class IntersectionObserverMock {
+    constructor(cb: IntersectionObserverCallback) {
+      setCallback(cb)
+    }
+
+    observe = observeMock
+    disconnect = disconnectMock
+    unobserve = vi.fn()
+  }
+
+  globalThis.IntersectionObserver = IntersectionObserverMock as any
+}
+
 // Component de test qui utilise le hook
 function TestComponent({ onLoadMore, hasMore, loading }: any) {
   const sentinelRef = useInfiniteScroll({ onLoadMore, hasMore, loading })
@@ -19,10 +35,9 @@ function TestComponent({ onLoadMore, hasMore, loading }: any) {
 describe('useInfiniteScroll', () => {
   it('appelle onLoadMore quand le sentinel est visible et hasMore=true', async () => {
     let observerCallback: IntersectionObserverCallback | undefined
-    window.IntersectionObserver = vi.fn((cb: IntersectionObserverCallback) => {
+    mockIntersectionObserver((cb) => {
       observerCallback = cb
-      return { observe: observeMock, disconnect: disconnectMock, unobserve: vi.fn() }
-    }) as any
+    })
 
     const onLoadMore = vi.fn()
     render(
@@ -38,10 +53,9 @@ describe('useInfiniteScroll', () => {
 
   it("n'appelle pas onLoadMore si loading=true", async () => {
     let observerCallback: IntersectionObserverCallback | undefined
-    window.IntersectionObserver = vi.fn((cb: IntersectionObserverCallback) => {
+    mockIntersectionObserver((cb) => {
       observerCallback = cb
-      return { observe: observeMock, disconnect: disconnectMock, unobserve: vi.fn() }
-    }) as any
+    })
 
     const onLoadMore = vi.fn()
     render(
@@ -57,10 +71,9 @@ describe('useInfiniteScroll', () => {
 
   it("n'appelle pas onLoadMore si hasMore=false", async () => {
     let observerCallback: IntersectionObserverCallback | undefined
-    window.IntersectionObserver = vi.fn((cb: IntersectionObserverCallback) => {
+    mockIntersectionObserver((cb) => {
       observerCallback = cb
-      return { observe: observeMock, disconnect: disconnectMock, unobserve: vi.fn() }
-    }) as any
+    })
 
     const onLoadMore = vi.fn()
     render(
