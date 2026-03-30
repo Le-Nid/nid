@@ -1,0 +1,311 @@
+import { useState, useEffect, useCallback } from 'react'
+import {
+  Card, Table, Tag, Typography, Tabs, Statistic, Row, Col, Input,
+  Select, Switch, Button, Modal, Descriptions, Space, Badge, InputNumber,
+} from 'antd'
+import {
+  UserOutlined, TeamOutlined, CloudOutlined, ScheduleOutlined,
+  DatabaseOutlined, SearchOutlined,
+} from '@ant-design/icons'
+import { adminApi } from '../api'
+import { formatBytes } from '../utils/format'
+
+const { Title, Text } = Typography
+
+interface AdminStats {
+  users: number
+  gmailAccounts: number
+  jobs: { total: number; completed: number; failed: number; active: number }
+  archives: { totalMails: number; totalSizeBytes: number }
+}
+
+interface AdminUser {
+  id: string
+  email: string
+  role: string
+  display_name: string | null
+  avatar_url: string | null
+  is_active: boolean
+  max_gmail_accounts: number
+  storage_quota_bytes: number
+  last_login_at: string | null
+  created_at: string
+  gmail_accounts_count: number
+  storage_used_bytes: number
+}
+
+interface AdminJob {
+  id: string
+  type: string
+  status: string
+  progress: number
+  total: number
+  processed: number
+  user_id: string
+  user_email: string
+  error: string | null
+  created_at: string
+  completed_at: string | null
+}
+
+export default function AdminPage() {
+  const [stats, setStats] = useState<AdminStats | null>(null)
+  const [users, setUsers] = useState<AdminUser[]>([])
+  const [usersTotal, setUsersTotal] = useState(0)
+  const [usersPage, setUsersPage] = useState(1)
+  const [usersSearch, setUsersSearch] = useState('')
+  const [jobs, setJobs] = useState<AdminJob[]>([])
+  const [jobsTotal, setJobsTotal] = useState(0)
+  const [jobsPage, setJobsPage] = useState(1)
+  const [jobsStatus, setJobsStatus] = useState<string | undefined>()
+  const [editUser, setEditUser] = useState<AdminUser | null>(null)
+  const [editLoading, setEditLoading] = useState(false)
+
+  const loadStats = useCallback(async () => {
+    const data = await adminApi.getStats()
+    setStats(data)
+  }, [])
+
+  const loadUsers = useCallback(async () => {
+    const data = await adminApi.listUsers({ page: usersPage, limit: 20, search: usersSearch || undefined })
+    setUsers(data.users)
+    setUsersTotal(data.total)
+  }, [usersPage, usersSearch])
+
+  const loadJobs = useCallback(async () => {
+    const data = await adminApi.listJobs({ page: jobsPage, limit: 20, status: jobsStatus })
+    setJobs(data.jobs)
+    setJobsTotal(data.total)
+  }, [jobsPage, jobsStatus])
+
+  useEffect(() => { loadStats() }, [loadStats])
+  useEffect(() => { loadUsers() }, [loadUsers])
+  useEffect(() => { loadJobs() }, [loadJobs])
+
+  const handleUpdateUser = async (userId: string, updates: Record<string, any>) => {
+    setEditLoading(true)
+    try {
+      await adminApi.updateUser(userId, updates)
+      await loadUsers()
+      setEditUser(null)
+    } finally {
+      setEditLoading(false)
+    }
+  }
+
+  const statusColor: Record<string, string> = {
+    completed: 'success', failed: 'error', active: 'processing',
+    pending: 'default', cancelled: 'warning',
+  }
+
+  const usersColumns = [
+    {
+      title: 'Email', dataIndex: 'email', key: 'email',
+      render: (email: string, record: AdminUser) => (
+        <Space>
+          {record.avatar_url && <img src={record.avatar_url} alt="" style={{ width: 20, height: 20, borderRadius: '50%' }} />}
+          <Text>{email}</Text>
+        </Space>
+      ),
+    },
+    {
+      title: 'Rôle', dataIndex: 'role', key: 'role',
+      render: (role: string) => <Tag color={role === 'admin' ? 'red' : 'blue'}>{role}</Tag>,
+    },
+    {
+      title: 'Actif', dataIndex: 'is_active', key: 'is_active',
+      render: (active: boolean) => <Badge status={active ? 'success' : 'error'} text={active ? 'Oui' : 'Non'} />,
+    },
+    {
+      title: 'Comptes Gmail', dataIndex: 'gmail_accounts_count', key: 'accounts',
+      render: (count: number, record: AdminUser) => `${count} / ${record.max_gmail_accounts}`,
+    },
+    {
+      title: 'Stockage', key: 'storage',
+      render: (_: any, record: AdminUser) =>
+        `${formatBytes(record.storage_used_bytes)} / ${formatBytes(record.storage_quota_bytes)}`,
+    },
+    {
+      title: 'Dernière connexion', dataIndex: 'last_login_at', key: 'last_login',
+      render: (d: string | null) => d ? new Date(d).toLocaleDateString('fr-FR') : '—',
+    },
+    {
+      title: 'Actions', key: 'actions',
+      render: (_: any, record: AdminUser) => (
+        <Button size="small" onClick={() => setEditUser(record)}>Modifier</Button>
+      ),
+    },
+  ]
+
+  const jobsColumns = [
+    { title: 'Type', dataIndex: 'type', key: 'type' },
+    {
+      title: 'Statut', dataIndex: 'status', key: 'status',
+      render: (s: string) => <Tag color={statusColor[s] ?? 'default'}>{s}</Tag>,
+    },
+    {
+      title: 'Progression', key: 'progress',
+      render: (_: any, r: AdminJob) => `${r.processed}/${r.total} (${r.progress}%)`,
+    },
+    { title: 'Utilisateur', dataIndex: 'user_email', key: 'user_email' },
+    {
+      title: 'Créé', dataIndex: 'created_at', key: 'created_at',
+      render: (d: string) => new Date(d).toLocaleString('fr-FR'),
+    },
+    {
+      title: 'Erreur', dataIndex: 'error', key: 'error',
+      render: (e: string | null) => e ? <Text type="danger" ellipsis style={{ maxWidth: 200 }}>{e}</Text> : '—',
+    },
+  ]
+
+  return (
+    <div>
+      <Title level={3}>🛡️ Administration</Title>
+
+      {/* Stats globales */}
+      {stats && (
+        <Row gutter={16} style={{ marginBottom: 24 }}>
+          <Col span={6}>
+            <Card><Statistic title="Utilisateurs" value={stats.users} prefix={<TeamOutlined />} /></Card>
+          </Col>
+          <Col span={6}>
+            <Card><Statistic title="Comptes Gmail" value={stats.gmailAccounts} prefix={<CloudOutlined />} /></Card>
+          </Col>
+          <Col span={6}>
+            <Card><Statistic title="Jobs (total)" value={stats.jobs.total} prefix={<ScheduleOutlined />}
+              suffix={<Text type="secondary" style={{ fontSize: 12 }}> ({stats.jobs.active} actifs)</Text>} /></Card>
+          </Col>
+          <Col span={6}>
+            <Card><Statistic title="Archives" value={stats.archives.totalMails} prefix={<DatabaseOutlined />}
+              suffix={<Text type="secondary" style={{ fontSize: 12 }}> ({formatBytes(stats.archives.totalSizeBytes)})</Text>} /></Card>
+          </Col>
+        </Row>
+      )}
+
+      <Tabs items={[
+        {
+          key: 'users',
+          label: <span><UserOutlined /> Utilisateurs</span>,
+          children: (
+            <>
+              <Input.Search
+                placeholder="Rechercher par email ou nom..."
+                allowClear
+                onSearch={(v) => { setUsersSearch(v); setUsersPage(1) }}
+                style={{ width: 300, marginBottom: 16 }}
+                prefix={<SearchOutlined />}
+              />
+              <Table
+                dataSource={users}
+                columns={usersColumns}
+                rowKey="id"
+                pagination={{
+                  current: usersPage, pageSize: 20, total: usersTotal,
+                  onChange: setUsersPage, showSizeChanger: false,
+                }}
+              />
+            </>
+          ),
+        },
+        {
+          key: 'jobs',
+          label: <span><ScheduleOutlined /> Jobs</span>,
+          children: (
+            <>
+              <Select
+                placeholder="Filtrer par statut"
+                allowClear
+                style={{ width: 200, marginBottom: 16 }}
+                onChange={(v) => { setJobsStatus(v); setJobsPage(1) }}
+                options={[
+                  { value: 'active', label: 'Actif' },
+                  { value: 'completed', label: 'Terminé' },
+                  { value: 'failed', label: 'Échoué' },
+                  { value: 'pending', label: 'En attente' },
+                  { value: 'cancelled', label: 'Annulé' },
+                ]}
+              />
+              <Table
+                dataSource={jobs}
+                columns={jobsColumns}
+                rowKey="id"
+                pagination={{
+                  current: jobsPage, pageSize: 20, total: jobsTotal,
+                  onChange: setJobsPage, showSizeChanger: false,
+                }}
+              />
+            </>
+          ),
+        },
+      ]} />
+
+      {/* Modal modification utilisateur */}
+      <Modal
+        title="Modifier l'utilisateur"
+        open={!!editUser}
+        onCancel={() => setEditUser(null)}
+        footer={null}
+        width={560}
+      >
+        {editUser && (
+          <EditUserForm
+            user={editUser}
+            loading={editLoading}
+            onSave={(updates) => handleUpdateUser(editUser.id, updates)}
+          />
+        )}
+      </Modal>
+    </div>
+  )
+}
+
+function EditUserForm({
+  user, loading, onSave,
+}: {
+  user: AdminUser; loading: boolean; onSave: (updates: Record<string, any>) => void
+}) {
+  const [role, setRole] = useState(user.role)
+  const [isActive, setIsActive] = useState(user.is_active)
+  const [maxAccounts, setMaxAccounts] = useState(user.max_gmail_accounts)
+  const [quota, setQuota] = useState(Math.round(user.storage_quota_bytes / 1_073_741_824)) // en Go
+
+  return (
+    <Space direction="vertical" style={{ width: '100%' }} size="large">
+      <Descriptions column={1} bordered size="small">
+        <Descriptions.Item label="Email">{user.email}</Descriptions.Item>
+        <Descriptions.Item label="Nom">{user.display_name ?? '—'}</Descriptions.Item>
+        <Descriptions.Item label="Inscrit le">{new Date(user.created_at).toLocaleDateString('fr-FR')}</Descriptions.Item>
+        <Descriptions.Item label="Stockage utilisé">{formatBytes(user.storage_used_bytes)}</Descriptions.Item>
+      </Descriptions>
+
+      <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+        <div>
+          <Text strong>Rôle : </Text>
+          <Select value={role} onChange={setRole} style={{ width: 120 }}
+            options={[{ value: 'user', label: 'User' }, { value: 'admin', label: 'Admin' }]} />
+        </div>
+        <div>
+          <Text strong>Actif : </Text>
+          <Switch checked={isActive} onChange={setIsActive} />
+        </div>
+        <div>
+          <Text strong>Max comptes Gmail : </Text>
+          <InputNumber min={1} max={50} value={maxAccounts} onChange={(v) => setMaxAccounts(v ?? 3)} />
+        </div>
+        <div>
+          <Text strong>Quota stockage (Go) : </Text>
+          <InputNumber min={1} max={1000} value={quota} onChange={(v) => setQuota(v ?? 5)} />
+        </div>
+      </Space>
+
+      <Button type="primary" loading={loading} onClick={() => onSave({
+        role,
+        is_active: isActive,
+        max_gmail_accounts: maxAccounts,
+        storage_quota_bytes: quota * 1_073_741_824,
+      })}>
+        Enregistrer
+      </Button>
+    </Space>
+  )
+}

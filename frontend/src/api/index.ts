@@ -87,3 +87,27 @@ export const jobsApi = {
   cancel: (jobId: string) =>
     api.delete(`/api/jobs/${jobId}`),
 }
+
+// ─── Auth (Google SSO) ────────────────────────────────────
+export const authApi = {
+  getGoogleSsoUrl: () =>
+    api.get('/api/auth/google').then((r) => r.data),
+}
+
+// ─── Admin ────────────────────────────────────────────────
+export const adminApi = {
+  getStats: () =>
+    api.get('/api/admin/stats').then((r) => r.data),
+
+  listUsers: (params: Record<string, any> = {}) =>
+    api.get('/api/admin/users', { params }).then((r) => r.data),
+
+  getUser: (userId: string) =>
+    api.get(`/api/admin/users/${userId}`).then((r) => r.data),
+
+  updateUser: (userId: string, dto: Record<string, any>) =>
+    api.patch(`/api/admin/users/${userId}`, dto).then((r) => r.data),
+
+  listJobs: (params: Record<string, any> = {}) =>
+    api.get('/api/admin/jobs', { params }).then((r) => r.data),
+}

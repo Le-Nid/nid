@@ -7,11 +7,13 @@ export async function jobRoutes(app: FastifyInstance) {
   const db   = getDb()
 
   app.get('/', auth, async (request) => {
+    const { sub: userId } = request.user as { sub: string }
     const { status, accountId } = request.query as { status?: string; accountId?: string }
 
     let query = db
       .selectFrom('jobs')
       .selectAll()
+      .where('user_id', '=', userId)
       .orderBy('created_at', 'desc')
       .limit(50)
 
@@ -22,12 +24,14 @@ export async function jobRoutes(app: FastifyInstance) {
   })
 
   app.get('/:jobId', auth, async (request, reply) => {
+    const { sub: userId } = request.user as { sub: string }
     const { jobId } = request.params as { jobId: string }
 
     const job = await db
       .selectFrom('jobs')
       .selectAll()
       .where('id', '=', jobId)
+      .where('user_id', '=', userId)
       .executeTakeFirst()
 
     if (!job) return reply.code(404).send({ error: 'Not found' })
@@ -38,12 +42,14 @@ export async function jobRoutes(app: FastifyInstance) {
   })
 
   app.delete('/:jobId', auth, async (request, reply) => {
+    const { sub: userId } = request.user as { sub: string }
     const { jobId } = request.params as { jobId: string }
 
     const job = await db
       .selectFrom('jobs')
       .select('bullmq_id')
       .where('id', '=', jobId)
+      .where('user_id', '=', userId)
       .executeTakeFirst()
 
     if (!job) return reply.code(404).send({ error: 'Not found' })

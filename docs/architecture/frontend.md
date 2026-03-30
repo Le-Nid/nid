@@ -21,12 +21,16 @@
 
 Gère :
 - Token JWT (persisté dans `localStorage`)
-- Profil utilisateur local
+- Profil utilisateur local (email, rôle, display_name, avatar_url, quotas)
 - Liste des comptes Gmail connectés
 - Compte Gmail actif (sélecteur sidebar)
+- Connexion via Google SSO (`loginWithToken`)
 
 ```typescript
 const { token, user, gmailAccounts, activeAccountId } = useAuthStore()
+// user.role: 'user' | 'admin'
+// user.display_name, user.avatar_url: depuis Google SSO
+// user.max_gmail_accounts, user.storage_quota_bytes: quotas
 ```
 
 ---
@@ -39,11 +43,15 @@ const { token, user, gmailAccounts, activeAccountId } = useAuthStore()
 /dashboard          → DashboardPage 🔒
 /mails              → MailManagerPage 🔒
 /archive            → ArchivePage 🔒
+/rules              → RulesPage 🔒
 /jobs               → JobsPage 🔒
 /settings           → SettingsPage 🔒
+/admin              → AdminPage 🔒🛡️ (admin uniquement)
 ```
 
 Le composant `ProtectedRoute` vérifie la présence du token JWT. Si absent, redirect vers `/login`.
+
+Le composant `AdminRoute` vérifie que `user.role === 'admin'`. Si non-admin, redirect vers `/dashboard`.
 
 ---
 

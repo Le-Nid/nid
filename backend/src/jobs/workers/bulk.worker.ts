@@ -9,6 +9,7 @@ import {
 
 interface BulkPayload {
   accountId: string;
+  userId?: string;
   action:
     | "trash"
     | "delete"
@@ -38,6 +39,7 @@ export function startBulkWorker() {
           status: "active",
           total,
           gmail_account_id: accountId,
+          user_id: job.data.userId ?? null,
           payload: JSON.stringify(job.data),
         })
         .onConflict((oc: any) => oc.doNothing())

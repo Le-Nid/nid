@@ -7,7 +7,7 @@ import {
 import { enqueueJob } from '../jobs/queue'
 
 export async function gmailRoutes(app: FastifyInstance) {
-  const auth = { preHandler: [app.authenticate] }
+  const auth = { preHandler: [app.authenticate, app.requireAccountOwnership] }
 
   // ─── Profile ──────────────────────────────────────────
   app.get('/:accountId/profile', auth, async (request) => {
@@ -37,6 +37,7 @@ export async function gmailRoutes(app: FastifyInstance) {
   // ─── Bulk operations (async via BullMQ) ───────────────
   app.post('/:accountId/messages/bulk', auth, async (request, reply) => {
     const { accountId } = request.params as { accountId: string }
+    const { sub: userId } = request.user as { sub: string }
     const { action, messageIds, labelId } = request.body as {
       action: 'trash' | 'delete' | 'label' | 'unlabel' | 'mark_read' | 'mark_unread' | 'archive'
       messageIds: string[]
@@ -47,6 +48,7 @@ export async function gmailRoutes(app: FastifyInstance) {
 
     const job = await enqueueJob('bulk_operation', {
       accountId,
+      userId,
       action,
       messageIds,
       labelId,

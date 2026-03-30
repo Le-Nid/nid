@@ -19,7 +19,7 @@ Créer un compte local.
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiJ9...",
-  "user": { "id": "uuid", "email": "user@example.com" }
+  "user": { "id": "uuid", "email": "user@example.com", "role": "user" }
 }
 ```
 
@@ -45,7 +45,7 @@ Se connecter.
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiJ9...",
-  "user": { "id": "uuid", "email": "user@example.com" }
+  "user": { "id": "uuid", "email": "user@example.com", "role": "user" }
 }
 ```
 
@@ -54,6 +54,7 @@ Se connecter.
 | Code | Description |
 |---|---|
 | 401 | Credentials invalides |
+| 403 | Compte désactivé |
 
 ---
 
@@ -64,11 +65,35 @@ Récupérer le profil utilisateur et les comptes Gmail associés.
 **Réponse 200**
 ```json
 {
-  "user": { "id": "uuid", "email": "user@example.com", "created_at": "..." },
+  "user": {
+    "id": "uuid", "email": "user@example.com", "role": "user",
+    "display_name": "John Doe", "avatar_url": "https://...",
+    "max_gmail_accounts": 3, "storage_quota_bytes": 5368709120,
+    "created_at": "..."
+  },
   "gmailAccounts": [
     { "id": "uuid", "email": "compte@gmail.com", "is_active": true, "created_at": "..." }
-  ]
+  ],
+  "storageUsedBytes": 1073741824
 }
+```
+
+---
+
+## Google SSO
+
+### GET /api/auth/google
+
+Obtenir l'URL de connexion Google SSO (inscription ou connexion).
+
+**Réponse 200**
+```json
+{ "url": "https://accounts.google.com/o/oauth2/v2/auth?..." }
+```
+
+### GET /api/auth/google/callback
+
+Callback Google SSO. Redirige vers `{FRONTEND_URL}/login?token=...&user=...` en cas de succès, ou `{FRONTEND_URL}/login?google=error` en cas d'erreur.
 ```
 
 ---

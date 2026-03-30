@@ -58,10 +58,45 @@
 - [x] **Preview images PJ** dans Archive drawer (lazy loading, `mime_type.startsWith('image/')`)
 - [x] `AntApp` wrapper pour accès global aux hooks notification/message Ant Design
 
-## v2.0 — Multi-utilisateurs
+## v2.0 — Multi-utilisateurs (✅ complété)
 
-- [ ] Isolation stricte des données par utilisateur
-- [ ] Gestion des rôles (admin / user)
-- [ ] Page admin : vue globale des comptes et jobs
-- [ ] Quota et limites par utilisateur
-- [ ] Pouvoir s'authentifier/créer un compte avec le sso de son compte google
+- [x] Isolation stricte des données par utilisateur (`requireAccountOwnership` middleware)
+- [x] Gestion des rôles (admin / user) — `role` dans JWT, middleware `requireAdmin`
+- [x] Page admin : vue globale des comptes, jobs, statistiques, modification utilisateurs
+- [x] Quota et limites par utilisateur (`max_gmail_accounts`, `storage_quota_bytes`)
+- [x] Authentification / inscription via Google SSO (OAuth2 `openid profile email`)
+- [x] Migration DB `003_multiuser` — colonnes `role`, `google_id`, `is_active`, quotas, `user_id` sur jobs
+- [x] Profil utilisateur dans les paramètres (avatar, quota, stockage)
+- [x] Sécurisation de toutes les routes avec vérification d'ownership des comptes Gmail
+
+## v2.1 — Nettoyage, insights & robustesse
+
+### Haute valeur ajoutée
+
+- [ ] **Unsubscribe Manager** — Scanner les headers `List-Unsubscribe`, page dédiée listant newsletters/listes avec volume et taille, désabonnement en un clic + suppression en masse
+- [ ] **Archivage automatique planifié** — Rule action `archive_nas` planifiable (ex : archiver tout > 6 mois, chaque dimanche). Branchement sur scheduler et worker existants
+- [ ] **Gestionnaire de pièces jointes** — Page dédiée listant toutes les PJ (live Gmail + archives) triées par taille, bouton "télécharger + supprimer" ou "archiver le mail"
+- [ ] **Rapport hebdo / insights** — Notification in-app ou mail résumant : mails reçus, top expéditeurs, Go libérés, règles exécutées, jobs en erreur. Worker BullMQ cron
+
+### Qualité de vie
+
+- [ ] **Templates de règles** — Bibliothèque de règles pré-configurées (ex : "Nettoyer notifs GitHub", "Archiver factures > 3 mois", "Supprimer newsletters non lues > 30j"). Un clic pour activer
+- [ ] **Détection de doublons** — Identifier les mails en double (même subject + sender + date), proposer suppression groupée
+- [ ] **Audit log** — Table `audit_logs(user_id, action, target, details, created_at)` traçant les actions sensibles (suppression, archivage, modification de règles)
+- [ ] **2FA / TOTP** — Authentification à deux facteurs pour comptes locaux (via `otplib`). Pertinent pour app self-hosted avec accès aux boîtes Gmail
+
+### Nice to have
+
+- [ ] **Vérification d'intégrité des archives** — Job planifié comparant EMLs archivés ↔ index PostgreSQL, détection fichiers manquants ou corrompus
+- [ ] **Webhooks / notifications externes** — Webhook configurable (Discord, Slack, Ntfy) sur événements : job échoué, règle exécutée, quota atteint
+- [ ] **Raccourcis clavier** — Dans MailManager : `j/k` (navigation), `e` (archiver), `#` (supprimer), `/` (recherche)
+- [ ] **Export/import de configuration** — Exporter règles + paramètres en JSON, réimporter sur une autre instance
+
+### Ops & déploiement
+
+- [ ] Via une variable d'environnement, choisir d'accepter ou non les inscriptions
+- [ ] Faire tous les tests unitaires
+- [ ] Mettre au propre les dockerfiles pour un déploiement simple
+- [ ] Faire un docker-compose simple pour le déploiement et en faire la doc
+- [ ] Faire en sorte que les variables d'environnements soient injectées dans les applis soit par fichier .env pour le dev local soit par variable d'environnement docker pour la prod
+

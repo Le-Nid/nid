@@ -6,6 +6,7 @@ import { jobRoutes } from './jobs'
 import { dashboardRoutes } from './dashboard'
 import { rulesRoutes } from './rules'
 import { jobSseRoutes, startQueueEventBroadcaster } from './job-sse'
+import { adminRoutes } from './admin'
 
 export async function registerRoutes(app: FastifyInstance) {
   // Health check
@@ -19,6 +20,7 @@ export async function registerRoutes(app: FastifyInstance) {
   await app.register(jobSseRoutes,    { prefix: '/api/jobs' })
   await app.register(dashboardRoutes, { prefix: '/api/dashboard' })
   await app.register(rulesRoutes,     { prefix: '/api/rules' })
+  await app.register(adminRoutes,     { prefix: '/api/admin' })
 
   // Démarrer le broadcaster SSE ← QueueEvents BullMQ
   startQueueEventBroadcaster()

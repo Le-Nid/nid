@@ -74,6 +74,7 @@ nav:
     - Règles: api/rules.md
     - Dashboard: api/dashboard.md
     - Jobs: api/jobs.md
+    - Admin: api/admin.md
   - Développement:
     - Contribuer: development/contributing.md
     - Roadmap: development/roadmap.md

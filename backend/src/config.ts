@@ -22,9 +22,13 @@ export const config = {
   GOOGLE_CLIENT_ID: require_env('GOOGLE_CLIENT_ID'),
   GOOGLE_CLIENT_SECRET: require_env('GOOGLE_CLIENT_SECRET'),
   GOOGLE_REDIRECT_URI: require_env('GOOGLE_REDIRECT_URI'),
+  GOOGLE_SSO_REDIRECT_URI: process.env.GOOGLE_SSO_REDIRECT_URI ?? '',
 
   FRONTEND_URL: process.env.FRONTEND_URL ?? 'http://localhost:3000',
   ARCHIVE_PATH: process.env.ARCHIVE_PATH ?? '/archives',
+
+  // Premier utilisateur avec ce mail devient admin automatiquement
+  ADMIN_EMAIL: process.env.ADMIN_EMAIL ?? '',
 
   // Gmail API throttle — stay under 250 units/user/sec
   GMAIL_BATCH_SIZE: 100,

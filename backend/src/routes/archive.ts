@@ -7,7 +7,7 @@ import { invalidateDashboardCache } from "../dashboard/cache.service";
 import fs from "fs";
 
 export async function archiveRoutes(app: FastifyInstance) {
-  const auth = { preHandler: [app.authenticate] };
+  const auth = { preHandler: [app.authenticate, app.requireAccountOwnership] };
   const db = getDb();
 
   // ─── Liste mails archivés ─────────────────────────────────
@@ -140,6 +140,7 @@ export async function archiveRoutes(app: FastifyInstance) {
   // ─── Déclencher un archivage ─────────────────────────────
   app.post("/:accountId/archive", auth, async (request, reply) => {
     const { accountId } = request.params as { accountId: string };
+    const { sub: userId } = request.user as { sub: string };
     const {
       messageIds,
       query,
@@ -152,6 +153,7 @@ export async function archiveRoutes(app: FastifyInstance) {
 
     const job = await enqueueJob("archive_mails", {
       accountId,
+      userId,
       messageIds,
       query,
       differential,

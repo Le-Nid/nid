@@ -9,11 +9,19 @@ export type JsonbValue = ColumnType<unknown, string, string>
 // ─── Tables ───────────────────────────────────────────────
 
 export interface UsersTable {
-  id:            Generated<string>
-  email:         string
-  password_hash: string
-  created_at:    Generated<Date>
-  updated_at:    Generated<Date>
+  id:                  Generated<string>
+  email:               string
+  password_hash:       string | null
+  role:                Generated<string>   // 'admin' | 'user'
+  display_name:        string | null
+  avatar_url:          string | null
+  google_id:           string | null
+  is_active:           Generated<boolean>
+  max_gmail_accounts:  Generated<number>
+  storage_quota_bytes: Generated<bigint>   // 5 Go par défaut
+  last_login_at:       Date | null
+  created_at:          Generated<Date>
+  updated_at:          Generated<Date>
 }
 
 export interface GmailAccountsTable {
@@ -81,6 +89,7 @@ export interface JobsTable {
   total:            Generated<number>
   processed:        Generated<number>
   gmail_account_id: string | null
+  user_id:          string | null
   payload:          ColumnType<unknown, string, string>
   error:            string | null
   created_at:       Generated<Date>

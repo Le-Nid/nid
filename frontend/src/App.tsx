@@ -11,10 +11,17 @@ const ArchivePage = lazy(() => import("./pages/Archive"));
 const SettingsPage = lazy(() => import("./pages/Settings"));
 const JobsPage = lazy(() => import("./pages/Jobs"));
 const RulesPage = lazy(() => import("./pages/Rules"));
+const AdminPage = lazy(() => import("./pages/Admin"));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token);
   if (!token) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+}
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const user = useAuthStore((s) => s.user);
+  if (user?.role !== "admin") return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 }
 
@@ -52,6 +59,7 @@ export default function App() {
           <Route path="rules" element={<RulesPage />} />
           <Route path="jobs" element={<JobsPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
         </Route>
       </Routes>
     </Suspense>

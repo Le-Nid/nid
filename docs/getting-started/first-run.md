@@ -1,13 +1,48 @@
 # Premier lancement
 
-## 1. Créer votre compte local
+## 1. Créer votre compte
 
 Ouvrez [http://localhost:3000](http://localhost:3000).
 
-Cliquez sur **Créer un compte**, saisissez votre email et un mot de passe (min. 8 caractères).
+Deux options s'offrent à vous :
+
+- **Compte local** : cliquez sur **Créer un compte**, saisissez votre email et un mot de passe (min. 8 caractères).
+- **Google SSO** : cliquez sur **Se connecter avec Google** pour utiliser votre compte Google existant. Aucun mot de passe n'est nécessaire.
+
+!!! tip "Google SSO"
+    Si vous utilisez Google SSO, votre nom et avatar Google seront récupérés automatiquement. Vous pouvez ensuite connecter vos comptes Gmail dans les Paramètres.
 
 !!! note
-    Ce compte est local à l'application (stocké dans PostgreSQL). Il n'a pas de lien avec votre compte Google.
+    Le compte local est stocké dans PostgreSQL. Le compte Google SSO est lié via votre `google_id` — si vous avez déjà un compte local avec le même email, il sera fusionné.
+
+---
+
+## 2. Devenir administrateur
+
+Le premier administrateur doit être configuré de l'une de ces façons :
+
+### Option A — Variable `ADMIN_EMAIL` (recommandé)
+
+Dans votre `.env`, définissez `ADMIN_EMAIL=votre@email.com` **avant** de créer votre compte. L'utilisateur qui s'inscrit avec cet email obtient automatiquement le rôle `admin`.
+
+### Option B — Promotion manuelle en SQL
+
+Si votre compte existe déjà avec le rôle `user` :
+
+```bash
+docker compose exec postgres psql -U gmailmanager -d gmailmanager \
+  -c "UPDATE users SET role = 'admin' WHERE email = 'votre@email.com';"
+```
+
+Déconnectez-vous puis reconnectez-vous pour que le JWT soit regénéré avec le rôle `admin`.
+
+### Option C — Via la page Admin
+
+Un administrateur existant peut promouvoir d'autres utilisateurs depuis **Administration** → onglet **Utilisateurs** → **Modifier**.
+
+!!! info "Rôles"
+    - **user** (défaut) : accès complet à ses propres données (mails, archives, règles, jobs).
+    - **admin** : idem + accès à la page Administration (vue globale des utilisateurs, jobs de tous les users, gestion des quotas et des rôles).
 
 ---
 

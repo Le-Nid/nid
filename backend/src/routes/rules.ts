@@ -61,7 +61,7 @@ const ruleCreateSchema = z.object({
 });
 
 export async function rulesRoutes(app: FastifyInstance) {
-  const auth = { preHandler: [app.authenticate] };
+  const auth = { preHandler: [app.authenticate, app.requireAccountOwnership] };
 
   app.get("/:accountId", auth, async (request) => {
     const { accountId } = request.params as { accountId: string };
@@ -124,9 +124,10 @@ export async function rulesRoutes(app: FastifyInstance) {
       accountId: string;
       ruleId: string;
     };
+    const { sub: userId } = request.user as { sub: string };
     const rule = await getRule(ruleId, accountId);
     if (!rule) return reply.code(404).send({ error: "Rule not found" });
-    const job = await enqueueJob("run_rule", { accountId, ruleId });
+    const job = await enqueueJob("run_rule", { accountId, userId, ruleId });
     return reply
       .code(202)
       .send({ jobId: job.id, message: "Rule execution enqueued" });

@@ -28,7 +28,14 @@ Toutes les variables sont définies dans `.env` à la racine du projet.
 |---|---|
 | `GOOGLE_CLIENT_ID` | Client ID de votre application Google Cloud |
 | `GOOGLE_CLIENT_SECRET` | Client Secret de votre application Google Cloud |
-| `GOOGLE_REDIRECT_URI` | URI de callback OAuth2. Doit correspondre exactement à ce qui est configuré dans Google Cloud |
+| `GOOGLE_REDIRECT_URI` | URI de callback OAuth2 pour la connexion des comptes Gmail |
+| `GOOGLE_SSO_REDIRECT_URI` | *(optionnel)* URI de callback pour le Google SSO. Si absent, utilise `GOOGLE_REDIRECT_URI` |
+
+### Multi-utilisateurs (v2.0)
+
+| Variable | Défaut | Description |
+|---|---|---|
+| `ADMIN_EMAIL` | *(vide)* | L'utilisateur qui s'inscrit avec cet email obtient automatiquement le rôle `admin` |
 
 ### PostgreSQL
 

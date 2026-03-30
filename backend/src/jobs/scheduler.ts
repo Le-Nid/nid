@@ -26,6 +26,7 @@ export function startRuleScheduler() {
           "rules.schedule",
           "rules.last_run_at",
           eb.ref("gmail_accounts.email").as("account_email") as any,
+          eb.ref("gmail_accounts.user_id").as("user_id") as any,
         ])
         .where("rules.is_active", "=", true)
         .where("rules.schedule", "is not", null)
@@ -37,6 +38,7 @@ export function startRuleScheduler() {
         if (rule.schedule && shouldRun(rule.schedule, rule.last_run_at, now)) {
           await enqueueJob("run_rule", {
             accountId: rule.gmail_account_id,
+            userId: rule.user_id,
             ruleId: rule.id,
           });
           console.info(

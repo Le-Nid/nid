@@ -7,7 +7,15 @@ erDiagram
     users {
         uuid id PK
         varchar email
-        varchar password_hash
+        varchar password_hash "nullable (SSO)"
+        varchar role "user | admin"
+        varchar display_name
+        varchar avatar_url
+        varchar google_id "nullable, unique"
+        boolean is_active "default true"
+        integer max_gmail_accounts "default 5"
+        bigint storage_quota_bytes "default 1 Go"
+        timestamptz last_login_at
         timestamptz created_at
         timestamptz updated_at
     }
@@ -69,6 +77,7 @@ erDiagram
         integer total
         integer processed
         uuid gmail_account_id FK
+        uuid user_id FK
         jsonb payload
         text error
         timestamptz created_at
@@ -80,6 +89,7 @@ erDiagram
     archived_mails ||--o{ archived_attachments : "contient"
     gmail_accounts ||--o{ rules : "définit"
     gmail_accounts ||--o{ jobs : "génère"
+    users ||--o{ jobs : "possède"
 ```
 
 ---
@@ -97,6 +107,8 @@ erDiagram
 | `jobs` | `gmail_account_id` | BTree | Filtrage jobs par compte |
 | `jobs` | `status` | BTree | Filtrage par statut |
 | `jobs` | `created_at DESC` | BTree | Tri par date |
+| `jobs` | `user_id` | BTree | Filtrage jobs par utilisateur |
+| `users` | `google_id` (partiel) | Unique | Lookup SSO Google |
 
 ---
 

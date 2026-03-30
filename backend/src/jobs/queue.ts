@@ -10,6 +10,7 @@ export type JobType =
 
 export interface JobPayload {
   accountId: string
+  userId?: string
   [key: string]: unknown
 }
 

@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react'
-import { Card, Button, List, Avatar, Tag, Popconfirm, Typography, Alert, Space, Divider } from 'antd'
-import { GoogleOutlined, DeleteOutlined, PlusOutlined, CheckCircleOutlined } from '@ant-design/icons'
+import { Card, Button, List, Avatar, Tag, Popconfirm, Typography, Alert, Space, Divider, Progress, Descriptions } from 'antd'
+import { GoogleOutlined, DeleteOutlined, PlusOutlined, CheckCircleOutlined, UserOutlined } from '@ant-design/icons'
 import { useSearchParams } from 'react-router-dom'
 import api from '../api/client'
 import { useAuthStore } from '../store/auth.store'
+import { formatBytes } from '../utils/format'
 
 const { Title, Text } = Typography
 
 export default function SettingsPage() {
-  const { gmailAccounts, fetchMe } = useAuthStore()
+  const { user, gmailAccounts, fetchMe, storageUsedBytes } = useAuthStore()
   const [searchParams] = useSearchParams()
   const [connecting, setConnecting] = useState(false)
 
@@ -24,6 +25,10 @@ export default function SettingsPage() {
     try {
       const { data } = await api.get('/api/auth/gmail/connect')
       globalThis.location.href = data.url
+    } catch (e: any) {
+      if (e.response?.status === 403) {
+        alert(e.response?.data?.error ?? 'Limite de comptes Gmail atteinte')
+      }
     } finally {
       setConnecting(false)
     }
@@ -33,6 +38,9 @@ export default function SettingsPage() {
     await api.delete(`/api/auth/gmail/${accountId}`)
     fetchMe()
   }
+
+  const quotaBytes = user?.storage_quota_bytes ?? 5_368_709_120
+  const quotaPercent = quotaBytes > 0 ? Math.round((storageUsedBytes / quotaBytes) * 100) : 0
 
   return (
     <div style={{ maxWidth: 720 }}>
@@ -57,6 +65,45 @@ export default function SettingsPage() {
           style={{ marginBottom: 24 }}
         />
       )}
+
+      {/* Profil utilisateur */}
+      <Card title="Profil" style={{ marginBottom: 24 }}>
+        <Space size="large" align="start">
+          {user?.avatar_url
+            ? <Avatar src={user.avatar_url} size={64} />
+            : <Avatar icon={<UserOutlined />} size={64} />
+          }
+          <Descriptions column={1} size="small">
+            <Descriptions.Item label="Email">{user?.email}</Descriptions.Item>
+            {user?.display_name && (
+              <Descriptions.Item label="Nom">{user.display_name}</Descriptions.Item>
+            )}
+            <Descriptions.Item label="Rôle">
+              <Tag color={user?.role === 'admin' ? 'red' : 'blue'}>{user?.role}</Tag>
+            </Descriptions.Item>
+          </Descriptions>
+        </Space>
+
+        <Divider />
+
+        <div>
+          <Text strong>Stockage archives</Text>
+          <div style={{ marginTop: 8 }}>
+            <Progress
+              percent={quotaPercent}
+              format={() => `${formatBytes(storageUsedBytes)} / ${formatBytes(quotaBytes)}`}
+              status={quotaPercent > 90 ? 'exception' : 'normal'}
+            />
+          </div>
+        </div>
+
+        <div style={{ marginTop: 12 }}>
+          <Text strong>Comptes Gmail</Text>
+          <Text type="secondary" style={{ marginLeft: 8 }}>
+            {gmailAccounts.length} / {user?.max_gmail_accounts ?? 3}
+          </Text>
+        </div>
+      </Card>
 
       <Card title="Comptes Gmail connectés">
         <List

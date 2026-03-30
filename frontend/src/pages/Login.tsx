@@ -1,16 +1,39 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Card, Form, Input, Button, Tabs, Typography, Alert, Space } from 'antd'
-import { MailOutlined, LockOutlined } from '@ant-design/icons'
+import { useState, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Card, Form, Input, Button, Tabs, Typography, Alert, Space, Divider } from 'antd'
+import { MailOutlined, LockOutlined, GoogleOutlined } from '@ant-design/icons'
 import { useAuthStore } from '../store/auth.store'
+import { authApi } from '../api'
 
 const { Title, Text } = Typography
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  const { login, register } = useAuthStore()
+  const [searchParams] = useSearchParams()
+  const { login, register, loginWithToken } = useAuthStore()
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Handle Google SSO callback
+  useEffect(() => {
+    const token = searchParams.get('token')
+    const userParam = searchParams.get('user')
+    const googleError = searchParams.get('google')
+
+    if (token && userParam) {
+      try {
+        const user = JSON.parse(userParam)
+        loginWithToken(token, user).then(() => navigate('/dashboard'))
+      } catch {
+        setError('Erreur lors de la connexion Google')
+      }
+    } else if (googleError === 'disabled') {
+      setError('Ce compte a été désactivé')
+    } else if (googleError === 'error') {
+      setError('Erreur lors de la connexion Google')
+    }
+  }, [searchParams])
 
   async function handleLogin(values: { email: string; password: string }) {
     setLoading(true); setError(null)
@@ -32,6 +55,17 @@ export default function LoginPage() {
     } finally { setLoading(false) }
   }
 
+  async function handleGoogleLogin() {
+    setGoogleLoading(true); setError(null)
+    try {
+      const { url } = await authApi.getGoogleSsoUrl()
+      globalThis.location.href = url
+    } catch {
+      setError('Impossible de lancer la connexion Google')
+      setGoogleLoading(false)
+    }
+  }
+
   const LoginForm = (
     <Form onFinish={handleLogin} layout="vertical">
       <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email' }]}>
@@ -43,6 +77,17 @@ export default function LoginPage() {
       {error && <Alert message={error} type="error" style={{ marginBottom: 16 }} />}
       <Button type="primary" htmlType="submit" loading={loading} block size="large">
         Se connecter
+      </Button>
+      <Divider plain>ou</Divider>
+      <Button
+        block
+        size="large"
+        icon={<GoogleOutlined />}
+        loading={googleLoading}
+        onClick={handleGoogleLogin}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      >
+        Se connecter avec Google
       </Button>
     </Form>
   )
@@ -58,6 +103,17 @@ export default function LoginPage() {
       {error && <Alert message={error} type="error" style={{ marginBottom: 16 }} />}
       <Button type="primary" htmlType="submit" loading={loading} block size="large">
         Créer un compte
+      </Button>
+      <Divider plain>ou</Divider>
+      <Button
+        block
+        size="large"
+        icon={<GoogleOutlined />}
+        loading={googleLoading}
+        onClick={handleGoogleLogin}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      >
+        S'inscrire avec Google
       </Button>
     </Form>
   )

@@ -1,9 +1,9 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { Layout, Menu, Select, Avatar, Dropdown, Typography, Space, Switch, Tooltip } from 'antd'
+import { Layout, Menu, Select, Avatar, Dropdown, Typography, Space, Switch, Tooltip, Tag } from 'antd'
 import {
   DashboardOutlined, MailOutlined, DatabaseOutlined, SettingOutlined,
   LogoutOutlined, UserOutlined, ScheduleOutlined, RobotOutlined,
-  BulbOutlined, BulbFilled
+  BulbOutlined, BulbFilled, CrownOutlined
 } from '@ant-design/icons'
 import { useAuthStore } from '../store/auth.store'
 import { useThemeStore } from '../store/theme.store'
@@ -28,6 +28,9 @@ export default function AppLayout() {
     { key: '/rules',     icon: <RobotOutlined />,     label: 'Règles auto' },
     { key: '/jobs',      icon: <ScheduleOutlined />,  label: 'Jobs' },
     { key: '/settings',  icon: <SettingOutlined />,   label: 'Paramètres' },
+    ...(user?.role === 'admin' ? [
+      { key: '/admin', icon: <CrownOutlined />, label: 'Administration' },
+    ] : []),
   ]
 
   const userMenu = {
@@ -114,8 +117,12 @@ export default function AppLayout() {
           {/* User menu */}
           <Dropdown menu={userMenu} trigger={['click']}>
             <Space style={{ cursor: 'pointer' }}>
-              <Avatar icon={<UserOutlined />} size="small" />
-              <Text style={{ fontSize: 13 }}>{user?.email}</Text>
+              {user?.avatar_url
+                ? <Avatar src={user.avatar_url} size="small" />
+                : <Avatar icon={<UserOutlined />} size="small" />
+              }
+              <Text style={{ fontSize: 13 }}>{user?.display_name || user?.email}</Text>
+              {user?.role === 'admin' && <Tag color="red" style={{ marginLeft: 4, fontSize: 10 }}>admin</Tag>}
             </Space>
           </Dropdown>
         </Header>

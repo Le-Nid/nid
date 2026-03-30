@@ -5,6 +5,7 @@ import { getRule, runRule } from "../../rules/rules.service";
 
 interface RunRulePayload {
   accountId: string;
+  userId?: string;
   ruleId: string;
 }
 
@@ -23,6 +24,7 @@ export function startRuleWorker() {
           type: "run_rule",
           status: "active",
           gmail_account_id: accountId,
+          user_id: job.data.userId ?? null,
           payload: JSON.stringify(job.data),
         })
         .onConflict((oc: any) => oc.doNothing())
