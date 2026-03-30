@@ -1,19 +1,22 @@
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import bcrypt from 'bcrypt'
+import crypto from 'node:crypto'
 import { authenticator } from 'otplib'
 import { getDb } from '../db'
 import { getGmailAuthUrl, exchangeGmailCode, getGoogleSsoUrl, exchangeGoogleSsoCode } from '../auth/oauth.service'
 import { config } from '../config'
 import { logAudit } from '../audit/audit.service'
+import { setAuthCookie, clearAuthCookie } from '../plugins'
+import { getRedis } from '../plugins/redis'
 
 const registerSchema = z.object({
   email:    z.string().email(),
-  password: z.string().min(8),
+  password: z.string().min(8).max(128),
 })
 const loginSchema = z.object({
   email:    z.string().email(),
-  password: z.string().min(8),
+  password: z.string().min(8).max(128),
   totpCode: z.string().length(6).optional(),
 })
 
@@ -28,8 +31,10 @@ export async function authRoutes(app: FastifyInstance) {
     }
   })
 
-  // ─── Register ─────────────────────────────────────────────
-  app.post('/register', async (request, reply) => {
+  // ─── Register (Point 5: rate limit) ───────────────────────
+  app.post('/register', {
+    config: { rateLimit: { max: 3, timeWindow: '1 minute' } },
+  }, async (request, reply) => {
     if (!config.ALLOW_REGISTRATION) {
       return reply.code(403).send({ error: 'Registration is disabled' })
     }
@@ -55,11 +60,14 @@ export async function authRoutes(app: FastifyInstance) {
 
     const token = app.jwt.sign({ sub: user.id, email: user.email, role: user.role })
     await logAudit(user.id, 'user.register', { ipAddress: request.ip })
-    return reply.code(201).send({ token, user: { id: user.id, email: user.email, role: user.role } })
+    setAuthCookie(reply, token)
+    return reply.code(201).send({ user: { id: user.id, email: user.email, role: user.role } })
   })
 
-  // ─── Login ────────────────────────────────────────────────
-  app.post('/login', async (request, reply) => {
+  // ─── Login (Point 5: rate limit, Point 8: no user enumeration) ──
+  app.post('/login', {
+    config: { rateLimit: { max: 5, timeWindow: '1 minute' } },
+  }, async (request, reply) => {
     const body = loginSchema.parse(request.body)
 
     const user = await db
@@ -68,12 +76,15 @@ export async function authRoutes(app: FastifyInstance) {
       .where('email', '=', body.email)
       .executeTakeFirst()
 
-    if (!user) return reply.code(401).send({ error: 'Invalid credentials' })
-    if (!user.is_active) return reply.code(403).send({ error: 'Account is disabled' })
-    if (!user.password_hash) return reply.code(401).send({ error: 'This account uses Google Sign-In' })
+    // Point 8: unified error message to prevent user enumeration
+    if (!user || !user.is_active || !user.password_hash) {
+      // Constant-time hash to prevent timing oracle even when user doesn't exist
+      if (!user) await bcrypt.hash(body.password, 12)
+      return reply.code(401).send({ error: 'Invalid email or password' })
+    }
 
     const valid = await bcrypt.compare(body.password, user.password_hash)
-    if (!valid) return reply.code(401).send({ error: 'Invalid credentials' })
+    if (!valid) return reply.code(401).send({ error: 'Invalid email or password' })
 
     // 2FA check
     if (user.totp_enabled && user.totp_secret) {
@@ -82,7 +93,7 @@ export async function authRoutes(app: FastifyInstance) {
       }
       const totpValid = authenticator.verify({ token: body.totpCode, secret: user.totp_secret })
       if (!totpValid) {
-        return reply.code(401).send({ error: 'Invalid TOTP code' })
+        return reply.code(401).send({ error: 'Invalid email or password' })
       }
     }
 
@@ -90,7 +101,36 @@ export async function authRoutes(app: FastifyInstance) {
 
     const token = app.jwt.sign({ sub: user.id, email: user.email, role: user.role })
     await logAudit(user.id, 'user.login', { ipAddress: request.ip })
-    return { token, user: { id: user.id, email: user.email, role: user.role } }
+    setAuthCookie(reply, token)
+    return { user: { id: user.id, email: user.email, role: user.role } }
+  })
+
+  // ─── Logout (Point 13: server-side invalidation via Redis blacklist) ──
+  app.post('/logout', { preHandler: [app.authenticate] }, async (request, reply) => {
+    try {
+      // Blacklist current JWT until its natural expiration
+      const payload = request.user as { sub: string; exp?: number }
+      if (payload.exp) {
+        const ttl = payload.exp - Math.floor(Date.now() / 1000)
+        if (ttl > 0) {
+          const redis = getRedis()
+          const raw = request.cookies.token ?? request.headers.authorization?.replace('Bearer ', '')
+          if (raw) {
+            await redis.set(`jwt:blacklist:${raw}`, '1', 'EX', ttl)
+          }
+        }
+      }
+    } catch { /* best-effort */ }
+    clearAuthCookie(reply)
+    return reply.code(204).send()
+  })
+
+  // ─── Refresh (Point 14: token refresh without re-login) ───
+  app.post('/refresh', { preHandler: [app.authenticate] }, async (request, reply) => {
+    const { sub: userId, email, role } = request.user as { sub: string; email: string; role: string }
+    const token = app.jwt.sign({ sub: userId, email, role })
+    setAuthCookie(reply, token)
+    return { user: { id: userId, email, role } }
   })
 
   // ─── Google SSO ───────────────────────────────────────────
@@ -98,18 +138,35 @@ export async function authRoutes(app: FastifyInstance) {
     return { url: getGoogleSsoUrl() }
   })
 
+  // Point 3: use httpOnly cookie + short-lived auth code instead of token in URL
   app.get('/google/callback', async (request, reply) => {
     const { code } = request.query as { code: string }
     try {
       const user = await exchangeGoogleSsoCode(code)
       const token = app.jwt.sign({ sub: user.id, email: user.email, role: user.role })
       await logAudit(user.id, 'user.login_sso', { ipAddress: request.ip })
-      return reply.redirect(`${config.FRONTEND_URL}/login?token=${encodeURIComponent(token)}&user=${encodeURIComponent(JSON.stringify({ id: user.id, email: user.email, role: user.role }))}`)
+      // Set httpOnly cookie directly on redirect — no token in URL
+      setAuthCookie(reply, token)
+      // Pass only a short-lived auth code for user info
+      const authCode = crypto.randomBytes(32).toString('hex')
+      const redis = getRedis()
+      await redis.set(`sso:code:${authCode}`, JSON.stringify({ id: user.id, email: user.email, role: user.role }), 'EX', 60)
+      return reply.redirect(`${config.FRONTEND_URL}/login?sso_code=${authCode}`)
     } catch (err: any) {
       app.log.error(err)
       const msg = err.message === 'Account is disabled' ? 'disabled' : 'error'
       return reply.redirect(`${config.FRONTEND_URL}/login?google=${msg}`)
     }
+  })
+
+  // Exchange SSO auth code for user info (token is already in cookie)
+  app.post('/google/exchange', async (request, reply) => {
+    const { code } = z.object({ code: z.string().min(1) }).parse(request.body)
+    const redis = getRedis()
+    const data = await redis.get(`sso:code:${code}`)
+    if (!data) return reply.code(401).send({ error: 'Invalid or expired code' })
+    await redis.del(`sso:code:${code}`)
+    return JSON.parse(data)
   })
 
   // ─── Me ───────────────────────────────────────────────────
@@ -140,7 +197,7 @@ export async function authRoutes(app: FastifyInstance) {
     return { user, gmailAccounts: accounts, storageUsedBytes: Number(storageUsed?.total ?? 0) }
   })
 
-  // ─── Gmail OAuth2 ──────────────────────────────────────────
+  // ─── Gmail OAuth2 (Point 9: signed state) ──────────────────
   app.get('/gmail/connect', { preHandler: [app.authenticate] }, async (request, reply) => {
     const { sub: userId } = request.user as { sub: string }
 
@@ -161,13 +218,18 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.code(403).send({ error: `Maximum ${user?.max_gmail_accounts ?? 3} Gmail accounts allowed` })
     }
 
-    return { url: getGmailAuthUrl(userId) }
+    // Sign the state to prevent CSRF
+    const state = app.jwt.sign({ userId, purpose: 'gmail_oauth' }, { expiresIn: '5m' })
+    return { url: getGmailAuthUrl(state) }
   })
 
   app.get('/gmail/callback', async (request, reply) => {
-    const { code, state: userId } = request.query as { code: string; state: string }
+    const { code, state } = request.query as { code: string; state: string }
     try {
-      const account = await exchangeGmailCode(code, userId)
+      // Verify signed state
+      const decoded = app.jwt.verify(state)
+      if ((decoded as any).purpose !== 'gmail_oauth') throw new Error('Invalid state')
+      const account = await exchangeGmailCode(code, (decoded as any).userId)
       return reply.redirect(`${config.FRONTEND_URL}/settings?gmail=connected&account=${account.email}`)
     } catch (err) {
       app.log.error(err)

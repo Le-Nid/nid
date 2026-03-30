@@ -1,5 +1,8 @@
 import { getDb } from '../db'
 import * as crypto from 'crypto'
+import pino from 'pino'
+
+const logger = pino({ name: 'webhook' })
 
 export type WebhookEvent =
   | 'job.completed'
@@ -30,12 +33,19 @@ export async function triggerWebhooks(userId: string, event: WebhookEvent, data:
   const payload: WebhookPayload = {
     event,
     timestamp: new Date().toISOString(),
-    data,
+    // Point 7: only send non-sensitive summary fields
+    data: {
+      ...(data.jobId ? { jobId: data.jobId } : {}),
+      ...(data.status ? { status: data.status } : {}),
+      ...(data.count !== undefined ? { count: data.count } : {}),
+      ...(data.category ? { category: data.category } : {}),
+      ...(data.title ? { title: data.title } : {}),
+    },
   }
 
   for (const webhook of matching) {
     sendWebhook(webhook, payload).catch((err) => {
-      console.error(`[Webhook] Failed to send to ${webhook.url}:`, err.message)
+      logger.error(`[Webhook] Failed to send to ${webhook.url}: ${err.message}`)
     })
   }
 }

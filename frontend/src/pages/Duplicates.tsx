@@ -161,7 +161,7 @@ export default function DuplicatesPage() {
           </Row>
 
           <Card size="small" style={{ marginBottom: 16, background: '#fff7e6', borderColor: '#ffd591' }}>
-            <Text style={{ fontSize: 13 }} dangerouslySetInnerHTML={{ __html: t('duplicates.hint') }} />
+            <Text style={{ fontSize: 13 }}>{t('duplicates.hint')}</Text>
           </Card>
 
           <Table

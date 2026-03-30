@@ -20,10 +20,9 @@ export function useJobSSE(jobId: string | null) {
   const connect = useCallback(() => {
     if (!jobId) return
 
-    const token = localStorage.getItem('token')
-    // EventSource ne supporte pas les headers custom — on passe le token en query
-    const url = `/api/jobs/${jobId}/events?token=${token}`
-    const es  = new EventSource(url)
+    // Point 3: no more token in URL — httpOnly cookie is sent automatically
+    const url = `/api/jobs/${jobId}/events`
+    const es  = new EventSource(url, { withCredentials: true })
     esRef.current = es
 
     es.onopen = () => setConnected(true)

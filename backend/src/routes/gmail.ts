@@ -1,4 +1,5 @@
 import { FastifyInstance } from 'fastify'
+import { z } from 'zod'
 import {
   listMessages, getMessage, getMessageFull,
   trashMessages, deleteMessages, modifyMessages,
@@ -36,16 +37,16 @@ export async function gmailRoutes(app: FastifyInstance) {
   })
 
   // ─── Bulk operations (async via BullMQ) ───────────────
+  const bulkSchema = z.object({
+    action: z.enum(['trash', 'delete', 'label', 'unlabel', 'mark_read', 'mark_unread', 'archive']),
+    messageIds: z.array(z.string()).min(1, 'No messageIds provided').max(5000),
+    labelId: z.string().optional(),
+  })
+
   app.post('/:accountId/messages/bulk', auth, async (request, reply) => {
     const { accountId } = request.params as { accountId: string }
     const { sub: userId } = request.user as { sub: string }
-    const { action, messageIds, labelId } = request.body as {
-      action: 'trash' | 'delete' | 'label' | 'unlabel' | 'mark_read' | 'mark_unread' | 'archive'
-      messageIds: string[]
-      labelId?: string
-    }
-
-    if (!messageIds?.length) return reply.code(400).send({ error: 'No messageIds provided' })
+    const { action, messageIds, labelId } = bulkSchema.parse(request.body)
 
     const job = await enqueueJob('bulk_operation', {
       accountId,

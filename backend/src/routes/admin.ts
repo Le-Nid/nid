@@ -3,6 +3,11 @@ import { z } from 'zod'
 import { getDb } from '../db'
 import { sql } from 'kysely'
 
+/** Escape ILIKE special characters (Point 10) */
+function escapeIlike(str: string): string {
+  return str.replace(/[%_\\]/g, '\\$&')
+}
+
 const updateUserSchema = z.object({
   role: z.enum(['admin', 'user']).optional(),
   is_active: z.boolean().optional(),
@@ -35,8 +40,8 @@ export async function adminRoutes(app: FastifyInstance) {
     if (search) {
       query = query.where((eb) =>
         eb.or([
-          eb('email', 'ilike', `%${search}%`),
-          eb('display_name', 'ilike', `%${search}%`),
+          eb('email', 'ilike', `%${escapeIlike(search)}%`),
+          eb('display_name', 'ilike', `%${escapeIlike(search)}%`),
         ])
       )
     }

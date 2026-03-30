@@ -18,8 +18,8 @@ const InsightsPage = lazy(() => import("./pages/Insights"));
 const DuplicatesPage = lazy(() => import("./pages/Duplicates"));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const token = useAuthStore((s) => s.token);
-  if (!token) return <Navigate to="/login" replace />;
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 
@@ -38,10 +38,11 @@ function RouteFallback() {
 }
 
 export default function App() {
-  const { token, fetchMe } = useAuthStore();
+  const { fetchMe } = useAuthStore();
 
   useEffect(() => {
-    if (token) fetchMe();
+    // Try to restore session from httpOnly cookie
+    fetchMe();
   }, []);
 
   return (

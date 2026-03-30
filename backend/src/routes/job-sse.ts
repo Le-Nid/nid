@@ -7,14 +7,10 @@ import { getDb } from "../db";
 const subscribers = new Map<string, Set<any>>();
 
 export async function jobSseRoutes(app: FastifyInstance) {
-  // SSE ne peut pas envoyer de headers custom — on accepte le JWT en query param aussi
+  // SSE: read JWT from httpOnly cookie (primary) or Authorization header (fallback)
   const verifyToken = async (request: any, reply: any) => {
-    const token =
-      (request.query as any).token ??
-      request.headers.authorization?.replace("Bearer ", "");
-    if (!token) return reply.code(401).send({ error: "Unauthorized" });
     try {
-      request.user = app.jwt.verify(token);
+      await request.jwtVerify()
     } catch {
       return reply.code(401).send({ error: "Unauthorized" });
     }

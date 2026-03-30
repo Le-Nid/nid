@@ -4,7 +4,17 @@ import { getDb } from "../db";
 import { enqueueJob } from "../jobs/queue";
 import { streamArchiveZip } from "../archive/export.service";
 import { invalidateDashboardCache } from "../dashboard/cache.service";
-import fs from "fs";
+import fs from "node:fs";
+
+/** Escape ILIKE special characters to prevent wildcard injection (Point 10) */
+function escapeIlike(str: string): string {
+  return str.replaceAll(/[%_\\]/g, String.raw`\$&`)
+}
+
+/** Sanitize filename for Content-Disposition header (Point 17) */
+function sanitizeFilename(name: string): string {
+  return name.replaceAll(/["\r\n]/g, '_')
+}
 
 export async function archiveRoutes(app: FastifyInstance) {
   const auth = { preHandler: [app.authenticate, app.requireAccountOwnership] };
@@ -22,8 +32,8 @@ export async function archiveRoutes(app: FastifyInstance) {
       limit = "50",
     } = request.query as Record<string, string>;
 
-    const offset = (parseInt(page) - 1) * parseInt(limit);
-    const lim = parseInt(limit);
+    const offset = (Number.parseInt(page) - 1) * Math.min(Number.parseInt(limit), 100);
+    const lim = Math.min(Number.parseInt(limit), 100);
 
     let query = db
       .selectFrom("archived_mails")
@@ -31,7 +41,7 @@ export async function archiveRoutes(app: FastifyInstance) {
       .where("gmail_account_id", "=", accountId);
 
     if (sender) {
-      query = query.where("sender", "ilike", `%${sender}%`);
+      query = query.where("sender", "ilike", `%${escapeIlike(sender)}%`);
     }
     if (from_date) {
       query = query.where("date", ">=", new Date(from_date));
@@ -42,15 +52,15 @@ export async function archiveRoutes(app: FastifyInstance) {
 
     let mails;
     if (q) {
-      // Full-text search via tsvector
-      const tsQuery = q.trim().split(/\s+/).join(" & ");
+      // Full-text search via plainto_tsquery (Point 11: safe against operator injection)
+      const searchTerm = q.trim().slice(0, 200);
       let fsQuery = db
         .selectFrom("archived_mails")
         .selectAll()
         .where("gmail_account_id", "=", accountId);
 
       if (sender) {
-        fsQuery = fsQuery.where("sender", "ilike", `%${sender}%`);
+        fsQuery = fsQuery.where("sender", "ilike", `%${escapeIlike(sender)}%`);
       }
       if (from_date) {
         fsQuery = fsQuery.where("date", ">=", new Date(from_date));
@@ -60,9 +70,9 @@ export async function archiveRoutes(app: FastifyInstance) {
       }
 
       mails = await (fsQuery as any)
-        .where(sql`search_vector @@ to_tsquery('french', ${tsQuery})`)
+        .where(sql`search_vector @@ plainto_tsquery('french', ${searchTerm})`)
         .orderBy(
-          sql`ts_rank(search_vector, to_tsquery('french', ${tsQuery}))`,
+          sql`ts_rank(search_vector, plainto_tsquery('french', ${searchTerm}))`,
           "desc",
         )
         .orderBy("date", "desc")
@@ -83,7 +93,7 @@ export async function archiveRoutes(app: FastifyInstance) {
       .where("gmail_account_id", "=", accountId)
       .executeTakeFirstOrThrow();
 
-    return { mails, total: Number(count), page: parseInt(page), limit: lim };
+    return { mails, total: Number(count), page: Number.parseInt(page), limit: lim };
   });
 
   // ─── Mail archivé + pièces jointes ───────────────────────
@@ -131,7 +141,7 @@ export async function archiveRoutes(app: FastifyInstance) {
       if (!att) return reply.code(404).send({ error: "Not found" });
 
       return reply
-        .header("Content-Disposition", `attachment; filename="${att.filename}"`)
+        .header("Content-Disposition", `attachment; filename="${sanitizeFilename(att.filename)}"`)
         .header("Content-Type", att.mime_type ?? "application/octet-stream")
         .send(fs.createReadStream(att.file_path));
     },
