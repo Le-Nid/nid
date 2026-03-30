@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Table,
   Space,
@@ -74,8 +74,6 @@ export default function MailManagerPage() {
   const [viewingId, setViewingId] = useState<string | null>(null);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const [focusedIndex, setFocusedIndex] = useState(-1);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-
   const [messageApi, contextHolder] = message.useMessage();
 
   // ─── Raccourcis clavier ───────────────────────────────────

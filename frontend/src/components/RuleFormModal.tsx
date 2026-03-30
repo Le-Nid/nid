@@ -22,7 +22,6 @@ import {
   RuleAction,
   ConditionField,
   CONDITION_FIELD_LABELS,
-  CONDITION_OPERATOR_LABELS,
   ACTION_LABELS,
   SCHEDULE_OPTIONS,
   ActionType,

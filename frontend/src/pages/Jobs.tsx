@@ -238,7 +238,7 @@ export default function JobsPage() {
           ]}
         />
 
-        <Button icon={<ReloadOutlined />} onClick={load} loading={loading}>
+        <Button icon={<ReloadOutlined />} onClick={() => load()} loading={loading}>
           {t('common.refresh')}
         </Button>
 

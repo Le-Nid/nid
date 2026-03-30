@@ -27,14 +27,6 @@ interface DashboardStats {
   profile: { emailAddress: string; messagesTotal: number }
 }
 
-const LABEL_NAMES: Record<string, string> = {
-  INBOX: 'Boîte de réception', UNREAD: 'Non lus', SENT: 'Envoyés',
-  DRAFT: 'Brouillons', SPAM: 'Spam', TRASH: 'Corbeille',
-  STARRED: 'Suivis', IMPORTANT: 'Importants',
-  CATEGORY_PROMOTIONS: 'Promotions', CATEGORY_SOCIAL: 'Réseaux sociaux',
-  CATEGORY_UPDATES: 'Mises à jour', CATEGORY_FORUMS: 'Forums',
-}
-
 export default function DashboardPage() {
   const { t } = useTranslation()
   const { accountId, account } = useAccount()

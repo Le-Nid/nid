@@ -54,7 +54,7 @@ export async function attachmentsRoutes(app: FastifyInstance) {
     let countQuery = db
       .selectFrom('archived_attachments')
       .innerJoin('archived_mails', 'archived_mails.id', 'archived_attachments.archived_mail_id')
-      .select((eb: any) => eb.fn.countAll<number>().as('count'))
+      .select((eb: any) => eb.fn.countAll().as('count'))
       .where('archived_mails.gmail_account_id', '=', accountId)
 
     if (q) {
@@ -67,16 +67,16 @@ export async function attachmentsRoutes(app: FastifyInstance) {
       )
     }
 
-    const { count } = await countQuery.executeTakeFirstOrThrow()
+    const { count } = await countQuery.executeTakeFirstOrThrow() as any
 
     // Compute total size
     const sizeQuery = db
       .selectFrom('archived_attachments')
       .innerJoin('archived_mails', 'archived_mails.id', 'archived_attachments.archived_mail_id')
-      .select((eb: any) => eb.fn.sum<number>('archived_attachments.size_bytes').as('total_size'))
+      .select((eb: any) => eb.fn.sum('archived_attachments.size_bytes').as('total_size'))
       .where('archived_mails.gmail_account_id', '=', accountId)
 
-    const { total_size } = await sizeQuery.executeTakeFirstOrThrow()
+    const { total_size } = await sizeQuery.executeTakeFirstOrThrow() as any
 
     return {
       attachments,

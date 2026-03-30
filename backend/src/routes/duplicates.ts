@@ -20,15 +20,15 @@ export async function duplicatesRoutes(app: FastifyInstance) {
         'subject',
         'sender',
         sql<string>`date_trunc('minute', date)`.as('date_group'),
-        eb.fn.countAll<number>().as('count'),
-        eb.fn.sum<number>('size_bytes').as('total_size'),
+        eb.fn.countAll().as('count'),
+        eb.fn.sum('size_bytes').as('total_size'),
         sql<string[]>`array_agg(id ORDER BY archived_at DESC)`.as('mail_ids'),
       ])
       .where('gmail_account_id', '=', accountId)
       .where('subject', 'is not', null)
       .where('sender', 'is not', null)
       .groupBy(['subject', 'sender', sql`date_trunc('minute', date)`])
-      .having((eb: any) => eb.fn.countAll(), '>=', Number.parseInt(min_count))
+      .having((eb: any) => eb.fn.countAll(), '>=', Number.parseInt(min_count) as any)
       .orderBy(sql`count(*) DESC`)
       .limit(200)
       .execute()

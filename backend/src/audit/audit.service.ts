@@ -20,6 +20,8 @@ export type AuditAction =
   | 'duplicates.delete'
   | 'newsletter.delete'
   | 'admin.update_user'
+  | 'user.2fa_enable'
+  | 'user.2fa_disable'
 
 export async function logAudit(
   userId: string,

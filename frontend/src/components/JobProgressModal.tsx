@@ -9,8 +9,6 @@ import { useTranslation } from "react-i18next";
 
 const { Text } = Typography;
 
-const TYPE_LABELS: Record<string, string> = {};
-
 const STATUS_COLORS: Record<string, string> = {
   pending: "default",
   active: "processing",

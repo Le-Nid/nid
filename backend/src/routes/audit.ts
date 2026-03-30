@@ -28,9 +28,9 @@ export async function auditRoutes(app: FastifyInstance) {
 
     const { count } = await db
       .selectFrom('audit_logs')
-      .select((eb: any) => eb.fn.countAll<number>().as('count'))
+      .select((eb: any) => eb.fn.countAll().as('count'))
       .where('user_id', '=', userId)
-      .executeTakeFirstOrThrow()
+      .executeTakeFirstOrThrow() as any
 
     return { logs, total: Number(count), page: Number.parseInt(page), limit: lim }
   })
