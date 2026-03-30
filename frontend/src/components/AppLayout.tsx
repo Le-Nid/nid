@@ -49,7 +49,7 @@ export default function AppLayout() {
       { key: 'logout', icon: <LogoutOutlined />, label: t('layout.logout'), danger: true },
     ],
     onClick: ({ key }: { key: string }) => {
-      if (key === 'logout') { logout(); navigate('/login') }
+      if (key === 'logout') { logout().then(() => navigate('/login')) }
     },
   }
 

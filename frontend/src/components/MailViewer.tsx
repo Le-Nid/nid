@@ -116,12 +116,11 @@ export default function MailViewer({ accountId, messageId, onClose }: Props) {
     const imageAtts = atts.filter((a) => IMAGE_MIME_TYPES.has(a.mimeType));
     if (!imageAtts.length) return;
 
-    const token = localStorage.getItem("token");
     imageAtts.forEach(async (att) => {
       try {
         const res = await fetch(
           `/api/gmail/${accountId}/messages/${messageId}/attachments/${att.attachmentId}`,
-          { headers: { Authorization: `Bearer ${token}` } },
+          { credentials: 'include' },
         );
         const json = await res.json();
         const bytes = Uint8Array.from(
@@ -138,10 +137,9 @@ export default function MailViewer({ accountId, messageId, onClose }: Props) {
   }, [mail]);
 
   const downloadAttachment = async (attachmentId: string, filename: string) => {
-    const token = localStorage.getItem("token");
     const res = await fetch(
       `/api/gmail/${accountId}/messages/${messageId}/attachments/${attachmentId}`,
-      { headers: { Authorization: `Bearer ${token}` } },
+      { credentials: 'include' },
     );
     const json = await res.json();
     const url = URL.createObjectURL(

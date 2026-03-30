@@ -9,6 +9,7 @@ import { startRuleWorker } from "./jobs/workers/rule.worker";
 import { startUnsubscribeWorker } from "./jobs/workers/unsubscribe.worker";
 import { startReportScheduler } from "./reports/report.scheduler";
 import { startRuleScheduler } from "./jobs/scheduler";
+import type { Worker } from "bullmq";
 
 const server = Fastify({
   logger: {
@@ -20,16 +21,21 @@ const server = Fastify({
   },
 });
 
+// Track active workers for graceful shutdown (Point 18)
+const workers: Worker[] = [];
+
 async function bootstrap() {
   try {
     await registerPlugins(server);
     await registerRoutes(server);
 
-    // Start BullMQ workers
-    startBulkWorker();
-    startArchiveWorker();
-    startRuleWorker();
-    startUnsubscribeWorker();
+    // Start BullMQ workers — collect references for shutdown
+    workers.push(
+      startBulkWorker(),
+      startArchiveWorker(),
+      startRuleWorker(),
+      startUnsubscribeWorker(),
+    );
     startRuleScheduler();
     startReportScheduler();
     server.log.info("✅ BullMQ workers started");
@@ -42,11 +48,14 @@ async function bootstrap() {
   }
 }
 
-// Graceful shutdown
+// Graceful shutdown (Point 18)
 const signals = ["SIGTERM", "SIGINT"] as const;
 signals.forEach((signal) => {
   process.on(signal, async () => {
     server.log.info(`${signal} received, shutting down...`);
+    // Close workers first so no new jobs are picked up
+    await Promise.allSettled(workers.map((w) => w.close()));
+    server.log.info("BullMQ workers stopped");
     await server.close();
     process.exit(0);
   });

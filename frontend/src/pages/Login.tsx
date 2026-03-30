@@ -13,7 +13,7 @@ export default function LoginPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { login, register, loginWithToken } = useAuthStore()
+  const { login, register, loginWithSsoCode } = useAuthStore()
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -28,18 +28,15 @@ export default function LoginPage() {
     }).catch(() => {})
   }, [])
 
+  // Point 3: SSO callback now uses a short-lived auth code instead of token in URL
   useEffect(() => {
-    const token = searchParams.get('token')
-    const userParam = searchParams.get('user')
+    const ssoCode = searchParams.get('sso_code')
     const googleError = searchParams.get('google')
 
-    if (token && userParam) {
-      try {
-        const user = JSON.parse(userParam)
-        loginWithToken(token, user).then(() => navigate('/dashboard'))
-      } catch {
-        setError(t('login.errorGoogle'))
-      }
+    if (ssoCode) {
+      loginWithSsoCode(ssoCode)
+        .then(() => navigate('/dashboard'))
+        .catch(() => setError(t('login.errorGoogle')))
     } else if (googleError === 'disabled') {
       setError(t('login.errorDisabled'))
     } else if (googleError === 'error') {
@@ -88,6 +85,13 @@ export default function LoginPage() {
     setGoogleLoading(true); setError(null)
     try {
       const { url } = await authApi.getGoogleSsoUrl()
+      // Point 11: validate redirect URL to prevent open redirect
+      const parsed = new URL(url)
+      if (parsed.hostname !== 'accounts.google.com') {
+        setError(t('login.errorGoogleStart'))
+        setGoogleLoading(false)
+        return
+      }
       globalThis.location.href = url
     } catch {
       setError(t('login.errorGoogleStart'))

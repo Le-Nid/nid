@@ -172,11 +172,10 @@ export default function MailManagerPage() {
 
   // ─── Fetch métadonnées en parallèle ──────────────────────
   async function fetchMeta(acctId: string, ids: string[]): Promise<MailRow[]> {
-    const token = localStorage.getItem("token");
     return Promise.all(
       ids.map((id) =>
         fetch(`/api/gmail/${acctId}/messages/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         }).then((r) => r.json()),
       ),
     );

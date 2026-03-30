@@ -22,13 +22,13 @@ export function createOAuth2Client() {
   )
 }
 
-export function getGmailAuthUrl(userId: string): string {
+export function getGmailAuthUrl(state: string): string {
   const oauth2Client = createOAuth2Client()
   return oauth2Client.generateAuthUrl({
     access_type: 'offline',
     scope:       SCOPES,
     prompt:      'consent',
-    state:       userId,
+    state,
   })
 }
 

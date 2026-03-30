@@ -301,7 +301,7 @@ export default function RulesPage() {
           borderColor: "#b7eb8f",
         }}
       >
-        <Text style={{ fontSize: 13 }} dangerouslySetInnerHTML={{ __html: t('rules.description') }} />
+                <Text style={{ fontSize: 13 }}>{t('rules.description')}</Text>
       </Card>
 
       {!accountId ? (

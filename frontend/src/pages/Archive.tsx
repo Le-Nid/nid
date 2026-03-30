@@ -454,7 +454,7 @@ export default function ArchivePage() {
                         {/* Preview inline pour les images */}
                         {att.mime_type?.startsWith("image/") && (
                           <img
-                            src={`${downloadUrl(att.id)}?token=${localStorage.getItem("token")}`}
+                            src={downloadUrl(att.id)}
                             alt={att.filename}
                             style={{
                               maxWidth: "100%",

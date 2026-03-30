@@ -18,7 +18,7 @@ interface GmailAccount {
 }
 
 interface AuthState {
-  token: string | null
+  isAuthenticated: boolean
   user: User | null
   gmailAccounts: GmailAccount[]
   activeAccountId: string | null
@@ -26,14 +26,15 @@ interface AuthState {
 
   login: (email: string, password: string, totpCode?: string) => Promise<void>
   register: (email: string, password: string) => Promise<void>
-  loginWithToken: (token: string, user: User) => Promise<void>
-  logout: () => void
+  loginWithSsoCode: (code: string) => Promise<void>
+  logout: () => Promise<void>
   fetchMe: () => Promise<void>
   setActiveAccount: (accountId: string) => void
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
-  token: localStorage.getItem('token'),
+  // Point 1: no more token in localStorage — auth state determined by cookie presence
+  isAuthenticated: false,
   user: null,
   gmailAccounts: [],
   activeAccountId: localStorage.getItem('activeAccountId'),
@@ -41,41 +42,49 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   login: async (email, password, totpCode?) => {
     const { data } = await api.post('/api/auth/login', { email, password, totpCode })
-    localStorage.setItem('token', data.token)
-    set({ token: data.token, user: data.user })
+    // Token is now set as httpOnly cookie by the backend
+    set({ isAuthenticated: true, user: data.user })
     await get().fetchMe()
   },
 
   register: async (email, password) => {
     const { data } = await api.post('/api/auth/register', { email, password })
-    localStorage.setItem('token', data.token)
-    set({ token: data.token, user: data.user })
+    set({ isAuthenticated: true, user: data.user })
   },
 
-  loginWithToken: async (token, user) => {
-    localStorage.setItem('token', token)
-    set({ token, user })
+  // Point 3: SSO now uses an auth code exchange instead of token in URL
+  loginWithSsoCode: async (code: string) => {
+    const { data } = await api.post('/api/auth/google/exchange', { code })
+    set({ isAuthenticated: true, user: data })
     await get().fetchMe()
   },
 
-  logout: () => {
-    localStorage.removeItem('token')
+  // Point 13: call server-side logout to blacklist JWT
+  logout: async () => {
+    try {
+      await api.post('/api/auth/logout')
+    } catch { /* best-effort */ }
     localStorage.removeItem('activeAccountId')
-    set({ token: null, user: null, gmailAccounts: [], activeAccountId: null, storageUsedBytes: 0 })
+    set({ isAuthenticated: false, user: null, gmailAccounts: [], activeAccountId: null, storageUsedBytes: 0 })
   },
 
   fetchMe: async () => {
-    const { data } = await api.get('/api/auth/me')
-    const accounts: GmailAccount[] = data.gmailAccounts
-    const stored = get().activeAccountId
-    const active = stored && accounts.find((a) => a.id === stored) ? stored : accounts[0]?.id ?? null
-    if (active) localStorage.setItem('activeAccountId', active)
-    set({
-      user: data.user,
-      gmailAccounts: accounts,
-      activeAccountId: active,
-      storageUsedBytes: data.storageUsedBytes ?? 0,
-    })
+    try {
+      const { data } = await api.get('/api/auth/me')
+      const accounts: GmailAccount[] = data.gmailAccounts
+      const stored = get().activeAccountId
+      const active = stored && accounts.find((a) => a.id === stored) ? stored : accounts[0]?.id ?? null
+      if (active) localStorage.setItem('activeAccountId', active)
+      set({
+        isAuthenticated: true,
+        user: data.user,
+        gmailAccounts: accounts,
+        activeAccountId: active,
+        storageUsedBytes: data.storageUsedBytes ?? 0,
+      })
+    } catch {
+      set({ isAuthenticated: false, user: null })
+    }
   },
 
   setActiveAccount: (accountId) => {

@@ -1,6 +1,9 @@
 import { getDb } from '../db'
 import { shouldNotify, type NotifCategory } from './notification-prefs.service'
 import { triggerWebhooks, type WebhookEvent } from '../webhooks/webhook.service'
+import pino from 'pino'
+
+const logger = pino({ name: 'notify' })
 
 /**
  * Maps notification categories to webhook event names.
@@ -50,7 +53,7 @@ export async function notify(opts: NotifyOptions): Promise<void> {
         .execute()
     }
   } catch (err) {
-    console.error(`[notify] Failed to create in-app notification for ${category}:`, (err as Error).message)
+    logger.error(`[notify] Failed to create in-app notification for ${category}: ${(err as Error).message}`)
   }
 
   // 2. Webhooks
@@ -65,6 +68,6 @@ export async function notify(opts: NotifyOptions): Promise<void> {
       })
     }
   } catch (err) {
-    console.error(`[notify] Failed to trigger webhooks for ${category}:`, (err as Error).message)
+    logger.error(`[notify] Failed to trigger webhooks for ${category}: ${(err as Error).message}`)
   }
 }

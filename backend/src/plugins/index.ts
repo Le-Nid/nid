@@ -1,9 +1,11 @@
 import { FastifyInstance } from 'fastify'
 import cors from '@fastify/cors'
 import jwt from '@fastify/jwt'
+import cookie from '@fastify/cookie'
 import rateLimit from '@fastify/rate-limit'
 import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
+import { ZodError } from 'zod'
 import { config } from '../config'
 import { connectDb } from './db'
 import { connectRedis } from './redis'
@@ -15,13 +17,20 @@ export async function registerPlugins(app: FastifyInstance) {
     credentials: true,
   })
 
-  // JWT
+  // Cookie
+  await app.register(cookie)
+
+  // JWT — tokens read from httpOnly cookie or Authorization header
   await app.register(jwt, {
     secret: config.JWT_SECRET,
     sign: { expiresIn: config.JWT_EXPIRY },
+    cookie: {
+      cookieName: 'token',
+      signed: false,
+    },
   })
 
-  // Rate limiting
+  // Rate limiting (global)
   await app.register(rateLimit, {
     max: 100,
     timeWindow: '1 minute',
@@ -44,10 +53,49 @@ export async function registerPlugins(app: FastifyInstance) {
   await connectDb(app)
   await connectRedis(app)
 
-  // Decorate request with auth helper
+  // ─── Global error handler (Point 16) ──────────────────────
+  app.setErrorHandler((error: any, request, reply) => {
+    if (error instanceof ZodError) {
+      return reply.code(400).send({ error: 'Validation failed', details: error.format() })
+    }
+    if (error.statusCode) {
+      return reply.code(error.statusCode).send({ error: error.message })
+    }
+    request.log.error(error)
+    reply.code(500).send({ error: 'Internal server error' })
+  })
+
+  // ─── Auth helper: verify JWT + check blacklist + check user is still active (Point 6, 13) ──
   app.decorate('authenticate', async function (request: any, reply: any) {
     try {
       await request.jwtVerify()
+
+      // Point 13: check JWT blacklist (logout invalidation)
+      const raw = request.cookies?.token ?? request.headers.authorization?.replace('Bearer ', '')
+      if (raw) {
+        const blacklisted = await app.redis.get(`jwt:blacklist:${raw}`)
+        if (blacklisted) {
+          return reply
+            .clearCookie('token', { path: '/' })
+            .code(401)
+            .send({ error: 'Unauthorized' })
+        }
+      }
+
+      const { sub: userId } = request.user as { sub: string }
+      const user = await app.db
+        .selectFrom('users')
+        .select(['id', 'is_active', 'role'])
+        .where('id', '=', userId)
+        .executeTakeFirst()
+      if (!user?.is_active) {
+        return reply
+          .clearCookie('token', { path: '/' })
+          .code(401)
+          .send({ error: 'Unauthorized' })
+      }
+      // Keep role in sync with DB
+      request.user.role = user.role
     } catch {
       reply.code(401).send({ error: 'Unauthorized' })
     }
@@ -79,4 +127,20 @@ export async function registerPlugins(app: FastifyInstance) {
       return reply.code(403).send({ error: 'Admin access required' })
     }
   })
+}
+
+/** Helper to set auth cookie on reply */
+export function setAuthCookie(reply: any, token: string) {
+  reply.setCookie('token', token, {
+    httpOnly: true,
+    secure: config.NODE_ENV === 'production',
+    sameSite: 'strict',
+    path: '/',
+    maxAge: 60 * 60 * 24, // 24h (seconds)
+  })
+}
+
+/** Helper to clear auth cookie on reply */
+export function clearAuthCookie(reply: any) {
+  reply.clearCookie('token', { path: '/' })
 }

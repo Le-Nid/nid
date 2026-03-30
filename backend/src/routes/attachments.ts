@@ -3,6 +3,11 @@ import { getDb } from '../db'
 import { getGmailClient } from '../gmail/gmail.service'
 import { config } from '../config'
 
+/** Escape ILIKE special characters (Point 10) */
+function escapeIlike(str: string): string {
+  return str.replace(/[%_\\]/g, '\\$&')
+}
+
 export async function attachmentsRoutes(app: FastifyInstance) {
   const auth = { preHandler: [app.authenticate, app.requireAccountOwnership] }
 
@@ -35,9 +40,9 @@ export async function attachmentsRoutes(app: FastifyInstance) {
     if (q) {
       query = query.where((eb: any) =>
         eb.or([
-          eb('archived_attachments.filename', 'ilike', `%${q}%`),
-          eb('archived_mails.subject', 'ilike', `%${q}%`),
-          eb('archived_mails.sender', 'ilike', `%${q}%`),
+          eb('archived_attachments.filename', 'ilike', `%${escapeIlike(q)}%`),
+          eb('archived_mails.subject', 'ilike', `%${escapeIlike(q)}%`),
+          eb('archived_mails.sender', 'ilike', `%${escapeIlike(q)}%`),
         ])
       )
     }
