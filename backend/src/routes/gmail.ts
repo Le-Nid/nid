@@ -5,6 +5,7 @@ import {
   listLabels, createLabel, deleteLabel, getMailboxProfile
 } from '../gmail/gmail.service'
 import { enqueueJob } from '../jobs/queue'
+import { logAudit } from '../audit/audit.service'
 
 export async function gmailRoutes(app: FastifyInstance) {
   const auth = { preHandler: [app.authenticate, app.requireAccountOwnership] }
@@ -52,6 +53,11 @@ export async function gmailRoutes(app: FastifyInstance) {
       action,
       messageIds,
       labelId,
+    })
+
+    await logAudit(userId, `bulk.${action === 'trash' ? 'trash' : action === 'delete' ? 'delete' : action === 'archive' ? 'archive' : 'label'}` as any, {
+      targetType: 'messages', targetId: accountId,
+      details: { action, count: messageIds.length, jobId: job.id },
     })
 
     return reply.code(202).send({ jobId: job.id, message: 'Job enqueued' })

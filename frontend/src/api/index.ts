@@ -74,6 +74,12 @@ export const rulesApi = {
 
   preview: (accountId: string, conditions: any[]) =>
     api.post(`/api/rules/${accountId}/preview`, { conditions }).then((r) => r.data),
+
+  getTemplates: () =>
+    api.get('/api/rules/templates').then((r) => r.data),
+
+  createFromTemplate: (accountId: string, templateId: string) =>
+    api.post(`/api/rules/${accountId}/from-template`, { templateId }).then((r) => r.data),
 }
 
 // ─── Jobs ─────────────────────────────────────────────────
@@ -110,4 +116,73 @@ export const adminApi = {
 
   listJobs: (params: Record<string, any> = {}) =>
     api.get('/api/admin/jobs', { params }).then((r) => r.data),
+}
+
+// ─── Unsubscribe ──────────────────────────────────────────
+export const unsubscribeApi = {
+  scanNewsletters: (accountId: string) =>
+    api.get(`/api/unsubscribe/${accountId}/newsletters`).then((r) => r.data),
+
+  scanAsync: (accountId: string) =>
+    api.post(`/api/unsubscribe/${accountId}/scan`).then((r) => r.data),
+
+  getMessageIds: (accountId: string, senderEmail: string) =>
+    api.get(`/api/unsubscribe/${accountId}/newsletters/${encodeURIComponent(senderEmail)}/messages`).then((r) => r.data),
+
+  deleteSender: (accountId: string, senderEmail: string, permanent = false) =>
+    api.post(`/api/unsubscribe/${accountId}/newsletters/${encodeURIComponent(senderEmail)}/delete`, { permanent }).then((r) => r.data),
+}
+
+// ─── Attachments ──────────────────────────────────────────
+export const attachmentsApi = {
+  listArchived: (accountId: string, params: Record<string, any> = {}) =>
+    api.get(`/api/attachments/${accountId}/archived`, { params }).then((r) => r.data),
+
+  listLive: (accountId: string, params: Record<string, any> = {}) =>
+    api.get(`/api/attachments/${accountId}/live`, { params }).then((r) => r.data),
+}
+
+// ─── Reports ──────────────────────────────────────────────
+export const reportsApi = {
+  getWeekly: () =>
+    api.get('/api/reports/weekly').then((r) => r.data),
+}
+
+// ─── Duplicates ───────────────────────────────────────────
+export const duplicatesApi = {
+  detectArchived: (accountId: string, params: Record<string, any> = {}) =>
+    api.get(`/api/duplicates/${accountId}/archived`, { params }).then((r) => r.data),
+
+  deleteArchived: (accountId: string, mailIds: string[]) =>
+    api.post(`/api/duplicates/${accountId}/archived/delete`, { mailIds }).then((r) => r.data),
+}
+
+// ─── Notifications ────────────────────────────────────────
+export const notificationsApi = {
+  list: (params: Record<string, any> = {}) =>
+    api.get('/api/notifications', { params }).then((r) => r.data),
+
+  markRead: (notificationId: string) =>
+    api.patch(`/api/notifications/${notificationId}/read`).then((r) => r.data),
+
+  markAllRead: () =>
+    api.patch('/api/notifications/read-all').then((r) => r.data),
+}
+
+// ─── Audit ────────────────────────────────────────────────
+export const auditApi = {
+  list: (params: Record<string, any> = {}) =>
+    api.get('/api/audit', { params }).then((r) => r.data),
+}
+
+// ─── 2FA / TOTP ──────────────────────────────────────────
+export const twoFactorApi = {
+  setup: () =>
+    api.post('/api/auth/2fa/setup').then((r) => r.data),
+
+  enable: (token: string) =>
+    api.post('/api/auth/2fa/enable', { token }).then((r) => r.data),
+
+  disable: (token: string) =>
+    api.post('/api/auth/2fa/disable', { token }).then((r) => r.data),
 }

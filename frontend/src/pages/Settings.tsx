@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Card, Button, List, Avatar, Tag, Popconfirm, Typography, Alert, Space, Divider, Progress, Descriptions } from 'antd'
-import { GoogleOutlined, DeleteOutlined, PlusOutlined, CheckCircleOutlined, UserOutlined } from '@ant-design/icons'
+import { Card, Button, List, Avatar, Tag, Popconfirm, Typography, Alert, Space, Divider, Progress, Descriptions, Table, Input, message } from 'antd'
+import { GoogleOutlined, DeleteOutlined, PlusOutlined, CheckCircleOutlined, UserOutlined, HistoryOutlined, LockOutlined, SafetyOutlined } from '@ant-design/icons'
 import { useSearchParams } from 'react-router-dom'
 import api from '../api/client'
 import { useAuthStore } from '../store/auth.store'
 import { formatBytes } from '../utils/format'
+import { auditApi, twoFactorApi } from '../api'
 
 const { Title, Text } = Typography
 
@@ -12,6 +13,13 @@ export default function SettingsPage() {
   const { user, gmailAccounts, fetchMe, storageUsedBytes } = useAuthStore()
   const [searchParams] = useSearchParams()
   const [connecting, setConnecting] = useState(false)
+  const [auditLogs, setAuditLogs] = useState<any[]>([])
+  const [auditLoading, setAuditLoading] = useState(false)
+  const [auditTotal, setAuditTotal] = useState(0)
+  const [auditPage, setAuditPage] = useState(1)
+  const [totpSetup, setTotpSetup] = useState<{ secret: string; qrDataUrl: string } | null>(null)
+  const [totpCode, setTotpCode] = useState('')
+  const [totpLoading, setTotpLoading] = useState(false)
 
   const gmailStatus = searchParams.get('gmail')
   const connectedEmail = searchParams.get('account')
@@ -19,6 +27,20 @@ export default function SettingsPage() {
   useEffect(() => {
     if (gmailStatus === 'connected') fetchMe()
   }, [gmailStatus])
+
+  const fetchAuditLogs = async (page = 1) => {
+    setAuditLoading(true)
+    try {
+      const data = await auditApi.list({ page, limit: 10 })
+      setAuditLogs(data.data)
+      setAuditTotal(data.total)
+      setAuditPage(page)
+    } finally {
+      setAuditLoading(false)
+    }
+  }
+
+  useEffect(() => { fetchAuditLogs() }, [])
 
   const connectGmail = async () => {
     setConnecting(true)
@@ -155,6 +177,159 @@ export default function SettingsPage() {
             Scopes requis : gmail.modify, gmail.labels — aucune donnée n'est stockée hors de votre NAS.
           </Text>
         </div>
+      </Card>
+
+      {/* 2FA / TOTP */}
+      <Card title={<><SafetyOutlined /> Authentification à deux facteurs (2FA)</>} style={{ marginTop: 24 }}>
+        {(user as any)?.totp_enabled ? (
+          <>
+            <Alert type="success" message="2FA activé" showIcon style={{ marginBottom: 16 }} />
+            <Space>
+              <Input
+                placeholder="Code TOTP"
+                maxLength={6}
+                value={totpCode}
+                onChange={(e) => setTotpCode(e.target.value)}
+                style={{ width: 140 }}
+              />
+              <Popconfirm
+                title="Désactiver la 2FA ?"
+                description="Vous devrez fournir un code TOTP valide."
+                onConfirm={async () => {
+                  if (totpCode.length !== 6) return
+                  setTotpLoading(true)
+                  try {
+                    await twoFactorApi.disable(totpCode)
+                    message.success('2FA désactivé')
+                    setTotpCode('')
+                    setTotpSetup(null)
+                    fetchMe()
+                  } catch (e: any) {
+                    message.error(e.response?.data?.error || 'Erreur')
+                  } finally {
+                    setTotpLoading(false)
+                  }
+                }}
+                okText="Désactiver"
+                cancelText="Annuler"
+                okButtonProps={{ danger: true }}
+              >
+                <Button danger icon={<LockOutlined />} loading={totpLoading}>
+                  Désactiver la 2FA
+                </Button>
+              </Popconfirm>
+            </Space>
+          </>
+        ) : totpSetup ? (
+          <>
+            <Text>Scannez ce QR code avec votre application d'authentification (Google Authenticator, Authy, etc.) :</Text>
+            <div style={{ textAlign: 'center', margin: '16px 0' }}>
+              <img src={totpSetup.qrDataUrl} alt="QR Code TOTP" style={{ maxWidth: 200 }} />
+            </div>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              Clé manuelle : <code>{totpSetup.secret}</code>
+            </Text>
+            <Divider />
+            <Space>
+              <Input
+                placeholder="Code à 6 chiffres"
+                maxLength={6}
+                value={totpCode}
+                onChange={(e) => setTotpCode(e.target.value)}
+                style={{ width: 160 }}
+              />
+              <Button
+                type="primary"
+                icon={<LockOutlined />}
+                loading={totpLoading}
+                disabled={totpCode.length !== 6}
+                onClick={async () => {
+                  setTotpLoading(true)
+                  try {
+                    await twoFactorApi.enable(totpCode)
+                    message.success('2FA activé avec succès !')
+                    setTotpSetup(null)
+                    setTotpCode('')
+                    fetchMe()
+                  } catch (e: any) {
+                    message.error(e.response?.data?.error || 'Code invalide')
+                  } finally {
+                    setTotpLoading(false)
+                  }
+                }}
+              >
+                Vérifier et activer
+              </Button>
+              <Button onClick={() => { setTotpSetup(null); setTotpCode('') }}>Annuler</Button>
+            </Space>
+          </>
+        ) : (
+          <>
+            <Text>Protégez votre compte avec un code TOTP généré par une application d'authentification.</Text>
+            <div style={{ marginTop: 16 }}>
+              <Button
+                type="primary"
+                icon={<SafetyOutlined />}
+                loading={totpLoading}
+                onClick={async () => {
+                  setTotpLoading(true)
+                  try {
+                    const data = await twoFactorApi.setup()
+                    setTotpSetup(data)
+                  } catch (e: any) {
+                    message.error(e.response?.data?.error || 'Erreur')
+                  } finally {
+                    setTotpLoading(false)
+                  }
+                }}
+              >
+                Configurer la 2FA
+              </Button>
+            </div>
+          </>
+        )}
+      </Card>
+
+      {/* Audit log */}
+      <Card title={<><HistoryOutlined /> Journal d'activité</>} style={{ marginTop: 24 }}>
+        <Table
+          dataSource={auditLogs}
+          rowKey="id"
+          loading={auditLoading}
+          size="small"
+          pagination={{
+            current: auditPage,
+            total: auditTotal,
+            pageSize: 10,
+            onChange: (p) => fetchAuditLogs(p),
+            showSizeChanger: false,
+          }}
+          columns={[
+            {
+              title: 'Date',
+              dataIndex: 'created_at',
+              width: 170,
+              render: (v: string) => new Date(v).toLocaleString('fr-FR'),
+            },
+            {
+              title: 'Action',
+              dataIndex: 'action',
+              width: 180,
+              render: (v: string) => <Tag>{v}</Tag>,
+            },
+            {
+              title: 'Cible',
+              dataIndex: 'target_type',
+              width: 120,
+              render: (v: string, row: any) => v ? `${v} ${row.target_id ? '#' + row.target_id.slice(0, 8) : ''}` : '—',
+            },
+            {
+              title: 'Détails',
+              dataIndex: 'details',
+              render: (v: any) => v ? <Text type="secondary" style={{ fontSize: 12 }}>{JSON.stringify(v)}</Text> : '—',
+            },
+          ]}
+        />
       </Card>
     </div>
   )

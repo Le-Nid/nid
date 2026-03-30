@@ -12,6 +12,9 @@ const TYPE_LABELS: Record<string, string> = {
   bulk_operation: "Opération bulk",
   archive_mails: "Archivage NAS",
   run_rule: "Exécution de règle",
+  scan_unsubscribe: "Scan newsletters",
+  scan_attachments: "Scan pièces jointes",
+  generate_report: "Génération rapport",
 };
 
 const STATUS_COLORS: Record<string, string> = {

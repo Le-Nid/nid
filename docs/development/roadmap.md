@@ -73,17 +73,17 @@
 
 ### Haute valeur ajoutée
 
-- [ ] **Unsubscribe Manager** — Scanner les headers `List-Unsubscribe`, page dédiée listant newsletters/listes avec volume et taille, désabonnement en un clic + suppression en masse
-- [ ] **Archivage automatique planifié** — Rule action `archive_nas` planifiable (ex : archiver tout > 6 mois, chaque dimanche). Branchement sur scheduler et worker existants
-- [ ] **Gestionnaire de pièces jointes** — Page dédiée listant toutes les PJ (live Gmail + archives) triées par taille, bouton "télécharger + supprimer" ou "archiver le mail"
-- [ ] **Rapport hebdo / insights** — Notification in-app ou mail résumant : mails reçus, top expéditeurs, Go libérés, règles exécutées, jobs en erreur. Worker BullMQ cron
+- [x] **Unsubscribe Manager** — Scanner les headers `List-Unsubscribe`, page dédiée listant newsletters/listes avec volume et taille, désabonnement en un clic + suppression en masse
+- [x] **Archivage automatique planifié** — Rule action `archive_nas` planifiable (ex : archiver tout > 6 mois, chaque dimanche). Conditions `older_than` / `newer_than` ajoutées aux règles
+- [x] **Gestionnaire de pièces jointes** — Page dédiée listant toutes les PJ (live Gmail + archives) triées par taille, avec recherche et tri
+- [x] **Rapport hebdo / insights** — Page Insights avec rapport hebdomadaire + système de notifications in-app (cloche dans le header, scheduler lundi)
 
 ### Qualité de vie
 
-- [ ] **Templates de règles** — Bibliothèque de règles pré-configurées (ex : "Nettoyer notifs GitHub", "Archiver factures > 3 mois", "Supprimer newsletters non lues > 30j"). Un clic pour activer
-- [ ] **Détection de doublons** — Identifier les mails en double (même subject + sender + date), proposer suppression groupée
-- [ ] **Audit log** — Table `audit_logs(user_id, action, target, details, created_at)` traçant les actions sensibles (suppression, archivage, modification de règles)
-- [ ] **2FA / TOTP** — Authentification à deux facteurs pour comptes locaux (via `otplib`). Pertinent pour app self-hosted avec accès aux boîtes Gmail
+- [x] **Templates de règles** — Bibliothèque de règles pré-configurées (ex : "Nettoyer notifs GitHub", "Archiver factures > 3 mois", "Supprimer newsletters non lues > 30j"). Un clic pour activer
+- [x] **Détection de doublons** — Identifier les mails en double (même subject + sender + date), proposer suppression groupée
+- [x] **Audit log** — Table `audit_logs(user_id, action, target, details, created_at)` traçant les actions sensibles (suppression, archivage, modification de règles)
+- [x] **2FA / TOTP** — Authentification à deux facteurs pour comptes locaux (via `otplib`). Pertinent pour app self-hosted avec accès aux boîtes Gmail
 
 ### Nice to have
 

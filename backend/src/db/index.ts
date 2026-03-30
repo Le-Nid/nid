@@ -4,6 +4,9 @@ import { Database } from './types'
 import { config } from '../config'
 import * as migration001 from './migrations/001_initial'
 import * as migration003 from './migrations/003_multiuser'
+import * as migration004 from './migrations/004_notifications'
+import * as migration005 from './migrations/005_audit_logs'
+import * as migration006 from './migrations/006_totp'
 
 // ─── Kysely instance ──────────────────────────────────────
 
@@ -25,8 +28,11 @@ export function getDb(): Kysely<Database> {
 // ─── Migration provider (in-code, pas de filesystem) ──────
 
 const migrations: Record<string, Migration> = {
-  '001_initial':    migration001,
-  '003_multiuser':  migration003,
+  '001_initial':       migration001,
+  '003_multiuser':     migration003,
+  '004_notifications': migration004,
+  '005_audit_logs':    migration005,
+  '006_totp':          migration006,
 }
 
 class InCodeMigrationProvider implements MigrationProvider {

@@ -1,15 +1,21 @@
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import bcrypt from 'bcrypt'
+import { authenticator } from 'otplib'
 import { getDb } from '../db'
 import { getGmailAuthUrl, exchangeGmailCode, getGoogleSsoUrl, exchangeGoogleSsoCode } from '../auth/oauth.service'
 import { config } from '../config'
+import { logAudit } from '../audit/audit.service'
 
 const registerSchema = z.object({
   email:    z.string().email(),
   password: z.string().min(8),
 })
-const loginSchema = registerSchema
+const loginSchema = z.object({
+  email:    z.string().email(),
+  password: z.string().min(8),
+  totpCode: z.string().length(6).optional(),
+})
 
 export async function authRoutes(app: FastifyInstance) {
   const db = getDb()
@@ -36,6 +42,7 @@ export async function authRoutes(app: FastifyInstance) {
       .executeTakeFirstOrThrow()
 
     const token = app.jwt.sign({ sub: user.id, email: user.email, role: user.role })
+    await logAudit(user.id, 'user.register', { ipAddress: request.ip })
     return reply.code(201).send({ token, user: { id: user.id, email: user.email, role: user.role } })
   })
 
@@ -45,7 +52,7 @@ export async function authRoutes(app: FastifyInstance) {
 
     const user = await db
       .selectFrom('users')
-      .select(['id', 'email', 'password_hash', 'role', 'is_active'])
+      .select(['id', 'email', 'password_hash', 'role', 'is_active', 'totp_enabled', 'totp_secret'])
       .where('email', '=', body.email)
       .executeTakeFirst()
 
@@ -56,9 +63,21 @@ export async function authRoutes(app: FastifyInstance) {
     const valid = await bcrypt.compare(body.password, user.password_hash)
     if (!valid) return reply.code(401).send({ error: 'Invalid credentials' })
 
+    // 2FA check
+    if (user.totp_enabled && user.totp_secret) {
+      if (!body.totpCode) {
+        return reply.code(403).send({ error: 'TOTP_REQUIRED' })
+      }
+      const totpValid = authenticator.verify({ token: body.totpCode, secret: user.totp_secret })
+      if (!totpValid) {
+        return reply.code(401).send({ error: 'Invalid TOTP code' })
+      }
+    }
+
     await db.updateTable('users').set({ last_login_at: new Date() }).where('id', '=', user.id).execute()
 
     const token = app.jwt.sign({ sub: user.id, email: user.email, role: user.role })
+    await logAudit(user.id, 'user.login', { ipAddress: request.ip })
     return { token, user: { id: user.id, email: user.email, role: user.role } }
   })
 
@@ -72,6 +91,7 @@ export async function authRoutes(app: FastifyInstance) {
     try {
       const user = await exchangeGoogleSsoCode(code)
       const token = app.jwt.sign({ sub: user.id, email: user.email, role: user.role })
+      await logAudit(user.id, 'user.login_sso', { ipAddress: request.ip })
       return reply.redirect(`${config.FRONTEND_URL}/login?token=${encodeURIComponent(token)}&user=${encodeURIComponent(JSON.stringify({ id: user.id, email: user.email, role: user.role }))}`)
     } catch (err: any) {
       app.log.error(err)
@@ -87,7 +107,7 @@ export async function authRoutes(app: FastifyInstance) {
     const user = await db
       .selectFrom('users')
       .select(['id', 'email', 'role', 'display_name', 'avatar_url', 'is_active',
-               'max_gmail_accounts', 'storage_quota_bytes', 'created_at'])
+               'max_gmail_accounts', 'storage_quota_bytes', 'totp_enabled', 'created_at'])
       .where('id', '=', userId)
       .executeTakeFirst()
 

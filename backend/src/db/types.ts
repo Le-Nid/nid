@@ -19,6 +19,8 @@ export interface UsersTable {
   is_active:           Generated<boolean>
   max_gmail_accounts:  Generated<number>
   storage_quota_bytes: Generated<bigint>   // 5 Go par défaut
+  totp_secret:         string | null
+  totp_enabled:        Generated<boolean>
   last_login_at:       Date | null
   created_at:          Generated<Date>
   updated_at:          Generated<Date>
@@ -96,6 +98,28 @@ export interface JobsTable {
   completed_at:     Date | null
 }
 
+export interface NotificationsTable {
+  id:         Generated<string>
+  user_id:    string
+  type:       string
+  title:      string
+  body:       string | null
+  data:       ColumnType<unknown, string, string> | null
+  is_read:    Generated<boolean>
+  created_at: Generated<Date>
+}
+
+export interface AuditLogsTable {
+  id:          Generated<string>
+  user_id:     string
+  action:      string
+  target_type: string | null
+  target_id:   string | null
+  details:     ColumnType<unknown, string, string> | null
+  ip_address:  string | null
+  created_at:  Generated<Date>
+}
+
 // ─── Database interface ───────────────────────────────────
 
 export interface Database {
@@ -105,6 +129,8 @@ export interface Database {
   archived_attachments: ArchivedAttachmentsTable
   rules:                RulesTable
   jobs:                 JobsTable
+  notifications:        NotificationsTable
+  audit_logs:           AuditLogsTable
 }
 
 // ─── Row types (Selectable = what you get back from SELECT) ─
@@ -115,6 +141,8 @@ export type ArchivedMail       = Selectable<ArchivedMailsTable>
 export type ArchivedAttachment = Selectable<ArchivedAttachmentsTable>
 export type Rule               = Selectable<RulesTable>
 export type Job                = Selectable<JobsTable>
+export type Notification       = Selectable<NotificationsTable>
+export type AuditLog           = Selectable<AuditLogsTable>
 
 export type NewUser               = Insertable<UsersTable>
 export type NewGmailAccount       = Insertable<GmailAccountsTable>
@@ -122,3 +150,5 @@ export type NewArchivedMail       = Insertable<ArchivedMailsTable>
 export type NewArchivedAttachment = Insertable<ArchivedAttachmentsTable>
 export type NewRule               = Insertable<RulesTable>
 export type NewJob                = Insertable<JobsTable>
+export type NewNotification       = Insertable<NotificationsTable>
+export type NewAuditLog           = Insertable<AuditLogsTable>

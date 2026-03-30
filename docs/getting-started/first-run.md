@@ -109,3 +109,93 @@ Consultez vos archives dans la section **Archives** — recherche full-text disp
 Dans **Paramètres**, cliquez à nouveau sur **Connecter un compte Gmail**.
 
 Vous pouvez switcher entre vos comptes via le sélecteur dans la sidebar.
+
+---
+
+## Activer la 2FA (authentification à deux facteurs)
+
+Si vous utilisez un compte local (email + mot de passe), vous pouvez sécuriser votre accès avec un code TOTP :
+
+1. Dans **Paramètres**, section **Authentification à deux facteurs**
+2. Cliquez sur **Configurer la 2FA**
+3. Scannez le QR code avec votre app d'authentification (Google Authenticator, Authy, etc.)
+4. Entrez le code à 6 chiffres affiché par l'app
+5. Cliquez sur **Vérifier et activer**
+
+Lors de vos prochaines connexions, un champ TOTP sera demandé après l'email/mot de passe.
+
+!!! info "Google SSO et 2FA"
+    La 2FA ne s'applique qu'aux comptes locaux. Les utilisateurs Google SSO sont déjà protégés par la 2FA de Google.
+
+---
+
+## Templates de règles
+
+Pour créer rapidement des règles de nettoyage :
+
+1. Dans **Règles**, cliquez sur **Templates**
+2. Parcourez les modèles par catégorie (Nettoyage, Archive, Organisation)
+3. Cliquez sur **Utiliser** sur un template
+4. La règle est créée et activable immédiatement
+
+Exemples : "Nettoyer notifs GitHub", "Archiver factures > 3 mois", "Supprimer newsletters non lues > 30j".
+
+---
+
+## Scanner les newsletters (Unsubscribe)
+
+1. Dans **Désabonnement**, cliquez sur **Scanner** sur un de vos comptes Gmail
+2. L'app analyse les headers `List-Unsubscribe` de vos mails récents
+3. Vous voyez la liste des newsletters/listes de diffusion avec leur volume et taille
+4. Cliquez sur **Se désabonner** pour envoyer une demande de désabonnement
+5. Utilisez **Supprimer** pour nettoyer en masse les anciens mails de cette liste
+
+---
+
+## Gérer les pièces jointes
+
+La page **Pièces jointes** centralise toutes les PJ :
+
+- **Archives** : PJ des mails archivés sur votre NAS
+- **Gmail** : PJ des mails encore dans votre boîte Gmail
+
+Triez par taille pour identifier les fichiers volumineux et téléchargez-les directement.
+
+---
+
+## Détecter les doublons
+
+1. Dans **Doublons**, les archives sont automatiquement analysées
+2. Les mails identiques (même sujet + expéditeur + date) sont regroupés
+3. Cliquez sur **Supprimer N** pour ne garder que le plus récent de chaque groupe
+
+---
+
+## Journal d'activité
+
+Dans **Paramètres**, la section **Journal d'activité** affiche vos actions récentes : connexions, créations de règles, opérations bulk, etc. Utile pour vérifier l'activité sur votre compte.
+
+---
+
+## Insights & rapport hebdomadaire
+
+La page **Insights** affiche un rapport hebdomadaire de votre activité Gmail :
+
+- Nombre de mails reçus, archivés et supprimés
+- Top expéditeurs de la semaine
+- Règles exécutées et espace libéré
+- Évolution semaine par semaine
+
+Le rapport est aussi généré automatiquement chaque lundi et envoyé comme notification in-app.
+
+---
+
+## Notifications
+
+L'icône **🔔** dans le header affiche vos notifications :
+
+- Rapports hebdomadaires générés
+- Jobs terminés ou en échec
+- Alertes système (quota, erreurs)
+
+Le badge rouge indique le nombre de notifications non lues. Cliquez sur une notification pour la marquer comme lue, ou utilisez **Tout marquer comme lu**.

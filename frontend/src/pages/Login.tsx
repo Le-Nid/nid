@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Card, Form, Input, Button, Tabs, Typography, Alert, Space, Divider } from 'antd'
-import { MailOutlined, LockOutlined, GoogleOutlined } from '@ant-design/icons'
+import { MailOutlined, LockOutlined, GoogleOutlined, SafetyOutlined } from '@ant-design/icons'
 import { useAuthStore } from '../store/auth.store'
 import { authApi } from '../api'
 
@@ -14,6 +14,9 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [totpRequired, setTotpRequired] = useState(false)
+  const [totpCode, setTotpCode] = useState('')
+  const [savedCredentials, setSavedCredentials] = useState<{ email: string; password: string } | null>(null)
 
   // Handle Google SSO callback
   useEffect(() => {
@@ -38,10 +41,27 @@ export default function LoginPage() {
   async function handleLogin(values: { email: string; password: string }) {
     setLoading(true); setError(null)
     try {
-      await login(values.email, values.password)
+      await login(values.email, values.password, totpRequired ? totpCode : undefined)
       navigate('/dashboard')
     } catch (e: any) {
-      setError(e.response?.data?.error ?? 'Erreur de connexion')
+      if (e.response?.data?.error === 'TOTP_REQUIRED') {
+        setTotpRequired(true)
+        setSavedCredentials(values)
+        setError(null)
+      } else {
+        setError(e.response?.data?.error ?? 'Erreur de connexion')
+      }
+    } finally { setLoading(false) }
+  }
+
+  async function handleTotpSubmit() {
+    if (!savedCredentials) return
+    setLoading(true); setError(null)
+    try {
+      await login(savedCredentials.email, savedCredentials.password, totpCode)
+      navigate('/dashboard')
+    } catch (e: any) {
+      setError(e.response?.data?.error ?? 'Code TOTP invalide')
     } finally { setLoading(false) }
   }
 
@@ -66,7 +86,34 @@ export default function LoginPage() {
     }
   }
 
-  const LoginForm = (
+  const LoginForm = totpRequired ? (
+    <div>
+      <Alert
+        message="Vérification en deux étapes"
+        description="Entrez le code à 6 chiffres de votre application d'authentification."
+        type="info"
+        showIcon
+        icon={<SafetyOutlined />}
+        style={{ marginBottom: 16 }}
+      />
+      <Input
+        placeholder="Code TOTP à 6 chiffres"
+        maxLength={6}
+        value={totpCode}
+        onChange={(e) => setTotpCode(e.target.value)}
+        size="large"
+        style={{ marginBottom: 16 }}
+        onPressEnter={handleTotpSubmit}
+      />
+      {error && <Alert message={error} type="error" style={{ marginBottom: 16 }} />}
+      <Button type="primary" loading={loading} block size="large" onClick={handleTotpSubmit} disabled={totpCode.length !== 6}>
+        Vérifier
+      </Button>
+      <Button block size="large" style={{ marginTop: 8 }} onClick={() => { setTotpRequired(false); setSavedCredentials(null); setTotpCode(''); setError(null) }}>
+        Retour
+      </Button>
+    </div>
+  ) : (
     <Form onFinish={handleLogin} layout="vertical">
       <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email' }]}>
         <Input prefix={<MailOutlined />} placeholder="votre@email.com" size="large" />

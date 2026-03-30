@@ -3,11 +3,13 @@ import { Layout, Menu, Select, Avatar, Dropdown, Typography, Space, Switch, Tool
 import {
   DashboardOutlined, MailOutlined, DatabaseOutlined, SettingOutlined,
   LogoutOutlined, UserOutlined, ScheduleOutlined, RobotOutlined,
-  BulbOutlined, BulbFilled, CrownOutlined
+  BulbOutlined, BulbFilled, CrownOutlined,
+  StopOutlined, PaperClipOutlined, LineChartOutlined, CopyOutlined,
 } from '@ant-design/icons'
 import { useAuthStore } from '../store/auth.store'
 import { useThemeStore } from '../store/theme.store'
 import { useGlobalJobNotifier } from '../hooks/useGlobalJobNotifier'
+import NotificationBell from './NotificationBell'
 
 const { Sider, Content, Header } = Layout
 const { Text } = Typography
@@ -25,8 +27,12 @@ export default function AppLayout() {
     { key: '/dashboard', icon: <DashboardOutlined />, label: 'Dashboard' },
     { key: '/mails',     icon: <MailOutlined />,      label: 'Mes mails' },
     { key: '/archive',   icon: <DatabaseOutlined />,  label: 'Archives' },
-    { key: '/rules',     icon: <RobotOutlined />,     label: 'Règles auto' },
-    { key: '/jobs',      icon: <ScheduleOutlined />,  label: 'Jobs' },
+    { key: '/rules',        icon: <RobotOutlined />,       label: 'Règles auto' },
+    { key: '/unsubscribe',   icon: <StopOutlined />,        label: 'Newsletters' },
+    { key: '/attachments',   icon: <PaperClipOutlined />,   label: 'Pièces jointes' },
+    { key: '/duplicates',    icon: <CopyOutlined />,         label: 'Doublons' },
+    { key: '/insights',      icon: <LineChartOutlined />,   label: 'Insights' },
+    { key: '/jobs',          icon: <ScheduleOutlined />,    label: 'Jobs' },
     { key: '/settings',  icon: <SettingOutlined />,   label: 'Paramètres' },
     ...(user?.role === 'admin' ? [
       { key: '/admin', icon: <CrownOutlined />, label: 'Administration' },
@@ -100,6 +106,9 @@ export default function AppLayout() {
           alignItems:   'center',
           gap:          16,
         }}>
+          {/* Notifications */}
+          <NotificationBell />
+
           {/* Dark mode toggle */}
           <Tooltip title={isDark ? 'Passer en mode clair' : 'Passer en mode sombre'}>
             <Space size={6} style={{ cursor: 'pointer' }} onClick={toggle}>

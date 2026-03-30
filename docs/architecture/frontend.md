@@ -38,15 +38,19 @@ const { token, user, gmailAccounts, activeAccountId } = useAuthStore()
 ## Routing
 
 ```
-/login              → LoginPage (non protégée)
+/login              → LoginPage (non protégée, gère la 2FA TOTP)
 /                   → Redirect → /dashboard
 /dashboard          → DashboardPage 🔒
 /mails              → MailManagerPage 🔒
 /archive            → ArchivePage 🔒
-/rules              → RulesPage 🔒
+/rules              → RulesPage 🔒 (inclut le drawer Templates)
 /jobs               → JobsPage 🔒
-/settings           → SettingsPage 🔒
+/settings           → SettingsPage 🔒 (profil, Gmail, 2FA, audit log)
 /admin              → AdminPage 🔒🛡️ (admin uniquement)
+/unsubscribe        → UnsubscribePage 🔒
+/attachments        → AttachmentsPage 🔒
+/duplicates         → DuplicatesPage 🔒
+/insights           → InsightsPage 🔒
 ```
 
 Le composant `ProtectedRoute` vérifie la présence du token JWT. Si absent, redirect vers `/login`.

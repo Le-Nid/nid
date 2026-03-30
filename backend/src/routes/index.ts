@@ -7,6 +7,13 @@ import { dashboardRoutes } from './dashboard'
 import { rulesRoutes } from './rules'
 import { jobSseRoutes, startQueueEventBroadcaster } from './job-sse'
 import { adminRoutes } from './admin'
+import { unsubscribeRoutes } from './unsubscribe'
+import { attachmentsRoutes } from './attachments'
+import { reportsRoutes } from './reports'
+import { notificationsRoutes } from './notifications'
+import { duplicatesRoutes } from './duplicates'
+import { auditRoutes } from './audit'
+import { twoFactorRoutes } from './2fa'
 
 export async function registerRoutes(app: FastifyInstance) {
   // Health check
@@ -20,7 +27,14 @@ export async function registerRoutes(app: FastifyInstance) {
   await app.register(jobSseRoutes,    { prefix: '/api/jobs' })
   await app.register(dashboardRoutes, { prefix: '/api/dashboard' })
   await app.register(rulesRoutes,     { prefix: '/api/rules' })
-  await app.register(adminRoutes,     { prefix: '/api/admin' })
+  await app.register(adminRoutes,       { prefix: '/api/admin' })
+  await app.register(unsubscribeRoutes,  { prefix: '/api/unsubscribe' })
+  await app.register(attachmentsRoutes,  { prefix: '/api/attachments' })
+  await app.register(reportsRoutes,      { prefix: '/api/reports' })
+  await app.register(notificationsRoutes, { prefix: '/api/notifications' })
+  await app.register(duplicatesRoutes,    { prefix: '/api/duplicates' })
+  await app.register(auditRoutes,         { prefix: '/api/audit' })
+  await app.register(twoFactorRoutes,     { prefix: '/api/auth/2fa' })
 
   // Démarrer le broadcaster SSE ← QueueEvents BullMQ
   startQueueEventBroadcaster()

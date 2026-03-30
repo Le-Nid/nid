@@ -1,6 +1,6 @@
 // ─── Conditions ───────────────────────────────────────────
 
-export type ConditionField = 'from' | 'to' | 'subject' | 'has_attachment' | 'size_gt' | 'size_lt' | 'label'
+export type ConditionField = 'from' | 'to' | 'subject' | 'has_attachment' | 'size_gt' | 'size_lt' | 'label' | 'older_than' | 'newer_than'
 export type ConditionOperator = 'contains' | 'not_contains' | 'equals' | 'not_equals' | 'gt' | 'lt' | 'is_true'
 
 export interface RuleCondition {

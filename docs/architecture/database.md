@@ -15,6 +15,8 @@ erDiagram
         boolean is_active "default true"
         integer max_gmail_accounts "default 5"
         bigint storage_quota_bytes "default 1 Go"
+        varchar totp_secret "nullable"
+        boolean totp_enabled "default false"
         timestamptz last_login_at
         timestamptz created_at
         timestamptz updated_at
@@ -90,6 +92,30 @@ erDiagram
     gmail_accounts ||--o{ rules : "définit"
     gmail_accounts ||--o{ jobs : "génère"
     users ||--o{ jobs : "possède"
+    users ||--o{ notifications : "reçoit"
+    users ||--o{ audit_logs : "trace"
+
+    notifications {
+        uuid id PK
+        uuid user_id FK
+        varchar type
+        varchar title
+        text body
+        jsonb data
+        boolean is_read "default false"
+        timestamptz created_at
+    }
+
+    audit_logs {
+        uuid id PK
+        uuid user_id FK
+        varchar action "ex: user.login, rule.create"
+        varchar target_type "nullable"
+        varchar target_id "nullable"
+        jsonb details "nullable"
+        varchar ip_address "nullable"
+        timestamptz created_at
+    }
 ```
 
 ---
@@ -109,6 +135,8 @@ erDiagram
 | `jobs` | `created_at DESC` | BTree | Tri par date |
 | `jobs` | `user_id` | BTree | Filtrage jobs par utilisateur |
 | `users` | `google_id` (partiel) | Unique | Lookup SSO Google |
+| `audit_logs` | `user_id + created_at` | BTree | Logs par utilisateur |
+| `audit_logs` | `action + created_at` | BTree | Filtrage par action |
 
 ---
 

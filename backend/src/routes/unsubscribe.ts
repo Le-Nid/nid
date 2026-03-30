@@ -1,0 +1,47 @@
+import { FastifyInstance } from 'fastify'
+import { scanNewsletters, getNewsletterMessageIds } from '../unsubscribe/unsubscribe.service'
+import { enqueueJob } from '../jobs/queue'
+
+export async function unsubscribeRoutes(app: FastifyInstance) {
+  const auth = { preHandler: [app.authenticate, app.requireAccountOwnership] }
+
+  // ─── Scan newsletters (async job) ─────────────────────
+  app.post('/:accountId/scan', auth, async (request, reply) => {
+    const { accountId } = request.params as { accountId: string }
+    const { sub: userId } = request.user as { sub: string }
+
+    const job = await enqueueJob('scan_unsubscribe', { accountId, userId })
+    return reply.code(202).send({ jobId: job.id, message: 'Scan enqueued' })
+  })
+
+  // ─── Scan sync (for smaller mailboxes, returns data directly) ─
+  app.get('/:accountId/newsletters', auth, async (request) => {
+    const { accountId } = request.params as { accountId: string }
+    return scanNewsletters(accountId)
+  })
+
+  // ─── Get all message IDs for a sender ─────────────────
+  app.get('/:accountId/newsletters/:senderEmail/messages', auth, async (request) => {
+    const { accountId, senderEmail } = request.params as { accountId: string; senderEmail: string }
+    const ids = await getNewsletterMessageIds(accountId, decodeURIComponent(senderEmail))
+    return { messageIds: ids, count: ids.length }
+  })
+
+  // ─── Bulk delete all from a newsletter sender ─────────
+  app.post('/:accountId/newsletters/:senderEmail/delete', auth, async (request, reply) => {
+    const { accountId, senderEmail } = request.params as { accountId: string; senderEmail: string }
+    const { sub: userId } = request.user as { sub: string }
+    const { permanent = false } = request.body as { permanent?: boolean }
+
+    const messageIds = await getNewsletterMessageIds(accountId, decodeURIComponent(senderEmail))
+    if (messageIds.length === 0) return { deleted: 0 }
+
+    const job = await enqueueJob('bulk_operation', {
+      accountId,
+      userId,
+      action: permanent ? 'delete' : 'trash',
+      messageIds,
+    })
+    return reply.code(202).send({ jobId: job.id, count: messageIds.length })
+  })
+}

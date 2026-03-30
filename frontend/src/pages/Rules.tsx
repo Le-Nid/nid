@@ -12,6 +12,8 @@ import {
   message,
   Card,
   Empty,
+  Drawer,
+  List,
 } from "antd";
 import {
   PlusOutlined,
@@ -20,6 +22,7 @@ import {
   DeleteOutlined,
   ClockCircleOutlined,
   CheckCircleOutlined,
+  AppstoreOutlined,
 } from "@ant-design/icons";
 import { rulesApi, gmailApi } from "../api";
 import { useAccount } from "../hooks/useAccount";
@@ -49,6 +52,9 @@ export default function RulesPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<Rule | null>(null);
   const [messageApi, contextHolder] = message.useMessage();
+  const [templateDrawer, setTemplateDrawer] = useState(false);
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [templateLoading, setTemplateLoading] = useState(false);
 
   const load = useCallback(async () => {
     if (!accountId) return;
@@ -118,6 +124,33 @@ export default function RulesPage() {
   const handleSaved = () => {
     setModalOpen(false);
     load();
+  };
+
+  const openTemplates = async () => {
+    setTemplateDrawer(true);
+    if (templates.length === 0) {
+      setTemplateLoading(true);
+      try {
+        const data = await rulesApi.getTemplates();
+        setTemplates(data);
+      } catch {
+        messageApi.error("Erreur lors du chargement des templates");
+      } finally {
+        setTemplateLoading(false);
+      }
+    }
+  };
+
+  const applyTemplate = async (templateId: string) => {
+    if (!accountId) return;
+    try {
+      await rulesApi.createFromTemplate(accountId, templateId);
+      messageApi.success("Règle créée depuis le template");
+      setTemplateDrawer(false);
+      load();
+    } catch {
+      messageApi.error("Erreur lors de la création");
+    }
   };
 
   const scheduleLabel = (s: string | null) =>
@@ -253,6 +286,9 @@ export default function RulesPage() {
         <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
           Nouvelle règle
         </Button>
+        <Button icon={<AppstoreOutlined />} onClick={openTemplates}>
+          Templates
+        </Button>
       </Space>
 
       <Card
@@ -309,6 +345,48 @@ export default function RulesPage() {
         onClose={() => setModalOpen(false)}
         onSaved={handleSaved}
       />
+
+      <Drawer
+        title="📋 Templates de règles"
+        open={templateDrawer}
+        onClose={() => setTemplateDrawer(false)}
+        width={480}
+      >
+        <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
+          Cliquez sur un template pour créer une règle pré-configurée. Vous pourrez la modifier ensuite.
+        </Text>
+        <List
+          loading={templateLoading}
+          dataSource={templates}
+          renderItem={(tpl: any) => (
+            <List.Item
+              actions={[
+                <Button
+                  key="apply"
+                  type="primary"
+                  size="small"
+                  onClick={() => applyTemplate(tpl.id)}
+                  disabled={!accountId}
+                >
+                  Activer
+                </Button>,
+              ]}
+            >
+              <List.Item.Meta
+                title={tpl.name}
+                description={
+                  <Space direction="vertical" size={2}>
+                    <Text type="secondary" style={{ fontSize: 12 }}>{tpl.description}</Text>
+                    <Tag color={tpl.category === 'cleanup' ? 'red' : tpl.category === 'archive' ? 'blue' : 'green'} style={{ fontSize: 10 }}>
+                      {tpl.category === 'cleanup' ? '🧹 Nettoyage' : tpl.category === 'archive' ? '📦 Archivage' : '📁 Organisation'}
+                    </Tag>
+                  </Space>
+                }
+              />
+            </List.Item>
+          )}
+        />
+      </Drawer>
     </div>
   );
 }

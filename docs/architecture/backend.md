@@ -16,6 +16,8 @@
 | `zod` | Validation des inputs |
 | `mailparser` | Parsing EML pour lecture archives |
 | `bcrypt` | Hashage des mots de passe |
+| `otplib` | Génération et vérification de codes TOTP (2FA) |
+| `qrcode` | Génération de QR codes pour configuration 2FA |
 
 ---
 

@@ -75,6 +75,12 @@ nav:
     - Dashboard: api/dashboard.md
     - Jobs: api/jobs.md
     - Admin: api/admin.md
+    - Audit log: api/audit.md
+    - Doublons: api/duplicates.md
+    - Newsletters: api/unsubscribe.md
+    - Pièces jointes: api/attachments.md
+    - Rapports: api/reports.md
+    - Notifications: api/notifications.md
   - Développement:
     - Contribuer: development/contributing.md
     - Roadmap: development/roadmap.md

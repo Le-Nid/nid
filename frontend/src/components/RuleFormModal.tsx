@@ -39,6 +39,8 @@ const OPERATORS_FOR_FIELD: Record<ConditionField, string[]> = {
   size_gt: ["gt"],
   size_lt: ["lt"],
   label: ["equals", "not_equals"],
+  older_than: ["gt"],
+  newer_than: ["gt"],
 };
 
 const ACTIONS_NEEDING_LABEL: ActionType[] = ["label", "unlabel"];

@@ -12,6 +12,10 @@ const SettingsPage = lazy(() => import("./pages/Settings"));
 const JobsPage = lazy(() => import("./pages/Jobs"));
 const RulesPage = lazy(() => import("./pages/Rules"));
 const AdminPage = lazy(() => import("./pages/Admin"));
+const UnsubscribePage = lazy(() => import("./pages/Unsubscribe"));
+const AttachmentsPage = lazy(() => import("./pages/Attachments"));
+const InsightsPage = lazy(() => import("./pages/Insights"));
+const DuplicatesPage = lazy(() => import("./pages/Duplicates"));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token);
@@ -59,6 +63,10 @@ export default function App() {
           <Route path="rules" element={<RulesPage />} />
           <Route path="jobs" element={<JobsPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="unsubscribe" element={<UnsubscribePage />} />
+          <Route path="attachments" element={<AttachmentsPage />} />
+          <Route path="insights" element={<InsightsPage />} />
+          <Route path="duplicates" element={<DuplicatesPage />} />
           <Route path="admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
         </Route>
       </Routes>

@@ -41,6 +41,12 @@ Se connecter.
 { "email": "user@example.com", "password": "motdepasse123" }
 ```
 
+Si la 2FA est activée, le serveur retourne une erreur `403` avec `TOTP_REQUIRED`. Il faut renvoyer la requête avec le champ `totpCode` :
+
+```json
+{ "email": "user@example.com", "password": "motdepasse123", "totpCode": "123456" }
+```
+
 **Réponse 200**
 ```json
 {
@@ -53,8 +59,8 @@ Se connecter.
 
 | Code | Description |
 |---|---|
-| 401 | Credentials invalides |
-| 403 | Compte désactivé |
+| 401 | Credentials invalides ou code TOTP invalide |
+| 403 | Compte désactivé ou `TOTP_REQUIRED` (2FA requise) |
 
 ---
 
@@ -76,6 +82,9 @@ Récupérer le profil utilisateur et les comptes Gmail associés.
   ],
   "storageUsedBytes": 1073741824
 }
+```
+
+Le champ `totp_enabled` est inclus dans l'objet `user` pour savoir si la 2FA est active.
 ```
 
 ---
@@ -128,6 +137,67 @@ Google redirige vers ce endpoint après autorisation. Il :
 ### DELETE /api/auth/gmail/:accountId 🔒
 
 Déconnecter un compte Gmail.
+
+---
+
+## 2FA / TOTP
+
+### POST /api/auth/2fa/setup 🔒
+
+Générer un secret TOTP et un QR code pour configurer la 2FA.
+
+**Réponse 200**
+```json
+{
+  "secret": "JBSWY3DPEHPK3PXP",
+  "qrDataUrl": "data:image/png;base64,..."
+}
+```
+
+Le QR code encode l'URI `otpauth://totp/Gmail%20Manager:user@email.com?secret=...&issuer=Gmail%20Manager`.
+
+### POST /api/auth/2fa/enable 🔒
+
+Vérifier un code TOTP et activer la 2FA.
+
+**Body**
+```json
+{ "token": "123456" }
+```
+
+**Réponse 200**
+```json
+{ "success": true }
+```
+
+**Erreurs**
+
+| Code | Description |
+|---|---|
+| 400 | 2FA déjà activé, setup non effectué, ou code invalide |
+
+### POST /api/auth/2fa/disable 🔒
+
+Désactiver la 2FA (nécessite un code TOTP valide).
+
+**Body**
+```json
+{ "token": "123456" }
+```
+
+**Réponse 200**
+```json
+{ "success": true }
+```
+
+**Erreurs**
+
+| Code | Description |
+|---|---|
+| 400 | 2FA non activée ou code invalide |
+
+!!! warning "Google SSO et 2FA"
+    La 2FA ne s'applique qu'aux comptes avec mot de passe local. Les utilisateurs connectés via Google SSO sont protégés par la 2FA de Google.
 
 **Réponse 204** — No content
 

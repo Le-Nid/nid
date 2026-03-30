@@ -1,4 +1,4 @@
-export type ConditionField = 'from' | 'to' | 'subject' | 'has_attachment' | 'size_gt' | 'size_lt' | 'label'
+export type ConditionField = 'from' | 'to' | 'subject' | 'has_attachment' | 'size_gt' | 'size_lt' | 'label' | 'older_than' | 'newer_than'
 export type ConditionOperator = 'contains' | 'not_contains' | 'equals' | 'not_equals' | 'gt' | 'lt' | 'is_true'
 export type ActionType = 'trash' | 'delete' | 'label' | 'unlabel' | 'archive' | 'archive_nas' | 'mark_read' | 'mark_unread'
 
@@ -35,6 +35,8 @@ export const CONDITION_FIELD_LABELS: Record<ConditionField, string> = {
   size_gt: 'Taille supérieure à',
   size_lt: 'Taille inférieure à',
   label: 'Label',
+  older_than: 'Plus ancien que',
+  newer_than: 'Plus récent que',
 }
 
 export const CONDITION_OPERATOR_LABELS: Record<ConditionOperator, string> = {
