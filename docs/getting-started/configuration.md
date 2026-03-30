@@ -36,6 +36,7 @@ Toutes les variables sont définies dans `.env` à la racine du projet.
 | Variable | Défaut | Description |
 |---|---|---|
 | `ADMIN_EMAIL` | *(vide)* | L'utilisateur qui s'inscrit avec cet email obtient automatiquement le rôle `admin` |
+| `ALLOW_REGISTRATION` | `true` | Mettre à `false` pour fermer les inscriptions (formulaire + Google SSO) |
 
 ### PostgreSQL
 
@@ -44,6 +45,35 @@ Toutes les variables sont définies dans `.env` à la racine du projet.
 | `POSTGRES_USER` | Utilisateur PostgreSQL |
 | `POSTGRES_PASSWORD` | Mot de passe PostgreSQL |
 | `POSTGRES_DB` | Nom de la base de données |
+
+---
+
+## Injection des variables d'environnement
+
+### Dev local (hors Docker)
+
+Le backend charge automatiquement le fichier `.env` à la racine du projet grâce à `dotenv/config`. Créez-le à partir du template :
+
+```bash
+cp .env.example .env
+# Éditez .env avec vos valeurs
+```
+
+Le frontend en mode dev (`npm run dev`) utilise le proxy Vite qui redirige `/api` vers `VITE_API_URL` (défaut : `http://localhost:4000`).
+
+### Docker prod
+
+Les variables sont injectées via `docker-compose.yml` → section `environment:`. Docker Compose résout automatiquement les `${VAR}` depuis le fichier `.env` présent à la racine.
+
+Le frontend prod (nginx) n'a besoin d'aucune variable d'environnement : il proxie les appels `/api` directement vers le service `backend` via le réseau Docker interne.
+
+### Docker dev
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+```
+
+Le fichier `docker-compose.dev.yml` surcharge le compose prod : volumes montés pour hot reload, ports debug et base de données exposés, `NODE_ENV=development`.
 
 ---
 

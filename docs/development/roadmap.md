@@ -95,11 +95,11 @@
 
 ### Ops & déploiement
 
-- [ ] Via une variable d'environnement, choisir d'accepter ou non les inscriptions
-- [ ] Faire tous les tests unitaires
-- [ ] Mettre au propre les dockerfiles pour un déploiement simple
-- [ ] Faire un docker-compose simple pour le déploiement et en faire la doc
-- [ ] Faire en sorte que les variables d'environnements soient injectées dans les applis soit par fichier .env pour le dev local soit par variable d'environnement docker pour la prod
-- [ ] Implémenter le RGAA
-- [ ] Il faut packagé l'appli pour la mettre en open source ensuite
+- [x] Via une variable d'environnement, choisir d'accepter ou non les inscriptions
+- [x] Faire tous les tests unitaires
+- [x] Mettre au propre les dockerfiles pour un déploiement simple
+- [x] Faire un docker-compose simple pour le déploiement et en faire la doc
+- [x] Faire en sorte que les variables d'environnements soient injectées dans les applis soit par fichier .env pour le dev local soit par variable d'environnement docker pour la prod
+- [x] Implémenter le RGAA
+- [x] Il faut packagé l'appli pour la mettre en open source ensuite
 

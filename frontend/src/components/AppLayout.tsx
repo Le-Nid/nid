@@ -1,5 +1,5 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { Layout, Menu, Select, Avatar, Dropdown, Typography, Space, Switch, Tooltip, Tag } from 'antd'
+import { Layout, Menu, Select, Avatar, Dropdown, Typography, Switch, Tooltip, Tag } from 'antd'
 import {
   DashboardOutlined, MailOutlined, DatabaseOutlined, SettingOutlined,
   LogoutOutlined, UserOutlined, ScheduleOutlined, RobotOutlined,
@@ -58,13 +58,15 @@ export default function AppLayout() {
         width={220}
         theme={isDark ? 'dark' : 'light'}
         style={{ borderRight: isDark ? '1px solid #303030' : '1px solid #f0f0f0' }}
+        role="navigation"
+        aria-label="Menu principal"
       >
         {/* Logo */}
         <div style={{
           padding: '18px 16px',
           borderBottom: isDark ? '1px solid #303030' : '1px solid #f0f0f0',
-        }}>
-          <Text strong style={{ fontSize: 15 }}>📬 Gmail Manager</Text>
+        }} aria-label="Gmail Manager">
+          <Text strong style={{ fontSize: 15 }}><span aria-hidden="true">📬</span> Gmail Manager</Text>
         </div>
 
         {/* Sélecteur compte Gmail */}
@@ -73,7 +75,7 @@ export default function AppLayout() {
             padding: '10px 12px',
             borderBottom: isDark ? '1px solid #303030' : '1px solid #f0f0f0',
           }}>
-            <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 4 }}>
+            <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 4 }} id="gmail-account-label">
               Compte Gmail
             </Text>
             <Select
@@ -82,6 +84,7 @@ export default function AppLayout() {
               value={activeAccountId}
               onChange={setActiveAccount}
               options={gmailAccounts.map((a) => ({ value: a.id, label: a.email }))}
+              aria-labelledby="gmail-account-label"
             />
           </div>
         )}
@@ -105,13 +108,18 @@ export default function AppLayout() {
           justifyContent: 'flex-end',
           alignItems:   'center',
           gap:          16,
-        }}>
+        }} role="banner">
           {/* Notifications */}
           <NotificationBell />
 
           {/* Dark mode toggle */}
           <Tooltip title={isDark ? 'Passer en mode clair' : 'Passer en mode sombre'}>
-            <Space size={6} style={{ cursor: 'pointer' }} onClick={toggle}>
+            <button
+              type="button"
+              onClick={toggle}
+              aria-label={isDark ? 'Passer en mode clair' : 'Passer en mode sombre'}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+            >
               {isDark ? <BulbFilled style={{ color: '#faad14' }} /> : <BulbOutlined />}
               <Switch
                 size="small"
@@ -119,28 +127,29 @@ export default function AppLayout() {
                 onChange={toggle}
                 checkedChildren="🌙"
                 unCheckedChildren="☀️"
+                tabIndex={-1}
               />
-            </Space>
+            </button>
           </Tooltip>
 
           {/* User menu */}
           <Dropdown menu={userMenu} trigger={['click']}>
-            <Space style={{ cursor: 'pointer' }}>
+            <button type="button" aria-label="Menu utilisateur" style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
               {user?.avatar_url
-                ? <Avatar src={user.avatar_url} size="small" />
-                : <Avatar icon={<UserOutlined />} size="small" />
+                ? <Avatar src={user.avatar_url} size="small" alt={user.display_name || user.email} />
+                : <Avatar icon={<UserOutlined />} size="small" aria-hidden="true" />
               }
               <Text style={{ fontSize: 13 }}>{user?.display_name || user?.email}</Text>
               {user?.role === 'admin' && <Tag color="red" style={{ marginLeft: 4, fontSize: 10 }}>admin</Tag>}
-            </Space>
+            </button>
           </Dropdown>
         </Header>
 
-        <Content style={{
+        <Content id="main-content" style={{
           padding:    24,
           background: isDark ? '#1f1f1f' : '#f5f5f5',
           minHeight:  'calc(100vh - 64px)',
-        }}>
+        }} role="main">
           <Outlet />
         </Content>
       </Layout>

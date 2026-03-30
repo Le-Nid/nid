@@ -4,6 +4,7 @@ import { Card, Form, Input, Button, Tabs, Typography, Alert, Space, Divider } fr
 import { MailOutlined, LockOutlined, GoogleOutlined, SafetyOutlined } from '@ant-design/icons'
 import { useAuthStore } from '../store/auth.store'
 import { authApi } from '../api'
+import api from '../api/client'
 
 const { Title, Text } = Typography
 
@@ -17,6 +18,14 @@ export default function LoginPage() {
   const [totpRequired, setTotpRequired] = useState(false)
   const [totpCode, setTotpCode] = useState('')
   const [savedCredentials, setSavedCredentials] = useState<{ email: string; password: string } | null>(null)
+  const [allowRegistration, setAllowRegistration] = useState(true)
+
+  // Fetch auth config (registration open?)
+  useEffect(() => {
+    api.get('/api/auth/config').then((r) => {
+      setAllowRegistration(r.data.allowRegistration)
+    }).catch(() => {})
+  }, [])
 
   // Handle Google SSO callback
   useEffect(() => {
@@ -98,12 +107,14 @@ export default function LoginPage() {
       />
       <Input
         placeholder="Code TOTP à 6 chiffres"
+        aria-label="Code TOTP à 6 chiffres"
         maxLength={6}
         value={totpCode}
         onChange={(e) => setTotpCode(e.target.value)}
         size="large"
         style={{ marginBottom: 16 }}
         onPressEnter={handleTotpSubmit}
+        autoComplete="one-time-code"
       />
       {error && <Alert message={error} type="error" style={{ marginBottom: 16 }} />}
       <Button type="primary" loading={loading} block size="large" onClick={handleTotpSubmit} disabled={totpCode.length !== 6}>
@@ -166,24 +177,24 @@ export default function LoginPage() {
   )
 
   return (
-    <div style={{
+    <main style={{
       minHeight: '100vh', display: 'flex', alignItems: 'center',
       justifyContent: 'center', background: '#f0f2f5',
-    }}>
+    }} aria-label="Connexion">
       <Card style={{ width: 400 }}>
         <Space direction="vertical" align="center" style={{ width: '100%', marginBottom: 24 }}>
-          <Text style={{ fontSize: 32 }}>📬</Text>
-          <Title level={3} style={{ margin: 0 }}>Gmail Manager</Title>
+          <Text style={{ fontSize: 32 }} aria-hidden="true">📬</Text>
+          <Title level={1} style={{ margin: 0, fontSize: 24 }}>Gmail Manager</Title>
           <Text type="secondary">Gérez vos mails, archivez sur votre NAS</Text>
         </Space>
 
         <Tabs
           items={[
             { key: 'login', label: 'Connexion', children: LoginForm },
-            { key: 'register', label: 'Créer un compte', children: RegisterForm },
+            ...(allowRegistration ? [{ key: 'register', label: 'Créer un compte', children: RegisterForm }] : []),
           ]}
         />
       </Card>
-    </div>
+    </main>
   )
 }

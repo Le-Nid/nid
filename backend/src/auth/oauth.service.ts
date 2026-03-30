@@ -168,6 +168,11 @@ export async function exchangeGoogleSsoCode(code: string) {
       .where('id', '=', user.id)
       .execute()
   } else {
+    // Registration gating
+    if (!config.ALLOW_REGISTRATION) {
+      throw new Error('Registration is disabled')
+    }
+
     // Créer un nouveau compte — pas de mot de passe (SSO)
     const role = config.ADMIN_EMAIL && data.email === config.ADMIN_EMAIL ? 'admin' : 'user'
 

@@ -294,7 +294,7 @@ export default function MailViewer({ accountId, messageId, onClose }: Props) {
                   borderRadius: 4,
                 }}
                 sandbox="allow-same-origin"
-                title="mail-content"
+                title="Contenu du mail"
               />
             ) : (
               <pre

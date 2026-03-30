@@ -502,7 +502,7 @@ export default function ArchivePage() {
                   borderRadius: 4,
                 }}
                 sandbox="allow-same-origin"
-                title="mail-html"
+                title="Contenu HTML du mail archivé"
               />
             ) : (
               <pre

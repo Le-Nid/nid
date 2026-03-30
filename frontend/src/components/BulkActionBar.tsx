@@ -44,6 +44,8 @@ export default function BulkActionBar({
 
   return (
     <div
+      role="toolbar"
+      aria-label={`Actions groupées sur ${selected.length} mail${selected.length > 1 ? 's' : ''}`}
       style={{
         background: "#e6f4ff",
         border: "1px solid #91caff",

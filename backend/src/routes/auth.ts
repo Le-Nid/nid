@@ -20,8 +20,20 @@ const loginSchema = z.object({
 export async function authRoutes(app: FastifyInstance) {
   const db = getDb()
 
+  // ─── Public config (registration open?) ───────────────────
+  app.get('/config', async () => {
+    return {
+      allowRegistration: config.ALLOW_REGISTRATION,
+      googleSsoEnabled: !!config.GOOGLE_SSO_REDIRECT_URI,
+    }
+  })
+
   // ─── Register ─────────────────────────────────────────────
   app.post('/register', async (request, reply) => {
+    if (!config.ALLOW_REGISTRATION) {
+      return reply.code(403).send({ error: 'Registration is disabled' })
+    }
+
     const body = registerSchema.parse(request.body)
     const hash = await bcrypt.hash(body.password, 12)
 

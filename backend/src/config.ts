@@ -30,6 +30,9 @@ export const config = {
   // Premier utilisateur avec ce mail devient admin automatiquement
   ADMIN_EMAIL: process.env.ADMIN_EMAIL ?? '',
 
+  // Inscription ouverte ou fermée (défaut: true)
+  ALLOW_REGISTRATION: process.env.ALLOW_REGISTRATION !== 'false',
+
   // Gmail API throttle — stay under 250 units/user/sec
   GMAIL_BATCH_SIZE: 100,
   GMAIL_THROTTLE_MS: 500,

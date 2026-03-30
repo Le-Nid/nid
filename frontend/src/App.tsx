@@ -31,7 +31,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 
 function RouteFallback() {
   return (
-    <div style={{ minHeight: "40vh", display: "grid", placeItems: "center" }}>
+    <div aria-live="polite" aria-label="Chargement" style={{ minHeight: "40vh", display: "grid", placeItems: "center" }}>
       <Spin size="large" />
     </div>
   );
