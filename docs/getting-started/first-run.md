@@ -298,3 +298,11 @@ Le fichier contient vos règles (par compte Gmail) et vos webhooks, sans donnée
 
 !!! warning "Import additif"
     L'import ajoute les éléments sans supprimer les existants. Importez plusieurs fois le même fichier créera des doublons.
+
+---
+
+## Changer la langue
+
+L'application est disponible en **français** 🇫🇷 (par défaut) et en **anglais** 🇬🇧.
+
+Le sélecteur de langue est situé dans la barre de navigation, à côté de la cloche de notifications. Le choix est persisté dans le navigateur — il est conservé entre les sessions.

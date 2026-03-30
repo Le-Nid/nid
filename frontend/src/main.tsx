@@ -3,17 +3,29 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { ConfigProvider, theme as antTheme, App as AntApp } from 'antd'
 import frFR from 'antd/locale/fr_FR'
+import enUS from 'antd/locale/en_US'
+import { useTranslation } from 'react-i18next'
 import { useThemeStore } from './store/theme.store'
 import AppRouter from './App'
+import './i18n'
 import './index.css'
+
+const antLocales = { fr: frFR, en: enUS } as Record<string, typeof frFR>
 
 // Wrapper pour lire le store Zustand DANS l'arbre React
 function ThemedApp() {
   const mode = useThemeStore((s) => s.mode)
+  const { i18n } = useTranslation()
+  const lang = i18n.language?.startsWith('en') ? 'en' : 'fr'
+
+  // Set <html lang> dynamically
+  React.useEffect(() => {
+    document.documentElement.lang = lang
+  }, [lang])
 
   return (
     <ConfigProvider
-      locale={frFR}
+      locale={antLocales[lang] ?? frFR}
       theme={{
         algorithm: mode === 'dark' ? antTheme.darkAlgorithm : antTheme.defaultAlgorithm,
         token: {

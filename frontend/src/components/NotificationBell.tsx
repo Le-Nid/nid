@@ -1,13 +1,14 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Badge, Dropdown, List, Typography, Button, Space, Empty } from 'antd'
 import { BellOutlined, CheckOutlined } from '@ant-design/icons'
+import { useTranslation } from 'react-i18next'
 import { notificationsApi } from '../api'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/fr'
+import 'dayjs/locale/en'
 
 dayjs.extend(relativeTime)
-dayjs.locale('fr')
 
 const { Text } = Typography
 
@@ -21,6 +22,7 @@ interface Notification {
 }
 
 export default function NotificationBell() {
+  const { t, i18n } = useTranslation()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [open, setOpen] = useState(false)
@@ -69,16 +71,16 @@ export default function NotificationBell() {
         justifyContent: 'space-between',
         alignItems: 'center',
       }}>
-        <Text strong>Notifications</Text>
+        <Text strong>{t('notifications.title')}</Text>
         {unreadCount > 0 && (
           <Button size="small" type="link" icon={<CheckOutlined />} onClick={handleMarkAllRead}>
-            Tout marquer lu
+            {t('notifications.markAllRead')}
           </Button>
         )}
       </div>
       {notifications.length === 0 ? (
         <div style={{ padding: 24 }}>
-          <Empty description="Aucune notification" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          <Empty description={t('notifications.empty')} image={Empty.PRESENTED_IMAGE_SIMPLE} />
         </div>
       ) : (
         <List
@@ -97,7 +99,7 @@ export default function NotificationBell() {
                 description={
                   <Space direction="vertical" size={2}>
                     {item.body && <Text type="secondary" style={{ fontSize: 12 }}>{item.body}</Text>}
-                    <Text type="secondary" style={{ fontSize: 11 }}>{dayjs(item.created_at).fromNow()}</Text>
+                    <Text type="secondary" style={{ fontSize: 11 }}>{dayjs(item.created_at).locale(i18n.language).fromNow()}</Text>
                   </Space>
                 }
               />

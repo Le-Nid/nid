@@ -8,6 +8,7 @@ import {
   FileImageOutlined, FilePdfOutlined, FileOutlined, FileZipOutlined,
 } from '@ant-design/icons'
 import { attachmentsApi } from '../api'
+import { useTranslation } from 'react-i18next'
 import { useAccount } from '../hooks/useAccount'
 import { formatBytes } from '../utils/format'
 
@@ -45,6 +46,7 @@ function getFileIcon(mimeType: string | null) {
 }
 
 export default function AttachmentsPage() {
+  const { t } = useTranslation()
   const { accountId } = useAccount()
   const [mode, setMode] = useState<ViewMode>('archived')
   const [archivedAtts, setArchivedAtts] = useState<ArchivedAttachment[]>([])
@@ -71,7 +73,7 @@ export default function AttachmentsPage() {
       setTotal(data.total)
       setTotalSize(data.totalSizeBytes)
     } catch {
-      messageApi.error('Erreur lors du chargement des pièces jointes')
+      messageApi.error(t('attachments.loadError'))
     } finally {
       setLoading(false)
     }
@@ -86,7 +88,7 @@ export default function AttachmentsPage() {
       setTotalSize(data.totalSizeBytes)
       setTotal(data.attachments.length)
     } catch {
-      messageApi.error('Erreur lors du scan Gmail')
+      messageApi.error(t('attachments.scanError'))
     } finally {
       setLoading(false)
     }
@@ -105,7 +107,7 @@ export default function AttachmentsPage() {
 
   const archivedColumns = [
     {
-      title: 'Fichier',
+      title: t('attachments.filename'),
       key: 'filename',
       render: (_: any, row: ArchivedAttachment) => (
         <Space>
@@ -115,43 +117,43 @@ export default function AttachmentsPage() {
       ),
     },
     {
-      title: 'Taille',
+      title: t('attachments.size'),
       key: 'size_bytes',
       width: 110,
       sorter: true,
       render: (_: any, row: ArchivedAttachment) => formatBytes(Number(row.size_bytes)),
     },
     {
-      title: 'Mail',
+      title: t('attachments.mail'),
       key: 'mail',
       render: (_: any, row: ArchivedAttachment) => (
         <Space direction="vertical" size={0}>
-          <Text style={{ fontSize: 12 }}>{row.mail_subject || '(sans sujet)'}</Text>
+          <Text style={{ fontSize: 12 }}>{row.mail_subject || t('common.noSubject')}</Text>
           <Text type="secondary" style={{ fontSize: 11 }}>{row.mail_sender}</Text>
         </Space>
       ),
     },
     {
-      title: 'Date',
+      title: t('attachments.date'),
       key: 'date',
       width: 120,
       render: (_: any, row: ArchivedAttachment) => {
-        try { return row.mail_date ? new Date(row.mail_date).toLocaleDateString('fr-FR') : '-' } catch { return '-' }
+        try { return row.mail_date ? new Date(row.mail_date).toLocaleDateString() : '-' } catch { return '-' }
       },
     },
     {
-      title: 'Type',
+      title: t('attachments.type'),
       key: 'type',
       width: 140,
       render: (_: any, row: ArchivedAttachment) => (
-        <Tag style={{ fontSize: 10 }}>{row.mime_type || 'inconnu'}</Tag>
+        <Tag style={{ fontSize: 10 }}>{row.mime_type || t('common.noData')}</Tag>
       ),
     },
   ]
 
   const liveColumns = [
     {
-      title: 'Fichier',
+      title: t('attachments.filename'),
       key: 'filename',
       render: (_: any, row: LiveAttachment) => (
         <Space>
@@ -161,7 +163,7 @@ export default function AttachmentsPage() {
       ),
     },
     {
-      title: 'Taille',
+      title: t('attachments.size'),
       dataIndex: 'sizeBytes',
       width: 110,
       sorter: (a: LiveAttachment, b: LiveAttachment) => a.sizeBytes - b.sizeBytes,
@@ -169,25 +171,25 @@ export default function AttachmentsPage() {
       render: (v: number) => formatBytes(v),
     },
     {
-      title: 'Mail',
+      title: t('attachments.mail'),
       key: 'mail',
       render: (_: any, row: LiveAttachment) => (
         <Space direction="vertical" size={0}>
-          <Text style={{ fontSize: 12 }}>{row.mailSubject || '(sans sujet)'}</Text>
+          <Text style={{ fontSize: 12 }}>{row.mailSubject || t('common.noSubject')}</Text>
           <Text type="secondary" style={{ fontSize: 11 }}>{row.mailSender}</Text>
         </Space>
       ),
     },
     {
-      title: 'Date',
+      title: t('attachments.date'),
       key: 'date',
       width: 120,
       render: (_: any, row: LiveAttachment) => {
-        try { return new Date(row.mailDate).toLocaleDateString('fr-FR') } catch { return '-' }
+        try { return new Date(row.mailDate).toLocaleDateString() } catch { return '-' }
       },
     },
     {
-      title: 'Type',
+      title: t('attachments.type'),
       key: 'type',
       width: 140,
       render: (_: any, row: LiveAttachment) => <Tag style={{ fontSize: 10 }}>{row.mimeType}</Tag>,
@@ -199,13 +201,13 @@ export default function AttachmentsPage() {
       {contextHolder}
 
       <Space style={{ marginBottom: 16 }} align="center">
-        <Title level={3} style={{ margin: 0 }}>📎 Pièces jointes</Title>
+        <Title level={3} style={{ margin: 0 }}>{t('attachments.title')}</Title>
         <Segmented
           value={mode}
           onChange={(v) => setMode(v as ViewMode)}
           options={[
-            { label: <><DatabaseOutlined /> Archives</>, value: 'archived' },
-            { label: <><CloudOutlined /> Gmail live</>, value: 'live' },
+            { label: <><DatabaseOutlined /> {t('attachments.archived')}</>, value: 'archived' },
+            { label: <><CloudOutlined /> {t('attachments.live')}</>, value: 'live' },
           ]}
         />
         <Button
@@ -213,30 +215,30 @@ export default function AttachmentsPage() {
           onClick={() => mode === 'archived' ? loadArchived(page, search) : loadLive()}
           loading={loading}
         >
-          Recharger
+          {t('attachments.reload')}
         </Button>
       </Space>
 
       {!accountId ? (
-        <Empty description="Aucun compte Gmail connecté" />
+        <Empty description={t('attachments.noAccount')} />
       ) : (
         <>
           <Row gutter={16} style={{ marginBottom: 16 }}>
             <Col span={8}>
               <Card size="small">
-                <Statistic title="Pièces jointes" value={total} prefix={<PaperClipOutlined />} />
+                <Statistic title={t('attachments.totalAttachments')} value={total} prefix={<PaperClipOutlined />} />
               </Card>
             </Col>
             <Col span={8}>
               <Card size="small">
-                <Statistic title="Taille totale" value={formatBytes(totalSize)} />
+                <Statistic title={t('attachments.totalSize')} value={formatBytes(totalSize)} />
               </Card>
             </Col>
             <Col span={8}>
               <Card size="small">
                 <Statistic
-                  title="Source"
-                  value={mode === 'archived' ? 'Archives locales' : 'Gmail (>100 Ko)'}
+                  title={t('attachments.source')}
+                  value={mode === 'archived' ? t('attachments.sourceArchived') : t('attachments.sourceLive')}
                 />
               </Card>
             </Col>
@@ -244,7 +246,7 @@ export default function AttachmentsPage() {
 
           {mode === 'archived' && (
             <Input.Search
-              placeholder="Rechercher par nom, sujet ou expéditeur..."
+              placeholder={t('attachments.searchPlaceholder')}
               style={{ marginBottom: 12, maxWidth: 400 }}
               onSearch={handleSearch}
               allowClear
@@ -264,7 +266,7 @@ export default function AttachmentsPage() {
               onChange: (p) => { setPage(p); loadArchived(p, search) },
               showTotal: (t) => `${t} pièces jointes`,
             } : { pageSize: 50, showTotal: (t) => `${t} pièces jointes` }}
-            locale={{ emptyText: <Empty description="Aucune pièce jointe trouvée" /> }}
+            locale={{ emptyText: <Empty description={t('attachments.noAttachment')} /> }}
           />
         </>
       )}

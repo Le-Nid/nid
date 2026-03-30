@@ -25,6 +25,7 @@ import {
   FileOutlined,
   EyeOutlined,
 } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 import { archiveApi } from "../api";
 import { useAccount } from "../hooks/useAccount";
 import { formatBytes, formatSender } from "../utils/format";
@@ -57,6 +58,7 @@ interface Attachment {
 }
 
 export default function ArchivePage() {
+  const { t } = useTranslation();
   const { accountId } = useAccount();
   const [mails, setMails] = useState<ArchivedMail[]>([]);
   const [total, setTotal] = useState(0);
@@ -94,7 +96,7 @@ export default function ArchivePage() {
         setTotal(data.total);
         setPage(p);
       } catch {
-        messageApi.error("Erreur lors du chargement des archives");
+        messageApi.error(t('archive.loadError'));
       } finally {
         setLoading(false);
       }
@@ -112,7 +114,7 @@ export default function ArchivePage() {
       setViewing(detail);
       setViewMode("html");
     } catch {
-      messageApi.error("Impossible de charger ce mail archivé");
+      messageApi.error(t('archive.loadMailError'));
     }
   };
 
@@ -134,11 +136,11 @@ export default function ArchivePage() {
       a.click();
       URL.revokeObjectURL(url);
       notification.success({
-        message: "Export ZIP terminé",
-        description: `${ids.length} mail(s) exporté(s)`,
+        message: t('archive.exportDone'),
+        description: t('archive.exportCount', { count: ids.length }),
       });
     } catch {
-      messageApi.error("Erreur lors de l'export ZIP");
+      messageApi.error(t('archive.exportError'));
     } finally {
       setExporting(false);
     }
@@ -186,7 +188,7 @@ export default function ArchivePage() {
 
   const columns = [
     {
-      title: "Expéditeur",
+      title: t('archive.sender'),
       dataIndex: "sender",
       width: 190,
       ellipsis: true,
@@ -197,7 +199,7 @@ export default function ArchivePage() {
       ),
     },
     {
-      title: "Sujet",
+      title: t('archive.subject'),
       dataIndex: "subject",
       ellipsis: true,
       render: (v: string, row: ArchivedMail) => (
@@ -206,7 +208,7 @@ export default function ArchivePage() {
             {row.has_attachments && (
               <PaperClipOutlined style={{ color: "#8c8c8c", fontSize: 12 }} />
             )}
-            <Text style={{ fontSize: 13 }}>{v || "(sans sujet)"}</Text>
+            <Text style={{ fontSize: 13 }}>{v || t('common.noSubject')}</Text>
           </Space>
           <Text type="secondary" ellipsis style={{ fontSize: 11 }}>
             {row.snippet}
@@ -215,14 +217,14 @@ export default function ArchivePage() {
       ),
     },
     {
-      title: "Taille",
+      title: t('archive.size'),
       dataIndex: "size_bytes",
       width: 90,
       sorter: (a: ArchivedMail, b: ArchivedMail) => a.size_bytes - b.size_bytes,
       render: (v: number) => <Tag color="orange">{formatBytes(v)}</Tag>,
     },
     {
-      title: "Date",
+      title: t('archive.date'),
       dataIndex: "date",
       width: 100,
       sorter: true,
@@ -233,7 +235,7 @@ export default function ArchivePage() {
       ),
     },
     {
-      title: "Archivé",
+      title: t('archive.archived'),
       dataIndex: "archived_at",
       width: 120,
       render: (v: string) => (
@@ -246,7 +248,7 @@ export default function ArchivePage() {
       title: "",
       width: 50,
       render: (_: any, row: ArchivedMail) => (
-        <Tooltip title="Lire">
+        <Tooltip title={t('mailManager.read')}>
           <Button
             size="small"
             type="text"
@@ -270,14 +272,14 @@ export default function ArchivePage() {
       {contextHolder}
 
       <Title level={3} style={{ marginBottom: 16 }}>
-        📦 Archives
+        {t('archive.title')}
       </Title>
 
       {/* Filtres */}
       <Card size="small" style={{ marginBottom: 12 }}>
         <Space wrap>
           <Search
-            placeholder="Recherche full-text (sujet, expéditeur…)"
+            placeholder={t('archive.searchPlaceholder')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onSearch={() => load(1)}
@@ -286,7 +288,7 @@ export default function ArchivePage() {
             enterButton={<SearchOutlined />}
           />
           <Input
-            placeholder="Filtrer par expéditeur"
+            placeholder={t('archive.filterSender')}
             value={sender}
             onChange={(e) => setSender(e.target.value)}
             onPressEnter={() => load(1)}
@@ -297,15 +299,15 @@ export default function ArchivePage() {
           <RangePicker
             onChange={(dates) => setDateRange(dates as any)}
             format="DD/MM/YYYY"
-            placeholder={["Date début", "Date fin"]}
+            placeholder={[t('archive.dateStart'), t('archive.dateEnd')]}
           />
           <Button type="primary" onClick={() => load(1)} loading={loading}>
-            <SearchOutlined /> Rechercher
+            <SearchOutlined /> {t('common.search')}
           </Button>
           <Button icon={<ReloadOutlined />} onClick={() => load(1)} />
           {total > 0 && (
             <Text type="secondary">
-              {total.toLocaleString("fr-FR")} mails archivés
+              {t('archive.totalArchived', { total: total.toLocaleString() })}
             </Text>
           )}
         </Space>
@@ -323,18 +325,17 @@ export default function ArchivePage() {
         >
           <Space>
             <Text strong style={{ color: "#1677ff" }}>
-              {selected.length} sélectionné(s) —{" "}
-              {formatBytes(selectedSizeBytes)}
+              {t('archive.selectedCount', { count: selected.length, size: formatBytes(selectedSizeBytes) })}
             </Text>
             <Button
               icon={<FileZipOutlined />}
               loading={exporting}
               onClick={() => exportZip(selected)}
             >
-              Exporter en ZIP
+              {t('archive.exportZip')}
             </Button>
             <Button size="small" onClick={() => setSelected([])}>
-              Désélectionner
+              {t('archive.deselect')}
             </Button>
           </Space>
         </Card>
@@ -358,13 +359,13 @@ export default function ArchivePage() {
           total,
           onChange: (p) => load(p),
           showSizeChanger: false,
-          showTotal: (t) => `${t.toLocaleString("fr-FR")} mails`,
+          showTotal: (t) => `${t.toLocaleString()} mails`,
         }}
         onRow={(row) => ({
           onClick: () => openMail(row),
           style: { cursor: "pointer" },
         })}
-        locale={{ emptyText: <Empty description="Aucun mail archivé" /> }}
+        locale={{ emptyText: <Empty description={t('archive.noArchive')} /> }}
       />
 
       {/* Viewer drawer */}
@@ -372,7 +373,7 @@ export default function ArchivePage() {
         title={
           <Space>
             <Text ellipsis style={{ maxWidth: 480 }}>
-              {viewing?.subject || "(sans sujet)"}
+              {viewing?.subject || t('common.noSubject')}
             </Text>
             <Button
               size="small"
@@ -396,11 +397,11 @@ export default function ArchivePage() {
               style={{ width: "100%", marginBottom: 12 }}
             >
               <Space>
-                <Text strong>De :</Text>
+                <Text strong>{t('archive.from')}</Text>
                 <Text>{viewing.sender}</Text>
               </Space>
               <Space>
-                <Text strong>Date :</Text>
+                <Text strong>{t('archive.dateFull')}</Text>
                 <Text type="secondary">
                   {dayjs(viewing.date).format("DD/MM/YYYY HH:mm")}
                 </Text>
@@ -408,7 +409,7 @@ export default function ArchivePage() {
                 <Text type="secondary">{formatBytes(viewing.size_bytes)}</Text>
               </Space>
               <Space>
-                <Text strong>Archivé le :</Text>
+                <Text strong>{t('archive.archivedAt')}</Text>
                 <Text type="secondary">
                   {dayjs(viewing.archived_at).format("DD/MM/YYYY HH:mm")}
                 </Text>
@@ -421,8 +422,7 @@ export default function ArchivePage() {
             {viewing.attachments?.length > 0 && (
               <div style={{ marginBottom: 12 }}>
                 <Text strong>
-                  <PaperClipOutlined /> Pièces jointes (
-                  {viewing.attachments.length})
+                  <PaperClipOutlined /> {t('archive.attachments', { count: viewing.attachments.length })}
                 </Text>
                 <List
                   size="small"
@@ -436,7 +436,7 @@ export default function ArchivePage() {
                           href={downloadUrl(att.id)}
                           download={att.filename}
                         >
-                          Télécharger
+                          {t('common.download')}
                         </Button>,
                       ]}
                     >
@@ -481,14 +481,14 @@ export default function ArchivePage() {
                 type={viewMode === "html" ? "primary" : "default"}
                 onClick={() => setViewMode("html")}
               >
-                Vue HTML
+                {t('archive.htmlView')}
               </Button>
               <Button
                 size="small"
                 type={viewMode === "raw" ? "primary" : "default"}
                 onClick={() => setViewMode("raw")}
               >
-                EML brut
+                {t('archive.emlRaw')}
               </Button>
             </Space>
 

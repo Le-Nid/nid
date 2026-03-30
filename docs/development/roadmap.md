@@ -103,3 +103,14 @@
 - [x] Implémenter le RGAA
 - [x] Il faut packagé l'appli pour la mettre en open source ensuite
 
+## v2.2 — I18n (✅ complété)
+- [x] Ajouter l'internationalisation. Faire français / anglais pour le moment
+  - [x] Infrastructure i18n (react-i18next + i18next + LanguageDetector)
+  - [x] Fichiers de traduction FR et EN (~350+ clés)
+  - [x] Sélecteur de langue dans le header (drapeau FR/EN)
+  - [x] Ant Design locale dynamique (frFR / enUS)
+  - [x] dayjs locale dynamique
+  - [x] `<html lang>` dynamique
+  - [x] Toutes les pages i18n : Login, Dashboard, MailManager, Jobs, Archive, Rules, Settings, Admin, Unsubscribe, Attachments, Insights, Duplicates
+  - [x] Tous les composants i18n : AppLayout, BulkActionBar, NotificationBell, MailViewer, GmailSearchInput, RuleFormModal, JobProgressModal
+  - [x] Persistance de la langue (localStorage)

@@ -8,6 +8,7 @@ import {
   ReloadOutlined,
 } from '@ant-design/icons'
 import { unsubscribeApi } from '../api'
+import { useTranslation } from 'react-i18next'
 import { useAccount } from '../hooks/useAccount'
 import { formatBytes } from '../utils/format'
 import JobProgressModal from '../components/JobProgressModal'
@@ -26,6 +27,7 @@ interface NewsletterSender {
 }
 
 export default function UnsubscribePage() {
+  const { t } = useTranslation()
   const { accountId } = useAccount()
   const [newsletters, setNewsletters] = useState<NewsletterSender[]>([])
   const [loading, setLoading] = useState(false)
@@ -41,7 +43,7 @@ export default function UnsubscribePage() {
       const data = await unsubscribeApi.scanNewsletters(accountId)
       setNewsletters(data)
     } catch {
-      messageApi.error('Erreur lors du scan des newsletters')
+      messageApi.error(t('unsubscribe.scanError'))
     } finally {
       setLoading(false)
     }
@@ -55,11 +57,11 @@ export default function UnsubscribePage() {
       const { jobId, count } = await unsubscribeApi.deleteSender(accountId!, sender.email, permanent)
       setActiveJobId(jobId)
       notification.success({
-        message: `Suppression lancée`,
-        description: `${count} mails de ${sender.sender} seront ${permanent ? 'supprimés définitivement' : 'mis à la corbeille'}.`,
+        message: t('unsubscribe.deleteStarted'),
+        description: t('unsubscribe.deleteDesc', { count, sender: sender.sender }),
       })
     } catch {
-      messageApi.error('Erreur lors de la suppression')
+      messageApi.error(t('unsubscribe.deleteError'))
     } finally {
       setDeletingEmail(null)
     }
@@ -77,7 +79,7 @@ export default function UnsubscribePage() {
 
   const columns = [
     {
-      title: 'Expéditeur',
+      title: t('unsubscribe.sender'),
       key: 'sender',
       render: (_: any, row: NewsletterSender) => (
         <Space direction="vertical" size={0}>
@@ -87,21 +89,21 @@ export default function UnsubscribePage() {
       ),
     },
     {
-      title: 'Mails',
+      title: t('unsubscribe.mails'),
       dataIndex: 'count',
       width: 90,
       sorter: (a: NewsletterSender, b: NewsletterSender) => a.count - b.count,
       render: (v: number) => <Tag>{v}</Tag>,
     },
     {
-      title: 'Taille',
+      title: t('unsubscribe.size'),
       dataIndex: 'totalSizeBytes',
       width: 110,
       sorter: (a: NewsletterSender, b: NewsletterSender) => a.totalSizeBytes - b.totalSizeBytes,
       render: (v: number) => formatBytes(v),
     },
     {
-      title: 'Dernier envoi',
+      title: t('unsubscribe.lastSent'),
       dataIndex: 'latestDate',
       width: 140,
       render: (v: string) => {
@@ -109,7 +111,7 @@ export default function UnsubscribePage() {
       },
     },
     {
-      title: 'Désinscription',
+      title: t('unsubscribe.unsubscribeCol'),
       width: 130,
       render: (_: any, row: NewsletterSender) => {
         if (row.unsubscribeUrl) {
@@ -122,7 +124,7 @@ export default function UnsubscribePage() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              Se désinscrire
+              {t('unsubscribe.unsubscribeBtn')}
             </Button>
           )
         }
@@ -134,11 +136,11 @@ export default function UnsubscribePage() {
               icon={<MailOutlined />}
               href={row.unsubscribeMailto}
             >
-              Par email
+              {t('unsubscribe.byEmail')}
             </Button>
           )
         }
-        return <Text type="secondary" style={{ fontSize: 11 }}>Non disponible</Text>
+        return <Text type="secondary" style={{ fontSize: 11 }}>{t('unsubscribe.unavailable')}</Text>
       },
     },
     {
@@ -147,14 +149,14 @@ export default function UnsubscribePage() {
       render: (_: any, row: NewsletterSender) => (
         <Space size="small">
           <Popconfirm
-            title={`Supprimer ${row.count} mails de ${row.sender} ?`}
-            description="Les mails seront mis à la corbeille."
+            title={t('unsubscribe.deleteConfirm', { count: row.count, sender: row.sender })}
+            description={t('unsubscribe.deleteHint')}
             onConfirm={() => handleDelete(row, false)}
-            okText="Supprimer"
+            okText={t('common.delete')}
             okButtonProps={{ danger: true }}
-            cancelText="Annuler"
+            cancelText={t('common.cancel')}
           >
-            <Tooltip title="Mettre à la corbeille">
+            <Tooltip title={t('unsubscribe.trashMails')}>
               <Button
                 size="small"
                 danger
@@ -173,43 +175,43 @@ export default function UnsubscribePage() {
       {contextHolder}
 
       <Space style={{ marginBottom: 16 }} align="center">
-        <Title level={3} style={{ margin: 0 }}>📧 Newsletters & Listes</Title>
+        <Title level={3} style={{ margin: 0 }}>{t('unsubscribe.title')}</Title>
         <Button icon={<ReloadOutlined />} onClick={load} loading={loading}>
-          Scanner
+          {t('unsubscribe.scan')}
         </Button>
       </Space>
 
       {!accountId ? (
-        <Empty description="Aucun compte Gmail connecté" />
+        <Empty description={t('unsubscribe.noAccount')} />
       ) : (
         <>
           <Row gutter={16} style={{ marginBottom: 16 }}>
             <Col span={6}>
               <Card size="small">
-                <Statistic title="Newsletters détectées" value={newsletters.length} />
+                <Statistic title={t('unsubscribe.detected')} value={newsletters.length} />
               </Card>
             </Col>
             <Col span={6}>
               <Card size="small">
-                <Statistic title="Mails newsletter" value={totalMails} />
+                <Statistic title={t('unsubscribe.newsletterMails')} value={totalMails} />
               </Card>
             </Col>
             <Col span={6}>
               <Card size="small">
-                <Statistic title="Espace occupé" value={formatBytes(totalSize)} />
+                <Statistic title={t('unsubscribe.spaceUsed')} value={formatBytes(totalSize)} />
               </Card>
             </Col>
             <Col span={6}>
               <Card size="small" style={{ background: '#fff7e6', borderColor: '#ffd591' }}>
                 <Text style={{ fontSize: 13 }}>
-                  Cliquez sur <strong>Se désinscrire</strong> puis <DeleteOutlined /> pour nettoyer.
+                  {t('unsubscribe.hint')}
                 </Text>
               </Card>
             </Col>
           </Row>
 
           <Input.Search
-            placeholder="Rechercher un expéditeur..."
+            placeholder={t('unsubscribe.searchPlaceholder')}
             style={{ marginBottom: 12, maxWidth: 400 }}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -223,7 +225,7 @@ export default function UnsubscribePage() {
             loading={loading}
             size="small"
             pagination={{ pageSize: 50, showSizeChanger: true, showTotal: (t) => `${t} newsletters` }}
-            locale={{ emptyText: <Empty description={loading ? 'Scan en cours...' : 'Aucune newsletter détectée. Cliquez sur Scanner.'} /> }}
+            locale={{ emptyText: <Empty description={loading ? t('common.loading') : t('unsubscribe.noNewsletters')} /> }}
           />
 
           <JobProgressModal jobId={activeJobId} onClose={() => { setActiveJobId(null); load() }} />

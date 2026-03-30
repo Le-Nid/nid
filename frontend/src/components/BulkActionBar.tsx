@@ -16,6 +16,7 @@ import {
   ExclamationCircleOutlined,
   CloudDownloadOutlined,
 } from "@ant-design/icons";
+import { useTranslation } from 'react-i18next';
 
 const { Text } = Typography;
 
@@ -38,6 +39,7 @@ export default function BulkActionBar({
   onBulkAction,
   loading,
 }: Props) {
+  const { t } = useTranslation();
   if (!selected.length) return null;
 
   const userLabels = labels.filter((l) => l.type === "user");
@@ -45,7 +47,7 @@ export default function BulkActionBar({
   return (
     <div
       role="toolbar"
-      aria-label={`Actions groupées sur ${selected.length} mail${selected.length > 1 ? 's' : ''}`}
+      aria-label={t('bulk.selected', { count: selected.length })}
       style={{
         background: "#e6f4ff",
         border: "1px solid #91caff",
@@ -59,64 +61,63 @@ export default function BulkActionBar({
       }}
     >
       <Text strong style={{ color: "#1677ff" }}>
-        {selected.length} mail{selected.length > 1 ? "s" : ""} sélectionné
-        {selected.length > 1 ? "s" : ""}
+        {t('bulk.selected', { count: selected.length })}
       </Text>
 
       <Divider type="vertical" />
 
       <Space wrap size="small">
-        <Tooltip title="Supprimer (corbeille)">
+        <Tooltip title={t('bulk.trashTooltip')}>
           <Button
             icon={<DeleteOutlined />}
             size="small"
             onClick={() => onBulkAction("trash")}
             loading={loading}
           >
-            Corbeille
+            {t('bulk.trash')}
           </Button>
         </Tooltip>
 
         <Popconfirm
-          title="Supprimer définitivement ?"
-          description={`${selected.length} mail(s) seront supprimés de façon irréversible.`}
+          title={t('bulk.permanentDeleteTitle')}
+          description={t('bulk.permanentDeleteDesc', { count: selected.length })}
           onConfirm={() => onBulkAction("delete")}
-          okText="Supprimer"
+          okText={t('common.delete')}
           okButtonProps={{ danger: true }}
-          cancelText="Annuler"
+          cancelText={t('common.cancel')}
           icon={<ExclamationCircleOutlined style={{ color: "red" }} />}
         >
-          <Tooltip title="Suppression définitive — irréversible">
+          <Tooltip title={t('bulk.permanentDeleteTooltip')}>
             <Button
               icon={<DeleteOutlined />}
               size="small"
               danger
               loading={loading}
             >
-              Supprimer
+              {t('bulk.permanentDelete')}
             </Button>
           </Tooltip>
         </Popconfirm>
 
-        <Tooltip title="Archiver (retirer de INBOX)">
+        <Tooltip title={t('bulk.archiveGmailTooltip')}>
           <Button
             icon={<InboxOutlined />}
             size="small"
             onClick={() => onBulkAction("archive")}
             loading={loading}
           >
-            Archiver Gmail
+            {t('bulk.archiveGmail')}
           </Button>
         </Tooltip>
 
-        <Tooltip title="Archiver sur le NAS (EML)">
+        <Tooltip title={t('bulk.archiveNasTooltip')}>
           <Button
             icon={<CloudDownloadOutlined />}
             size="small"
             onClick={() => onBulkAction("archive_nas")}
             loading={loading}
           >
-            Archiver NAS
+            {t('bulk.archiveNas')}
           </Button>
         </Tooltip>
 
@@ -126,7 +127,7 @@ export default function BulkActionBar({
           onClick={() => onBulkAction("mark_read")}
           loading={loading}
         >
-          Marquer lu
+          {t('bulk.markRead')}
         </Button>
 
         <Button
@@ -135,14 +136,14 @@ export default function BulkActionBar({
           onClick={() => onBulkAction("mark_unread")}
           loading={loading}
         >
-          Non lu
+          {t('bulk.markUnread')}
         </Button>
 
         {userLabels.length > 0 && (
           <Select
             placeholder={
               <>
-                <TagOutlined /> Ajouter un label
+                <TagOutlined /> {t('bulk.addLabel')}
               </>
             }
             size="small"

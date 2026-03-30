@@ -11,6 +11,9 @@
 | `zustand` | State management global (stores légers) |
 | `axios` | Client HTTP avec intercepteurs JWT |
 | `dayjs` | Manipulation de dates (requis par Ant Design) |
+| `react-i18next` | Internationalisation (hooks `useTranslation`) |
+| `i18next` | Moteur i18n, détection automatique de la langue |
+| `i18next-browser-languagedetector` | Détection de la langue du navigateur |
 | `vite` | Bundler, HMR en dev |
 
 ---
@@ -82,3 +85,70 @@ Toutes les pages font leurs appels via ce client, jamais via `fetch` directement
 | `VITE_API_URL` | `` (vide) | URL de l'API backend. En dev, le proxy Vite redirige `/api` vers `localhost:4000` |
 
 En production (Dockerfile multi-stage), le build Vite est servi par Nginx qui proxy `/api` vers le backend.
+
+---
+
+## Internationalisation (i18n)
+
+L'application est entièrement traduite en **français** (langue par défaut) et **anglais**, grâce à `react-i18next`.
+
+### Configuration
+
+Le fichier `src/i18n/index.ts` initialise i18next avec :
+
+- **`LanguageDetector`** — détecte la langue du navigateur au premier chargement
+- **`fallbackLng: 'fr'`** — français par défaut si la langue n'est pas supportée
+- **Persistance `localStorage`** — clé `i18nextLng`, le choix de l'utilisateur est mémorisé
+
+### Fichiers de traduction
+
+```
+src/i18n/
+├── index.ts              ← Configuration i18next
+└── locales/
+    ├── fr.json           ← ~370+ clés, namespace plat
+    └── en.json           ← Traductions anglaises (même structure)
+```
+
+Les clés sont organisées par domaine fonctionnel dans un namespace plat :
+
+```json
+{
+  "dashboard.title": "Tableau de bord",
+  "mails.search": "Rechercher...",
+  "rules.create": "Créer une règle",
+  "jobs.bulkOperation": "Opération groupée",
+  "settings.profile": "Profil",
+  "admin.users": "Utilisateurs"
+}
+```
+
+### Sélecteur de langue
+
+Un sélecteur `<Select>` est intégré dans la barre de navigation (`AppLayout.tsx`), entre la cloche de notifications et le toggle thème sombre. Il affiche les drapeaux 🇫🇷 / 🇬🇧 et appelle `i18n.changeLanguage()` au changement.
+
+### Intégration Ant Design et dayjs
+
+- **Ant Design** : la locale du `ConfigProvider` est synchronisée dynamiquement (`frFR` / `enUS`) dans `main.tsx` en fonction de la langue active.
+- **dayjs** : la locale est changée dynamiquement dans les composants qui affichent des dates relatives (Rules, Jobs, NotificationBell).
+- **`<html lang>`** : l'attribut `lang` du document est mis à jour via un `useEffect` dans `main.tsx`.
+
+### Utilisation dans les composants
+
+Toutes les pages et composants utilisent le hook `useTranslation()` :
+
+```tsx
+import { useTranslation } from 'react-i18next';
+
+function MaPage() {
+  const { t } = useTranslation();
+  return <h1>{t('dashboard.title')}</h1>;
+}
+```
+
+### Pages et composants traduits
+
+Toutes les pages et composants de l'application sont traduits :
+
+- **Pages** : Login, Dashboard, MailManager, Jobs, Archive, Rules, Settings, Admin, Unsubscribe, Attachments, Insights, Duplicates
+- **Composants** : AppLayout, BulkActionBar, NotificationBell, MailViewer, GmailSearchInput, RuleFormModal, JobProgressModal

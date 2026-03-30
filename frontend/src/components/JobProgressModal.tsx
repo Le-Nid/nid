@@ -5,17 +5,11 @@ import {
   LoadingOutlined,
 } from "@ant-design/icons";
 import { useJobSSE } from "../hooks/useJobSSE";
+import { useTranslation } from "react-i18next";
 
 const { Text } = Typography;
 
-const TYPE_LABELS: Record<string, string> = {
-  bulk_operation: "Opération bulk",
-  archive_mails: "Archivage NAS",
-  run_rule: "Exécution de règle",
-  scan_unsubscribe: "Scan newsletters",
-  scan_attachments: "Scan pièces jointes",
-  generate_report: "Génération rapport",
-};
+const TYPE_LABELS: Record<string, string> = {};
 
 const STATUS_COLORS: Record<string, string> = {
   pending: "default",
@@ -31,6 +25,7 @@ interface Props {
 }
 
 export default function JobProgressModal({ jobId, onClose }: Props) {
+  const { t } = useTranslation();
   const { job, connected } = useJobSSE(jobId);
 
   const isTerminal =
@@ -49,7 +44,14 @@ export default function JobProgressModal({ jobId, onClose }: Props) {
           ) : job?.status === "failed" ? (
             <CloseCircleOutlined style={{ color: "#ff4d4f" }} />
           ) : null}
-          {job ? (TYPE_LABELS[job.type] ?? job.type) : "Job en cours"}
+          {job ? (() => {
+            const typeKeyMap: Record<string, string> = {
+              bulk_operation: 'bulkOperation', archive_mails: 'archiveMails',
+              run_rule: 'runRule', scan_unsubscribe: 'scanUnsubscribe',
+              scan_attachments: 'scanAttachments', generate_report: 'generateReport',
+            };
+            return t('jobs.' + (typeKeyMap[job.type] || job.type), { defaultValue: job.type });
+          })() : t('common.loading')}
         </Space>
       }
       footer={null}
@@ -63,7 +65,7 @@ export default function JobProgressModal({ jobId, onClose }: Props) {
             </Tag>
             {!connected && !isTerminal && (
               <Text type="secondary" style={{ fontSize: 12 }}>
-                Reconnexion…
+                {t('jobModal.reconnecting')}
               </Text>
             )}
           </Space>
@@ -83,7 +85,7 @@ export default function JobProgressModal({ jobId, onClose }: Props) {
           {job.error && (
             <Alert
               type="error"
-              message="Erreur"
+              message={t('common.error')}
               description={job.error}
               showIcon
             />
@@ -92,13 +94,13 @@ export default function JobProgressModal({ jobId, onClose }: Props) {
           {job.status === "completed" && (
             <Alert
               type="success"
-              message={`Terminé — ${job.processed} éléments traités`}
+              message={t('jobModal.done', { count: job.processed })}
               showIcon
             />
           )}
         </Space>
       ) : (
-        <Text type="secondary">Connexion au flux temps réel…</Text>
+        <Text type="secondary">{t('jobModal.connecting')}</Text>
       )}
     </Modal>
   );

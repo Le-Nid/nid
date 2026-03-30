@@ -25,18 +25,20 @@ Elle remplace des outils comme Gmail Cleaner et OpenArchiver, sans envoyer vos d
 | 🛡️ **Intégrité** | Vérification de cohérence archives disque ↔ BDD |
 | ⌨️ **Raccourcis clavier** | Navigation et actions rapides dans Mes mails |
 | 💾 **Export/Import** | Sauvegarde et restauration de la configuration (règles, webhooks) |
+| 🌐 **Internationalisation** | Français / Anglais, sélecteur de langue, persistance du choix |
 
 ---
 
 ## Stack technique
 
 ```
-Frontend   →  React 19 + Ant Design
+Frontend   →  React 19 + Ant Design + react-i18next
 Backend    →  Fastify + TypeScript
 Auth       →  JWT local + OAuth2 Gmail
 Base de données  →  PostgreSQL 16
 Queue      →  BullMQ + Redis
 Archives   →  EML + index PostgreSQL
+i18n       →  Français 🇫🇷 / Anglais 🇬🇧 (extensible)
 ```
 
 ---

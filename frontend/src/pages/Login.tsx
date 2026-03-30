@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Card, Form, Input, Button, Tabs, Typography, Alert, Space, Divider } from 'antd'
 import { MailOutlined, LockOutlined, GoogleOutlined, SafetyOutlined } from '@ant-design/icons'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/auth.store'
 import { authApi } from '../api'
 import api from '../api/client'
@@ -9,6 +10,7 @@ import api from '../api/client'
 const { Title, Text } = Typography
 
 export default function LoginPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { login, register, loginWithToken } = useAuthStore()
@@ -20,14 +22,12 @@ export default function LoginPage() {
   const [savedCredentials, setSavedCredentials] = useState<{ email: string; password: string } | null>(null)
   const [allowRegistration, setAllowRegistration] = useState(true)
 
-  // Fetch auth config (registration open?)
   useEffect(() => {
     api.get('/api/auth/config').then((r) => {
       setAllowRegistration(r.data.allowRegistration)
     }).catch(() => {})
   }, [])
 
-  // Handle Google SSO callback
   useEffect(() => {
     const token = searchParams.get('token')
     const userParam = searchParams.get('user')
@@ -38,12 +38,12 @@ export default function LoginPage() {
         const user = JSON.parse(userParam)
         loginWithToken(token, user).then(() => navigate('/dashboard'))
       } catch {
-        setError('Erreur lors de la connexion Google')
+        setError(t('login.errorGoogle'))
       }
     } else if (googleError === 'disabled') {
-      setError('Ce compte a été désactivé')
+      setError(t('login.errorDisabled'))
     } else if (googleError === 'error') {
-      setError('Erreur lors de la connexion Google')
+      setError(t('login.errorGoogle'))
     }
   }, [searchParams])
 
@@ -58,7 +58,7 @@ export default function LoginPage() {
         setSavedCredentials(values)
         setError(null)
       } else {
-        setError(e.response?.data?.error ?? 'Erreur de connexion')
+        setError(e.response?.data?.error ?? t('login.errorConnection'))
       }
     } finally { setLoading(false) }
   }
@@ -70,7 +70,7 @@ export default function LoginPage() {
       await login(savedCredentials.email, savedCredentials.password, totpCode)
       navigate('/dashboard')
     } catch (e: any) {
-      setError(e.response?.data?.error ?? 'Code TOTP invalide')
+      setError(e.response?.data?.error ?? t('login.errorTotpInvalid'))
     } finally { setLoading(false) }
   }
 
@@ -80,7 +80,7 @@ export default function LoginPage() {
       await register(values.email, values.password)
       navigate('/settings')
     } catch (e: any) {
-      setError(e.response?.data?.error ?? 'Erreur lors de la création du compte')
+      setError(e.response?.data?.error ?? t('login.errorRegister'))
     } finally { setLoading(false) }
   }
 
@@ -90,7 +90,7 @@ export default function LoginPage() {
       const { url } = await authApi.getGoogleSsoUrl()
       globalThis.location.href = url
     } catch {
-      setError('Impossible de lancer la connexion Google')
+      setError(t('login.errorGoogleStart'))
       setGoogleLoading(false)
     }
   }
@@ -98,16 +98,16 @@ export default function LoginPage() {
   const LoginForm = totpRequired ? (
     <div>
       <Alert
-        message="Vérification en deux étapes"
-        description="Entrez le code à 6 chiffres de votre application d'authentification."
+        message={t('login.totpTitle')}
+        description={t('login.totpDescription')}
         type="info"
         showIcon
         icon={<SafetyOutlined />}
         style={{ marginBottom: 16 }}
       />
       <Input
-        placeholder="Code TOTP à 6 chiffres"
-        aria-label="Code TOTP à 6 chiffres"
+        placeholder={t('login.totpPlaceholder')}
+        aria-label={t('login.totpPlaceholder')}
         maxLength={6}
         value={totpCode}
         onChange={(e) => setTotpCode(e.target.value)}
@@ -118,25 +118,25 @@ export default function LoginPage() {
       />
       {error && <Alert message={error} type="error" style={{ marginBottom: 16 }} />}
       <Button type="primary" loading={loading} block size="large" onClick={handleTotpSubmit} disabled={totpCode.length !== 6}>
-        Vérifier
+        {t('login.totpVerify')}
       </Button>
       <Button block size="large" style={{ marginTop: 8 }} onClick={() => { setTotpRequired(false); setSavedCredentials(null); setTotpCode(''); setError(null) }}>
-        Retour
+        {t('common.back')}
       </Button>
     </div>
   ) : (
     <Form onFinish={handleLogin} layout="vertical">
-      <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email' }]}>
-        <Input prefix={<MailOutlined />} placeholder="votre@email.com" size="large" />
+      <Form.Item name="email" label={t('login.email')} rules={[{ required: true, type: 'email' }]}>
+        <Input prefix={<MailOutlined />} placeholder={t('login.emailPlaceholder')} size="large" />
       </Form.Item>
-      <Form.Item name="password" label="Mot de passe" rules={[{ required: true }]}>
-        <Input.Password prefix={<LockOutlined />} placeholder="••••••••" size="large" />
+      <Form.Item name="password" label={t('login.password')} rules={[{ required: true }]}>
+        <Input.Password prefix={<LockOutlined />} placeholder={t('login.passwordPlaceholder')} size="large" />
       </Form.Item>
       {error && <Alert message={error} type="error" style={{ marginBottom: 16 }} />}
       <Button type="primary" htmlType="submit" loading={loading} block size="large">
-        Se connecter
+        {t('login.submit')}
       </Button>
-      <Divider plain>ou</Divider>
+      <Divider plain>{t('common.or')}</Divider>
       <Button
         block
         size="large"
@@ -145,24 +145,24 @@ export default function LoginPage() {
         onClick={handleGoogleLogin}
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       >
-        Se connecter avec Google
+        {t('login.googleLogin')}
       </Button>
     </Form>
   )
 
   const RegisterForm = (
     <Form onFinish={handleRegister} layout="vertical">
-      <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email' }]}>
-        <Input prefix={<MailOutlined />} placeholder="votre@email.com" size="large" />
+      <Form.Item name="email" label={t('login.email')} rules={[{ required: true, type: 'email' }]}>
+        <Input prefix={<MailOutlined />} placeholder={t('login.emailPlaceholder')} size="large" />
       </Form.Item>
-      <Form.Item name="password" label="Mot de passe" rules={[{ required: true, min: 8 }]}>
-        <Input.Password prefix={<LockOutlined />} placeholder="Min. 8 caractères" size="large" />
+      <Form.Item name="password" label={t('login.password')} rules={[{ required: true, min: 8 }]}>
+        <Input.Password prefix={<LockOutlined />} placeholder={t('login.passwordMin')} size="large" />
       </Form.Item>
       {error && <Alert message={error} type="error" style={{ marginBottom: 16 }} />}
       <Button type="primary" htmlType="submit" loading={loading} block size="large">
-        Créer un compte
+        {t('login.register')}
       </Button>
-      <Divider plain>ou</Divider>
+      <Divider plain>{t('common.or')}</Divider>
       <Button
         block
         size="large"
@@ -171,7 +171,7 @@ export default function LoginPage() {
         onClick={handleGoogleLogin}
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       >
-        S'inscrire avec Google
+        {t('login.googleRegister')}
       </Button>
     </Form>
   )
@@ -180,18 +180,18 @@ export default function LoginPage() {
     <main style={{
       minHeight: '100vh', display: 'flex', alignItems: 'center',
       justifyContent: 'center', background: '#f0f2f5',
-    }} aria-label="Connexion">
+    }} aria-label={t('login.tabLogin')}>
       <Card style={{ width: 400 }}>
         <Space direction="vertical" align="center" style={{ width: '100%', marginBottom: 24 }}>
           <Text style={{ fontSize: 32 }} aria-hidden="true">📬</Text>
-          <Title level={1} style={{ margin: 0, fontSize: 24 }}>Gmail Manager</Title>
-          <Text type="secondary">Gérez vos mails, archivez sur votre NAS</Text>
+          <Title level={1} style={{ margin: 0, fontSize: 24 }}>{t('login.title')}</Title>
+          <Text type="secondary">{t('login.subtitle')}</Text>
         </Space>
 
         <Tabs
           items={[
-            { key: 'login', label: 'Connexion', children: LoginForm },
-            ...(allowRegistration ? [{ key: 'register', label: 'Créer un compte', children: RegisterForm }] : []),
+            { key: 'login', label: t('login.tabLogin'), children: LoginForm },
+            ...(allowRegistration ? [{ key: 'register', label: t('login.tabRegister'), children: RegisterForm }] : []),
           ]}
         />
       </Card>

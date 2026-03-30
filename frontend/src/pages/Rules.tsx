@@ -24,6 +24,7 @@ import {
   CheckCircleOutlined,
   AppstoreOutlined,
 } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 import { rulesApi, gmailApi } from "../api";
 import { useAccount } from "../hooks/useAccount";
 import {
@@ -37,13 +38,14 @@ import RuleFormModal from "../components/RuleFormModal";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/fr";
+import "dayjs/locale/en";
 
 dayjs.extend(relativeTime);
-dayjs.locale("fr");
 
 const { Title, Text } = Typography;
 
 export default function RulesPage() {
+  const { t, i18n } = useTranslation();
   const { accountId } = useAccount();
   const [rules, setRules] = useState<Rule[]>([]);
   const [labels, setLabels] = useState<any[]>([]);
@@ -67,7 +69,7 @@ export default function RulesPage() {
       setRules(r);
       setLabels(l);
     } catch {
-      messageApi.error("Erreur lors du chargement des règles");
+      messageApi.error(t('rules.loadError'));
     } finally {
       setLoading(false);
     }
@@ -82,7 +84,7 @@ export default function RulesPage() {
       const updated = await rulesApi.toggle(accountId!, rule.id);
       setRules((prev) => prev.map((r) => (r.id === rule.id ? updated : r)));
     } catch {
-      messageApi.error("Erreur lors du changement de statut");
+      messageApi.error(t('rules.toggleError'));
     }
   };
 
@@ -91,13 +93,13 @@ export default function RulesPage() {
     try {
       const { jobId } = await rulesApi.run(accountId!, rule.id);
       notification.success({
-        message: `Règle "${rule.name}" lancée`,
-        description: `Job #${jobId} créé. Suivez la progression dans Jobs.`,
+        message: t('rules.runSuccess', { name: rule.name }),
+        description: t('rules.runJobCreated', { jobId }),
         duration: 5,
       });
       load();
     } catch {
-      messageApi.error("Erreur lors de l'exécution de la règle");
+      messageApi.error(t('rules.runError'));
     } finally {
       setRunningId(null);
     }
@@ -107,9 +109,9 @@ export default function RulesPage() {
     try {
       await rulesApi.delete(accountId!, rule.id);
       setRules((prev) => prev.filter((r) => r.id !== rule.id));
-      messageApi.success("Règle supprimée");
+      messageApi.success(t('rules.deleteSuccess'));
     } catch {
-      messageApi.error("Erreur lors de la suppression");
+      messageApi.error(t('rules.deleteError'));
     }
   };
 
@@ -134,7 +136,7 @@ export default function RulesPage() {
         const data = await rulesApi.getTemplates();
         setTemplates(data);
       } catch {
-        messageApi.error("Erreur lors du chargement des templates");
+        messageApi.error(t('rules.templateLoadError'));
       } finally {
         setTemplateLoading(false);
       }
@@ -145,20 +147,20 @@ export default function RulesPage() {
     if (!accountId) return;
     try {
       await rulesApi.createFromTemplate(accountId, templateId);
-      messageApi.success("Règle créée depuis le template");
+      messageApi.success(t('rules.templateApplied'));
       setTemplateDrawer(false);
       load();
     } catch {
-      messageApi.error("Erreur lors de la création");
+      messageApi.error(t('rules.deleteError'));
     }
   };
 
   const scheduleLabel = (s: string | null) =>
-    SCHEDULE_OPTIONS.find((o) => o.value === s)?.label ?? "Manuel";
+    SCHEDULE_OPTIONS.find((o) => o.value === s)?.label ?? t('ruleLabels.manualOnly');
 
   const columns = [
     {
-      title: "Statut",
+      title: t('rules.status'),
       dataIndex: "is_active",
       width: 80,
       render: (active: boolean, row: Rule) => (
@@ -172,7 +174,7 @@ export default function RulesPage() {
       ),
     },
     {
-      title: "Règle",
+      title: t('rules.rule'),
       render: (_: any, row: Rule) => (
         <Space direction="vertical" size={2}>
           <Text strong>{row.name}</Text>
@@ -185,7 +187,7 @@ export default function RulesPage() {
       ),
     },
     {
-      title: "Conditions",
+      title: t('rules.conditions'),
       dataIndex: "conditions",
       render: (conditions: Rule["conditions"]) => (
         <Space direction="vertical" size={2}>
@@ -204,7 +206,7 @@ export default function RulesPage() {
       ),
     },
     {
-      title: "Action",
+      title: t('rules.action'),
       dataIndex: "action",
       width: 200,
       render: (action: Rule["action"]) => {
@@ -218,7 +220,7 @@ export default function RulesPage() {
       },
     },
     {
-      title: "Planification",
+      title: t('rules.schedule'),
       dataIndex: "schedule",
       width: 150,
       render: (s: string | null, row: Rule) => (
@@ -230,7 +232,7 @@ export default function RulesPage() {
           {row.last_run_at && (
             <Text type="secondary" style={{ fontSize: 11 }}>
               <CheckCircleOutlined style={{ color: "#52c41a" }} />{" "}
-              {dayjs(row.last_run_at).fromNow()}
+              {dayjs(row.last_run_at).locale(i18n.language).fromNow()}
             </Text>
           )}
         </Space>
@@ -241,7 +243,7 @@ export default function RulesPage() {
       width: 130,
       render: (_: any, row: Rule) => (
         <Space size="small">
-          <Tooltip title="Exécuter maintenant">
+          <Tooltip title={t('rules.runNow')}>
             <Button
               size="small"
               type="primary"
@@ -252,7 +254,7 @@ export default function RulesPage() {
               disabled={!row.is_active}
             />
           </Tooltip>
-          <Tooltip title="Modifier">
+          <Tooltip title={t('common.edit')}>
             <Button
               size="small"
               icon={<EditOutlined />}
@@ -260,13 +262,13 @@ export default function RulesPage() {
             />
           </Tooltip>
           <Popconfirm
-            title="Supprimer cette règle ?"
+            title={t('rules.deleteRule') + ' ?'}
             onConfirm={() => handleDelete(row)}
-            okText="Supprimer"
+            okText={t('common.delete')}
             okButtonProps={{ danger: true }}
-            cancelText="Annuler"
+            cancelText={t('common.cancel')}
           >
-            <Tooltip title="Supprimer">
+            <Tooltip title={t('rules.deleteRule')}>
               <Button size="small" danger icon={<DeleteOutlined />} />
             </Tooltip>
           </Popconfirm>
@@ -281,13 +283,13 @@ export default function RulesPage() {
 
       <Space style={{ marginBottom: 16 }} align="center">
         <Title level={3} style={{ margin: 0 }}>
-          🤖 Règles automatiques
+          {t('rules.title')}
         </Title>
         <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-          Nouvelle règle
+          {t('rules.newRule')}
         </Button>
         <Button icon={<AppstoreOutlined />} onClick={openTemplates}>
-          Templates
+          {t('rules.templates')}
         </Button>
       </Space>
 
@@ -299,17 +301,11 @@ export default function RulesPage() {
           borderColor: "#b7eb8f",
         }}
       >
-        <Text style={{ fontSize: 13 }}>
-          Les règles analysent votre boîte Gmail et appliquent des actions
-          automatiquement. Utilisez <strong>Prévisualiser</strong> pour voir
-          combien de mails seront affectés avant de sauvegarder. Les actions
-          bulk sont toujours exécutées via des <strong>jobs asynchrones</strong>
-          .
-        </Text>
+        <Text style={{ fontSize: 13 }} dangerouslySetInnerHTML={{ __html: t('rules.description') }} />
       </Card>
 
       {!accountId ? (
-        <Empty description="Aucun compte Gmail connecté" />
+        <Empty description={t('rules.noAccount')} />
       ) : (
         <Table
           dataSource={rules}
@@ -321,7 +317,7 @@ export default function RulesPage() {
           locale={{
             emptyText: (
               <Empty
-                description="Aucune règle"
+                description={t('rules.noRules')}
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
               >
                 <Button
@@ -329,7 +325,7 @@ export default function RulesPage() {
                   icon={<PlusOutlined />}
                   onClick={openCreate}
                 >
-                  Créer ma première règle
+                  {t('rules.createFirst')}
                 </Button>
               </Empty>
             ),
@@ -347,13 +343,13 @@ export default function RulesPage() {
       />
 
       <Drawer
-        title="📋 Templates de règles"
+        title={t('rules.templateDrawerTitle')}
         open={templateDrawer}
         onClose={() => setTemplateDrawer(false)}
         width={480}
       >
         <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
-          Cliquez sur un template pour créer une règle pré-configurée. Vous pourrez la modifier ensuite.
+          {t('rules.templateHint')}
         </Text>
         <List
           loading={templateLoading}
@@ -378,7 +374,7 @@ export default function RulesPage() {
                   <Space direction="vertical" size={2}>
                     <Text type="secondary" style={{ fontSize: 12 }}>{tpl.description}</Text>
                     <Tag color={tpl.category === 'cleanup' ? 'red' : tpl.category === 'archive' ? 'blue' : 'green'} style={{ fontSize: 10 }}>
-                      {tpl.category === 'cleanup' ? '🧹 Nettoyage' : tpl.category === 'archive' ? '📦 Archivage' : '📁 Organisation'}
+                      {tpl.category === 'cleanup' ? t('rules.categoryCleanup') : tpl.category === 'archive' ? t('rules.categoryArchive') : t('rules.categoryOrganize')}
                     </Tag>
                   </Space>
                 }

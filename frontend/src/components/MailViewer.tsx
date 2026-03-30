@@ -13,6 +13,7 @@ import {
   Image,
 } from "antd";
 import { DownloadOutlined, PaperClipOutlined } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 import { gmailApi } from "../api";
 import { formatBytes } from "../utils/format";
 import dayjs from "dayjs";
@@ -85,6 +86,7 @@ function extractAttachments(payload: any) {
 }
 
 export default function MailViewer({ accountId, messageId, onClose }: Props) {
+  const { t } = useTranslation();
   const [mail, setMail] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -103,7 +105,7 @@ export default function MailViewer({ accountId, messageId, onClose }: Props) {
     gmailApi
       .getMessageFull(accountId, messageId)
       .then(setMail)
-      .catch(() => setError("Impossible de charger ce mail"))
+      .catch(() => setError(t('common.error')))
       .finally(() => setLoading(false));
   }, [accountId, messageId]);
 
@@ -168,7 +170,7 @@ export default function MailViewer({ accountId, messageId, onClose }: Props) {
 
   return (
     <Drawer
-      title={loading ? "Chargement…" : get("Subject") || "(sans sujet)"}
+      title={loading ? t('viewer.loading') : get("Subject") || t('common.noSubject')}
       open={!!messageId}
       onClose={onClose}
       width={740}
@@ -186,15 +188,15 @@ export default function MailViewer({ accountId, messageId, onClose }: Props) {
               style={{ marginBottom: 12, width: "100%" }}
             >
               <Space wrap>
-                <Text strong>De :</Text>
+                <Text strong>{t('viewer.from')}</Text>
                 <Text>{get("From")}</Text>
               </Space>
               <Space wrap>
-                <Text strong>À :</Text>
+                <Text strong>{t('viewer.to')}</Text>
                 <Text type="secondary">{get("To")}</Text>
               </Space>
               <Space>
-                <Text strong>Date :</Text>
+                <Text strong>{t('viewer.date')}</Text>
                 <Text type="secondary">
                   {dayjs(get("Date")).format("DD/MM/YYYY HH:mm")}
                 </Text>
@@ -218,7 +220,7 @@ export default function MailViewer({ accountId, messageId, onClose }: Props) {
             {attachments.length > 0 && (
               <>
                 <Text strong>
-                  <PaperClipOutlined /> Pièces jointes ({attachments.length})
+                  <PaperClipOutlined /> {t('viewer.attachments', { count: attachments.length })}
                 </Text>
 
                 {/* Preview images inline */}
@@ -256,7 +258,7 @@ export default function MailViewer({ accountId, messageId, onClose }: Props) {
                   renderItem={(att) => (
                     <List.Item
                       actions={[
-                        <Tooltip title="Télécharger">
+                        <Tooltip title={t('common.download')}>
                           <Button
                             size="small"
                             icon={<DownloadOutlined />}

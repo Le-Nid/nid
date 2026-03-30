@@ -7,6 +7,7 @@ import {
   CopyOutlined, DeleteOutlined, ReloadOutlined,
 } from '@ant-design/icons'
 import { duplicatesApi } from '../api'
+import { useTranslation } from 'react-i18next'
 import { useAccount } from '../hooks/useAccount'
 import { formatBytes } from '../utils/format'
 
@@ -22,6 +23,7 @@ interface DuplicateGroup {
 }
 
 export default function DuplicatesPage() {
+  const { t } = useTranslation()
   const { accountId } = useAccount()
   const [groups, setGroups] = useState<DuplicateGroup[]>([])
   const [loading, setLoading] = useState(false)
@@ -39,7 +41,7 @@ export default function DuplicatesPage() {
       setTotalDuplicateMails(data.totalDuplicateMails)
       setTotalDuplicateSize(data.totalDuplicateSizeBytes)
     } catch {
-      messageApi.error('Erreur lors de la détection des doublons')
+      messageApi.error(t('duplicates.scanError'))
     } finally {
       setLoading(false)
     }
@@ -54,10 +56,10 @@ export default function DuplicatesPage() {
     setDeletingGroup(key)
     try {
       const result = await duplicatesApi.deleteArchived(accountId!, toDelete)
-      messageApi.success(`${result.deleted} doublons supprimés`)
+      messageApi.success(t('duplicates.deleteSuccess', { count: result.deleted }))
       load()
     } catch {
-      messageApi.error('Erreur lors de la suppression')
+      messageApi.error(t('duplicates.deleteError'))
     } finally {
       setDeletingGroup(null)
     }
@@ -65,33 +67,33 @@ export default function DuplicatesPage() {
 
   const columns = [
     {
-      title: 'Sujet',
+      title: t('duplicates.subject'),
       key: 'subject',
       render: (_: any, row: DuplicateGroup) => (
         <Space direction="vertical" size={0}>
-          <Text strong style={{ fontSize: 13 }}>{row.subject || '(sans sujet)'}</Text>
+          <Text strong style={{ fontSize: 13 }}>{row.subject || t('common.noSubject')}</Text>
           <Text type="secondary" style={{ fontSize: 11 }}>{row.sender}</Text>
         </Space>
       ),
     },
     {
-      title: 'Date',
+      title: t('duplicates.date'),
       key: 'date',
       width: 140,
       render: (_: any, row: DuplicateGroup) => {
-        try { return new Date(row.dateGroup).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) }
+        try { return new Date(row.dateGroup).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) }
         catch { return '-' }
       },
     },
     {
-      title: 'Copies',
+      title: t('duplicates.copies'),
       dataIndex: 'count',
       width: 90,
       sorter: (a: DuplicateGroup, b: DuplicateGroup) => a.count - b.count,
-      render: (v: number) => <Tag color={v > 3 ? 'red' : 'orange'}>{v} copies</Tag>,
+      render: (v: number) => <Tag color={v > 3 ? 'red' : 'orange'}>{t('duplicates.copiesTag', { count: v })}</Tag>,
     },
     {
-      title: 'Taille totale',
+      title: t('duplicates.totalSize'),
       dataIndex: 'totalSizeBytes',
       width: 120,
       sorter: (a: DuplicateGroup, b: DuplicateGroup) => a.totalSizeBytes - b.totalSizeBytes,
@@ -104,12 +106,12 @@ export default function DuplicatesPage() {
         const key = `${row.subject}-${row.sender}-${row.dateGroup}`
         return (
           <Popconfirm
-            title={`Supprimer ${row.count - 1} doublon(s) ?`}
-            description="Le mail le plus récent sera conservé."
+            title={t('duplicates.deleteConfirm', { count: row.count - 1 })}
+            description={t('duplicates.deleteHint')}
             onConfirm={() => handleDeleteDuplicates(row)}
-            okText="Supprimer"
+            okText={t('common.delete')}
             okButtonProps={{ danger: true }}
-            cancelText="Annuler"
+            cancelText={t('common.cancel')}
           >
             <Button
               size="small"
@@ -117,7 +119,7 @@ export default function DuplicatesPage() {
               icon={<DeleteOutlined />}
               loading={deletingGroup === key}
             >
-              Supprimer {row.count - 1}
+              {t('duplicates.deleteCount', { count: row.count - 1 })}
             </Button>
           </Popconfirm>
         )
@@ -130,39 +132,36 @@ export default function DuplicatesPage() {
       {contextHolder}
 
       <Space style={{ marginBottom: 16 }} align="center">
-        <Title level={3} style={{ margin: 0 }}>🔁 Doublons (archives)</Title>
+        <Title level={3} style={{ margin: 0 }}>{t('duplicates.title')}</Title>
         <Button icon={<ReloadOutlined />} onClick={load} loading={loading}>
-          Analyser
+          {t('duplicates.analyze')}
         </Button>
       </Space>
 
       {!accountId ? (
-        <Empty description="Aucun compte Gmail connecté" />
+        <Empty description={t('duplicates.noAccount')} />
       ) : (
         <>
           <Row gutter={16} style={{ marginBottom: 16 }}>
             <Col span={8}>
               <Card size="small">
-                <Statistic title="Groupes de doublons" value={groups.length} prefix={<CopyOutlined />} />
+                <Statistic title={t('duplicates.groups')} value={groups.length} prefix={<CopyOutlined />} />
               </Card>
             </Col>
             <Col span={8}>
               <Card size="small">
-                <Statistic title="Mails en double" value={totalDuplicateMails} />
+                <Statistic title={t('duplicates.duplicateMails')} value={totalDuplicateMails} />
               </Card>
             </Col>
             <Col span={8}>
               <Card size="small">
-                <Statistic title="Espace récupérable" value={formatBytes(totalDuplicateSize)} />
+                <Statistic title={t('duplicates.reclaimableSpace')} value={formatBytes(totalDuplicateSize)} />
               </Card>
             </Col>
           </Row>
 
           <Card size="small" style={{ marginBottom: 16, background: '#fff7e6', borderColor: '#ffd591' }}>
-            <Text style={{ fontSize: 13 }}>
-              Détection basée sur les <strong>archives locales</strong> (même sujet + expéditeur + date).
-              Le mail le plus récent est conservé, les copies sont supprimées de l'index.
-            </Text>
+            <Text style={{ fontSize: 13 }} dangerouslySetInnerHTML={{ __html: t('duplicates.hint') }} />
           </Card>
 
           <Table
@@ -172,7 +171,7 @@ export default function DuplicatesPage() {
             loading={loading}
             size="small"
             pagination={{ pageSize: 50, showTotal: (t) => `${t} groupes de doublons` }}
-            locale={{ emptyText: <Empty description="Aucun doublon détecté dans vos archives" /> }}
+            locale={{ emptyText: <Empty description={t('duplicates.noDuplicates')} /> }}
           />
         </>
       )}

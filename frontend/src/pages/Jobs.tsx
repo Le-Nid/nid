@@ -12,15 +12,16 @@ import {
   Empty,
 } from "antd";
 import { DeleteOutlined, ReloadOutlined, EyeOutlined } from "@ant-design/icons";
+import { useTranslation } from 'react-i18next';
 import { jobsApi } from "../api";
 import { useAccount } from "../hooks/useAccount";
 import JobProgressModal from "../components/JobProgressModal";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/fr";
+import "dayjs/locale/en";
 
 dayjs.extend(relativeTime);
-dayjs.locale("fr");
 
 const { Title, Text } = Typography;
 
@@ -32,22 +33,8 @@ const STATUS_COLOR: Record<string, string> = {
   cancelled: "warning",
 };
 
-const STATUS_LABEL: Record<string, string> = {
-  pending: "En attente",
-  active: "En cours",
-  completed: "Terminé",
-  failed: "Échoué",
-  cancelled: "Annulé",
-};
-
-const TYPE_LABEL: Record<string, string> = {
-  bulk_operation: "Opération bulk",
-  archive_mails: "Archivage NAS",
-  run_rule: "Règle auto",
-  sync_dashboard: "Sync dashboard",
-};
-
 export default function JobsPage() {
+  const { t } = useTranslation();
   const { accountId } = useAccount();
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -111,24 +98,24 @@ export default function JobsPage() {
 
   const columns = [
     {
-      title: "Type",
+      title: t('jobs.type'),
       dataIndex: "type",
       width: 160,
-      render: (t: string) => <Text strong>{TYPE_LABEL[t] ?? t}</Text>,
+      render: (v: string) => <Text strong>{t(`jobs.${v === 'bulk_operation' ? 'bulkOperation' : v === 'archive_mails' ? 'archiveMails' : v === 'run_rule' ? 'runRule' : 'syncDashboard'}`, { defaultValue: v })}</Text>,
     },
     {
-      title: "Statut",
+      title: t('jobs.status'),
       dataIndex: "status",
       width: 120,
       render: (s: string) => (
         <Badge
           status={STATUS_COLOR[s] as any}
-          text={<Text style={{ fontSize: 12 }}>{STATUS_LABEL[s] ?? s}</Text>}
+          text={<Text style={{ fontSize: 12 }}>{t(`jobs.${s}`, { defaultValue: s })}</Text>}
         />
       ),
     },
     {
-      title: "Progression",
+      title: t('jobs.progress'),
       width: 240,
       render: (_: any, record: any) => (
         <Space direction="vertical" size={2} style={{ width: "100%" }}>
@@ -148,7 +135,7 @@ export default function JobsPage() {
       ),
     },
     {
-      title: "Compte",
+      title: t('jobs.account'),
       dataIndex: "gmail_account_id",
       width: 120,
       ellipsis: true,
@@ -159,7 +146,7 @@ export default function JobsPage() {
       ),
     },
     {
-      title: "Créé",
+      title: t('jobs.created'),
       dataIndex: "created_at",
       width: 130,
       render: (d: string) => (
@@ -171,7 +158,7 @@ export default function JobsPage() {
       ),
     },
     {
-      title: "Durée",
+      title: t('jobs.duration'),
       width: 90,
       render: (_: any, record: any) => {
         if (!record.completed_at) return <Text type="secondary">—</Text>;
@@ -183,7 +170,7 @@ export default function JobsPage() {
       },
     },
     {
-      title: "Erreur",
+      title: t('jobs.errorCol'),
       dataIndex: "error",
       ellipsis: true,
       render: (e: string) =>
@@ -233,26 +220,26 @@ export default function JobsPage() {
     <div>
       <Space style={{ marginBottom: 16 }} align="center" wrap>
         <Title level={3} style={{ margin: 0 }}>
-          ⚙️ Jobs
+          {t('jobs.title')}
         </Title>
 
         <Select
           allowClear
-          placeholder="Filtrer par statut"
+          placeholder={t('jobs.filterStatus')}
           style={{ width: 180 }}
           value={statusFilter}
           onChange={setStatusFilter}
           options={[
-            { value: "pending", label: "En attente" },
-            { value: "active", label: "En cours" },
-            { value: "completed", label: "Terminés" },
-            { value: "failed", label: "Échoués" },
-            { value: "cancelled", label: "Annulés" },
+            { value: "pending", label: t('jobs.pending') },
+            { value: "active", label: t('jobs.active') },
+            { value: "completed", label: t('jobs.completed') },
+            { value: "failed", label: t('jobs.failed') },
+            { value: "cancelled", label: t('jobs.cancelled') },
           ]}
         />
 
         <Button icon={<ReloadOutlined />} onClick={load} loading={loading}>
-          Rafraîchir
+          {t('common.refresh')}
         </Button>
 
         {hasActiveJobs && (
@@ -260,7 +247,7 @@ export default function JobsPage() {
             status="processing"
             text={
               <Text type="secondary" style={{ fontSize: 12 }}>
-                Actualisation auto toutes les 5s
+                {t('jobs.autoRefresh')}
               </Text>
             }
           />
@@ -268,7 +255,7 @@ export default function JobsPage() {
       </Space>
 
       {jobs.length === 0 && !loading ? (
-        <Empty description="Aucun job" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        <Empty description={t('jobs.noJobs')} image={Empty.PRESENTED_IMAGE_SIMPLE} />
       ) : (
         <Table
           dataSource={jobs}

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Card, Button, List, Avatar, Tag, Popconfirm, Typography, Alert, Space, Divider, Progress, Descriptions, Table, Input, message, Modal, Form, Select, Switch } from 'antd'
 import { GoogleOutlined, DeleteOutlined, PlusOutlined, CheckCircleOutlined, UserOutlined, HistoryOutlined, LockOutlined, SafetyOutlined, ApiOutlined, DownloadOutlined, UploadOutlined, BellOutlined } from '@ant-design/icons'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import api from '../api/client'
 import { useAuthStore } from '../store/auth.store'
 import { formatBytes } from '../utils/format'
@@ -10,6 +11,7 @@ import { auditApi, twoFactorApi, webhooksApi, configApi, notificationsApi } from
 const { Title, Text } = Typography
 
 export default function SettingsPage() {
+  const { t } = useTranslation()
   const { user, gmailAccounts, fetchMe, storageUsedBytes } = useAuthStore()
   const [searchParams] = useSearchParams()
   const [connecting, setConnecting] = useState(false)
@@ -80,7 +82,7 @@ export default function SettingsPage() {
     } catch {
       // Revert on error
       setNotifPrefs(notifPrefs)
-      message.error('Erreur de sauvegarde')
+      message.error(t('common.error'))
     } finally {
       setNotifPrefsLoading(false)
     }
@@ -96,8 +98,8 @@ export default function SettingsPage() {
       a.download = `gmail-manager-config-${new Date().toISOString().slice(0, 10)}.json`
       a.click()
       URL.revokeObjectURL(url)
-      message.success('Configuration exportée')
-    } catch { message.error('Erreur export') }
+      message.success(t('settings.exportBtn'))
+    } catch { message.error(t('common.error')) }
   }
 
   const handleImport = () => {
@@ -111,9 +113,9 @@ export default function SettingsPage() {
       try {
         const data = JSON.parse(text)
         await configApi.importConfig(data)
-        message.success('Configuration importée')
+        message.success(t('settings.importBtn'))
         fetchMe()
-      } catch { message.error('Fichier invalide') }
+      } catch { message.error(t('common.error')) }
     }
     input.click()
   }
@@ -142,12 +144,12 @@ export default function SettingsPage() {
 
   return (
     <div style={{ maxWidth: 720 }}>
-      <Title level={3}>⚙️ Paramètres</Title>
+      <Title level={3}>{t('settings.title')}</Title>
 
       {gmailStatus === 'connected' && (
         <Alert
           type="success"
-          message={`Compte Gmail connecté : ${connectedEmail}`}
+          message={t('settings.gmailConnected', { email: connectedEmail })}
           icon={<CheckCircleOutlined />}
           showIcon
           closable
@@ -157,7 +159,7 @@ export default function SettingsPage() {
       {gmailStatus === 'error' && (
         <Alert
           type="error"
-          message="Erreur lors de la connexion Gmail. Réessayez."
+          message={t('settings.gmailConnectError')}
           showIcon
           closable
           style={{ marginBottom: 24 }}
@@ -165,18 +167,18 @@ export default function SettingsPage() {
       )}
 
       {/* Profil utilisateur */}
-      <Card title="Profil" style={{ marginBottom: 24 }}>
+      <Card title={t('settings.profile')} style={{ marginBottom: 24 }}>
         <Space size="large" align="start">
           {user?.avatar_url
             ? <Avatar src={user.avatar_url} size={64} />
             : <Avatar icon={<UserOutlined />} size={64} />
           }
           <Descriptions column={1} size="small">
-            <Descriptions.Item label="Email">{user?.email}</Descriptions.Item>
+            <Descriptions.Item label={t('settings.email')}>{user?.email}</Descriptions.Item>
             {user?.display_name && (
-              <Descriptions.Item label="Nom">{user.display_name}</Descriptions.Item>
+              <Descriptions.Item label={t('settings.name')}>{user.display_name}</Descriptions.Item>
             )}
-            <Descriptions.Item label="Rôle">
+            <Descriptions.Item label={t('settings.role')}>
               <Tag color={user?.role === 'admin' ? 'red' : 'blue'}>{user?.role}</Tag>
             </Descriptions.Item>
           </Descriptions>
@@ -185,7 +187,7 @@ export default function SettingsPage() {
         <Divider />
 
         <div>
-          <Text strong>Stockage archives</Text>
+          <Text strong>{t('settings.archiveStorage')}</Text>
           <div style={{ marginTop: 8 }}>
             <Progress
               percent={quotaPercent}
@@ -196,30 +198,30 @@ export default function SettingsPage() {
         </div>
 
         <div style={{ marginTop: 12 }}>
-          <Text strong>Comptes Gmail</Text>
+          <Text strong>{t('settings.gmailAccountsCount')}</Text>
           <Text type="secondary" style={{ marginLeft: 8 }}>
-            {gmailAccounts.length} / {user?.max_gmail_accounts ?? 3}
+            {t('settings.gmailAccountsQuota', { count: gmailAccounts.length, max: user?.max_gmail_accounts ?? 3 })}
           </Text>
         </div>
       </Card>
 
-      <Card title="Comptes Gmail connectés">
+      <Card title={t('settings.gmailAccounts')}>
         <List
           dataSource={gmailAccounts}
-          locale={{ emptyText: 'Aucun compte Gmail connecté' }}
+          locale={{ emptyText: t('settings.noGmailAccount') }}
           renderItem={(account) => (
             <List.Item
               actions={[
                 <Popconfirm
-                  title="Déconnecter ce compte ?"
-                  description="Les archives existantes ne seront pas supprimées."
+                  title={t('settings.disconnectConfirm')}
+                  description={t('settings.disconnectHint')}
                   onConfirm={() => disconnectAccount(account.id)}
-                  okText="Déconnecter"
-                  cancelText="Annuler"
+                  okText={t('settings.disconnect')}
+                  cancelText={t('common.cancel')}
                   okButtonProps={{ danger: true }}
                 >
                   <Button danger icon={<DeleteOutlined />} size="small">
-                    Déconnecter
+                    {t('settings.disconnect')}
                   </Button>
                 </Popconfirm>,
               ]}
@@ -229,7 +231,7 @@ export default function SettingsPage() {
                 title={
                   <Space>
                     {account.email}
-                    {account.is_active && <Tag color="success">Actif</Tag>}
+                    {account.is_active && <Tag color="success">{t('common.active')}</Tag>}
                   </Space>
                 }
               />
@@ -245,38 +247,38 @@ export default function SettingsPage() {
           onClick={connectGmail}
           loading={connecting}
         >
-          Connecter un compte Gmail
+          {t('settings.connectGmail')}
         </Button>
 
         <div style={{ marginTop: 12 }}>
           <Text type="secondary" style={{ fontSize: 12 }}>
-            Scopes requis : gmail.modify, gmail.labels — aucune donnée n'est stockée hors de votre NAS.
+            {t('settings.scopeHint')}
           </Text>
         </div>
       </Card>
 
       {/* 2FA / TOTP */}
-      <Card title={<><SafetyOutlined /> Authentification à deux facteurs (2FA)</>} style={{ marginTop: 24 }}>
+      <Card title={<><SafetyOutlined /> {t('settings.twoFactor')}</>} style={{ marginTop: 24 }}>
         {(user as any)?.totp_enabled ? (
           <>
-            <Alert type="success" message="2FA activé" showIcon style={{ marginBottom: 16 }} />
+            <Alert type="success" message={t('settings.twoFactorEnabled')} showIcon style={{ marginBottom: 16 }} />
             <Space>
               <Input
-                placeholder="Code TOTP"
+                placeholder={t('settings.totpCode')}
                 maxLength={6}
                 value={totpCode}
                 onChange={(e) => setTotpCode(e.target.value)}
                 style={{ width: 140 }}
               />
               <Popconfirm
-                title="Désactiver la 2FA ?"
-                description="Vous devrez fournir un code TOTP valide."
+                title={t('settings.disableTwoFactor') + ' ?'}
+                description={t('settings.disableTwoFactorHint')}
                 onConfirm={async () => {
                   if (totpCode.length !== 6) return
                   setTotpLoading(true)
                   try {
                     await twoFactorApi.disable(totpCode)
-                    message.success('2FA désactivé')
+                    message.success(t('settings.twoFactorDisabled'))
                     setTotpCode('')
                     setTotpSetup(null)
                     fetchMe()
@@ -286,29 +288,29 @@ export default function SettingsPage() {
                     setTotpLoading(false)
                   }
                 }}
-                okText="Désactiver"
-                cancelText="Annuler"
+                okText={t('common.deactivate')}
+                cancelText={t('common.cancel')}
                 okButtonProps={{ danger: true }}
               >
                 <Button danger icon={<LockOutlined />} loading={totpLoading}>
-                  Désactiver la 2FA
+                  {t('settings.disableTwoFactor')}
                 </Button>
               </Popconfirm>
             </Space>
           </>
         ) : totpSetup ? (
           <>
-            <Text>Scannez ce QR code avec votre application d'authentification (Google Authenticator, Authy, etc.) :</Text>
+            <Text>{t('settings.twoFactorQrHint')}</Text>
             <div style={{ textAlign: 'center', margin: '16px 0' }}>
               <img src={totpSetup.qrDataUrl} alt="QR Code TOTP" style={{ maxWidth: 200 }} />
             </div>
             <Text type="secondary" style={{ fontSize: 12 }}>
-              Clé manuelle : <code>{totpSetup.secret}</code>
+              {t('settings.manualKey')} <code>{totpSetup.secret}</code>
             </Text>
             <Divider />
             <Space>
               <Input
-                placeholder="Code à 6 chiffres"
+                placeholder={t('settings.sixDigitCode')}
                 maxLength={6}
                 value={totpCode}
                 onChange={(e) => setTotpCode(e.target.value)}
@@ -323,25 +325,25 @@ export default function SettingsPage() {
                   setTotpLoading(true)
                   try {
                     await twoFactorApi.enable(totpCode)
-                    message.success('2FA activé avec succès !')
+                    message.success(t('settings.twoFactorSuccess'))
                     setTotpSetup(null)
                     setTotpCode('')
                     fetchMe()
                   } catch (e: any) {
-                    message.error(e.response?.data?.error || 'Code invalide')
+                    message.error(e.response?.data?.error || t('settings.invalidCode'))
                   } finally {
                     setTotpLoading(false)
                   }
                 }}
               >
-                Vérifier et activer
+                {t('settings.verifyAndActivate')}
               </Button>
-              <Button onClick={() => { setTotpSetup(null); setTotpCode('') }}>Annuler</Button>
+              <Button onClick={() => { setTotpSetup(null); setTotpCode('') }}>{t('common.cancel')}</Button>
             </Space>
           </>
         ) : (
           <>
-            <Text>Protégez votre compte avec un code TOTP généré par une application d'authentification.</Text>
+            <Text>{t('settings.twoFactorSetupHint')}</Text>
             <div style={{ marginTop: 16 }}>
               <Button
                 type="primary"
@@ -359,7 +361,7 @@ export default function SettingsPage() {
                   }
                 }}
               >
-                Configurer la 2FA
+                {t('settings.setupTwoFactor')}
               </Button>
             </div>
           </>
@@ -367,24 +369,24 @@ export default function SettingsPage() {
       </Card>
 
       {/* Notification Preferences */}
-      <Card title={<><BellOutlined /> Préférences de notifications</>} style={{ marginTop: 24 }}>
+      <Card title={<><BellOutlined /> {t('settings.notificationPrefs')}</>} style={{ marginTop: 24 }}>
         <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
-          Choisissez les notifications que vous souhaitez recevoir et par quel canal.
+          {t('settings.notificationPrefsHint')}
         </Text>
         <Table
           dataSource={[
-            { key: 'weekly_report', label: 'Rapport hebdomadaire', desc: 'Résumé d\'activité chaque lundi', webhookEvent: null },
-            { key: 'job_completed', label: 'Job terminé', desc: 'Quand un job (bulk, archivage, règle) se termine', webhookEvent: 'job.completed' },
-            { key: 'job_failed', label: 'Job en échec', desc: 'Quand un job échoue', webhookEvent: 'job.failed' },
-            { key: 'rule_executed', label: 'Règle exécutée', desc: 'Quand une règle automatique s\'exécute', webhookEvent: 'rule.executed' },
-            { key: 'quota_warning', label: 'Alerte quota', desc: 'Quand le stockage approche la limite', webhookEvent: 'quota.warning' },
-            { key: 'integrity_alert', label: 'Alerte intégrité', desc: 'Problème détecté dans les archives', webhookEvent: 'integrity.failed' },
+            { key: 'weekly_report', label: t('settings.weeklyReport'), desc: t('settings.weeklyReportDesc'), webhookEvent: null },
+            { key: 'job_completed', label: t('settings.jobCompleted'), desc: t('settings.jobCompletedDesc'), webhookEvent: 'job.completed' },
+            { key: 'job_failed', label: t('settings.jobFailed'), desc: t('settings.jobFailedDesc'), webhookEvent: 'job.failed' },
+            { key: 'rule_executed', label: t('settings.ruleExecuted'), desc: t('settings.ruleExecutedDesc'), webhookEvent: 'rule.executed' },
+            { key: 'quota_warning', label: t('settings.quotaWarning'), desc: t('settings.quotaWarningDesc'), webhookEvent: 'quota.warning' },
+            { key: 'integrity_alert', label: t('settings.integrityAlert'), desc: t('settings.integrityAlertDesc'), webhookEvent: 'integrity.failed' },
           ]}
           pagination={false}
           size="small"
           columns={[
             {
-              title: 'Notification',
+              title: t('settings.notification'),
               dataIndex: 'label',
               render: (_: any, row: any) => (
                 <div>
@@ -395,7 +397,7 @@ export default function SettingsPage() {
               ),
             },
             {
-              title: '🔔 In-app',
+              title: t('settings.inApp'),
               width: 90,
               align: 'center' as const,
               render: (_: any, row: any) => (
@@ -408,7 +410,7 @@ export default function SettingsPage() {
               ),
             },
             {
-              title: '💬 Toast',
+              title: t('settings.toast'),
               width: 90,
               align: 'center' as const,
               render: (_: any, row: any) => (
@@ -421,7 +423,7 @@ export default function SettingsPage() {
               ),
             },
             {
-              title: '🔗 Webhook',
+              title: t('settings.webhook'),
               width: 100,
               align: 'center' as const,
               render: (_: any, row: any) => {
@@ -435,19 +437,19 @@ export default function SettingsPage() {
           ]}
         />
         <Text type="secondary" style={{ fontSize: 11, marginTop: 8, display: 'block' }}>
-          🔔 In-app = cloche dans le header · 💬 Toast = pop-up temporaire · 🔗 Webhook = push vers Discord, Slack, Ntfy, etc. (configurer ci-dessous)
+          {t('settings.channelHint')}
         </Text>
       </Card>
 
       {/* Webhooks */}
-      <Card title={<><ApiOutlined /> Webhooks</>} style={{ marginTop: 24 }}>
+      <Card title={<><ApiOutlined /> {t('settings.webhooks')}</>} style={{ marginTop: 24 }}>
         <List
           dataSource={webhooks}
-          locale={{ emptyText: 'Aucun webhook configuré' }}
+          locale={{ emptyText: t('settings.noWebhook') }}
           renderItem={(wh: any) => (
             <List.Item actions={[
               <Switch size="small" checked={wh.is_active} onChange={() => webhooksApi.toggle(wh.id).then(fetchWebhooks)} />,
-              <Button size="small" onClick={async () => { await webhooksApi.test(wh.id); message.success('Test envoyé') }}>Test</Button>,
+              <Button size="small" onClick={async () => { await webhooksApi.test(wh.id); message.success(t('settings.testSent')) }}>{t('common.test')}</Button>,
               <Popconfirm title="Supprimer ce webhook ?" onConfirm={() => webhooksApi.remove(wh.id).then(fetchWebhooks)}>
                 <Button danger size="small" icon={<DeleteOutlined />} />
               </Popconfirm>,
@@ -461,27 +463,27 @@ export default function SettingsPage() {
         />
         <Divider />
         <Button icon={<PlusOutlined />} onClick={() => { webhookForm.resetFields(); setWebhookModal(true) }}>
-          Ajouter un webhook
+          {t('settings.newWebhook')}
         </Button>
         <Modal
-          title="Nouveau webhook"
+          title={t('settings.newWebhook')}
           open={webhookModal}
           onCancel={() => setWebhookModal(false)}
           onOk={() => webhookForm.validateFields().then(async (vals) => {
             await webhooksApi.create(vals)
             setWebhookModal(false)
             fetchWebhooks()
-            message.success('Webhook créé')
+            message.success(t('settings.webhookCreated'))
           })}
         >
           <Form form={webhookForm} layout="vertical">
-            <Form.Item name="name" label="Nom" rules={[{ required: true }]}>
+            <Form.Item name="name" label={t('settings.webhookName')} rules={[{ required: true }]}>
               <Input placeholder="Mon webhook Discord" />
             </Form.Item>
-            <Form.Item name="url" label="URL" rules={[{ required: true, type: 'url' }]}>
+            <Form.Item name="url" label={t('settings.webhookUrl')} rules={[{ required: true, type: 'url' }]}>
               <Input placeholder="https://discord.com/api/webhooks/..." />
             </Form.Item>
-            <Form.Item name="type" label="Type" initialValue="generic">
+            <Form.Item name="type" label={t('settings.webhookType')} initialValue="generic">
               <Select options={[
                 { value: 'generic', label: 'Générique (HMAC)' },
                 { value: 'discord', label: 'Discord' },
@@ -489,13 +491,13 @@ export default function SettingsPage() {
                 { value: 'ntfy', label: 'Ntfy' },
               ]} />
             </Form.Item>
-            <Form.Item name="events" label="Événements" rules={[{ required: true }]}>
-              <Select mode="multiple" placeholder="Sélectionner les événements" options={[
-                { value: 'job.completed', label: 'Job terminé' },
-                { value: 'job.failed', label: 'Job échoué' },
-                { value: 'rule.executed', label: 'Règle exécutée' },
-                { value: 'quota.warning', label: 'Alerte quota' },
-                { value: 'integrity.failed', label: 'Intégrité échouée' },
+            <Form.Item name="events" label={t('settings.webhookEvents')} rules={[{ required: true }]}>
+              <Select mode="multiple" placeholder={t('settings.webhookSelectEvents')} options={[
+                { value: 'job.completed', label: t('settings.jobCompleted') },
+                { value: 'job.failed', label: t('settings.jobFailed') },
+                { value: 'rule.executed', label: t('settings.ruleExecuted') },
+                { value: 'quota.warning', label: t('settings.quotaWarning') },
+                { value: 'integrity.failed', label: t('settings.integrityAlert') },
               ]} />
             </Form.Item>
           </Form>
@@ -503,18 +505,18 @@ export default function SettingsPage() {
       </Card>
 
       {/* Export / Import */}
-      <Card title="Export / Import de configuration" style={{ marginTop: 24 }}>
-        <Text>Exportez vos règles et webhooks en JSON, ou importez une configuration existante.</Text>
+      <Card title={t('settings.exportConfig')} style={{ marginTop: 24 }}>
+        <Text>{t('settings.exportHint')}</Text>
         <div style={{ marginTop: 16 }}>
           <Space>
-            <Button icon={<DownloadOutlined />} onClick={handleExport}>Exporter</Button>
-            <Button icon={<UploadOutlined />} onClick={handleImport}>Importer</Button>
+            <Button icon={<DownloadOutlined />} onClick={handleExport}>{t('settings.exportBtn')}</Button>
+            <Button icon={<UploadOutlined />} onClick={handleImport}>{t('settings.importBtn')}</Button>
           </Space>
         </div>
       </Card>
 
       {/* Audit log */}
-      <Card title={<><HistoryOutlined /> Journal d'activité</>} style={{ marginTop: 24 }}>
+      <Card title={<><HistoryOutlined /> {t('settings.auditLog')}</>} style={{ marginTop: 24 }}>
         <Table
           dataSource={auditLogs}
           rowKey="id"
@@ -529,25 +531,25 @@ export default function SettingsPage() {
           }}
           columns={[
             {
-              title: 'Date',
+              title: t('settings.auditDate'),
               dataIndex: 'created_at',
               width: 170,
               render: (v: string) => new Date(v).toLocaleString('fr-FR'),
             },
             {
-              title: 'Action',
+              title: t('settings.auditAction'),
               dataIndex: 'action',
               width: 180,
               render: (v: string) => <Tag>{v}</Tag>,
             },
             {
-              title: 'Cible',
+              title: t('settings.auditTarget'),
               dataIndex: 'target_type',
               width: 120,
               render: (v: string, row: any) => v ? `${v} ${row.target_id ? '#' + row.target_id.slice(0, 8) : ''}` : '—',
             },
             {
-              title: 'Détails',
+              title: t('settings.auditDetails'),
               dataIndex: 'details',
               render: (v: any) => v ? <Text type="secondary" style={{ fontSize: 12 }}>{JSON.stringify(v)}</Text> : '—',
             },

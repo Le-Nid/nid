@@ -4,7 +4,7 @@
 
 ```mermaid
 graph TB
-    subgraph Frontend["Frontend (React 19 + Ant Design)"]
+    subgraph Frontend["Frontend (React 19 + Ant Design + i18n)"]
         UI[Interface web :3000]
     end
 
@@ -49,9 +49,9 @@ sequenceDiagram
     API->>Queue: enqueueJob("bulk_operation", payload)
     API-->>UI: 202 Accepted {jobId}
     
-    loop Poll toutes les 3s
-        UI->>API: GET /api/jobs/:jobId
-        API-->>UI: {status, progress, processed/total}
+    UI->>API: GET /api/jobs/events (SSE)
+    loop Événements temps réel
+        API-->>UI: SSE {jobId, status, progress, processed/total}
     end
 
     Queue->>Worker: Job dépilé
