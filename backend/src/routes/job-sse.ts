@@ -31,12 +31,14 @@ export async function jobSseRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const { jobId } = request.params as { jobId: string };
       const db = getDb();
+      const { sub: userId } = request.user as { sub: string };
 
-      // Vérifier que le job existe
+      // Vérifier que le job existe et appartient au user
       const job = await db
         .selectFrom("jobs")
         .select(["id", "status"])
         .where("id", "=", jobId)
+        .where("user_id", "=", userId)
         .executeTakeFirst();
       if (!job) return reply.code(404).send({ error: "Job not found" });
 

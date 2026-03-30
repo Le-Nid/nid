@@ -52,4 +52,31 @@ export async function registerPlugins(app: FastifyInstance) {
       reply.code(401).send({ error: 'Unauthorized' })
     }
   })
+
+  // Vérifie que l'accountId dans les params appartient au user authentifié
+  app.decorate('requireAccountOwnership', async function (request: any, reply: any) {
+    const { sub: userId } = request.user as { sub: string }
+    const { accountId } = request.params as { accountId: string }
+    if (!accountId) return // pas d'accountId dans cette route
+
+    const { db: database } = app
+    const account = await database
+      .selectFrom('gmail_accounts')
+      .select('id')
+      .where('id', '=', accountId)
+      .where('user_id', '=', userId)
+      .executeTakeFirst()
+
+    if (!account) {
+      return reply.code(403).send({ error: 'Forbidden: account does not belong to you' })
+    }
+  })
+
+  // Vérifie que l'utilisateur authentifié est admin
+  app.decorate('requireAdmin', async function (request: any, reply: any) {
+    const { role } = request.user as { role: string }
+    if (role !== 'admin') {
+      return reply.code(403).send({ error: 'Admin access required' })
+    }
+  })
 }

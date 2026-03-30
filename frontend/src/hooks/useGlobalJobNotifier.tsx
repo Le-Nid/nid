@@ -1,7 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { notification } from "antd";
 import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
-import { jobsApi } from "../api";
+import { jobsApi, notificationsApi } from "../api";
 import { useAccount } from "./useAccount";
 
 const TYPE_LABELS: Record<string, string> = {
@@ -14,12 +14,20 @@ const TYPE_LABELS: Record<string, string> = {
 /**
  * Lance un poll léger (5s) sur les jobs actifs du compte courant.
  * Quand un job passe à completed/failed, affiche une notification Ant Design.
+ * Respecte la préférence `toast_enabled` de l'utilisateur.
  * Doit être monté une seule fois dans AppLayout.
  */
 export function useGlobalJobNotifier() {
   const { accountId } = useAccount();
-  // Garde en mémoire les statuts connus pour détecter les transitions
   const knownStates = useRef<Map<string, string>>(new Map());
+  const [prefs, setPrefs] = useState<Record<string, boolean>>({});
+
+  // Load toast preferences once
+  useEffect(() => {
+    notificationsApi.getPreferences()
+      .then((p) => setPrefs(p))
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (!accountId) return;
@@ -32,8 +40,7 @@ export function useGlobalJobNotifier() {
           const prev = knownStates.current.get(job.id);
           const curr = job.status;
 
-          // Transition active/pending → completed
-          if (prev && prev !== "completed" && curr === "completed") {
+          if (prev && prev !== "completed" && curr === "completed" && prefs.job_completed_toast !== false) {
             notification.success({
               key: `job-${job.id}`,
               message: `${TYPE_LABELS[job.type] ?? job.type} terminé`,
@@ -43,8 +50,7 @@ export function useGlobalJobNotifier() {
             });
           }
 
-          // Transition → failed
-          if (prev && prev !== "failed" && curr === "failed") {
+          if (prev && prev !== "failed" && curr === "failed" && prefs.job_failed_toast !== false) {
             notification.error({
               key: `job-${job.id}`,
               message: `${TYPE_LABELS[job.type] ?? job.type} échoué`,

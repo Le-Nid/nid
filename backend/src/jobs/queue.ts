@@ -7,9 +7,14 @@ export type JobType =
   | 'archive_mails'
   | 'run_rule'
   | 'sync_dashboard'
+  | 'scan_unsubscribe'
+  | 'scan_attachments'
+  | 'generate_report'
+  | 'integrity_check'
 
 export interface JobPayload {
   accountId: string
+  userId?: string
   [key: string]: unknown
 }
 

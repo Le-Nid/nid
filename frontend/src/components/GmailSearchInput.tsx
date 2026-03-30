@@ -1,37 +1,35 @@
 import { useState } from "react";
 import { AutoComplete, Input } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 
-// Opérateurs Gmail natifs avec description
-const OPERATOR_SUGGESTIONS = [
-  { value: "from:", label: "from: — Expéditeur" },
-  { value: "to:", label: "to: — Destinataire" },
-  { value: "subject:", label: "subject: — Sujet" },
-  { value: "has:attachment", label: "has:attachment — Avec pièce jointe" },
-  { value: "has:drive", label: "has:drive — Avec Google Drive" },
-  { value: "larger:", label: "larger: — Plus grand que (ex: larger:5m)" },
-  { value: "smaller:", label: "smaller: — Plus petit que" },
-  {
-    value: "older_than:",
-    label: "older_than: — Plus vieux que (ex: 1y, 6m, 30d)",
-  },
-  { value: "newer_than:", label: "newer_than: — Plus récent que" },
-  { value: "in:inbox", label: "in:inbox — Dans la boîte de réception" },
-  { value: "in:spam", label: "in:spam — Dans le spam" },
-  { value: "in:trash", label: "in:trash — Dans la corbeille" },
-  { value: "in:sent", label: "in:sent — Envoyés" },
-  { value: "is:unread", label: "is:unread — Non lus" },
-  { value: "is:read", label: "is:read — Lus" },
-  { value: "is:starred", label: "is:starred — Suivis" },
-  { value: "is:important", label: "is:important — Importants" },
-  { value: "label:", label: "label: — Par label" },
-  { value: "category:promotions", label: "category:promotions — Promotions" },
-  { value: "category:social", label: "category:social — Réseaux sociaux" },
-  { value: "category:updates", label: "category:updates — Mises à jour" },
-  { value: "category:forums", label: "category:forums — Forums" },
-  { value: "filename:", label: "filename: — Nom de pièce jointe" },
-  { value: "after:", label: "after: — Après date (ex: after:2024/01/01)" },
-  { value: "before:", label: "before: — Avant date" },
+// Operator keys mapped to translation keys and values
+const OPERATOR_KEYS = [
+  { value: "from:", key: "from" },
+  { value: "to:", key: "to" },
+  { value: "subject:", key: "subject" },
+  { value: "has:attachment", key: "hasAttachment" },
+  { value: "has:drive", key: "hasDrive" },
+  { value: "larger:", key: "larger" },
+  { value: "smaller:", key: "smaller" },
+  { value: "older_than:", key: "olderThan" },
+  { value: "newer_than:", key: "newerThan" },
+  { value: "in:inbox", key: "inInbox" },
+  { value: "in:spam", key: "inSpam" },
+  { value: "in:trash", key: "inTrash" },
+  { value: "in:sent", key: "inSent" },
+  { value: "is:unread", key: "isUnread" },
+  { value: "is:read", key: "isRead" },
+  { value: "is:starred", key: "isStarred" },
+  { value: "is:important", key: "isImportant" },
+  { value: "label:", key: "label" },
+  { value: "category:promotions", key: "promotions" },
+  { value: "category:social", key: "social" },
+  { value: "category:updates", key: "updates" },
+  { value: "category:forums", key: "forums" },
+  { value: "filename:", key: "filename" },
+  { value: "after:", key: "after" },
+  { value: "before:", key: "before" },
 ];
 
 interface Props {
@@ -49,9 +47,15 @@ export default function GmailSearchInput({
   placeholder,
   style,
 }: Props) {
+  const { t } = useTranslation();
   const [options, setOptions] = useState<{ value: string; label: string }[]>(
     [],
   );
+
+  const operatorSuggestions = OPERATOR_KEYS.map((op) => ({
+    value: op.value,
+    label: `${op.value} — ${t('operators.' + op.key)}`,
+  }));
 
   const handleSearch = (input: string) => {
     // Extraire le dernier token (après le dernier espace)
@@ -63,7 +67,7 @@ export default function GmailSearchInput({
       return;
     }
 
-    const matches = OPERATOR_SUGGESTIONS.filter(
+    const matches = operatorSuggestions.filter(
       (op) =>
         op.value.toLowerCase().startsWith(lastToken) ||
         op.label.toLowerCase().includes(lastToken),

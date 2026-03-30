@@ -9,11 +9,21 @@ export type JsonbValue = ColumnType<unknown, string, string>
 // ─── Tables ───────────────────────────────────────────────
 
 export interface UsersTable {
-  id:            Generated<string>
-  email:         string
-  password_hash: string
-  created_at:    Generated<Date>
-  updated_at:    Generated<Date>
+  id:                  Generated<string>
+  email:               string
+  password_hash:       string | null
+  role:                Generated<string>   // 'admin' | 'user'
+  display_name:        string | null
+  avatar_url:          string | null
+  google_id:           string | null
+  is_active:           Generated<boolean>
+  max_gmail_accounts:  Generated<number>
+  storage_quota_bytes: Generated<bigint>   // 5 Go par défaut
+  totp_secret:         string | null
+  totp_enabled:        Generated<boolean>
+  last_login_at:       Date | null
+  created_at:          Generated<Date>
+  updated_at:          Generated<Date>
 }
 
 export interface GmailAccountsTable {
@@ -81,10 +91,65 @@ export interface JobsTable {
   total:            Generated<number>
   processed:        Generated<number>
   gmail_account_id: string | null
+  user_id:          string | null
   payload:          ColumnType<unknown, string, string>
   error:            string | null
   created_at:       Generated<Date>
   completed_at:     Date | null
+}
+
+export interface NotificationsTable {
+  id:         Generated<string>
+  user_id:    string
+  type:       string
+  title:      string
+  body:       string | null
+  data:       ColumnType<unknown, string, string> | null
+  is_read:    Generated<boolean>
+  created_at: Generated<Date>
+}
+
+export interface AuditLogsTable {
+  id:          Generated<string>
+  user_id:     string
+  action:      string
+  target_type: string | null
+  target_id:   string | null
+  details:     ColumnType<unknown, string, string> | null
+  ip_address:  string | null
+  created_at:  Generated<Date>
+}
+
+export interface WebhooksTable {
+  id:                Generated<string>
+  user_id:           string
+  name:              string
+  url:               string
+  type:              Generated<string>   // 'generic' | 'discord' | 'slack' | 'ntfy'
+  events:            string[]
+  is_active:         Generated<boolean>
+  secret:            string | null
+  last_triggered_at: Date | null
+  last_status:       number | null
+  created_at:        Generated<Date>
+}
+
+export interface NotificationPreferencesTable {
+  id:              Generated<string>
+  user_id:         string
+  weekly_report:   Generated<boolean>
+  job_completed:   Generated<boolean>
+  job_failed:      Generated<boolean>
+  rule_executed:   Generated<boolean>
+  quota_warning:   Generated<boolean>
+  integrity_alert: Generated<boolean>
+  weekly_report_toast:   Generated<boolean>
+  job_completed_toast:   Generated<boolean>
+  job_failed_toast:      Generated<boolean>
+  rule_executed_toast:   Generated<boolean>
+  quota_warning_toast:   Generated<boolean>
+  integrity_alert_toast: Generated<boolean>
+  updated_at:      Generated<Date>
 }
 
 // ─── Database interface ───────────────────────────────────
@@ -96,6 +161,10 @@ export interface Database {
   archived_attachments: ArchivedAttachmentsTable
   rules:                RulesTable
   jobs:                 JobsTable
+  notifications:        NotificationsTable
+  audit_logs:           AuditLogsTable
+  webhooks:             WebhooksTable
+  notification_preferences: NotificationPreferencesTable
 }
 
 // ─── Row types (Selectable = what you get back from SELECT) ─
@@ -106,6 +175,9 @@ export type ArchivedMail       = Selectable<ArchivedMailsTable>
 export type ArchivedAttachment = Selectable<ArchivedAttachmentsTable>
 export type Rule               = Selectable<RulesTable>
 export type Job                = Selectable<JobsTable>
+export type Notification       = Selectable<NotificationsTable>
+export type AuditLog           = Selectable<AuditLogsTable>
+export type Webhook            = Selectable<WebhooksTable>
 
 export type NewUser               = Insertable<UsersTable>
 export type NewGmailAccount       = Insertable<GmailAccountsTable>
@@ -113,3 +185,7 @@ export type NewArchivedMail       = Insertable<ArchivedMailsTable>
 export type NewArchivedAttachment = Insertable<ArchivedAttachmentsTable>
 export type NewRule               = Insertable<RulesTable>
 export type NewJob                = Insertable<JobsTable>
+export type NewNotification       = Insertable<NotificationsTable>
+export type NewAuditLog           = Insertable<AuditLogsTable>
+export type NewWebhook            = Insertable<WebhooksTable>
+export type NotificationPreference = Selectable<NotificationPreferencesTable>

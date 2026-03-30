@@ -97,6 +97,8 @@ export function buildGmailQuery(conditions: RuleCondition[]): string {
         break
       case 'size_gt': parts.push(`larger:${cond.value}`);  break
       case 'size_lt': parts.push(`smaller:${cond.value}`); break
+      case 'older_than': parts.push(`older_than:${cond.value}`); break
+      case 'newer_than': parts.push(`newer_than:${cond.value}`); break
       case 'label':
         if (cond.operator === 'equals')     parts.push(`label:${cond.value}`)
         else if (cond.operator === 'not_equals') parts.push(`-label:${cond.value}`)

@@ -5,9 +5,10 @@ import {
   listLabels, createLabel, deleteLabel, getMailboxProfile
 } from '../gmail/gmail.service'
 import { enqueueJob } from '../jobs/queue'
+import { logAudit } from '../audit/audit.service'
 
 export async function gmailRoutes(app: FastifyInstance) {
-  const auth = { preHandler: [app.authenticate] }
+  const auth = { preHandler: [app.authenticate, app.requireAccountOwnership] }
 
   // ─── Profile ──────────────────────────────────────────
   app.get('/:accountId/profile', auth, async (request) => {
@@ -37,6 +38,7 @@ export async function gmailRoutes(app: FastifyInstance) {
   // ─── Bulk operations (async via BullMQ) ───────────────
   app.post('/:accountId/messages/bulk', auth, async (request, reply) => {
     const { accountId } = request.params as { accountId: string }
+    const { sub: userId } = request.user as { sub: string }
     const { action, messageIds, labelId } = request.body as {
       action: 'trash' | 'delete' | 'label' | 'unlabel' | 'mark_read' | 'mark_unread' | 'archive'
       messageIds: string[]
@@ -47,9 +49,15 @@ export async function gmailRoutes(app: FastifyInstance) {
 
     const job = await enqueueJob('bulk_operation', {
       accountId,
+      userId,
       action,
       messageIds,
       labelId,
+    })
+
+    await logAudit(userId, `bulk.${action === 'trash' ? 'trash' : action === 'delete' ? 'delete' : action === 'archive' ? 'archive' : 'label'}` as any, {
+      targetType: 'messages', targetId: accountId,
+      details: { action, count: messageIds.length, jobId: job.id },
     })
 
     return reply.code(202).send({ jobId: job.id, message: 'Job enqueued' })

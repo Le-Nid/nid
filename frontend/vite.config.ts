@@ -20,12 +20,31 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        // Découper antd + charts dans des chunks séparés
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'antd-vendor':  ['antd', '@ant-design/icons'],
-          'charts':       ['@ant-design/charts'],
-          'utils':        ['axios', 'dayjs', 'zustand'],
+        // Vite 8 (Rolldown) attend une fonction ici.
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined
+
+          if (
+            id.includes('/react/') ||
+            id.includes('/react-dom/') ||
+            id.includes('/react-router-dom/')
+          ) {
+            return 'react-vendor'
+          }
+
+          if (id.includes('/antd/') || id.includes('/@ant-design/icons/')) {
+            return 'antd-vendor'
+          }
+
+          if (id.includes('/@ant-design/charts/') || id.includes('/@antv/')) {
+            return 'charts'
+          }
+
+          if (id.includes('/axios/') || id.includes('/dayjs/') || id.includes('/zustand/')) {
+            return 'utils'
+          }
+
+          return undefined
         },
       },
     },

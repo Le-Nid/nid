@@ -4,7 +4,7 @@ import { listMessages, batchGetMessages, getMailboxProfile } from '../gmail/gmai
 import { getCachedStats, setCachedStats, getCachedArchiveStats, setCachedArchiveStats } from '../dashboard/cache.service'
 
 export async function dashboardRoutes(app: FastifyInstance) {
-  const auth = { preHandler: [app.authenticate] }
+  const auth = { preHandler: [app.authenticate, app.requireAccountOwnership] }
 
   app.get('/:accountId/stats', auth, async (request) => {
     const { accountId } = request.params as { accountId: string }

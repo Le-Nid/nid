@@ -8,6 +8,7 @@ import {
   ReloadOutlined, WarningOutlined
 } from '@ant-design/icons'
 import { Bar, Pie, Line } from '@ant-design/charts'
+import { useTranslation } from 'react-i18next'
 import { useAccount } from '../hooks/useAccount'
 import { dashboardApi } from '../api'
 import { formatBytes, formatSender } from '../utils/format'
@@ -26,15 +27,8 @@ interface DashboardStats {
   profile: { emailAddress: string; messagesTotal: number }
 }
 
-const LABEL_NAMES: Record<string, string> = {
-  INBOX: 'Boîte de réception', UNREAD: 'Non lus', SENT: 'Envoyés',
-  DRAFT: 'Brouillons', SPAM: 'Spam', TRASH: 'Corbeille',
-  STARRED: 'Suivis', IMPORTANT: 'Importants',
-  CATEGORY_PROMOTIONS: 'Promotions', CATEGORY_SOCIAL: 'Réseaux sociaux',
-  CATEGORY_UPDATES: 'Mises à jour', CATEGORY_FORUMS: 'Forums',
-}
-
 export default function DashboardPage() {
+  const { t } = useTranslation()
   const { accountId, account } = useAccount()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [archiveStats, setArchiveStats] = useState<any>(null)
@@ -51,7 +45,7 @@ export default function DashboardPage() {
       ])
       setStats(s); setArchiveStats(a)
     } catch (e: any) {
-      setError(e.response?.data?.error ?? 'Erreur lors du chargement')
+      setError(e.response?.data?.error ?? t('dashboard.loadError'))
     } finally { setLoading(false) }
   }, [accountId])
 
@@ -60,7 +54,7 @@ export default function DashboardPage() {
   if (!accountId) {
     return (
       <Empty
-        description={<span>Aucun compte Gmail connecté. <a href="/settings">Connecter un compte</a></span>}
+        description={<span>{t('dashboard.noAccount')} <a href="/settings">{t('dashboard.connectAccount')}</a></span>}
       />
     )
   }
@@ -101,41 +95,41 @@ export default function DashboardPage() {
     point: { size: 3, fill: '#1677ff' },
     height: 200,
     axis: { x: { labelFormatter: (v: string) => dayjs(v + '-01').format('MMM YY') } },
-    tooltip: { items: [{ field: 'count', name: 'Mails' }] },
+    tooltip: { items: [{ field: 'count', name: t('dashboard.mails') }] },
   }
 
   const labelPieConfig = {
     data: (stats?.byLabel ?? [])
       .filter((l) => !['UNREAD', 'STARRED', 'IMPORTANT'].includes(l.label))
       .slice(0, 8)
-      .map((l) => ({ label: LABEL_NAMES[l.label] ?? l.label, count: l.count })),
+      .map((l) => ({ label: t(`labels.${l.label}`, { defaultValue: l.label }), count: l.count })),
     angleField: 'count', colorField: 'label',
     radius: 0.8, innerRadius: 0.55,
     height: 220,
     legend: { position: 'right' as const },
     label: false as any,
-    tooltip: { items: [{ field: 'count', name: 'Mails' }] },
+    tooltip: { items: [{ field: 'count', name: t('dashboard.mails') }] },
   }
 
   const biggestMailsColumns = [
     {
-      title: 'Expéditeur', dataIndex: 'from', ellipsis: true, width: 170,
+      title: t('dashboard.sender'), dataIndex: 'from', ellipsis: true, width: 170,
       render: (v: string) => (
         <Tooltip title={v}><Text style={{ fontSize: 12 }}>{formatSender(v)}</Text></Tooltip>
       ),
     },
     {
-      title: 'Sujet', dataIndex: 'subject', ellipsis: true,
-      render: (v: string) => <Text style={{ fontSize: 12 }}>{v || '(sans sujet)'}</Text>,
+      title: t('dashboard.subject'), dataIndex: 'subject', ellipsis: true,
+      render: (v: string) => <Text style={{ fontSize: 12 }}>{v || t('common.noSubject')}</Text>,
     },
     {
-      title: 'Taille', dataIndex: 'sizeEstimate', width: 90,
+      title: t('dashboard.size'), dataIndex: 'sizeEstimate', width: 90,
       sorter: (a: any, b: any) => a.sizeEstimate - b.sizeEstimate,
       defaultSortOrder: 'descend' as const,
       render: (v: number) => <Tag color="orange">{formatBytes(v)}</Tag>,
     },
     {
-      title: 'Date', dataIndex: 'date', width: 100,
+      title: t('dashboard.date'), dataIndex: 'date', width: 100,
       render: (v: string) => (
         <Text type="secondary" style={{ fontSize: 12 }}>
           {v ? dayjs(v).format('DD/MM/YY') : '—'}
@@ -147,10 +141,10 @@ export default function DashboardPage() {
   return (
     <div>
       <Space style={{ marginBottom: 20 }} align="center">
-        <Title level={3} style={{ margin: 0 }}>📊 Dashboard</Title>
+        <Title level={3} style={{ margin: 0 }}>{t('dashboard.title')}</Title>
         {account && <Text type="secondary">{account.email}</Text>}
         <Button icon={<ReloadOutlined />} onClick={load} loading={loading} size="small">
-          Rafraîchir
+          {t('common.refresh')}
         </Button>
       </Space>
 
@@ -159,15 +153,15 @@ export default function DashboardPage() {
           showIcon closable style={{ marginBottom: 16 }} />
       )}
 
-      <Spin spinning={loading} tip="Chargement des stats Gmail…">
+      <Spin spinning={loading} tip={t('dashboard.loadingStats')}>
 
         {/* KPIs */}
         <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
           {[
-            { title: 'Total messages', value: stats?.totalMessages ?? 0, icon: <MailOutlined />, format: true },
-            { title: 'Non lus', value: stats?.unreadCount ?? 0, icon: <InboxOutlined />, color: stats?.unreadCount ? '#1677ff' : undefined },
-            { title: 'Taille estimée', value: formatBytes(stats?.totalSizeBytes ?? 0), icon: <DatabaseOutlined /> },
-            { title: 'Archivés (NAS)', value: archiveStats?.total_mails ?? 0, icon: <DatabaseOutlined style={{ color: '#52c41a' }} /> },
+            { title: t('dashboard.totalMessages'), value: stats?.totalMessages ?? 0, icon: <MailOutlined />, format: true },
+            { title: t('dashboard.unread'), value: stats?.unreadCount ?? 0, icon: <InboxOutlined />, color: stats?.unreadCount ? '#1677ff' : undefined },
+            { title: t('dashboard.estimatedSize'), value: formatBytes(stats?.totalSizeBytes ?? 0), icon: <DatabaseOutlined /> },
+            { title: t('dashboard.archivedNas'), value: archiveStats?.total_mails ?? 0, icon: <DatabaseOutlined style={{ color: '#52c41a' }} /> },
           ].map((kpi) => (
             <Col xs={24} sm={12} lg={6} key={kpi.title}>
               <Card size="small">
@@ -185,7 +179,7 @@ export default function DashboardPage() {
 
         {/* Timeline */}
         {(stats?.timeline?.length ?? 0) > 0 && (
-          <Card title="📅 Volume de mails par mois" size="small" style={{ marginBottom: 16 }}>
+          <Card title={t('dashboard.timelineTitle')} size="small" style={{ marginBottom: 16 }}>
             <Line {...timelineConfig} />
           </Card>
         )}
@@ -193,17 +187,17 @@ export default function DashboardPage() {
         {/* Top expéditeurs */}
         <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
           <Col xs={24} lg={12}>
-            <Card title="👤 Top expéditeurs (nombre)" size="small">
+            <Card title={t('dashboard.topSendersCount')} size="small">
               {(stats?.bySender?.length ?? 0) > 0
                 ? <Bar {...topSendersByCount} />
-                : <Empty description="Aucune donnée" />}
+                : <Empty description={t('common.noData')} />}
             </Card>
           </Col>
           <Col xs={24} lg={12}>
-            <Card title="⚖️ Top expéditeurs (taille)" size="small">
+            <Card title={t('dashboard.topSendersSize')} size="small">
               {(stats?.bySender?.length ?? 0) > 0
                 ? <Bar {...topSendersBySize} />
-                : <Empty description="Aucune donnée" />}
+                : <Empty description={t('common.noData')} />}
             </Card>
           </Col>
         </Row>
@@ -211,24 +205,24 @@ export default function DashboardPage() {
         {/* Mails les plus gros + Labels */}
         <Row gutter={[16, 16]}>
           <Col xs={24} lg={16}>
-            <Card title="🐘 Mails les plus gros" size="small">
+            <Card title={t('dashboard.biggestMails')} size="small">
               <Table
                 dataSource={stats?.biggestMails ?? []}
                 columns={biggestMailsColumns}
                 rowKey="id"
                 size="small"
                 pagination={{ pageSize: 8, size: 'small' }}
-                locale={{ emptyText: 'Aucun mail' }}
+                locale={{ emptyText: t('dashboard.noMail') }}
               />
             </Card>
           </Col>
           <Col xs={24} lg={8}>
-            <Card title="🏷️ Répartition par label" size="small">
+            <Card title={t('dashboard.labelDistribution')} size="small">
               {(stats?.byLabel?.length ?? 0) > 0 ? (
                 <>
                   <Pie {...labelPieConfig} />
                   <div style={{ marginTop: 4 }}>
-                    <Text type="secondary" style={{ fontSize: 12 }}>Taux de lecture : </Text>
+                    <Text type="secondary" style={{ fontSize: 12 }}>{t('dashboard.readRate')} </Text>
                     <Progress
                       percent={stats?.totalMessages
                         ? Math.round(((stats.totalMessages - stats.unreadCount) / stats.totalMessages) * 100)
@@ -237,7 +231,7 @@ export default function DashboardPage() {
                     />
                   </div>
                 </>
-              ) : <Empty description="Aucune donnée" />}
+              ) : <Empty description={t('common.noData')} />}
             </Card>
           </Col>
         </Row>

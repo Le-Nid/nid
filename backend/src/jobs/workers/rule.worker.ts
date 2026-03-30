@@ -1,10 +1,12 @@
 import { Worker, Job } from "bullmq";
 import { getRedis } from "../../plugins/redis";
 import { getDb } from "../../db";
+import { notify } from "../../notifications/notify";
 import { getRule, runRule } from "../../rules/rules.service";
 
 interface RunRulePayload {
   accountId: string;
+  userId?: string;
   ruleId: string;
 }
 
@@ -23,6 +25,7 @@ export function startRuleWorker() {
           type: "run_rule",
           status: "active",
           gmail_account_id: accountId,
+          user_id: job.data.userId ?? null,
           payload: JSON.stringify(job.data),
         })
         .onConflict((oc: any) => oc.doNothing())
@@ -46,6 +49,16 @@ export function startRuleWorker() {
           .where("bullmq_id", "=", String(job.id))
           .execute();
 
+        if (job.data.userId) {
+          await notify({
+            userId: job.data.userId,
+            category: 'rule_executed',
+            title: `Règle "${rule.name}" exécutée`,
+            body: `${result?.processed ?? 0} mail(s) traité(s).`,
+            data: { jobId: String(job.id), ruleId, ruleName: rule.name },
+          })
+        }
+
         return result;
       } catch (err) {
         await db
@@ -53,6 +66,16 @@ export function startRuleWorker() {
           .set({ status: "failed", error: String(err) })
           .where("bullmq_id", "=", String(job.id))
           .execute();
+
+        if (job.data.userId) {
+          await notify({
+            userId: job.data.userId,
+            category: 'job_failed',
+            title: `Règle échouée`,
+            body: String(err),
+            data: { jobId: String(job.id), ruleId },
+          })
+        }
         throw err;
       }
     },

@@ -1,6 +1,7 @@
 import { Worker, Job } from "bullmq";
 import { getRedis } from "../../plugins/redis";
 import { getDb } from "../../db";
+import { notify } from "../../notifications/notify";
 import {
   trashMessages,
   deleteMessages,
@@ -9,6 +10,7 @@ import {
 
 interface BulkPayload {
   accountId: string;
+  userId?: string;
   action:
     | "trash"
     | "delete"
@@ -38,6 +40,7 @@ export function startBulkWorker() {
           status: "active",
           total,
           gmail_account_id: accountId,
+          user_id: job.data.userId ?? null,
           payload: JSON.stringify(job.data),
         })
         .onConflict((oc: any) => oc.doNothing())
@@ -85,12 +88,32 @@ export function startBulkWorker() {
           .set({ status: "completed", completed_at: new Date() })
           .where("bullmq_id", "=", String(job.id))
           .execute();
+
+        if (job.data.userId) {
+          await notify({
+            userId: job.data.userId,
+            category: 'job_completed',
+            title: `Opération bulk terminée`,
+            body: `${total} élément(s) traité(s) (${action}).`,
+            data: { jobId: String(job.id), action, count: total },
+          })
+        }
       } catch (err) {
         await db
           .updateTable("jobs")
           .set({ status: "failed", error: String(err) })
           .where("bullmq_id", "=", String(job.id))
           .execute();
+
+        if (job.data.userId) {
+          await notify({
+            userId: job.data.userId,
+            category: 'job_failed',
+            title: `Opération bulk échouée`,
+            body: String(err),
+            data: { jobId: String(job.id), action },
+          })
+        }
         throw err;
       }
     },

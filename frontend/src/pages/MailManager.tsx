@@ -26,20 +26,22 @@ import BulkActionBar from "../components/BulkActionBar";
 import MailViewer from "../components/MailViewer";
 import GmailSearchInput from "../components/GmailSearchInput";
 import JobProgressModal from "../components/JobProgressModal";
+import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
+import { useTranslation } from 'react-i18next';
 import dayjs from "dayjs";
 
 const { Text } = Typography;
 
-const QUICK_FILTERS = [
-  { label: "Tous", value: "" },
-  { label: "Non lus", value: "is:unread" },
-  { label: "Avec PJ", value: "has:attachment" },
-  { label: "Gros (> 5 Mo)", value: "larger:5m" },
-  { label: "Promotions", value: "category:promotions" },
-  { label: "Réseaux sociaux", value: "category:social" },
-  { label: "Spam", value: "in:spam" },
-  { label: "Corbeille", value: "in:trash" },
-  { label: "> 1 an", value: "older_than:1y" },
+const QUICK_FILTERS_KEYS = [
+  { labelKey: 'all', value: '' },
+  { labelKey: 'unread', value: 'is:unread' },
+  { labelKey: 'withAttachment', value: 'has:attachment' },
+  { labelKey: 'large', value: 'larger:5m' },
+  { labelKey: 'promotions', value: 'category:promotions' },
+  { labelKey: 'social', value: 'category:social' },
+  { labelKey: 'spam', value: 'in:spam' },
+  { labelKey: 'trash', value: 'in:trash' },
+  { labelKey: 'olderThan1y', value: 'older_than:1y' },
 ];
 
 interface MailRow {
@@ -55,6 +57,7 @@ interface MailRow {
 }
 
 export default function MailManagerPage() {
+  const { t } = useTranslation();
   const { accountId } = useAccount();
 
   const [mails, setMails] = useState<MailRow[]>([]);
@@ -70,8 +73,31 @@ export default function MailManagerPage() {
   const [total, setTotal] = useState(0);
   const [viewingId, setViewingId] = useState<string | null>(null);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
-
+  const [focusedIndex, setFocusedIndex] = useState(-1);
   const [messageApi, contextHolder] = message.useMessage();
+
+  // ─── Raccourcis clavier ───────────────────────────────────
+  useKeyboardShortcuts({
+    mails,
+    selectedIndex: focusedIndex,
+    onSelectIndex: (i) => {
+      setFocusedIndex(i);
+      if (i >= 0 && mails[i]) {
+        setSelected([mails[i].id]);
+      } else {
+        setSelected([]);
+      }
+    },
+    onViewMail: (id) => setViewingId(id),
+    onAction: (action) => {
+      if (selected.length > 0) handleBulkAction(action);
+    },
+    onSearch: () => {
+      const input = document.querySelector<HTMLInputElement>('.gmail-search-input input');
+      input?.focus();
+    },
+    enabled: !viewingId,
+  });
 
   // ─── Chargement initial ───────────────────────────────────
   const loadFresh = useCallback(async () => {
@@ -95,7 +121,7 @@ export default function MailManagerPage() {
       setPageToken(res.nextPageToken ?? null);
       setHasMore(!!res.nextPageToken);
     } catch {
-      messageApi.error("Erreur lors du chargement des mails");
+      messageApi.error(t('mailManager.loadError'));
     } finally {
       setLoading(false);
     }
@@ -120,7 +146,7 @@ export default function MailManagerPage() {
       setPageToken(res.nextPageToken ?? null);
       setHasMore(!!res.nextPageToken);
     } catch {
-      messageApi.error("Erreur lors du chargement");
+      messageApi.error(t('dashboard.loadError'));
     } finally {
       setLoadingMore(false);
     }
@@ -204,7 +230,7 @@ export default function MailManagerPage() {
   // ─── Colonnes ─────────────────────────────────────────────
   const columns = [
     {
-      title: "Expéditeur",
+      title: t('mailManager.sender'),
       dataIndex: "from",
       width: 195,
       ellipsis: true,
@@ -219,7 +245,7 @@ export default function MailManagerPage() {
       ),
     },
     {
-      title: "Sujet",
+      title: t('mailManager.subject'),
       dataIndex: "subject",
       ellipsis: true,
       render: (v: string, row: MailRow) => (
@@ -232,7 +258,7 @@ export default function MailManagerPage() {
               strong={row.labelIds.includes("UNREAD")}
               style={{ fontSize: 13 }}
             >
-              {v || "(sans sujet)"}
+              {v || t('common.noSubject')}
             </Text>
           </Space>
           <Text type="secondary" ellipsis style={{ fontSize: 11 }}>
@@ -242,7 +268,7 @@ export default function MailManagerPage() {
       ),
     },
     {
-      title: "Labels",
+      title: t('mailManager.labels'),
       dataIndex: "labelIds",
       width: 160,
       render: (ids: string[]) => (
@@ -262,7 +288,7 @@ export default function MailManagerPage() {
       ),
     },
     {
-      title: "Taille",
+      title: t('mailManager.size'),
       dataIndex: "sizeEstimate",
       width: 80,
       sorter: (a: MailRow, b: MailRow) => a.sizeEstimate - b.sizeEstimate,
@@ -273,7 +299,7 @@ export default function MailManagerPage() {
       ),
     },
     {
-      title: "Date",
+      title: t('mailManager.date'),
       dataIndex: "date",
       width: 95,
       render: (v: string) => (
@@ -290,26 +316,10 @@ export default function MailManagerPage() {
           trigger={["click"]}
           menu={{
             items: [
-              {
-                key: "read",
-                label: "Lire",
-                onClick: () => setViewingId(row.id),
-              },
-              {
-                key: "trash",
-                label: "Corbeille",
-                onClick: () => handleBulkAction("trash"),
-              },
-              {
-                key: "archive",
-                label: "Archiver Gmail",
-                onClick: () => handleBulkAction("archive"),
-              },
-              {
-                key: "nas",
-                label: "Archiver NAS",
-                onClick: () => handleBulkAction("archive_nas"),
-              },
+              {key: "read", label: t('mailManager.read'), onClick: () => setViewingId(row.id)},
+              {key: "trash", label: t('mailManager.trashAction'), onClick: () => handleBulkAction("trash")},
+              {key: "archive", label: t('mailManager.archiveGmail'), onClick: () => handleBulkAction("archive")},
+              {key: "nas", label: t('mailManager.archiveNas'), onClick: () => handleBulkAction("archive_nas")},
             ],
           }}
         >
@@ -332,7 +342,7 @@ export default function MailManagerPage() {
             onChange={(v) => {
               setQuickFilter(v);
             }}
-            options={QUICK_FILTERS}
+            options={QUICK_FILTERS_KEYS.map(f => ({ label: f.labelKey === 'all' ? t('mailManager.inbox') : t(`mailManager.${f.labelKey}`), value: f.value }))}
             prefix={<FilterOutlined />}
           />
           <GmailSearchInput
@@ -348,8 +358,7 @@ export default function MailManagerPage() {
           />
           {total > 0 && (
             <Text type="secondary" style={{ fontSize: 12 }}>
-              ~{total.toLocaleString("fr-FR")} résultats · {mails.length}{" "}
-              chargés
+              ~{total.toLocaleString()} {t('mailManager.results', { total, loaded: mails.length }).split('·').pop()}
             </Text>
           )}
         </Space>
@@ -376,14 +385,15 @@ export default function MailManagerPage() {
           selectedRowKeys: selected,
           onChange: (keys) => setSelected(keys as string[]),
         }}
-        onRow={(row) => ({
+        onRow={(row, index) => ({
           onClick: () => setViewingId(row.id),
           style: {
             cursor: "pointer",
             fontWeight: row.labelIds.includes("UNREAD") ? 600 : 400,
+            background: index === focusedIndex ? 'rgba(24, 144, 255, 0.08)' : undefined,
           },
         })}
-        locale={{ emptyText: "Aucun mail" }}
+        locale={{ emptyText: t('mailManager.noMail') }}
       />
 
       {/* Sentinel infinite scroll */}
@@ -399,7 +409,7 @@ export default function MailManagerPage() {
         {loadingMore && <Spin size="small" />}
         {!hasMore && mails.length > 0 && (
           <Text type="secondary" style={{ fontSize: 12 }}>
-            — Tous les mails chargés —
+            — {t('mailManager.allLoaded')} —
           </Text>
         )}
       </div>
@@ -416,6 +426,13 @@ export default function MailManagerPage() {
         jobId={activeJobId}
         onClose={() => setActiveJobId(null)}
       />
+
+      {/* Keyboard shortcuts hint */}
+      <div style={{ textAlign: 'center', marginTop: 8, opacity: 0.5 }}>
+        <Text type="secondary" style={{ fontSize: 11 }}>
+          {t('mailManager.shortcuts')}
+        </Text>
+      </div>
     </div>
   );
 }

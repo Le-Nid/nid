@@ -1,18 +1,23 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { Layout, Menu, Select, Avatar, Dropdown, Typography, Space, Switch, Tooltip } from 'antd'
+import { Layout, Menu, Select, Avatar, Dropdown, Typography, Switch, Tooltip, Tag } from 'antd'
 import {
   DashboardOutlined, MailOutlined, DatabaseOutlined, SettingOutlined,
-  LogoutOutlined, UserOutlined, LoadingOutlined, RobotOutlined,
-  BulbOutlined, BulbFilled
+  LogoutOutlined, UserOutlined, ScheduleOutlined, RobotOutlined,
+  BulbOutlined, BulbFilled, CrownOutlined,
+  StopOutlined, PaperClipOutlined, LineChartOutlined, CopyOutlined,
+  GlobalOutlined,
 } from '@ant-design/icons'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/auth.store'
 import { useThemeStore } from '../store/theme.store'
 import { useGlobalJobNotifier } from '../hooks/useGlobalJobNotifier'
+import NotificationBell from './NotificationBell'
 
 const { Sider, Content, Header } = Layout
 const { Text } = Typography
 
 export default function AppLayout() {
+  const { t, i18n } = useTranslation()
   const navigate  = useNavigate()
   const location  = useLocation()
   const { user, gmailAccounts, activeAccountId, setActiveAccount, logout } = useAuthStore()
@@ -22,19 +27,26 @@ export default function AppLayout() {
   useGlobalJobNotifier()
 
   const menuItems = [
-    { key: '/dashboard', icon: <DashboardOutlined />, label: 'Dashboard' },
-    { key: '/mails',     icon: <MailOutlined />,      label: 'Mes mails' },
-    { key: '/archive',   icon: <DatabaseOutlined />,  label: 'Archives' },
-    { key: '/rules',     icon: <RobotOutlined />,     label: 'Règles auto' },
-    { key: '/jobs',      icon: <LoadingOutlined />,   label: 'Jobs' },
-    { key: '/settings',  icon: <SettingOutlined />,   label: 'Paramètres' },
+    { key: '/dashboard', icon: <DashboardOutlined />, label: t('nav.dashboard') },
+    { key: '/mails',     icon: <MailOutlined />,      label: t('nav.mails') },
+    { key: '/archive',   icon: <DatabaseOutlined />,  label: t('nav.archives') },
+    { key: '/rules',        icon: <RobotOutlined />,       label: t('nav.rules') },
+    { key: '/unsubscribe',   icon: <StopOutlined />,        label: t('nav.newsletters') },
+    { key: '/attachments',   icon: <PaperClipOutlined />,   label: t('nav.attachments') },
+    { key: '/duplicates',    icon: <CopyOutlined />,         label: t('nav.duplicates') },
+    { key: '/insights',      icon: <LineChartOutlined />,   label: t('nav.insights') },
+    { key: '/jobs',          icon: <ScheduleOutlined />,    label: t('nav.jobs') },
+    { key: '/settings',  icon: <SettingOutlined />,   label: t('nav.settings') },
+    ...(user?.role === 'admin' ? [
+      { key: '/admin', icon: <CrownOutlined />, label: t('nav.admin') },
+    ] : []),
   ]
 
   const userMenu = {
     items: [
       { key: 'email', label: <Text type="secondary">{user?.email}</Text>, disabled: true },
       { type: 'divider' as const },
-      { key: 'logout', icon: <LogoutOutlined />, label: 'Déconnexion', danger: true },
+      { key: 'logout', icon: <LogoutOutlined />, label: t('layout.logout'), danger: true },
     ],
     onClick: ({ key }: { key: string }) => {
       if (key === 'logout') { logout(); navigate('/login') }
@@ -49,13 +61,15 @@ export default function AppLayout() {
         width={220}
         theme={isDark ? 'dark' : 'light'}
         style={{ borderRight: isDark ? '1px solid #303030' : '1px solid #f0f0f0' }}
+        role="navigation"
+        aria-label={t('layout.mainMenu')}
       >
         {/* Logo */}
         <div style={{
           padding: '18px 16px',
           borderBottom: isDark ? '1px solid #303030' : '1px solid #f0f0f0',
-        }}>
-          <Text strong style={{ fontSize: 15 }}>📬 Gmail Manager</Text>
+        }} aria-label={t('layout.appName')}>
+          <Text strong style={{ fontSize: 15 }}><span aria-hidden="true">📬</span> {t('layout.appName')}</Text>
         </div>
 
         {/* Sélecteur compte Gmail */}
@@ -64,8 +78,8 @@ export default function AppLayout() {
             padding: '10px 12px',
             borderBottom: isDark ? '1px solid #303030' : '1px solid #f0f0f0',
           }}>
-            <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 4 }}>
-              Compte Gmail
+            <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 4 }} id="gmail-account-label">
+              {t('layout.gmailAccount')}
             </Text>
             <Select
               size="small"
@@ -73,6 +87,7 @@ export default function AppLayout() {
               value={activeAccountId}
               onChange={setActiveAccount}
               options={gmailAccounts.map((a) => ({ value: a.id, label: a.email }))}
+              aria-labelledby="gmail-account-label"
             />
           </div>
         )}
@@ -96,10 +111,31 @@ export default function AppLayout() {
           justifyContent: 'flex-end',
           alignItems:   'center',
           gap:          16,
-        }}>
+        }} role="banner">
+          {/* Notifications */}
+          <NotificationBell />
+
+          {/* Language switcher */}
+          <Select
+            size="small"
+            value={i18n.language?.startsWith('en') ? 'en' : 'fr'}
+            onChange={(lng) => i18n.changeLanguage(lng)}
+            style={{ width: 90 }}
+            suffixIcon={<GlobalOutlined />}
+            options={[
+              { value: 'fr', label: '🇫🇷 FR' },
+              { value: 'en', label: '🇬🇧 EN' },
+            ]}
+          />
+
           {/* Dark mode toggle */}
-          <Tooltip title={isDark ? 'Passer en mode clair' : 'Passer en mode sombre'}>
-            <Space size={6} style={{ cursor: 'pointer' }} onClick={toggle}>
+          <Tooltip title={isDark ? t('layout.lightMode') : t('layout.darkMode')}>
+            <button
+              type="button"
+              onClick={toggle}
+              aria-label={isDark ? t('layout.lightMode') : t('layout.darkMode')}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+            >
               {isDark ? <BulbFilled style={{ color: '#faad14' }} /> : <BulbOutlined />}
               <Switch
                 size="small"
@@ -107,24 +143,29 @@ export default function AppLayout() {
                 onChange={toggle}
                 checkedChildren="🌙"
                 unCheckedChildren="☀️"
+                tabIndex={-1}
               />
-            </Space>
+            </button>
           </Tooltip>
 
           {/* User menu */}
           <Dropdown menu={userMenu} trigger={['click']}>
-            <Space style={{ cursor: 'pointer' }}>
-              <Avatar icon={<UserOutlined />} size="small" />
-              <Text style={{ fontSize: 13 }}>{user?.email}</Text>
-            </Space>
+            <button type="button" aria-label={t('layout.userMenu')} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
+              {user?.avatar_url
+                ? <Avatar src={user.avatar_url} size="small" alt={user.display_name || user.email} />
+                : <Avatar icon={<UserOutlined />} size="small" aria-hidden="true" />
+              }
+              <Text style={{ fontSize: 13 }}>{user?.display_name || user?.email}</Text>
+              {user?.role === 'admin' && <Tag color="red" style={{ marginLeft: 4, fontSize: 10 }}>admin</Tag>}
+            </button>
           </Dropdown>
         </Header>
 
-        <Content style={{
+        <Content id="main-content" style={{
           padding:    24,
           background: isDark ? '#1f1f1f' : '#f5f5f5',
           minHeight:  'calc(100vh - 64px)',
-        }}>
+        }} role="main">
           <Outlet />
         </Content>
       </Layout>

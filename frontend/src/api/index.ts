@@ -74,6 +74,12 @@ export const rulesApi = {
 
   preview: (accountId: string, conditions: any[]) =>
     api.post(`/api/rules/${accountId}/preview`, { conditions }).then((r) => r.data),
+
+  getTemplates: () =>
+    api.get('/api/rules/templates').then((r) => r.data),
+
+  createFromTemplate: (accountId: string, templateId: string) =>
+    api.post(`/api/rules/${accountId}/from-template`, { templateId }).then((r) => r.data),
 }
 
 // ─── Jobs ─────────────────────────────────────────────────
@@ -86,4 +92,139 @@ export const jobsApi = {
 
   cancel: (jobId: string) =>
     api.delete(`/api/jobs/${jobId}`),
+}
+
+// ─── Auth (Google SSO) ────────────────────────────────────
+export const authApi = {
+  getGoogleSsoUrl: () =>
+    api.get('/api/auth/google').then((r) => r.data),
+}
+
+// ─── Admin ────────────────────────────────────────────────
+export const adminApi = {
+  getStats: () =>
+    api.get('/api/admin/stats').then((r) => r.data),
+
+  listUsers: (params: Record<string, any> = {}) =>
+    api.get('/api/admin/users', { params }).then((r) => r.data),
+
+  getUser: (userId: string) =>
+    api.get(`/api/admin/users/${userId}`).then((r) => r.data),
+
+  updateUser: (userId: string, dto: Record<string, any>) =>
+    api.patch(`/api/admin/users/${userId}`, dto).then((r) => r.data),
+
+  listJobs: (params: Record<string, any> = {}) =>
+    api.get('/api/admin/jobs', { params }).then((r) => r.data),
+}
+
+// ─── Unsubscribe ──────────────────────────────────────────
+export const unsubscribeApi = {
+  scanNewsletters: (accountId: string) =>
+    api.get(`/api/unsubscribe/${accountId}/newsletters`).then((r) => r.data),
+
+  scanAsync: (accountId: string) =>
+    api.post(`/api/unsubscribe/${accountId}/scan`).then((r) => r.data),
+
+  getMessageIds: (accountId: string, senderEmail: string) =>
+    api.get(`/api/unsubscribe/${accountId}/newsletters/${encodeURIComponent(senderEmail)}/messages`).then((r) => r.data),
+
+  deleteSender: (accountId: string, senderEmail: string, permanent = false) =>
+    api.post(`/api/unsubscribe/${accountId}/newsletters/${encodeURIComponent(senderEmail)}/delete`, { permanent }).then((r) => r.data),
+}
+
+// ─── Attachments ──────────────────────────────────────────
+export const attachmentsApi = {
+  listArchived: (accountId: string, params: Record<string, any> = {}) =>
+    api.get(`/api/attachments/${accountId}/archived`, { params }).then((r) => r.data),
+
+  listLive: (accountId: string, params: Record<string, any> = {}) =>
+    api.get(`/api/attachments/${accountId}/live`, { params }).then((r) => r.data),
+}
+
+// ─── Reports ──────────────────────────────────────────────
+export const reportsApi = {
+  getWeekly: () =>
+    api.get('/api/reports/weekly').then((r) => r.data),
+}
+
+// ─── Duplicates ───────────────────────────────────────────
+export const duplicatesApi = {
+  detectArchived: (accountId: string, params: Record<string, any> = {}) =>
+    api.get(`/api/duplicates/${accountId}/archived`, { params }).then((r) => r.data),
+
+  deleteArchived: (accountId: string, mailIds: string[]) =>
+    api.post(`/api/duplicates/${accountId}/archived/delete`, { mailIds }).then((r) => r.data),
+}
+
+// ─── Notifications ────────────────────────────────────────
+export const notificationsApi = {
+  list: (params: Record<string, any> = {}) =>
+    api.get('/api/notifications', { params }).then((r) => r.data),
+
+  markRead: (notificationId: string) =>
+    api.patch(`/api/notifications/${notificationId}/read`).then((r) => r.data),
+
+  markAllRead: () =>
+    api.patch('/api/notifications/read-all').then((r) => r.data),
+
+  getPreferences: () =>
+    api.get('/api/notifications/preferences').then((r) => r.data),
+
+  updatePreferences: (prefs: Record<string, boolean>) =>
+    api.put('/api/notifications/preferences', prefs).then((r) => r.data),
+}
+
+// ─── Audit ────────────────────────────────────────────────
+export const auditApi = {
+  list: (params: Record<string, any> = {}) =>
+    api.get('/api/audit', { params }).then((r) => r.data),
+}
+
+// ─── 2FA / TOTP ──────────────────────────────────────────
+export const twoFactorApi = {
+  setup: () =>
+    api.post('/api/auth/2fa/setup').then((r) => r.data),
+
+  enable: (token: string) =>
+    api.post('/api/auth/2fa/enable', { token }).then((r) => r.data),
+
+  disable: (token: string) =>
+    api.post('/api/auth/2fa/disable', { token }).then((r) => r.data),
+}
+
+// ─── Webhooks ─────────────────────────────────────────────
+export const webhooksApi = {
+  list: () =>
+    api.get('/api/webhooks').then((r) => r.data),
+
+  create: (data: { name: string; url: string; type: string; events: string[] }) =>
+    api.post('/api/webhooks', data).then((r) => r.data),
+
+  update: (id: string, data: Record<string, any>) =>
+    api.put(`/api/webhooks/${id}`, data).then((r) => r.data),
+
+  toggle: (id: string) =>
+    api.patch(`/api/webhooks/${id}/toggle`).then((r) => r.data),
+
+  remove: (id: string) =>
+    api.delete(`/api/webhooks/${id}`),
+
+  test: (id: string) =>
+    api.post(`/api/webhooks/${id}/test`).then((r) => r.data),
+}
+
+// ─── Integrity ────────────────────────────────────────────
+export const integrityApi = {
+  check: (accountId?: string) =>
+    api.get('/api/integrity/check', { params: accountId ? { accountId } : {} }).then((r) => r.data),
+}
+
+// ─── Config Export/Import ─────────────────────────────────
+export const configApi = {
+  exportConfig: () =>
+    api.get('/api/config/export').then((r) => r.data),
+
+  importConfig: (data: any) =>
+    api.post('/api/config/import', data).then((r) => r.data),
 }

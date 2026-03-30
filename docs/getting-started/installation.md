@@ -31,12 +31,17 @@ Avant de lancer l'application, vous devez créer un projet Google Cloud et des c
 
 1. APIs & Services → Identifiants → **Créer des identifiants** → ID client OAuth 2.0
 2. Type d'application : **Application Web**
-3. Ajouter l'URI de redirection autorisée :
+3. Ajouter **deux** URIs de redirection autorisées :
    ```
    http://localhost:4000/api/auth/gmail/callback
+   http://localhost:4000/api/auth/google/callback
    ```
+   La première sert à connecter les comptes Gmail, la seconde à la connexion Google SSO.
    (Remplacez `localhost` par votre domaine si vous exposez l'app)
 4. Notez le **Client ID** et le **Client Secret**
+
+!!! tip "Deux URIs de redirection"
+    Les deux callbacks sont nécessaires : `/gmail/callback` gère la liaison d'un compte Gmail à l'app, `/google/callback` gère l'authentification/inscription via Google SSO. Si vous oubliez la seconde, le bouton « Se connecter avec Google » retournera une erreur `invalid_client`.
 
 ### Configurer l'écran de consentement
 
@@ -63,6 +68,10 @@ JWT_REFRESH_SECRET=$(openssl rand -hex 64)
 GOOGLE_CLIENT_ID=votre_client_id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=GOCSPX-votre_secret
 GOOGLE_REDIRECT_URI=http://localhost:4000/api/auth/gmail/callback
+GOOGLE_SSO_REDIRECT_URI=http://localhost:4000/api/auth/google/callback
+
+# Premier utilisateur avec cet email → rôle admin automatique
+ADMIN_EMAIL=votre@email.com
 
 # Base de données
 POSTGRES_USER=gmailmanager
@@ -90,13 +99,22 @@ volumes:
 
 ## 5. Lancer l'application
 
-```bash
-# Production
-docker compose up -d
+### Production
 
-# Développement (avec hot reload)
+```bash
+docker compose up -d
+```
+
+!!! info "Sécurité réseau"
+    En production, PostgreSQL et Redis ne sont **pas** exposés sur l'hôte. Seuls le frontend (port 3000) et le backend (port 4000) sont accessibles.
+
+### Développement (avec hot reload)
+
+```bash
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up
 ```
+
+En mode dev, les ports PostgreSQL (5432) et Redis (6379) sont exposés pour vos outils locaux (DBeaver, redis-cli, etc).
 
 Vérifiez que tous les conteneurs sont up :
 
@@ -104,12 +122,12 @@ Vérifiez que tous les conteneurs sont up :
 docker compose ps
 ```
 
-| Service | Port | Description |
-|---|---|---|
-| frontend | 3000 | Interface web React |
-| backend | 4000 | API Fastify |
-| postgres | — | Base de données |
-| redis | — | Queue BullMQ |
+| Service | Port prod | Port dev | Description |
+|---|---|---|---|
+| frontend | 3000 | 3000 | Interface web React |
+| backend | 4000 | 4000 + 9229 (debug) | API Fastify |
+| postgres | — | 5432 | Base de données |
+| redis | — | 6379 | Queue BullMQ |
 
 ---
 
@@ -117,9 +135,33 @@ docker compose ps
 
 ```bash
 # Health check de l'API
-curl http://localhost:4000/health
-# → {"status":"ok","timestamp":"..."}
+curl http://localhost:4000/api/auth/config
+# → {"allowRegistration":true,"googleSsoEnabled":true}
 
 # Documentation API Swagger
 open http://localhost:4000/docs
 ```
+
+Docker inclut des healthchecks automatiques pour tous les services :
+
+```bash
+docker compose ps
+# Tous les services doivent afficher "healthy"
+```
+
+---
+
+## 7. Fermer les inscriptions
+
+Une fois vos utilisateurs créés, fermez les inscriptions :
+
+```bash
+# Dans .env
+ALLOW_REGISTRATION=false
+```
+
+```bash
+docker compose up -d  # Relance uniquement le backend
+```
+
+Les tentatives d'inscription (formulaire ou Google SSO) retourneront une erreur 403.

@@ -43,7 +43,10 @@ gmail-manager/
 │       ├── pages/          # Une page par route
 │       ├── components/     # Composants réutilisables
 │       ├── store/          # Zustand stores
-│       └── hooks/          # Custom hooks
+│       ├── hooks/          # Custom hooks
+│       └── i18n/           # Internationalisation
+│           ├── index.ts    # Config i18next
+│           └── locales/    # fr.json, en.json
 ├── postgres/
 │   └── init.sql            # Schéma initial
 ├── docs/                   # Documentation MkDocs
@@ -68,6 +71,48 @@ gmail-manager/
 - **State global** : Zustand (`src/store/`)
 - **Appels API** : toujours via `src/api/client.ts` (axios configuré avec JWT)
 - **Composants** : Ant Design en priorité, custom seulement si nécessaire
+- **i18n** : tout texte visible doit passer par `t('clé')` — jamais de chaînes en dur dans le JSX
+
+---
+
+## Ajouter des traductions (i18n)
+
+L'application utilise `react-i18next`. Toutes les chaînes visibles par l'utilisateur doivent être traduites.
+
+### Ajouter une clé
+
+1. Ajoutez la clé dans `frontend/src/i18n/locales/fr.json` (français, langue par défaut)
+2. Ajoutez la même clé dans `frontend/src/i18n/locales/en.json` (anglais)
+3. Utilisez-la dans le composant :
+
+```tsx
+const { t } = useTranslation();
+<Button>{t('maPage.monBouton')}</Button>
+```
+
+### Convention de nommage des clés
+
+Les clés suivent le format `domaine.action` :
+
+```
+dashboard.title       → Titre de la page Dashboard
+mails.search          → Placeholder de recherche
+rules.create          → Bouton créer une règle
+settings.profile      → Section profil dans Settings
+admin.users           → Onglet utilisateurs admin
+```
+
+### Ajouter une nouvelle langue
+
+1. Créez `frontend/src/i18n/locales/xx.json` en copiant `fr.json`
+2. Traduisez toutes les clés
+3. Dans `frontend/src/i18n/index.ts`, ajoutez la ressource :
+   ```typescript
+   import xx from './locales/xx.json';
+   resources: { fr: { translation: fr }, en: { translation: en }, xx: { translation: xx } }
+   ```
+4. Dans `frontend/src/main.tsx`, ajoutez la locale Ant Design correspondante
+5. Dans `frontend/src/components/AppLayout.tsx`, ajoutez l'option au sélecteur de langue
 
 ---
 

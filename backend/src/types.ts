@@ -7,5 +7,7 @@ declare module "fastify" {
     db: Kysely<Database>;
     redis: Redis;
     authenticate: (request: any, reply: any) => Promise<void>;
+    requireAccountOwnership: (request: any, reply: any) => Promise<void>;
+    requireAdmin: (request: any, reply: any) => Promise<void>;
   }
 }

@@ -20,8 +20,7 @@ BullMQ permet :
 |---|---|---|
 | `bulk_operation` | `bulk.worker.ts` | POST `/api/gmail/:id/messages/bulk` |
 | `archive_mails` | `archive.worker.ts` | POST `/api/archive/:id/archive` |
-| `run_rule` | *(à implémenter v1.1)* | Manuel ou cron |
-| `sync_dashboard` | *(à implémenter v1.1)* | Cron ou à la demande |
+| `run_rule` | `rule.worker.ts` | Manuel ou cron (depuis la page Règles) |
 
 ---
 
@@ -64,8 +63,12 @@ pending → active → completed
 
 ---
 
-## Polling frontend
+## Suivi temps réel (SSE)
 
-La page Jobs poll l'API toutes les **3 secondes** si au moins un job est `active` ou `pending`. Ce polling s'arrête automatiquement quand tous les jobs sont dans un état terminal.
+Le suivi de progression utilise les **Server-Sent Events** via le endpoint `GET /api/jobs/events` :
 
-Pour une meilleure UX en v1.3, remplacer par des **WebSockets** (Server-Sent Events ou `ws`) pour du push en temps réel.
+- Le hook `useJobSSE` ouvre une connexion SSE persistante
+- Chaque événement contient `{ jobId, status, progress, processed, total }`
+- La connexion se reconnecte automatiquement en cas de coupure
+- Un `JobProgressModal` affiche la barre de progression en temps réel
+- Le composant `NotificationBell` reçoit également les événements pour les notifications toast

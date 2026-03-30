@@ -13,20 +13,32 @@ Elle remplace des outils comme Gmail Cleaner et OpenArchiver, sans envoyer vos d
 | 📊 **Dashboard** | Top expéditeurs, mails les plus gros, timeline, répartition labels |
 | 📬 **Gestion mails** | Bulk delete/label/archive, lecture, pièces jointes, règles auto |
 | 📦 **Archives** | Stockage EML sur NAS, recherche full-text, différentiel |
-| ⚙️ **Jobs** | Suivi en temps réel des opérations longues (BullMQ) |
-| 🔐 **Multi-compte** | Plusieurs comptes Gmail, auth locale JWT |
+| ⚙️ **Jobs** | Suivi en temps réel des opérations longues (BullMQ + SSE) |
+| 🔐 **Auth** | JWT local + Google SSO, 2FA/TOTP, multi-utilisateurs avec rôles |
+| 📧 **Unsubscribe** | Scan des headers List-Unsubscribe, désabonnement en un clic |
+| 📎 **Pièces jointes** | Gestionnaire dédié (live Gmail + archives), tri par taille |
+| 🔁 **Doublons** | Détection et suppression des mails archivés en double |
+| 📋 **Templates** | Bibliothèque de règles pré-configurées, activation en un clic |
+| 📈 **Insights** | Rapport hebdomadaire, notifications in-app, préférences de notifications |
+| 📝 **Audit log** | Journal d'activité traçant les actions sensibles |
+| 🔗 **Webhooks** | Notifications Discord, Slack, Ntfy ou HTTP générique |
+| 🛡️ **Intégrité** | Vérification de cohérence archives disque ↔ BDD |
+| ⌨️ **Raccourcis clavier** | Navigation et actions rapides dans Mes mails |
+| 💾 **Export/Import** | Sauvegarde et restauration de la configuration (règles, webhooks) |
+| 🌐 **Internationalisation** | Français / Anglais, sélecteur de langue, persistance du choix |
 
 ---
 
 ## Stack technique
 
 ```
-Frontend   →  React 19 + Ant Design
+Frontend   →  React 19 + Ant Design + react-i18next
 Backend    →  Fastify + TypeScript
 Auth       →  JWT local + OAuth2 Gmail
 Base de données  →  PostgreSQL 16
 Queue      →  BullMQ + Redis
 Archives   →  EML + index PostgreSQL
+i18n       →  Français 🇫🇷 / Anglais 🇬🇧 (extensible)
 ```
 
 ---

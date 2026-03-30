@@ -58,9 +58,59 @@
 - [x] **Preview images PJ** dans Archive drawer (lazy loading, `mime_type.startsWith('image/')`)
 - [x] `AntApp` wrapper pour accès global aux hooks notification/message Ant Design
 
-## v2.0 — Multi-utilisateurs
+## v2.0 — Multi-utilisateurs (✅ complété)
 
-- [ ] Isolation stricte des données par utilisateur
-- [ ] Gestion des rôles (admin / user)
-- [ ] Page admin : vue globale des comptes et jobs
-- [ ] Quota et limites par utilisateur
+- [x] Isolation stricte des données par utilisateur (`requireAccountOwnership` middleware)
+- [x] Gestion des rôles (admin / user) — `role` dans JWT, middleware `requireAdmin`
+- [x] Page admin : vue globale des comptes, jobs, statistiques, modification utilisateurs
+- [x] Quota et limites par utilisateur (`max_gmail_accounts`, `storage_quota_bytes`)
+- [x] Authentification / inscription via Google SSO (OAuth2 `openid profile email`)
+- [x] Migration DB `003_multiuser` — colonnes `role`, `google_id`, `is_active`, quotas, `user_id` sur jobs
+- [x] Profil utilisateur dans les paramètres (avatar, quota, stockage)
+- [x] Sécurisation de toutes les routes avec vérification d'ownership des comptes Gmail
+
+## v2.1 — Nettoyage, insights & robustesse
+
+### Haute valeur ajoutée
+
+- [x] **Unsubscribe Manager** — Scanner les headers `List-Unsubscribe`, page dédiée listant newsletters/listes avec volume et taille, désabonnement en un clic + suppression en masse
+- [x] **Archivage automatique planifié** — Rule action `archive_nas` planifiable (ex : archiver tout > 6 mois, chaque dimanche). Conditions `older_than` / `newer_than` ajoutées aux règles
+- [x] **Gestionnaire de pièces jointes** — Page dédiée listant toutes les PJ (live Gmail + archives) triées par taille, avec recherche et tri
+- [x] **Rapport hebdo / insights** — Page Insights avec rapport hebdomadaire + système de notifications in-app (cloche dans le header, scheduler lundi)
+
+### Qualité de vie
+
+- [x] **Templates de règles** — Bibliothèque de règles pré-configurées (ex : "Nettoyer notifs GitHub", "Archiver factures > 3 mois", "Supprimer newsletters non lues > 30j"). Un clic pour activer
+- [x] **Détection de doublons** — Identifier les mails en double (même subject + sender + date), proposer suppression groupée
+- [x] **Audit log** — Table `audit_logs(user_id, action, target, details, created_at)` traçant les actions sensibles (suppression, archivage, modification de règles)
+- [x] **2FA / TOTP** — Authentification à deux facteurs pour comptes locaux (via `otplib`). Pertinent pour app self-hosted avec accès aux boîtes Gmail
+
+### Nice to have
+
+- [x] **Vérification d'intégrité des archives** — Job planifié comparant EMLs archivés ↔ index PostgreSQL, détection fichiers manquants ou corrompus
+- [x] **Webhooks / notifications externes** — Webhook configurable (Discord, Slack, Ntfy) sur événements : job échoué, règle exécutée, quota atteint. Dispatcher unifié `notify()` reliant in-app + toast + webhooks
+- [x] **Raccourcis clavier** — Dans MailManager : `j/k` (navigation), `e` (archiver), `#` (supprimer), `/` (recherche)
+- [x] **Export/import de configuration** — Exporter règles + paramètres en JSON, réimporter sur une autre instance
+- [x] **Préférences de notifications** — Tableau 3 canaux (🔔 in-app, 💬 toast, 🔗 webhook) par type d'événement, sauvegarde instantanée
+
+### Ops & déploiement
+
+- [x] Via une variable d'environnement, choisir d'accepter ou non les inscriptions
+- [x] Faire tous les tests unitaires
+- [x] Mettre au propre les dockerfiles pour un déploiement simple
+- [x] Faire un docker-compose simple pour le déploiement et en faire la doc
+- [x] Faire en sorte que les variables d'environnements soient injectées dans les applis soit par fichier .env pour le dev local soit par variable d'environnement docker pour la prod
+- [x] Implémenter le RGAA
+- [x] Il faut packagé l'appli pour la mettre en open source ensuite
+
+## v2.2 — I18n (✅ complété)
+- [x] Ajouter l'internationalisation. Faire français / anglais pour le moment
+  - [x] Infrastructure i18n (react-i18next + i18next + LanguageDetector)
+  - [x] Fichiers de traduction FR et EN (~350+ clés)
+  - [x] Sélecteur de langue dans le header (drapeau FR/EN)
+  - [x] Ant Design locale dynamique (frFR / enUS)
+  - [x] dayjs locale dynamique
+  - [x] `<html lang>` dynamique
+  - [x] Toutes les pages i18n : Login, Dashboard, MailManager, Jobs, Archive, Rules, Settings, Admin, Unsubscribe, Attachments, Insights, Duplicates
+  - [x] Tous les composants i18n : AppLayout, BulkActionBar, NotificationBell, MailViewer, GmailSearchInput, RuleFormModal, JobProgressModal
+  - [x] Persistance de la langue (localStorage)

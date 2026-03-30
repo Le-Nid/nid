@@ -40,6 +40,8 @@ Retourne toutes les règles du compte Gmail.
 | `size_gt` | Taille supérieure (octets) | `gt` |
 | `size_lt` | Taille inférieure (octets) | `lt` |
 | `label` | Label Gmail | `equals`, `not_equals` |
+| `older_than` | Ancienneté minimale | `equals` (ex: `7d`, `3m`, `1y`) |
+| `newer_than` | Ancienneté maximale | `equals` (ex: `7d`, `3m`, `1y`) |
 
 ### Actions disponibles
 
@@ -126,3 +128,42 @@ Compte les mails qui matcheraient les conditions **sans** appliquer d'action.
 
 !!! tip "Toujours prévisualiser avant de créer"
     Le preview traduit vos conditions en requête Gmail native et vous donne une estimation du nombre de mails affectés. Utile pour éviter les surprises avec des actions irréversibles comme `delete`.
+
+---
+
+## Templates de règles
+
+### GET /api/rules/templates
+
+Retourne la bibliothèque de règles pré-configurées, organisée par catégorie.
+
+**Réponse**
+```json
+[
+  {
+    "id": "cleanup-github-notifications",
+    "name": "Nettoyer les notifications GitHub",
+    "description": "Supprime les notifications GitHub lues de plus de 7 jours",
+    "category": "cleanup",
+    "dto": {
+      "name": "...",
+      "conditions": [...],
+      "action": { "type": "trash" },
+      "schedule": "daily"
+    }
+  }
+]
+```
+
+Catégories disponibles : `cleanup`, `archive`, `organize`.
+
+### POST /api/rules/:accountId/from-template
+
+Crée une règle à partir d'un template.
+
+**Body**
+```json
+{ "templateId": "cleanup-github-notifications" }
+```
+
+**Réponse 201** : la règle créée.
