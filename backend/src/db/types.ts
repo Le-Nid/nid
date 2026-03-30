@@ -134,6 +134,24 @@ export interface WebhooksTable {
   created_at:        Generated<Date>
 }
 
+export interface NotificationPreferencesTable {
+  id:              Generated<string>
+  user_id:         string
+  weekly_report:   Generated<boolean>
+  job_completed:   Generated<boolean>
+  job_failed:      Generated<boolean>
+  rule_executed:   Generated<boolean>
+  quota_warning:   Generated<boolean>
+  integrity_alert: Generated<boolean>
+  weekly_report_toast:   Generated<boolean>
+  job_completed_toast:   Generated<boolean>
+  job_failed_toast:      Generated<boolean>
+  rule_executed_toast:   Generated<boolean>
+  quota_warning_toast:   Generated<boolean>
+  integrity_alert_toast: Generated<boolean>
+  updated_at:      Generated<Date>
+}
+
 // ─── Database interface ───────────────────────────────────
 
 export interface Database {
@@ -146,6 +164,7 @@ export interface Database {
   notifications:        NotificationsTable
   audit_logs:           AuditLogsTable
   webhooks:             WebhooksTable
+  notification_preferences: NotificationPreferencesTable
 }
 
 // ─── Row types (Selectable = what you get back from SELECT) ─
@@ -169,3 +188,4 @@ export type NewJob                = Insertable<JobsTable>
 export type NewNotification       = Insertable<NotificationsTable>
 export type NewAuditLog           = Insertable<AuditLogsTable>
 export type NewWebhook            = Insertable<WebhooksTable>
+export type NotificationPreference = Selectable<NotificationPreferencesTable>

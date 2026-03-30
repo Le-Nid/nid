@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Card, Button, List, Avatar, Tag, Popconfirm, Typography, Alert, Space, Divider, Progress, Descriptions, Table, Input, message, Modal, Form, Select, Switch } from 'antd'
-import { GoogleOutlined, DeleteOutlined, PlusOutlined, CheckCircleOutlined, UserOutlined, HistoryOutlined, LockOutlined, SafetyOutlined, ApiOutlined, DownloadOutlined, UploadOutlined } from '@ant-design/icons'
+import { GoogleOutlined, DeleteOutlined, PlusOutlined, CheckCircleOutlined, UserOutlined, HistoryOutlined, LockOutlined, SafetyOutlined, ApiOutlined, DownloadOutlined, UploadOutlined, BellOutlined } from '@ant-design/icons'
 import { useSearchParams } from 'react-router-dom'
 import api from '../api/client'
 import { useAuthStore } from '../store/auth.store'
 import { formatBytes } from '../utils/format'
-import { auditApi, twoFactorApi, webhooksApi, configApi } from '../api'
+import { auditApi, twoFactorApi, webhooksApi, configApi, notificationsApi } from '../api'
 
 const { Title, Text } = Typography
 
@@ -23,6 +23,21 @@ export default function SettingsPage() {
   const [webhooks, setWebhooks] = useState<any[]>([])
   const [webhookModal, setWebhookModal] = useState(false)
   const [webhookForm] = Form.useForm()
+  const [notifPrefs, setNotifPrefs] = useState<Record<string, boolean>>({
+    weekly_report: true,
+    job_completed: true,
+    job_failed: true,
+    rule_executed: false,
+    quota_warning: true,
+    integrity_alert: true,
+    weekly_report_toast: false,
+    job_completed_toast: true,
+    job_failed_toast: true,
+    rule_executed_toast: false,
+    quota_warning_toast: false,
+    integrity_alert_toast: false,
+  })
+  const [notifPrefsLoading, setNotifPrefsLoading] = useState(false)
 
   const gmailStatus = searchParams.get('gmail')
   const connectedEmail = searchParams.get('account')
@@ -43,10 +58,32 @@ export default function SettingsPage() {
     }
   }
 
-  useEffect(() => { fetchAuditLogs(); fetchWebhooks() }, [])
+  useEffect(() => { fetchAuditLogs(); fetchWebhooks(); fetchNotifPrefs() }, [])
 
   const fetchWebhooks = async () => {
     try { setWebhooks(await webhooksApi.list()) } catch { /* ignore */ }
+  }
+
+  const fetchNotifPrefs = async () => {
+    try {
+      const prefs = await notificationsApi.getPreferences()
+      setNotifPrefs(prefs)
+    } catch { /* ignore */ }
+  }
+
+  const updateNotifPref = async (key: string, value: boolean) => {
+    const updated = { ...notifPrefs, [key]: value }
+    setNotifPrefs(updated)
+    setNotifPrefsLoading(true)
+    try {
+      await notificationsApi.updatePreferences({ [key]: value })
+    } catch {
+      // Revert on error
+      setNotifPrefs(notifPrefs)
+      message.error('Erreur de sauvegarde')
+    } finally {
+      setNotifPrefsLoading(false)
+    }
   }
 
   const handleExport = async () => {
@@ -327,6 +364,79 @@ export default function SettingsPage() {
             </div>
           </>
         )}
+      </Card>
+
+      {/* Notification Preferences */}
+      <Card title={<><BellOutlined /> Préférences de notifications</>} style={{ marginTop: 24 }}>
+        <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
+          Choisissez les notifications que vous souhaitez recevoir et par quel canal.
+        </Text>
+        <Table
+          dataSource={[
+            { key: 'weekly_report', label: 'Rapport hebdomadaire', desc: 'Résumé d\'activité chaque lundi', webhookEvent: null },
+            { key: 'job_completed', label: 'Job terminé', desc: 'Quand un job (bulk, archivage, règle) se termine', webhookEvent: 'job.completed' },
+            { key: 'job_failed', label: 'Job en échec', desc: 'Quand un job échoue', webhookEvent: 'job.failed' },
+            { key: 'rule_executed', label: 'Règle exécutée', desc: 'Quand une règle automatique s\'exécute', webhookEvent: 'rule.executed' },
+            { key: 'quota_warning', label: 'Alerte quota', desc: 'Quand le stockage approche la limite', webhookEvent: 'quota.warning' },
+            { key: 'integrity_alert', label: 'Alerte intégrité', desc: 'Problème détecté dans les archives', webhookEvent: 'integrity.failed' },
+          ]}
+          pagination={false}
+          size="small"
+          columns={[
+            {
+              title: 'Notification',
+              dataIndex: 'label',
+              render: (_: any, row: any) => (
+                <div>
+                  <Text strong>{row.label}</Text>
+                  <br />
+                  <Text type="secondary" style={{ fontSize: 12 }}>{row.desc}</Text>
+                </div>
+              ),
+            },
+            {
+              title: '🔔 In-app',
+              width: 90,
+              align: 'center' as const,
+              render: (_: any, row: any) => (
+                <Switch
+                  size="small"
+                  checked={notifPrefs[row.key]}
+                  loading={notifPrefsLoading}
+                  onChange={(v) => updateNotifPref(row.key, v)}
+                />
+              ),
+            },
+            {
+              title: '💬 Toast',
+              width: 90,
+              align: 'center' as const,
+              render: (_: any, row: any) => (
+                <Switch
+                  size="small"
+                  checked={notifPrefs[`${row.key}_toast`]}
+                  loading={notifPrefsLoading}
+                  onChange={(v) => updateNotifPref(`${row.key}_toast`, v)}
+                />
+              ),
+            },
+            {
+              title: '🔗 Webhook',
+              width: 100,
+              align: 'center' as const,
+              render: (_: any, row: any) => {
+                if (!row.webhookEvent) return <Text type="secondary" style={{ fontSize: 11 }}>—</Text>
+                const count = webhooks.filter((w: any) => w.is_active && w.events.includes(row.webhookEvent)).length
+                return count > 0
+                  ? <Tag color="green">{count} actif{count > 1 ? 's' : ''}</Tag>
+                  : <Text type="secondary" style={{ fontSize: 11 }}>aucun</Text>
+              },
+            },
+          ]}
+        />
+        <Text type="secondary" style={{ fontSize: 11, marginTop: 8, display: 'block' }}>
+          🔔 In-app = cloche dans le header · 💬 Toast = pop-up temporaire · 🔗 Webhook = push vers Discord, Slack, Ntfy, etc. (configurer ci-dessous)
+        </Text>
       </Card>
 
       {/* Webhooks */}

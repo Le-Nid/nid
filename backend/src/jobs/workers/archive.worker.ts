@@ -1,6 +1,7 @@
 import { Worker, Job } from "bullmq";
 import { getRedis } from "../../plugins/redis";
 import { getDb } from "../../db";
+import { notify } from "../../notifications/notify";
 import { archiveMail, getArchivedIds } from "../../archive/archive.service";
 import { listMessages } from "../../gmail/gmail.service";
 
@@ -86,6 +87,16 @@ export function startArchiveWorker() {
         })
         .where("bullmq_id", "=", String(job.id))
         .execute();
+
+      if (job.data.userId) {
+        await notify({
+          userId: job.data.userId,
+          category: 'job_completed',
+          title: `Archivage terminé`,
+          body: `${total} mail(s) archivé(s) sur le NAS.`,
+          data: { jobId: String(job.id), count: total },
+        })
+      }
     },
     { connection: getRedis(), concurrency: 1 },
   );

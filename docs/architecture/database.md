@@ -95,6 +95,25 @@ erDiagram
     users ||--o{ notifications : "reçoit"
     users ||--o{ audit_logs : "trace"
     users ||--o{ webhooks : "configure"
+    users ||--|| notification_preferences : "paramètre"
+
+    notification_preferences {
+        uuid id PK
+        uuid user_id FK "unique"
+        boolean weekly_report "default true"
+        boolean job_completed "default true"
+        boolean job_failed "default true"
+        boolean rule_executed "default false"
+        boolean quota_warning "default true"
+        boolean integrity_alert "default true"
+        boolean weekly_report_toast "default false"
+        boolean job_completed_toast "default true"
+        boolean job_failed_toast "default true"
+        boolean rule_executed_toast "default false"
+        boolean quota_warning_toast "default false"
+        boolean integrity_alert_toast "default false"
+        timestamptz updated_at
+    }
 
     webhooks {
         uuid id PK
@@ -153,6 +172,7 @@ erDiagram
 | `audit_logs` | `user_id + created_at` | BTree | Logs par utilisateur |
 | `audit_logs` | `action + created_at` | BTree | Filtrage par action |
 | `webhooks` | `user_id` | BTree | Filtrage par utilisateur |
+| `notification_preferences` | `user_id` | Unique | Une ligne par utilisateur |
 
 ---
 

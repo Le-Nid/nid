@@ -1,5 +1,5 @@
-import { getDb } from '../db'
 import { generateAllReports, WeeklyReport } from './report.service'
+import { notify } from '../notifications/notify'
 
 // Report scheduler — runs once per day, generates weekly reports on Mondays
 // Stores reports as in-app notifications
@@ -21,18 +21,14 @@ export function startReportScheduler() {
       console.info('[ReportScheduler] Generating weekly reports...')
       const reports = await generateAllReports()
 
-      const db = getDb()
       for (const report of reports) {
-        await db
-          .insertInto('notifications')
-          .values({
-            user_id: report.userId,
-            type: 'weekly_report',
-            title: `Rapport hebdomadaire`,
-            body: formatReportBody(report),
-            data: JSON.stringify(report.stats),
-          })
-          .execute()
+        await notify({
+          userId: report.userId,
+          category: 'weekly_report',
+          title: 'Rapport hebdomadaire',
+          body: formatReportBody(report),
+          data: report.stats as Record<string, unknown>,
+        })
       }
 
       lastRunDate = today

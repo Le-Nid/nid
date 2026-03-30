@@ -200,6 +200,27 @@ L'icône **🔔** dans le header affiche vos notifications :
 
 Le badge rouge indique le nombre de notifications non lues. Cliquez sur une notification pour la marquer comme lue, ou utilisez **Tout marquer comme lu**.
 
+### Préférences de notifications
+
+Dans **Paramètres**, la carte **Préférences de notifications** affiche un tableau où vous choisissez, pour chaque type de notification, les canaux actifs :
+
+| Notification | 🔔 In-app | 💬 Toast | 🔗 Webhook |
+|---|---|---|---|
+| Rapport hebdomadaire | ✅ | ❌ | — |
+| Job terminé | ✅ | ✅ | `job.completed` |
+| Job en échec | ✅ | ✅ | `job.failed` |
+| Règle exécutée | ❌ | ❌ | `rule.executed` |
+| Alerte quota | ✅ | ❌ | `quota.warning` |
+| Alerte intégrité | ✅ | ❌ | `integrity.failed` |
+
+- **🔔 In-app** : crée une notification dans la cloche du header
+- **💬 Toast** : affiche une pop-up temporaire en bas de page
+- **🔗 Webhook** : push vers Discord, Slack, Ntfy ou endpoint HTTP (configurés dans la carte Webhooks)
+
+La colonne Webhook affiche le nombre de webhooks actifs pour chaque événement. Les trois canaux sont indépendants — vous pouvez activer in-app sans toast, ou uniquement le webhook.
+
+Chaque toggle prend effet immédiatement — aucune sauvegarde manuelle nécessaire.
+
 ---
 
 ## Vérification d'intégrité des archives

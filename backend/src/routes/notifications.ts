@@ -1,7 +1,9 @@
 import { FastifyInstance } from 'fastify'
 import { getDb } from '../db'
+import { NOTIFICATION_DEFAULTS } from '../notifications/notification-prefs.service'
 
 export async function notificationsRoutes(app: FastifyInstance) {
+  const db = getDb()
   const auth = { preHandler: [app.authenticate] }
 
   // ─── List notifications for current user ──────────────
@@ -9,7 +11,6 @@ export async function notificationsRoutes(app: FastifyInstance) {
     const { sub: userId } = request.user as { sub: string }
     const { page = '1', limit = '20', unread_only } = request.query as Record<string, string>
 
-    const db = getDb()
     const offset = (parseInt(page) - 1) * parseInt(limit)
     const lim = parseInt(limit)
 
@@ -58,13 +59,77 @@ export async function notificationsRoutes(app: FastifyInstance) {
   app.patch('/read-all', auth, async (request) => {
     const { sub: userId } = request.user as { sub: string }
 
-    const db = getDb()
     await db
       .updateTable('notifications')
       .set({ is_read: true })
       .where('user_id', '=', userId)
       .where('is_read', '=', false)
       .execute()
+
+    return { ok: true }
+  })
+
+  // ─── Get notification preferences ────────────────────
+  app.get('/preferences', auth, async (request) => {
+    const { sub: userId } = request.user as { sub: string }
+
+    const row = await db
+      .selectFrom('notification_preferences')
+      .selectAll()
+      .where('user_id', '=', userId)
+      .executeTakeFirst()
+
+    if (!row) return NOTIFICATION_DEFAULTS
+
+    return {
+      weekly_report: row.weekly_report,
+      job_completed: row.job_completed,
+      job_failed: row.job_failed,
+      rule_executed: row.rule_executed,
+      quota_warning: row.quota_warning,
+      integrity_alert: row.integrity_alert,
+      weekly_report_toast: row.weekly_report_toast,
+      job_completed_toast: row.job_completed_toast,
+      job_failed_toast: row.job_failed_toast,
+      rule_executed_toast: row.rule_executed_toast,
+      quota_warning_toast: row.quota_warning_toast,
+      integrity_alert_toast: row.integrity_alert_toast,
+    }
+  })
+
+  // ─── Update notification preferences ─────────────────
+  app.put('/preferences', auth, async (request) => {
+    const { sub: userId } = request.user as { sub: string }
+    const body = request.body as Record<string, boolean>
+
+    // Filter only valid keys
+    const allowed = [
+      'weekly_report', 'job_completed', 'job_failed', 'rule_executed', 'quota_warning', 'integrity_alert',
+      'weekly_report_toast', 'job_completed_toast', 'job_failed_toast', 'rule_executed_toast', 'quota_warning_toast', 'integrity_alert_toast',
+    ]
+    const updates: Record<string, any> = {}
+    for (const key of allowed) {
+      if (typeof body[key] === 'boolean') updates[key] = body[key]
+    }
+
+    const existing = await db
+      .selectFrom('notification_preferences')
+      .select('id')
+      .where('user_id', '=', userId)
+      .executeTakeFirst()
+
+    if (existing) {
+      await db
+        .updateTable('notification_preferences')
+        .set({ ...updates, updated_at: new Date() })
+        .where('user_id', '=', userId)
+        .execute()
+    } else {
+      await db
+        .insertInto('notification_preferences')
+        .values({ user_id: userId, ...updates } as any)
+        .execute()
+    }
 
     return { ok: true }
   })

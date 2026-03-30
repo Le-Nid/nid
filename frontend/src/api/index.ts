@@ -167,6 +167,12 @@ export const notificationsApi = {
 
   markAllRead: () =>
     api.patch('/api/notifications/read-all').then((r) => r.data),
+
+  getPreferences: () =>
+    api.get('/api/notifications/preferences').then((r) => r.data),
+
+  updatePreferences: (prefs: Record<string, boolean>) =>
+    api.put('/api/notifications/preferences', prefs).then((r) => r.data),
 }
 
 // ─── Audit ────────────────────────────────────────────────
