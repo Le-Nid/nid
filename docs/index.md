@@ -21,6 +21,10 @@ Elle remplace des outils comme Gmail Cleaner et OpenArchiver, sans envoyer vos d
 | 📋 **Templates** | Bibliothèque de règles pré-configurées, activation en un clic |
 | 📈 **Insights** | Rapport hebdomadaire, notifications in-app |
 | 📝 **Audit log** | Journal d'activité traçant les actions sensibles |
+| 🔗 **Webhooks** | Notifications Discord, Slack, Ntfy ou HTTP générique |
+| 🛡️ **Intégrité** | Vérification de cohérence archives disque ↔ BDD |
+| ⌨️ **Raccourcis clavier** | Navigation et actions rapides dans Mes mails |
+| 💾 **Export/Import** | Sauvegarde et restauration de la configuration (règles, webhooks) |
 
 ---
 

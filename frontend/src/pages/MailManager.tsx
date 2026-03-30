@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   Table,
   Space,
@@ -26,6 +26,7 @@ import BulkActionBar from "../components/BulkActionBar";
 import MailViewer from "../components/MailViewer";
 import GmailSearchInput from "../components/GmailSearchInput";
 import JobProgressModal from "../components/JobProgressModal";
+import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import dayjs from "dayjs";
 
 const { Text } = Typography;
@@ -70,8 +71,33 @@ export default function MailManagerPage() {
   const [total, setTotal] = useState(0);
   const [viewingId, setViewingId] = useState<string | null>(null);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
+  const [focusedIndex, setFocusedIndex] = useState(-1);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const [messageApi, contextHolder] = message.useMessage();
+
+  // ─── Raccourcis clavier ───────────────────────────────────
+  useKeyboardShortcuts({
+    mails,
+    selectedIndex: focusedIndex,
+    onSelectIndex: (i) => {
+      setFocusedIndex(i);
+      if (i >= 0 && mails[i]) {
+        setSelected([mails[i].id]);
+      } else {
+        setSelected([]);
+      }
+    },
+    onViewMail: (id) => setViewingId(id),
+    onAction: (action) => {
+      if (selected.length > 0) handleBulkAction(action);
+    },
+    onSearch: () => {
+      const input = document.querySelector<HTMLInputElement>('.gmail-search-input input');
+      input?.focus();
+    },
+    enabled: !viewingId,
+  });
 
   // ─── Chargement initial ───────────────────────────────────
   const loadFresh = useCallback(async () => {
@@ -376,11 +402,12 @@ export default function MailManagerPage() {
           selectedRowKeys: selected,
           onChange: (keys) => setSelected(keys as string[]),
         }}
-        onRow={(row) => ({
+        onRow={(row, index) => ({
           onClick: () => setViewingId(row.id),
           style: {
             cursor: "pointer",
             fontWeight: row.labelIds.includes("UNREAD") ? 600 : 400,
+            background: index === focusedIndex ? 'rgba(24, 144, 255, 0.08)' : undefined,
           },
         })}
         locale={{ emptyText: "Aucun mail" }}
@@ -416,6 +443,13 @@ export default function MailManagerPage() {
         jobId={activeJobId}
         onClose={() => setActiveJobId(null)}
       />
+
+      {/* Keyboard shortcuts hint */}
+      <div style={{ textAlign: 'center', marginTop: 8, opacity: 0.5 }}>
+        <Text type="secondary" style={{ fontSize: 11 }}>
+          Raccourcis : <code>j</code>/<code>k</code> naviguer · <code>Enter</code> ouvrir · <code>e</code> archiver · <code>#</code> supprimer · <code>/</code> rechercher
+        </Text>
+      </div>
     </div>
   );
 }

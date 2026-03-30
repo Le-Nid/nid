@@ -199,3 +199,81 @@ L'icône **🔔** dans le header affiche vos notifications :
 - Alertes système (quota, erreurs)
 
 Le badge rouge indique le nombre de notifications non lues. Cliquez sur une notification pour la marquer comme lue, ou utilisez **Tout marquer comme lu**.
+
+---
+
+## Vérification d'intégrité des archives
+
+Les administrateurs peuvent vérifier la cohérence entre les fichiers EML archivés sur le NAS et l'index PostgreSQL :
+
+1. Rendez-vous dans **Administration** (menu sidebar, réservé aux admins)
+2. La vérification détecte automatiquement :
+    - **Fichiers manquants** : référencés en BDD mais absents du disque
+    - **Fichiers orphelins** : présents sur disque sans enregistrement en BDD
+    - **Fichiers corrompus** : fichiers vides (0 octets)
+3. Le résultat indique si l'archive est **saine** ou non
+
+!!! info "Vérification automatique"
+    Une vérification est exécutée automatiquement chaque nuit à 3h du matin. En cas de problème, un événement webhook `integrity.failed` est déclenché.
+
+---
+
+## Webhooks / notifications externes
+
+Recevez des notifications sur vos services préférés quand un événement survient :
+
+1. Dans **Paramètres**, section **Webhooks**
+2. Cliquez sur **Ajouter un webhook**
+3. Configurez :
+    - **Nom** : identifiant libre
+    - **URL** : endpoint de votre service (Discord, Slack, Ntfy ou URL générique)
+    - **Type** : `discord`, `slack`, `ntfy` ou `generic`
+    - **Événements** : choisissez parmi `job.completed`, `job.failed`, `rule.executed`, `quota.warning`, `integrity.failed`
+4. Cliquez sur **Tester** pour vérifier la connectivité
+
+!!! tip "Signature HMAC"
+    Les webhooks de type `generic` incluent un header `X-Webhook-Signature` (HMAC-SHA256) pour vérifier l'authenticité des requêtes.
+
+---
+
+## Raccourcis clavier
+
+La page **Mes mails** supporte des raccourcis clavier pour naviguer et agir rapidement :
+
+| Touche | Action |
+|---|---|
+| `j` | Mail suivant |
+| `k` | Mail précédent |
+| `Entrée` / `o` | Ouvrir le mail sélectionné |
+| `e` | Archiver |
+| `#` | Supprimer (corbeille) |
+| `r` | Marquer comme lu |
+| `u` | Marquer comme non lu |
+| `/` | Focus sur la barre de recherche |
+| `Échap` | Désélectionner |
+
+Les raccourcis sont désactivés automatiquement quand vous tapez dans un champ de saisie. Un bandeau en bas de la page rappelle les touches disponibles.
+
+---
+
+## Export / import de configuration
+
+Sauvegardez et restaurez vos règles et webhooks au format JSON :
+
+### Exporter
+
+1. Dans **Paramètres**, section **Export / Import**
+2. Cliquez sur **Exporter**
+3. Un fichier `gmail-manager-config.json` est téléchargé
+
+Le fichier contient vos règles (par compte Gmail) et vos webhooks, sans données sensibles (tokens, secrets).
+
+### Importer
+
+1. Cliquez sur **Importer**
+2. Sélectionnez un fichier JSON précédemment exporté
+3. Les règles sont associées à vos comptes Gmail par email
+4. Les webhooks sont importés directement
+
+!!! warning "Import additif"
+    L'import ajoute les éléments sans supprimer les existants. Importez plusieurs fois le même fichier créera des doublons.

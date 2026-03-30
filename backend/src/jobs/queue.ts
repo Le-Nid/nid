@@ -10,6 +10,7 @@ export type JobType =
   | 'scan_unsubscribe'
   | 'scan_attachments'
   | 'generate_report'
+  | 'integrity_check'
 
 export interface JobPayload {
   accountId: string

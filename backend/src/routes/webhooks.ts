@@ -1,0 +1,131 @@
+import { FastifyInstance } from 'fastify'
+import { z } from 'zod'
+import { getDb } from '../db'
+import * as crypto from 'crypto'
+
+const webhookSchema = z.object({
+  name: z.string().min(1).max(100),
+  url: z.string().url(),
+  type: z.enum(['generic', 'discord', 'slack', 'ntfy']).default('generic'),
+  events: z.array(z.enum([
+    'job.completed', 'job.failed', 'rule.executed', 'quota.warning', 'integrity.failed',
+  ])).min(1),
+})
+
+export async function webhookRoutes(app: FastifyInstance) {
+  const db = getDb()
+  const auth = { preHandler: [app.authenticate] }
+
+  // ─── List webhooks ────────────────────────────────────
+  app.get('/', auth, async (request) => {
+    const { sub: userId } = request.user as { sub: string }
+    return db
+      .selectFrom('webhooks')
+      .selectAll()
+      .where('user_id', '=', userId)
+      .orderBy('created_at', 'desc')
+      .execute()
+  })
+
+  // ─── Create webhook ──────────────────────────────────
+  app.post('/', auth, async (request, reply) => {
+    const { sub: userId } = request.user as { sub: string }
+    const body = webhookSchema.parse(request.body)
+
+    const secret = body.type === 'generic' ? crypto.randomBytes(32).toString('hex') : null
+
+    const webhook = await db
+      .insertInto('webhooks')
+      .values({
+        user_id: userId,
+        name: body.name,
+        url: body.url,
+        type: body.type,
+        events: body.events,
+        secret,
+      })
+      .returningAll()
+      .executeTakeFirstOrThrow()
+
+    return reply.code(201).send(webhook)
+  })
+
+  // ─── Update webhook ──────────────────────────────────
+  app.put('/:webhookId', auth, async (request, reply) => {
+    const { sub: userId } = request.user as { sub: string }
+    const { webhookId } = request.params as { webhookId: string }
+    const body = webhookSchema.partial().parse(request.body)
+
+    const updated = await db
+      .updateTable('webhooks')
+      .set(body as any)
+      .where('id', '=', webhookId)
+      .where('user_id', '=', userId)
+      .returningAll()
+      .executeTakeFirst()
+
+    if (!updated) return reply.code(404).send({ error: 'Not found' })
+    return updated
+  })
+
+  // ─── Toggle active ───────────────────────────────────
+  app.patch('/:webhookId/toggle', auth, async (request, reply) => {
+    const { sub: userId } = request.user as { sub: string }
+    const { webhookId } = request.params as { webhookId: string }
+
+    const webhook = await db
+      .selectFrom('webhooks')
+      .select(['id', 'is_active'])
+      .where('id', '=', webhookId)
+      .where('user_id', '=', userId)
+      .executeTakeFirst()
+
+    if (!webhook) return reply.code(404).send({ error: 'Not found' })
+
+    const updated = await db
+      .updateTable('webhooks')
+      .set({ is_active: !webhook.is_active })
+      .where('id', '=', webhookId)
+      .returningAll()
+      .executeTakeFirstOrThrow()
+
+    return updated
+  })
+
+  // ─── Delete webhook ──────────────────────────────────
+  app.delete('/:webhookId', auth, async (request, reply) => {
+    const { sub: userId } = request.user as { sub: string }
+    const { webhookId } = request.params as { webhookId: string }
+
+    await db
+      .deleteFrom('webhooks')
+      .where('id', '=', webhookId)
+      .where('user_id', '=', userId)
+      .execute()
+
+    return reply.code(204).send()
+  })
+
+  // ─── Test webhook ────────────────────────────────────
+  app.post('/:webhookId/test', auth, async (request, reply) => {
+    const { sub: userId } = request.user as { sub: string }
+    const { webhookId } = request.params as { webhookId: string }
+
+    const webhook = await db
+      .selectFrom('webhooks')
+      .selectAll()
+      .where('id', '=', webhookId)
+      .where('user_id', '=', userId)
+      .executeTakeFirst()
+
+    if (!webhook) return reply.code(404).send({ error: 'Not found' })
+
+    const { triggerWebhooks } = await import('../webhooks/webhook.service')
+    await triggerWebhooks(userId, 'job.completed', {
+      test: true,
+      message: 'Test webhook from Gmail Manager',
+    })
+
+    return { success: true }
+  })
+}

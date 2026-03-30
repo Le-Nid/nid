@@ -8,10 +8,22 @@ import { enqueueJob } from "./queue";
 export function startRuleScheduler() {
   const INTERVAL_MS = 60 * 1000; // toutes les minutes
 
+  let lastIntegrityCheck: Date | null = null;
+
   async function tick() {
     const db = getDb();
 
     try {
+      // ─── Integrity check — once per day ─────────────────
+      const now = new Date();
+      if (!lastIntegrityCheck || (now.getTime() - lastIntegrityCheck.getTime()) > 24 * 3600 * 1000) {
+        if (now.getHours() === 3) { // Run at 3 AM
+          await enqueueJob('integrity_check', { accountId: '' });
+          lastIntegrityCheck = now;
+          console.info('[Scheduler] Enqueued daily integrity check');
+        }
+      }
+
       // Récupère les règles actives avec un schedule cron
       const rules = await db
         .selectFrom("rules")
@@ -31,8 +43,6 @@ export function startRuleScheduler() {
         .where("rules.is_active", "=", true)
         .where("rules.schedule", "is not", null)
         .execute();
-
-      const now = new Date();
 
       for (const rule of rules) {
         if (rule.schedule && shouldRun(rule.schedule, rule.last_run_at, now)) {

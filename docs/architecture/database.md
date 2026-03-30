@@ -94,6 +94,21 @@ erDiagram
     users ||--o{ jobs : "possède"
     users ||--o{ notifications : "reçoit"
     users ||--o{ audit_logs : "trace"
+    users ||--o{ webhooks : "configure"
+
+    webhooks {
+        uuid id PK
+        uuid user_id FK
+        varchar name "max 100"
+        text url
+        varchar type "generic | discord | slack | ntfy"
+        text[] events
+        boolean is_active "default true"
+        varchar secret "nullable, HMAC generic"
+        timestamptz last_triggered_at
+        integer last_status
+        timestamptz created_at
+    }
 
     notifications {
         uuid id PK
@@ -137,6 +152,7 @@ erDiagram
 | `users` | `google_id` (partiel) | Unique | Lookup SSO Google |
 | `audit_logs` | `user_id + created_at` | BTree | Logs par utilisateur |
 | `audit_logs` | `action + created_at` | BTree | Filtrage par action |
+| `webhooks` | `user_id` | BTree | Filtrage par utilisateur |
 
 ---
 

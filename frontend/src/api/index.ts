@@ -186,3 +186,39 @@ export const twoFactorApi = {
   disable: (token: string) =>
     api.post('/api/auth/2fa/disable', { token }).then((r) => r.data),
 }
+
+// ─── Webhooks ─────────────────────────────────────────────
+export const webhooksApi = {
+  list: () =>
+    api.get('/api/webhooks').then((r) => r.data),
+
+  create: (data: { name: string; url: string; type: string; events: string[] }) =>
+    api.post('/api/webhooks', data).then((r) => r.data),
+
+  update: (id: string, data: Record<string, any>) =>
+    api.put(`/api/webhooks/${id}`, data).then((r) => r.data),
+
+  toggle: (id: string) =>
+    api.patch(`/api/webhooks/${id}/toggle`).then((r) => r.data),
+
+  remove: (id: string) =>
+    api.delete(`/api/webhooks/${id}`),
+
+  test: (id: string) =>
+    api.post(`/api/webhooks/${id}/test`).then((r) => r.data),
+}
+
+// ─── Integrity ────────────────────────────────────────────
+export const integrityApi = {
+  check: (accountId?: string) =>
+    api.get('/api/integrity/check', { params: accountId ? { accountId } : {} }).then((r) => r.data),
+}
+
+// ─── Config Export/Import ─────────────────────────────────
+export const configApi = {
+  exportConfig: () =>
+    api.get('/api/config/export').then((r) => r.data),
+
+  importConfig: (data: any) =>
+    api.post('/api/config/import', data).then((r) => r.data),
+}

@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Card, Button, List, Avatar, Tag, Popconfirm, Typography, Alert, Space, Divider, Progress, Descriptions, Table, Input, message } from 'antd'
-import { GoogleOutlined, DeleteOutlined, PlusOutlined, CheckCircleOutlined, UserOutlined, HistoryOutlined, LockOutlined, SafetyOutlined } from '@ant-design/icons'
+import { Card, Button, List, Avatar, Tag, Popconfirm, Typography, Alert, Space, Divider, Progress, Descriptions, Table, Input, message, Modal, Form, Select, Switch } from 'antd'
+import { GoogleOutlined, DeleteOutlined, PlusOutlined, CheckCircleOutlined, UserOutlined, HistoryOutlined, LockOutlined, SafetyOutlined, ApiOutlined, DownloadOutlined, UploadOutlined } from '@ant-design/icons'
 import { useSearchParams } from 'react-router-dom'
 import api from '../api/client'
 import { useAuthStore } from '../store/auth.store'
 import { formatBytes } from '../utils/format'
-import { auditApi, twoFactorApi } from '../api'
+import { auditApi, twoFactorApi, webhooksApi, configApi } from '../api'
 
 const { Title, Text } = Typography
 
@@ -20,6 +20,9 @@ export default function SettingsPage() {
   const [totpSetup, setTotpSetup] = useState<{ secret: string; qrDataUrl: string } | null>(null)
   const [totpCode, setTotpCode] = useState('')
   const [totpLoading, setTotpLoading] = useState(false)
+  const [webhooks, setWebhooks] = useState<any[]>([])
+  const [webhookModal, setWebhookModal] = useState(false)
+  const [webhookForm] = Form.useForm()
 
   const gmailStatus = searchParams.get('gmail')
   const connectedEmail = searchParams.get('account')
@@ -40,7 +43,43 @@ export default function SettingsPage() {
     }
   }
 
-  useEffect(() => { fetchAuditLogs() }, [])
+  useEffect(() => { fetchAuditLogs(); fetchWebhooks() }, [])
+
+  const fetchWebhooks = async () => {
+    try { setWebhooks(await webhooksApi.list()) } catch { /* ignore */ }
+  }
+
+  const handleExport = async () => {
+    try {
+      const data = await configApi.exportConfig()
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `gmail-manager-config-${new Date().toISOString().slice(0, 10)}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+      message.success('Configuration exportée')
+    } catch { message.error('Erreur export') }
+  }
+
+  const handleImport = () => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.json'
+    input.onchange = async (e: any) => {
+      const file = e.target.files?.[0]
+      if (!file) return
+      const text = await file.text()
+      try {
+        const data = JSON.parse(text)
+        await configApi.importConfig(data)
+        message.success('Configuration importée')
+        fetchMe()
+      } catch { message.error('Fichier invalide') }
+    }
+    input.click()
+  }
 
   const connectGmail = async () => {
     setConnecting(true)
@@ -288,6 +327,80 @@ export default function SettingsPage() {
             </div>
           </>
         )}
+      </Card>
+
+      {/* Webhooks */}
+      <Card title={<><ApiOutlined /> Webhooks</>} style={{ marginTop: 24 }}>
+        <List
+          dataSource={webhooks}
+          locale={{ emptyText: 'Aucun webhook configuré' }}
+          renderItem={(wh: any) => (
+            <List.Item actions={[
+              <Switch size="small" checked={wh.is_active} onChange={() => webhooksApi.toggle(wh.id).then(fetchWebhooks)} />,
+              <Button size="small" onClick={async () => { await webhooksApi.test(wh.id); message.success('Test envoyé') }}>Test</Button>,
+              <Popconfirm title="Supprimer ce webhook ?" onConfirm={() => webhooksApi.remove(wh.id).then(fetchWebhooks)}>
+                <Button danger size="small" icon={<DeleteOutlined />} />
+              </Popconfirm>,
+            ]}>
+              <List.Item.Meta
+                title={<Space>{wh.name} <Tag>{wh.type}</Tag> {wh.last_status && <Tag color={wh.last_status < 300 ? 'green' : 'red'}>{wh.last_status}</Tag>}</Space>}
+                description={<Text type="secondary" style={{ fontSize: 12 }}>{wh.events.join(', ')}</Text>}
+              />
+            </List.Item>
+          )}
+        />
+        <Divider />
+        <Button icon={<PlusOutlined />} onClick={() => { webhookForm.resetFields(); setWebhookModal(true) }}>
+          Ajouter un webhook
+        </Button>
+        <Modal
+          title="Nouveau webhook"
+          open={webhookModal}
+          onCancel={() => setWebhookModal(false)}
+          onOk={() => webhookForm.validateFields().then(async (vals) => {
+            await webhooksApi.create(vals)
+            setWebhookModal(false)
+            fetchWebhooks()
+            message.success('Webhook créé')
+          })}
+        >
+          <Form form={webhookForm} layout="vertical">
+            <Form.Item name="name" label="Nom" rules={[{ required: true }]}>
+              <Input placeholder="Mon webhook Discord" />
+            </Form.Item>
+            <Form.Item name="url" label="URL" rules={[{ required: true, type: 'url' }]}>
+              <Input placeholder="https://discord.com/api/webhooks/..." />
+            </Form.Item>
+            <Form.Item name="type" label="Type" initialValue="generic">
+              <Select options={[
+                { value: 'generic', label: 'Générique (HMAC)' },
+                { value: 'discord', label: 'Discord' },
+                { value: 'slack', label: 'Slack' },
+                { value: 'ntfy', label: 'Ntfy' },
+              ]} />
+            </Form.Item>
+            <Form.Item name="events" label="Événements" rules={[{ required: true }]}>
+              <Select mode="multiple" placeholder="Sélectionner les événements" options={[
+                { value: 'job.completed', label: 'Job terminé' },
+                { value: 'job.failed', label: 'Job échoué' },
+                { value: 'rule.executed', label: 'Règle exécutée' },
+                { value: 'quota.warning', label: 'Alerte quota' },
+                { value: 'integrity.failed', label: 'Intégrité échouée' },
+              ]} />
+            </Form.Item>
+          </Form>
+        </Modal>
+      </Card>
+
+      {/* Export / Import */}
+      <Card title="Export / Import de configuration" style={{ marginTop: 24 }}>
+        <Text>Exportez vos règles et webhooks en JSON, ou importez une configuration existante.</Text>
+        <div style={{ marginTop: 16 }}>
+          <Space>
+            <Button icon={<DownloadOutlined />} onClick={handleExport}>Exporter</Button>
+            <Button icon={<UploadOutlined />} onClick={handleImport}>Importer</Button>
+          </Space>
+        </div>
       </Card>
 
       {/* Audit log */}

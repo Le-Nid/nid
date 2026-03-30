@@ -81,6 +81,9 @@ nav:
     - Pièces jointes: api/attachments.md
     - Rapports: api/reports.md
     - Notifications: api/notifications.md
+    - Intégrité: api/integrity.md
+    - Webhooks: api/webhooks.md
+    - Configuration: api/config.md
   - Développement:
     - Contribuer: development/contributing.md
     - Roadmap: development/roadmap.md

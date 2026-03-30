@@ -120,6 +120,20 @@ export interface AuditLogsTable {
   created_at:  Generated<Date>
 }
 
+export interface WebhooksTable {
+  id:                Generated<string>
+  user_id:           string
+  name:              string
+  url:               string
+  type:              Generated<string>   // 'generic' | 'discord' | 'slack' | 'ntfy'
+  events:            string[]
+  is_active:         Generated<boolean>
+  secret:            string | null
+  last_triggered_at: Date | null
+  last_status:       number | null
+  created_at:        Generated<Date>
+}
+
 // ─── Database interface ───────────────────────────────────
 
 export interface Database {
@@ -131,6 +145,7 @@ export interface Database {
   jobs:                 JobsTable
   notifications:        NotificationsTable
   audit_logs:           AuditLogsTable
+  webhooks:             WebhooksTable
 }
 
 // ─── Row types (Selectable = what you get back from SELECT) ─
@@ -143,6 +158,7 @@ export type Rule               = Selectable<RulesTable>
 export type Job                = Selectable<JobsTable>
 export type Notification       = Selectable<NotificationsTable>
 export type AuditLog           = Selectable<AuditLogsTable>
+export type Webhook            = Selectable<WebhooksTable>
 
 export type NewUser               = Insertable<UsersTable>
 export type NewGmailAccount       = Insertable<GmailAccountsTable>
@@ -152,3 +168,4 @@ export type NewRule               = Insertable<RulesTable>
 export type NewJob                = Insertable<JobsTable>
 export type NewNotification       = Insertable<NotificationsTable>
 export type NewAuditLog           = Insertable<AuditLogsTable>
+export type NewWebhook            = Insertable<WebhooksTable>

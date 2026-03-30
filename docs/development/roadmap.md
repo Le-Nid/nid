@@ -87,10 +87,10 @@
 
 ### Nice to have
 
-- [ ] **Vérification d'intégrité des archives** — Job planifié comparant EMLs archivés ↔ index PostgreSQL, détection fichiers manquants ou corrompus
-- [ ] **Webhooks / notifications externes** — Webhook configurable (Discord, Slack, Ntfy) sur événements : job échoué, règle exécutée, quota atteint
-- [ ] **Raccourcis clavier** — Dans MailManager : `j/k` (navigation), `e` (archiver), `#` (supprimer), `/` (recherche)
-- [ ] **Export/import de configuration** — Exporter règles + paramètres en JSON, réimporter sur une autre instance
+- [x] **Vérification d'intégrité des archives** — Job planifié comparant EMLs archivés ↔ index PostgreSQL, détection fichiers manquants ou corrompus
+- [x] **Webhooks / notifications externes** — Webhook configurable (Discord, Slack, Ntfy) sur événements : job échoué, règle exécutée, quota atteint
+- [x] **Raccourcis clavier** — Dans MailManager : `j/k` (navigation), `e` (archiver), `#` (supprimer), `/` (recherche)
+- [x] **Export/import de configuration** — Exporter règles + paramètres en JSON, réimporter sur une autre instance
 
 ### Ops & déploiement
 
@@ -99,4 +99,5 @@
 - [ ] Mettre au propre les dockerfiles pour un déploiement simple
 - [ ] Faire un docker-compose simple pour le déploiement et en faire la doc
 - [ ] Faire en sorte que les variables d'environnements soient injectées dans les applis soit par fichier .env pour le dev local soit par variable d'environnement docker pour la prod
+- [ ] Implémenter le RGAA
 

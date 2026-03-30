@@ -53,6 +53,10 @@ const { token, user, gmailAccounts, activeAccountId } = useAuthStore()
 /insights           → InsightsPage 🔒
 ```
 
+### Raccourcis clavier
+
+La page **MailManager** intègre le hook `useKeyboardShortcuts` qui capture les touches `j/k` (navigation), `Enter/o` (ouvrir), `e` (archiver), `#` (corbeille), `r/u` (lu/non lu), `/` (recherche), `Escape` (désélectionner). Les raccourcis sont désactivés dans les champs de saisie.
+
 Le composant `ProtectedRoute` vérifie la présence du token JWT. Si absent, redirect vers `/login`.
 
 Le composant `AdminRoute` vérifie que `user.role === 'admin'`. Si non-admin, redirect vers `/dashboard`.
