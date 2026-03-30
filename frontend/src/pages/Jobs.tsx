@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   Table,
   Tag,
@@ -53,23 +53,42 @@ export default function JobsPage() {
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [watchingJobId, setWatchingJobId] = useState<string | null>(null);
+  const inFlightLoadRef = useRef<Promise<void> | null>(null);
 
   const hasActiveJobs = jobs.some((j) =>
     ["active", "pending"].includes(j.status),
   );
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params: Record<string, any> = {};
-      if (accountId) params.accountId = accountId;
-      if (statusFilter) params.status = statusFilter;
-      const data = await jobsApi.list(params);
-      setJobs(data);
-    } finally {
-      setLoading(false);
-    }
-  }, [accountId, statusFilter]);
+  const load = useCallback(
+    async ({ showLoading = true }: { showLoading?: boolean } = {}) => {
+      if (inFlightLoadRef.current) {
+        return inFlightLoadRef.current;
+      }
+
+      const request = (async () => {
+        if (showLoading) {
+          setLoading(true);
+        }
+
+        try {
+          const params: Record<string, any> = {};
+          if (accountId) params.accountId = accountId;
+          if (statusFilter) params.status = statusFilter;
+          const data = await jobsApi.list(params);
+          setJobs(data);
+        } finally {
+          if (showLoading) {
+            setLoading(false);
+          }
+          inFlightLoadRef.current = null;
+        }
+      })();
+
+      inFlightLoadRef.current = request;
+      return request;
+    },
+    [accountId, statusFilter],
+  );
 
   useEffect(() => {
     load();
@@ -79,7 +98,9 @@ export default function JobsPage() {
   // (le SSE s'occupe des détails d'un job spécifique via la modal)
   useEffect(() => {
     if (!hasActiveJobs) return;
-    const interval = setInterval(load, 5000);
+    const interval = setInterval(() => {
+      void load({ showLoading: false });
+    }, 5000);
     return () => clearInterval(interval);
   }, [hasActiveJobs, load]);
 

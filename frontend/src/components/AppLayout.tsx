@@ -2,7 +2,7 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { Layout, Menu, Select, Avatar, Dropdown, Typography, Space, Switch, Tooltip } from 'antd'
 import {
   DashboardOutlined, MailOutlined, DatabaseOutlined, SettingOutlined,
-  LogoutOutlined, UserOutlined, LoadingOutlined, RobotOutlined,
+  LogoutOutlined, UserOutlined, ScheduleOutlined, RobotOutlined,
   BulbOutlined, BulbFilled
 } from '@ant-design/icons'
 import { useAuthStore } from '../store/auth.store'
@@ -26,7 +26,7 @@ export default function AppLayout() {
     { key: '/mails',     icon: <MailOutlined />,      label: 'Mes mails' },
     { key: '/archive',   icon: <DatabaseOutlined />,  label: 'Archives' },
     { key: '/rules',     icon: <RobotOutlined />,     label: 'Règles auto' },
-    { key: '/jobs',      icon: <LoadingOutlined />,   label: 'Jobs' },
+    { key: '/jobs',      icon: <ScheduleOutlined />,  label: 'Jobs' },
     { key: '/settings',  icon: <SettingOutlined />,   label: 'Paramètres' },
   ]
 
