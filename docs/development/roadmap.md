@@ -152,3 +152,6 @@
 
 - [ ] **Email "expiration"** — Marquer des emails comme temporaires (codes OTP, confirmations de livraison, promos). Auto-suppression après N jours. Détection heuristique possible
 - [ ] **Partage d'archive temporaire** — Générer un lien temporaire (token + expiration) pour partager un mail archivé avec quelqu'un sans compte
+
+### open-core / dual offering
+- [ ] **application modèle saas + self hosted gratuit** création d'un business model du genre self hosted gratuit + saas via stripe + vercel
