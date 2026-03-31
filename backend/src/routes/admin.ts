@@ -2,11 +2,9 @@ import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { getDb } from '../db'
 import { sql } from 'kysely'
-
-/** Escape ILIKE special characters (Point 10) */
-function escapeIlike(str: string): string {
-  return str.replace(/[%_\\]/g, '\\$&')
-}
+import { escapeIlike, notFound } from '../utils/db'
+import { extractPagination } from '../utils/pagination'
+import { authPresets } from '../utils/auth'
 
 const updateUserSchema = z.object({
   role: z.enum(['admin', 'user']).optional(),
@@ -16,17 +14,16 @@ const updateUserSchema = z.object({
 })
 
 export async function adminRoutes(app: FastifyInstance) {
-  const adminAuth = { preHandler: [app.authenticate, app.requireAdmin] }
+  const { adminAuth } = authPresets(app)
   const db = getDb()
 
   // ─── Liste des utilisateurs ────────────────────────────────
   app.get('/users', adminAuth, async (request) => {
-    const { page = '1', limit = '50', search } = request.query as {
+    const { search, ...paginationQuery } = request.query as {
       page?: string; limit?: string; search?: string
     }
 
-    const lim = Math.min(Number.parseInt(limit), 100)
-    const offset = (Number.parseInt(page) - 1) * lim
+    const { page, limit: lim, offset } = extractPagination(paginationQuery)
 
     let query = db
       .selectFrom('users')
@@ -74,7 +71,7 @@ export async function adminRoutes(app: FastifyInstance) {
         storage_used_bytes: storageMap.get(u.id) ?? 0,
       })),
       total: totalResult.rows[0].count,
-      page: Number.parseInt(page),
+      page,
       limit: lim,
     }
   })
@@ -93,7 +90,7 @@ export async function adminRoutes(app: FastifyInstance) {
       .where('id', '=', userId)
       .executeTakeFirst()
 
-    if (!user) return reply.code(404).send({ error: 'User not found' })
+    if (!user) return notFound(reply, 'User not found')
 
     const accounts = await db
       .selectFrom('gmail_accounts')
@@ -128,18 +125,17 @@ export async function adminRoutes(app: FastifyInstance) {
       .returning(['id', 'email', 'role', 'is_active', 'max_gmail_accounts', 'storage_quota_bytes'])
       .executeTakeFirst()
 
-    if (!updated) return reply.code(404).send({ error: 'User not found' })
+    if (!updated) return notFound(reply, 'User not found')
     return updated
   })
 
   // ─── Vue globale des jobs ─────────────────────────────────
   app.get('/jobs', adminAuth, async (request) => {
-    const { status, page = '1', limit = '50' } = request.query as {
+    const { status, page: pageStr, limit: limitStr } = request.query as {
       status?: string; page?: string; limit?: string
     }
 
-    const lim = Math.min(Number.parseInt(limit), 100)
-    const offset = (Number.parseInt(page) - 1) * lim
+    const { page, limit: lim, offset } = extractPagination({ page: pageStr, limit: limitStr })
 
     let query = db
       .selectFrom('jobs')
@@ -158,7 +154,7 @@ export async function adminRoutes(app: FastifyInstance) {
 
     const jobsCount = await sql<{ count: number }>`SELECT count(*)::int as count FROM jobs`.execute(db)
 
-    return { jobs, total: jobsCount.rows[0].count, page: Number.parseInt(page), limit: lim }
+    return { jobs, total: jobsCount.rows[0].count, page, limit: lim }
   })
 
   // ─── Statistiques globales ────────────────────────────────

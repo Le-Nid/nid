@@ -4,13 +4,15 @@ import { authenticator } from 'otplib'
 import QRCode from 'qrcode'
 import { getDb } from '../db'
 import { logAudit } from '../audit/audit.service'
+import { authPresets } from '../utils/auth'
 
 export async function twoFactorRoutes(app: FastifyInstance) {
   const db = getDb()
+  const { auth } = authPresets(app)
 
   // ─── Setup: generate secret + QR code ─────────────────────
-  app.post('/setup', { preHandler: [app.authenticate] }, async (request) => {
-    const { sub: userId } = request.user as { sub: string }
+  app.post('/setup', auth, async (request) => {
+    const userId = request.user.sub
 
     const user = await db
       .selectFrom('users')
@@ -38,8 +40,8 @@ export async function twoFactorRoutes(app: FastifyInstance) {
   })
 
   // ─── Verify & Enable ─────────────────────────────────────
-  app.post('/enable', { preHandler: [app.authenticate] }, async (request, reply) => {
-    const { sub: userId } = request.user as { sub: string }
+  app.post('/enable', auth, async (request, reply) => {
+    const userId = request.user.sub
     const { token } = z.object({ token: z.string().length(6) }).parse(request.body)
 
     const user = await db
@@ -72,8 +74,8 @@ export async function twoFactorRoutes(app: FastifyInstance) {
   })
 
   // ─── Disable ──────────────────────────────────────────────
-  app.post('/disable', { preHandler: [app.authenticate] }, async (request, reply) => {
-    const { sub: userId } = request.user as { sub: string }
+  app.post('/disable', auth, async (request, reply) => {
+    const userId = request.user.sub
     const { token } = z.object({ token: z.string().length(6) }).parse(request.body)
 
     const user = await db

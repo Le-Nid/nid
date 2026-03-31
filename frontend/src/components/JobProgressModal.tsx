@@ -6,16 +6,9 @@ import {
 } from "@ant-design/icons";
 import { useJobSSE } from "../hooks/useJobSSE";
 import { useTranslation } from "react-i18next";
+import { STATUS_COLORS } from "../utils/constants";
 
 const { Text } = Typography;
-
-const STATUS_COLORS: Record<string, string> = {
-  pending: "default",
-  active: "processing",
-  completed: "success",
-  failed: "error",
-  cancelled: "warning",
-};
 
 interface Props {
   jobId: string | null;

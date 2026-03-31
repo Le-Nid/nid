@@ -114,3 +114,42 @@
   - [x] Toutes les pages i18n : Login, Dashboard, MailManager, Jobs, Archive, Rules, Settings, Admin, Unsubscribe, Attachments, Insights, Duplicates
   - [x] Tous les composants i18n : AppLayout, BulkActionBar, NotificationBell, MailViewer, GmailSearchInput, RuleFormModal, JobProgressModal
   - [x] Persistance de la langue (localStorage)
+
+## v2.3 — Evolution
+
+- [ ] Si on se connecte avec son compte Google, on enregistre automatiquement son compte Gmail
+
+### Vie privée & Sécurité
+
+- [ ] **Détecteur de pixels-espions** — Scanner les emails pour détecter les tracking pixels (images 1x1, paramètres UTM, domaines connus type Mailchimp/SendGrid). Badge "tracké" dans la liste, rapport mensuel
+- [ ] **Scanner PII dans les archives** — Détecter les données sensibles dans les mails archivés (numéros de CB, IBAN, mots de passe en clair, numéros de sécu). Alerter et proposer le chiffrement ou la suppression
+- [ ] **Chiffrement des archives au repos** — Chiffrer les EML sur le NAS avec une clé dérivée du mot de passe utilisateur (AES-256-GCM). Déchiffrement à la volée pour la consultation
+
+### Intelligence & Analytics avancées
+
+- [ ] **Heatmap d'activité email** — Visualiser quand vous recevez le plus de mails (grille jour × heure, style contributions GitHub). Identifier les créneaux calmes
+- [ ] **Score d'encombrement par expéditeur** — Score combinant volume, taille, taux de lecture, et présence de `List-Unsubscribe`. Classement des expéditeurs "pollueurs" avec suggestion de nettoyage
+- [ ] **Suggestions de nettoyage intelligent** — Heuristiques basées sur expéditeur + pattern sujet + non lu + ancien. Ex : "Vous avez 847 notifications GitHub non lues (1.2 Go). Supprimer ?"
+- [ ] **Tracker Inbox Zero** — Compteur temps réel + historique de la progression vers inbox zero. Streak, graphique d'évolution, gamification légère
+
+### Gestion avancée
+
+- [ ] **Snooze d'emails** — Cacher un email et le faire réapparaître à une date/heure choisie (via un label temporaire + job BullMQ planifié)
+- [ ] **Recherches sauvegardées / dossiers intelligents** — Sauvegarder des requêtes Gmail complexes comme "vues" réutilisables. Ex : "Factures de ce mois", "Mails avec PJ > 5Mo non archivés"
+- [ ] **Vue boîte unifiée** — Afficher les mails de tous les comptes Gmail dans une seule timeline, avec filtre par compte
+- [ ] **Reconstruction de threads dans les archives** — Regrouper les mails archivés par conversation (via `In-Reply-To` / `References` headers) au lieu d'une liste plate
+
+### Ops & Résilience
+
+- [ ] **Stockage distant (S3/MinIO)** — Alternative au NAS local : archiver vers un bucket S3-compatible. Permet de géo-répliquer les archives
+- [ ] **Politiques de rétention** — Supprimer automatiquement les archives de plus de X mois/années. Configurable par compte ou par label
+- [ ] **Dashboard quota Gmail API** — Visualiser la consommation du quota Gmail API en temps réel (250 unités/user/sec). Historique et alertes si proche du plafond
+- [ ] **Import IMAP** — Importer des mails depuis d'autres providers (Outlook, ProtonMail export) dans le système d'archives
+- [ ] **Import mbox** — Importer un fichier mbox (Google Takeout, Thunderbird, Apple Mail) → parser et convertir en EML individuels dans les archives. Upload via l'UI avec barre de progression
+
+### Idées originales
+
+- [ ] **Newsletter → RSS** — Convertir les newsletters reçues par email en flux RSS consultable dans un lecteur dédié intégré. Désencombrer l'inbox tout en gardant le contenu
+- [ ] **Email "expiration"** — Marquer des emails comme temporaires (codes OTP, confirmations de livraison, promos). Auto-suppression après N jours. Détection heuristique possible
+- [ ] **Mode "Focus"** — Masquer temporairement tous les mails sauf ceux d'une liste blanche d'expéditeurs
+- [ ] **Partage d'archive temporaire** — Générer un lien temporaire (token + expiration) pour partager un mail archivé avec quelqu'un sans compte

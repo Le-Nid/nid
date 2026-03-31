@@ -2,6 +2,8 @@ import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { getDb } from '../db'
 import * as crypto from 'crypto'
+import { notFound } from '../utils/db'
+import { authPresets } from '../utils/auth'
 
 const webhookSchema = z.object({
   name: z.string().min(1).max(100),
@@ -14,11 +16,11 @@ const webhookSchema = z.object({
 
 export async function webhookRoutes(app: FastifyInstance) {
   const db = getDb()
-  const auth = { preHandler: [app.authenticate] }
+  const { auth } = authPresets(app)
 
   // ─── List webhooks ────────────────────────────────────
   app.get('/', auth, async (request) => {
-    const { sub: userId } = request.user as { sub: string }
+    const userId = request.user.sub
     return db
       .selectFrom('webhooks')
       .selectAll()
@@ -29,7 +31,7 @@ export async function webhookRoutes(app: FastifyInstance) {
 
   // ─── Create webhook ──────────────────────────────────
   app.post('/', auth, async (request, reply) => {
-    const { sub: userId } = request.user as { sub: string }
+    const userId = request.user.sub
     const body = webhookSchema.parse(request.body)
 
     const secret = body.type === 'generic' ? crypto.randomBytes(32).toString('hex') : null
@@ -52,7 +54,7 @@ export async function webhookRoutes(app: FastifyInstance) {
 
   // ─── Update webhook ──────────────────────────────────
   app.put('/:webhookId', auth, async (request, reply) => {
-    const { sub: userId } = request.user as { sub: string }
+    const userId = request.user.sub
     const { webhookId } = request.params as { webhookId: string }
     const body = webhookSchema.partial().parse(request.body)
 
@@ -64,13 +66,13 @@ export async function webhookRoutes(app: FastifyInstance) {
       .returningAll()
       .executeTakeFirst()
 
-    if (!updated) return reply.code(404).send({ error: 'Not found' })
+    if (!updated) return notFound(reply)
     return updated
   })
 
   // ─── Toggle active ───────────────────────────────────
   app.patch('/:webhookId/toggle', auth, async (request, reply) => {
-    const { sub: userId } = request.user as { sub: string }
+    const userId = request.user.sub
     const { webhookId } = request.params as { webhookId: string }
 
     const webhook = await db
@@ -80,7 +82,7 @@ export async function webhookRoutes(app: FastifyInstance) {
       .where('user_id', '=', userId)
       .executeTakeFirst()
 
-    if (!webhook) return reply.code(404).send({ error: 'Not found' })
+    if (!webhook) return notFound(reply)
 
     const updated = await db
       .updateTable('webhooks')
@@ -94,7 +96,7 @@ export async function webhookRoutes(app: FastifyInstance) {
 
   // ─── Delete webhook ──────────────────────────────────
   app.delete('/:webhookId', auth, async (request, reply) => {
-    const { sub: userId } = request.user as { sub: string }
+    const userId = request.user.sub
     const { webhookId } = request.params as { webhookId: string }
 
     await db
@@ -108,7 +110,7 @@ export async function webhookRoutes(app: FastifyInstance) {
 
   // ─── Test webhook ────────────────────────────────────
   app.post('/:webhookId/test', auth, async (request, reply) => {
-    const { sub: userId } = request.user as { sub: string }
+    const userId = request.user.sub
     const { webhookId } = request.params as { webhookId: string }
 
     const webhook = await db
@@ -118,7 +120,7 @@ export async function webhookRoutes(app: FastifyInstance) {
       .where('user_id', '=', userId)
       .executeTakeFirst()
 
-    if (!webhook) return reply.code(404).send({ error: 'Not found' })
+    if (!webhook) return notFound(reply)
 
     const { triggerWebhooks } = await import('../webhooks/webhook.service')
     await triggerWebhooks(userId, 'job.completed', {

@@ -1,14 +1,15 @@
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { getDb } from '../db'
+import { authPresets } from '../utils/auth'
 
 export async function configRoutes(app: FastifyInstance) {
   const db = getDb()
-  const auth = { preHandler: [app.authenticate] }
+  const { auth } = authPresets(app)
 
   // ─── Export config (rules + webhooks) ─────────────────
   app.get('/export', auth, async (request) => {
-    const { sub: userId } = request.user as { sub: string }
+    const userId = request.user.sub
 
     // Get all user's gmail accounts
     const accounts = await db
@@ -63,7 +64,7 @@ export async function configRoutes(app: FastifyInstance) {
 
   // ─── Import config ────────────────────────────────────
   app.post('/import', auth, async (request, reply) => {
-    const { sub: userId } = request.user as { sub: string }
+    const userId = request.user.sub
 
     const body = z.object({
       version: z.string(),

@@ -67,7 +67,7 @@ export const rulesApi = {
     api.patch(`/api/rules/${accountId}/${ruleId}/toggle`).then((r) => r.data),
 
   delete: (accountId: string, ruleId: string) =>
-    api.delete(`/api/rules/${accountId}/${ruleId}`),
+    api.delete(`/api/rules/${accountId}/${ruleId}`).then((r) => r.data),
 
   run: (accountId: string, ruleId: string) =>
     api.post(`/api/rules/${accountId}/${ruleId}/run`).then((r) => r.data),
@@ -91,7 +91,7 @@ export const jobsApi = {
     api.get(`/api/jobs/${jobId}`).then((r) => r.data),
 
   cancel: (jobId: string) =>
-    api.delete(`/api/jobs/${jobId}`),
+    api.delete(`/api/jobs/${jobId}`).then((r) => r.data),
 }
 
 // ─── Auth (Google SSO) ────────────────────────────────────
@@ -208,7 +208,7 @@ export const webhooksApi = {
     api.patch(`/api/webhooks/${id}/toggle`).then((r) => r.data),
 
   remove: (id: string) =>
-    api.delete(`/api/webhooks/${id}`),
+    api.delete(`/api/webhooks/${id}`).then((r) => r.data),
 
   test: (id: string) =>
     api.post(`/api/webhooks/${id}/test`).then((r) => r.data),
