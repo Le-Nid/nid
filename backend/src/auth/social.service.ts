@@ -17,7 +17,7 @@ interface ProviderEntry {
   client: { createAuthorizationURL: (...args: any[]) => URL; validateAuthorizationCode: (...args: any[]) => Promise<arctic.OAuth2Tokens> }
   scopes: string[]
   usesPkce: boolean
-  fetchProfile: (accessToken: string) => Promise<SocialProfile>
+  fetchProfile: (accessToken: string, tokens?: arctic.OAuth2Tokens) => Promise<SocialProfile>
 }
 
 // ─── Provider factory (lazy — only instantiate enabled ones) ─
@@ -44,12 +44,11 @@ function buildProviders(): Partial<Record<SocialProvider, ProviderEntry>> {
         'https://www.googleapis.com/auth/gmail.labels',
       ],
       usesPkce: true,
-      fetchProfile: async (accessToken) => {
-        const res = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        })
-        const data = await res.json() as Record<string, any>
-        return { id: data.sub, email: data.email, name: data.name ?? null, avatar: data.picture ?? null }
+      fetchProfile: async (_accessToken, tokens) => {
+        // Decode id_token directly — no extra network call needed
+        const claims = arctic.decodeIdToken(tokens!.idToken())
+        const c = claims as Record<string, any>
+        return { id: c.sub, email: c.email, name: c.name ?? null, avatar: c.picture ?? null }
       },
     }
   }
@@ -202,7 +201,7 @@ export async function exchangeSocialCode(provider: SocialProvider, code: string,
     : await entry.client.validateAuthorizationCode(code)
 
   const accessToken = tokens.accessToken()
-  const profile = await entry.fetchProfile(accessToken)
+  const profile = await entry.fetchProfile(accessToken, tokens)
 
   if (!profile.email) throw new Error(`No email returned from ${provider}`)
 
