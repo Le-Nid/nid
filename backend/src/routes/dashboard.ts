@@ -2,11 +2,12 @@ import { FastifyInstance } from 'fastify'
 import { getDb } from '../db'
 import { listMessages, batchGetMessages, getMailboxProfile } from '../gmail/gmail.service'
 import { getCachedStats, setCachedStats, getCachedArchiveStats, setCachedArchiveStats } from '../dashboard/cache.service'
+import { authPresets } from '../utils/auth'
 
 export async function dashboardRoutes(app: FastifyInstance) {
-  const auth = { preHandler: [app.authenticate, app.requireAccountOwnership] }
+  const { accountAuth } = authPresets(app)
 
-  app.get('/:accountId/stats', auth, async (request) => {
+  app.get('/:accountId/stats', accountAuth, async (request) => {
     const { accountId } = request.params as { accountId: string }
     const { limit = '20', refresh } = request.query as { limit?: string; refresh?: string }
 
@@ -63,7 +64,7 @@ export async function dashboardRoutes(app: FastifyInstance) {
     return stats
   })
 
-  app.get('/:accountId/archive-stats', auth, async (request) => {
+  app.get('/:accountId/archive-stats', accountAuth, async (request) => {
     const { accountId } = request.params as { accountId: string }
 
     const cached = await getCachedArchiveStats(accountId)

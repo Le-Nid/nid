@@ -109,9 +109,8 @@ export async function authRoutes(app: FastifyInstance) {
   app.post('/logout', { preHandler: [app.authenticate] }, async (request, reply) => {
     try {
       // Blacklist current JWT until its natural expiration
-      const payload = request.user as { sub: string; exp?: number }
-      if (payload.exp) {
-        const ttl = payload.exp - Math.floor(Date.now() / 1000)
+      if (request.user.exp) {
+        const ttl = request.user.exp - Math.floor(Date.now() / 1000)
         if (ttl > 0) {
           const redis = getRedis()
           const raw = request.cookies.token ?? request.headers.authorization?.replace('Bearer ', '')
@@ -127,7 +126,7 @@ export async function authRoutes(app: FastifyInstance) {
 
   // ─── Refresh (Point 14: token refresh without re-login) ───
   app.post('/refresh', { preHandler: [app.authenticate] }, async (request, reply) => {
-    const { sub: userId, email, role } = request.user as { sub: string; email: string; role: string }
+    const { sub: userId, email, role } = request.user
     const token = app.jwt.sign({ sub: userId, email, role })
     setAuthCookie(reply, token)
     return { user: { id: userId, email, role } }
@@ -171,7 +170,7 @@ export async function authRoutes(app: FastifyInstance) {
 
   // ─── Me ───────────────────────────────────────────────────
   app.get('/me', { preHandler: [app.authenticate] }, async (request) => {
-    const { sub: userId } = request.user as { sub: string }
+    const userId = request.user.sub
 
     const user = await db
       .selectFrom('users')
@@ -199,7 +198,7 @@ export async function authRoutes(app: FastifyInstance) {
 
   // ─── Gmail OAuth2 (Point 9: signed state) ──────────────────
   app.get('/gmail/connect', { preHandler: [app.authenticate] }, async (request, reply) => {
-    const { sub: userId } = request.user as { sub: string }
+    const userId = request.user.sub
 
     // Vérifier le quota de comptes Gmail
     const user = await db
@@ -238,7 +237,7 @@ export async function authRoutes(app: FastifyInstance) {
   })
 
   app.delete('/gmail/:accountId', { preHandler: [app.authenticate] }, async (request, reply) => {
-    const { sub: userId }    = request.user as { sub: string }
+    const userId = request.user.sub
     const { accountId }      = request.params as { accountId: string }
 
     await db

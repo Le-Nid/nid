@@ -1,18 +1,19 @@
 import { FastifyInstance } from 'fastify'
 import { getDb } from '../db'
 import { NOTIFICATION_DEFAULTS } from '../notifications/notification-prefs.service'
+import { extractPagination } from '../utils/pagination'
+import { authPresets } from '../utils/auth'
 
 export async function notificationsRoutes(app: FastifyInstance) {
   const db = getDb()
-  const auth = { preHandler: [app.authenticate] }
+  const { auth } = authPresets(app)
 
   // ─── List notifications for current user ──────────────
   app.get('/', auth, async (request) => {
-    const { sub: userId } = request.user as { sub: string }
-    const { page = '1', limit = '20', unread_only } = request.query as Record<string, string>
+    const userId = request.user.sub
+    const { unread_only, page: pageStr, limit: limitStr } = request.query as Record<string, string>
 
-    const offset = (parseInt(page) - 1) * parseInt(limit)
-    const lim = parseInt(limit)
+    const { page, limit: lim, offset } = extractPagination({ page: pageStr, limit: limitStr }, 20)
 
     let query = db
       .selectFrom('notifications')
@@ -36,12 +37,12 @@ export async function notificationsRoutes(app: FastifyInstance) {
       .where('is_read', '=', false)
       .executeTakeFirstOrThrow()
 
-    return { notifications, unreadCount: Number(count), page: parseInt(page), limit: lim }
+    return { notifications, unreadCount: Number(count), page, limit: lim }
   })
 
   // ─── Mark one as read ─────────────────────────────────
   app.patch('/:notificationId/read', auth, async (request, reply) => {
-    const { sub: userId } = request.user as { sub: string }
+    const userId = request.user.sub
     const { notificationId } = request.params as { notificationId: string }
 
     const db = getDb()
@@ -57,7 +58,7 @@ export async function notificationsRoutes(app: FastifyInstance) {
 
   // ─── Mark all as read ─────────────────────────────────
   app.patch('/read-all', auth, async (request) => {
-    const { sub: userId } = request.user as { sub: string }
+    const userId = request.user.sub
 
     await db
       .updateTable('notifications')
@@ -71,7 +72,7 @@ export async function notificationsRoutes(app: FastifyInstance) {
 
   // ─── Get notification preferences ────────────────────
   app.get('/preferences', auth, async (request) => {
-    const { sub: userId } = request.user as { sub: string }
+    const userId = request.user.sub
 
     const row = await db
       .selectFrom('notification_preferences')
@@ -99,7 +100,7 @@ export async function notificationsRoutes(app: FastifyInstance) {
 
   // ─── Update notification preferences ─────────────────
   app.put('/preferences', auth, async (request) => {
-    const { sub: userId } = request.user as { sub: string }
+    const userId = request.user.sub
     const body = request.body as Record<string, boolean>
 
     // Filter only valid keys

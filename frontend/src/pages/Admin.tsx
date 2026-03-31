@@ -10,6 +10,7 @@ import {
 import { adminApi } from '../api'
 import { useTranslation } from 'react-i18next'
 import { formatBytes } from '../utils/format'
+import { STATUS_COLORS } from '../utils/constants'
 
 const { Title, Text } = Typography
 
@@ -95,10 +96,7 @@ export default function AdminPage() {
     }
   }
 
-  const statusColor: Record<string, string> = {
-    completed: 'success', failed: 'error', active: 'processing',
-    pending: 'default', cancelled: 'warning',
-  }
+  const statusColor = STATUS_COLORS
 
   const usersColumns = [
     {

@@ -2,23 +2,20 @@ import { FastifyInstance } from 'fastify'
 import { getDb } from '../db'
 import { getGmailClient } from '../gmail/gmail.service'
 import { config } from '../config'
-
-/** Escape ILIKE special characters (Point 10) */
-function escapeIlike(str: string): string {
-  return str.replace(/[%_\\]/g, '\\$&')
-}
+import { escapeIlike } from '../utils/db'
+import { extractPagination } from '../utils/pagination'
+import { authPresets } from '../utils/auth'
 
 export async function attachmentsRoutes(app: FastifyInstance) {
-  const auth = { preHandler: [app.authenticate, app.requireAccountOwnership] }
+  const { accountAuth } = authPresets(app)
 
   // ─── List archived attachments (from DB) ──────────────
-  app.get('/:accountId/archived', auth, async (request) => {
+  app.get('/:accountId/archived', accountAuth, async (request) => {
     const { accountId } = request.params as { accountId: string }
-    const { page = '1', limit = '50', sort = 'size', order = 'desc', q } = request.query as Record<string, string>
+    const { sort = 'size', order = 'desc', q, page: pageStr, limit: limitStr } = request.query as Record<string, string>
 
     const db = getDb()
-    const offset = (parseInt(page) - 1) * parseInt(limit)
-    const lim = parseInt(limit)
+    const { page, limit: lim, offset } = extractPagination({ page: pageStr, limit: limitStr })
 
     let query = db
       .selectFrom('archived_attachments')
@@ -87,13 +84,13 @@ export async function attachmentsRoutes(app: FastifyInstance) {
       attachments,
       total: Number(count),
       totalSizeBytes: Number(total_size ?? 0),
-      page: parseInt(page),
+      page,
       limit: lim,
     }
   })
 
   // ─── Scan live Gmail attachments (direct API call) ────
-  app.get('/:accountId/live', auth, async (request) => {
+  app.get('/:accountId/live', accountAuth, async (request) => {
     const { accountId } = request.params as { accountId: string }
     const { maxResults = '200' } = request.query as { maxResults?: string }
 

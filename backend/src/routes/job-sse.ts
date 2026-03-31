@@ -27,7 +27,7 @@ export async function jobSseRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const { jobId } = request.params as { jobId: string };
       const db = getDb();
-      const { sub: userId } = request.user as { sub: string };
+      const userId = request.user.sub;
 
       // Vérifier que le job existe et appartient au user
       const job = await db

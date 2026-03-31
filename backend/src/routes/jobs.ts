@@ -1,13 +1,15 @@
 import { FastifyInstance } from 'fastify'
 import { getDb } from '../db'
 import { getQueue } from '../jobs/queue'
+import { notFound } from '../utils/db'
+import { authPresets } from '../utils/auth'
 
 export async function jobRoutes(app: FastifyInstance) {
-  const auth = { preHandler: [app.authenticate] }
+  const { auth } = authPresets(app)
   const db   = getDb()
 
   app.get('/', auth, async (request) => {
-    const { sub: userId } = request.user as { sub: string }
+    const userId = request.user.sub
     const { status, accountId } = request.query as { status?: string; accountId?: string }
 
     let query = db
@@ -24,7 +26,7 @@ export async function jobRoutes(app: FastifyInstance) {
   })
 
   app.get('/:jobId', auth, async (request, reply) => {
-    const { sub: userId } = request.user as { sub: string }
+    const userId = request.user.sub
     const { jobId } = request.params as { jobId: string }
 
     const job = await db
@@ -34,7 +36,7 @@ export async function jobRoutes(app: FastifyInstance) {
       .where('user_id', '=', userId)
       .executeTakeFirst()
 
-    if (!job) return reply.code(404).send({ error: 'Not found' })
+    if (!job) return notFound(reply)
 
     const queue   = getQueue()
     const bullJob = await queue.getJob(job.bullmq_id ?? '')
@@ -42,7 +44,7 @@ export async function jobRoutes(app: FastifyInstance) {
   })
 
   app.delete('/:jobId', auth, async (request, reply) => {
-    const { sub: userId } = request.user as { sub: string }
+    const userId = request.user.sub
     const { jobId } = request.params as { jobId: string }
 
     const job = await db
@@ -52,7 +54,7 @@ export async function jobRoutes(app: FastifyInstance) {
       .where('user_id', '=', userId)
       .executeTakeFirst()
 
-    if (!job) return reply.code(404).send({ error: 'Not found' })
+    if (!job) return notFound(reply)
 
     if (job.bullmq_id) {
       const queue   = getQueue()

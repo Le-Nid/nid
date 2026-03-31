@@ -2,12 +2,13 @@ import { FastifyInstance } from 'fastify'
 import { getDb } from '../db'
 import { sql } from 'kysely'
 import { enqueueJob } from '../jobs/queue'
+import { authPresets } from '../utils/auth'
 
 export async function duplicatesRoutes(app: FastifyInstance) {
-  const auth = { preHandler: [app.authenticate, app.requireAccountOwnership] }
+  const { accountAuth } = authPresets(app)
 
   // ─── Detect duplicates in archives ────────────────────
-  app.get('/:accountId/archived', auth, async (request) => {
+  app.get('/:accountId/archived', accountAuth, async (request) => {
     const { accountId } = request.params as { accountId: string }
     const { min_count = '2' } = request.query as { min_count?: string }
 
@@ -56,7 +57,7 @@ export async function duplicatesRoutes(app: FastifyInstance) {
   })
 
   // ─── Delete duplicates (keep newest) ──────────────────
-  app.post('/:accountId/archived/delete', auth, async (request, reply) => {
+  app.post('/:accountId/archived/delete', accountAuth, async (request, reply) => {
     const { accountId } = request.params as { accountId: string }
     const { mailIds } = request.body as { mailIds: string[] }
 
@@ -80,7 +81,7 @@ export async function duplicatesRoutes(app: FastifyInstance) {
   })
 
   // ─── Detect duplicates in live Gmail ──────────────────
-  app.get('/:accountId/live', auth, async (request) => {
+  app.get('/:accountId/live', accountAuth, async (request) => {
     const { accountId } = request.params as { accountId: string }
     // Uses Gmail search — limited approach, only finds same-subject mails
     // For a full scan, we'd need to fetch all messages which is expensive

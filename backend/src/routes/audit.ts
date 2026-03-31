@@ -1,15 +1,18 @@
 import { FastifyInstance } from 'fastify'
 import { getDb } from '../db'
+import { extractPagination } from '../utils/pagination'
+import { authPresets } from '../utils/auth'
 
 export async function auditRoutes(app: FastifyInstance) {
+  const { auth } = authPresets(app)
+
   // User's own audit log
-  app.get('/', { preHandler: [app.authenticate] }, async (request) => {
-    const { sub: userId } = request.user as { sub: string }
-    const { page = '1', limit = '50', action } = request.query as Record<string, string>
+  app.get('/', auth, async (request) => {
+    const userId = request.user.sub
+    const { action, page: pageStr, limit: limitStr } = request.query as Record<string, string>
 
     const db = getDb()
-    const offset = (Number.parseInt(page) - 1) * Number.parseInt(limit)
-    const lim = Number.parseInt(limit)
+    const { page, limit: lim, offset } = extractPagination({ page: pageStr, limit: limitStr })
 
     let query = db
       .selectFrom('audit_logs')
@@ -32,6 +35,6 @@ export async function auditRoutes(app: FastifyInstance) {
       .where('user_id', '=', userId)
       .executeTakeFirstOrThrow() as any
 
-    return { logs, total: Number(count), page: Number.parseInt(page), limit: lim }
+    return { logs, total: Number(count), page, limit: lim }
   })
 }

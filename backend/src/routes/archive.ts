@@ -5,11 +5,9 @@ import { enqueueJob } from "../jobs/queue";
 import { streamArchiveZip } from "../archive/export.service";
 import { invalidateDashboardCache } from "../dashboard/cache.service";
 import fs from "node:fs";
-
-/** Escape ILIKE special characters to prevent wildcard injection (Point 10) */
-function escapeIlike(str: string): string {
-  return str.replaceAll(/[%_\\]/g, String.raw`\$&`)
-}
+import { escapeIlike, notFound } from "../utils/db";
+import { extractPagination } from "../utils/pagination";
+import { authPresets } from "../utils/auth";
 
 /** Sanitize filename for Content-Disposition header (Point 17) */
 function sanitizeFilename(name: string): string {
@@ -17,23 +15,22 @@ function sanitizeFilename(name: string): string {
 }
 
 export async function archiveRoutes(app: FastifyInstance) {
-  const auth = { preHandler: [app.authenticate, app.requireAccountOwnership] };
+  const { accountAuth } = authPresets(app);
   const db = getDb();
 
   // ─── Liste mails archivés ─────────────────────────────────
-  app.get("/:accountId/mails", auth, async (request) => {
+  app.get("/:accountId/mails", accountAuth, async (request) => {
     const { accountId } = request.params as { accountId: string };
     const {
       q,
       sender,
       from_date,
       to_date,
-      page = "1",
-      limit = "50",
+      page: pageStr,
+      limit: limitStr,
     } = request.query as Record<string, string>;
 
-    const offset = (Number.parseInt(page) - 1) * Math.min(Number.parseInt(limit), 100);
-    const lim = Math.min(Number.parseInt(limit), 100);
+    const { page, limit: lim, offset } = extractPagination({ page: pageStr, limit: limitStr });
 
     let query = db
       .selectFrom("archived_mails")
@@ -93,11 +90,11 @@ export async function archiveRoutes(app: FastifyInstance) {
       .where("gmail_account_id", "=", accountId)
       .executeTakeFirstOrThrow();
 
-    return { mails, total: Number(count), page: Number.parseInt(page), limit: lim };
+    return { mails, total: Number(count), page, limit: lim };
   });
 
   // ─── Mail archivé + pièces jointes ───────────────────────
-  app.get("/:accountId/mails/:mailId", auth, async (request, reply) => {
+  app.get("/:accountId/mails/:mailId", accountAuth, async (request, reply) => {
     const { accountId, mailId } = request.params as {
       accountId: string;
       mailId: string;
@@ -110,7 +107,7 @@ export async function archiveRoutes(app: FastifyInstance) {
       .where("gmail_account_id", "=", accountId)
       .executeTakeFirst();
 
-    if (!mail) return reply.code(404).send({ error: "Not found" });
+    if (!mail) return notFound(reply);
 
     const attachments = await db
       .selectFrom("archived_attachments")
@@ -128,7 +125,7 @@ export async function archiveRoutes(app: FastifyInstance) {
   // ─── Download pièce jointe ───────────────────────────────
   app.get(
     "/:accountId/attachments/:attachmentId/download",
-    auth,
+    accountAuth,
     async (request, reply) => {
       const { attachmentId } = request.params as { attachmentId: string };
 
@@ -138,7 +135,7 @@ export async function archiveRoutes(app: FastifyInstance) {
         .where("id", "=", attachmentId)
         .executeTakeFirst();
 
-      if (!att) return reply.code(404).send({ error: "Not found" });
+      if (!att) return notFound(reply);
 
       return reply
         .header("Content-Disposition", `attachment; filename="${sanitizeFilename(att.filename)}"`)
@@ -148,9 +145,9 @@ export async function archiveRoutes(app: FastifyInstance) {
   );
 
   // ─── Déclencher un archivage ─────────────────────────────
-  app.post("/:accountId/archive", auth, async (request, reply) => {
+  app.post("/:accountId/archive", accountAuth, async (request, reply) => {
     const { accountId } = request.params as { accountId: string };
-    const { sub: userId } = request.user as { sub: string };
+    const userId = request.user.sub;
     const {
       messageIds,
       query,
@@ -173,7 +170,7 @@ export async function archiveRoutes(app: FastifyInstance) {
   });
 
   // ─── Export ZIP ───────────────────────────────────────────
-  app.post("/:accountId/export-zip", auth, async (request, reply) => {
+  app.post("/:accountId/export-zip", accountAuth, async (request, reply) => {
     const { accountId } = request.params as { accountId: string };
     const { mailIds } = request.body as { mailIds: string[] };
 
