@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
+import { BrowserRouter } from 'react-router'
 import { ConfigProvider, theme as antTheme, App as AntApp } from 'antd'
 import frFR from 'antd/locale/fr_FR'
 import enUS from 'antd/locale/en_US'

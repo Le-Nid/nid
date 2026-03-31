@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router'
 import { Card, Form, Input, Button, Tabs, Typography, Alert, Space, Divider } from 'antd'
 import { MailOutlined, LockOutlined, GoogleOutlined, SafetyOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'

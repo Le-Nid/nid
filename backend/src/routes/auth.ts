@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import bcrypt from 'bcrypt'
 import crypto from 'node:crypto'
-import { authenticator } from 'otplib'
+import { verifySync as otpVerify } from 'otplib'
 import { getDb } from '../db'
 import { getGmailAuthUrl, exchangeGmailCode, getGoogleSsoUrl, exchangeGoogleSsoCode } from '../auth/oauth.service'
 import { config } from '../config'
@@ -91,8 +91,8 @@ export async function authRoutes(app: FastifyInstance) {
       if (!body.totpCode) {
         return reply.code(403).send({ error: 'TOTP_REQUIRED' })
       }
-      const totpValid = authenticator.verify({ token: body.totpCode, secret: user.totp_secret })
-      if (!totpValid) {
+      const totpResult = otpVerify({ token: body.totpCode, secret: user.totp_secret })
+      if (!totpResult.valid) {
         return reply.code(401).send({ error: 'Invalid email or password' })
       }
     }
