@@ -155,3 +155,6 @@
 
 ### open-core / dual offering
 - [ ] **application modèle saas + self hosted gratuit** création d'un business model du genre self hosted gratuit + saas via stripe + vercel
+
+### authen,tification
+ajouter un systeme d'authent auth0 ? le but est de proposer une integration native des providers de reseau sociaux pour se connecter

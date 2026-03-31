@@ -10,7 +10,7 @@ export default defineConfig({
       formats: ['es'],
       fileName: () => 'index.js',
     },
-    rollupOptions: {
+    rolldownOptions: {
       external: [
         ...builtinModules,
         ...builtinModules.map((m) => `node:${m}`),
