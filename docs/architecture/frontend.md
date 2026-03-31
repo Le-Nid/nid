@@ -61,6 +61,12 @@ const { token, user, gmailAccounts, activeAccountId } = useAuthStore()
 
 La page **MailManager** intègre le hook `useKeyboardShortcuts` qui capture les touches `j/k` (navigation), `Enter/o` (ouvrir), `e` (archiver), `#` (corbeille), `r/u` (lu/non lu), `/` (recherche), `Escape` (désélectionner). Les raccourcis sont désactivés dans les champs de saisie.
 
+### Actions de masse
+
+La page **MailManager** propose un bouton **« Tout archiver »** qui lance un archivage différentiel de tous les mails correspondant à la requête en cours, sans sélection manuelle. L’opération est asynchrone (job BullMQ) avec suivi SSE.
+
+Le chargement des métadonnées (sujet, expéditeur, taille) utilise le endpoint **batch** (`POST /messages/batch`) pour récupérer jusqu'à 100 messages en un seul appel, évitant les erreurs 429.
+
 Le composant `ProtectedRoute` vérifie la présence du token JWT. Si absent, redirect vers `/login`.
 
 Le composant `AdminRoute` vérifie que `user.role === 'admin'`. Si non-admin, redirect vers `/dashboard`.

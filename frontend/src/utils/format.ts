@@ -7,12 +7,14 @@ export function formatBytes(bytes: number): string {
 }
 
 export function formatSender(sender: string): string {
+  if (!sender) return '—'
   // Extract display name if present: "John Doe <john@example.com>" → "John Doe"
   const match = sender.match(/^([^<]+)</)
   return match ? match[1].trim() : sender
 }
 
 export function formatEmail(sender: string): string {
+  if (!sender) return '—'
   const match = sender.match(/<([^>]+)>/)
   return match ? match[1] : sender
 }

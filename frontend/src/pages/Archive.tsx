@@ -147,39 +147,106 @@ export default function ArchivePage() {
   };
 
   // ─── Preview HTML inline depuis EML ─────────────────────
-  function extractHtmlFromEml(emlContent: string): string {
-    // Chercher le boundary MIME
-    const boundaryMatch = emlContent.match(/boundary="?([^"\r\n;]+)"?/i);
-    if (!boundaryMatch) {
-      // Mail simple texte
-      const bodyStart =
-        emlContent.indexOf("\r\n\r\n") + 4 || emlContent.indexOf("\n\n") + 2;
-      return `<pre style="white-space:pre-wrap;font-family:inherit">${emlContent.slice(bodyStart)}</pre>`;
-    }
+  function decodeBase64Utf8(b64: string): string {
+    const binary = atob(b64.replaceAll(/\s/g, ''));
+    const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+    return new TextDecoder('utf-8').decode(bytes);
+  }
 
-    const boundary = boundaryMatch[1];
-    const parts = emlContent.split(`--${boundary}`);
-    for (const part of parts) {
-      if (/content-type:\s*text\/html/i.test(part)) {
-        const bodyIdx =
-          part.indexOf("\r\n\r\n") !== -1
-            ? part.indexOf("\r\n\r\n") + 4
-            : part.indexOf("\n\n") + 2;
-        const encoding = /content-transfer-encoding:\s*base64/i.test(part)
-          ? "base64"
-          : "plain";
-        const raw = part.slice(bodyIdx).trim();
-        if (encoding === "base64") {
-          try {
-            return atob(raw.replace(/\s/g, ""));
-          } catch {
-            return raw;
-          }
-        }
+  function decodeQuotedPrintable(str: string): string {
+    const decoded = str
+      .replaceAll(/=\r?\n/g, '') // soft line breaks
+      .replaceAll(/=([0-9A-Fa-f]{2})/g, (_m, hex) =>
+        String.fromCharCode(parseInt(hex, 16)),
+      );
+    // The result is raw bytes as Latin-1 chars — re-interpret as UTF-8
+    const bytes = Uint8Array.from(decoded, (c) => c.charCodeAt(0));
+    try {
+      return new TextDecoder('utf-8').decode(bytes);
+    } catch {
+      return decoded;
+    }
+  }
+
+  function decodePartBody(raw: string, part: string): string {
+    const isBase64 = /content-transfer-encoding:\s*base64/i.test(part);
+    const isQP = /content-transfer-encoding:\s*quoted-printable/i.test(part);
+    if (isBase64) {
+      try {
+        return decodeBase64Utf8(raw);
+      } catch {
         return raw;
       }
     }
-    // Fallback : texte brut
+    if (isQP) return decodeQuotedPrintable(raw);
+    return raw;
+  }
+
+  function extractBodyFromParts(emlContent: string, boundary: string, depth = 0): string | null {
+    if (depth > 5) return null; // guard against infinite recursion
+    const parts = emlContent.split(`--${boundary}`);
+    let htmlPart: string | null = null;
+    let textPart: string | null = null;
+
+    for (const part of parts) {
+      // Extract only the header section of this part
+      const headerEnd = part.indexOf('\r\n\r\n') !== -1
+        ? part.indexOf('\r\n\r\n')
+        : part.indexOf('\n\n');
+      if (headerEnd < 0) continue;
+      const partHeader = part.slice(0, headerEnd);
+
+      // Nested multipart (e.g. multipart/alternative inside multipart/mixed)
+      const nestedBoundary = partHeader.match(/content-type:\s*multipart\/\w+[^]*?boundary="?([^"\r\n;]+)"?/i);
+      if (nestedBoundary) {
+        const nested = extractBodyFromParts(part, nestedBoundary[1], depth + 1);
+        if (nested) return nested;
+        continue;
+      }
+
+      const bodyIdx = headerEnd + (part.indexOf('\r\n\r\n') !== -1 ? 4 : 2);
+      const raw = part.slice(bodyIdx).trim();
+
+      if (/content-type:\s*text\/html/i.test(partHeader)) {
+        htmlPart = decodePartBody(raw, partHeader);
+      } else if (/content-type:\s*text\/plain/i.test(partHeader) && !textPart) {
+        textPart = decodePartBody(raw, partHeader);
+      }
+    }
+
+    if (htmlPart) return htmlPart;
+    if (textPart) return `<pre style="white-space:pre-wrap;font-family:inherit">${textPart}</pre>`;
+    return null;
+  }
+
+  function extractHtmlFromEml(emlContent: string): string {
+    if (!emlContent) return '';
+
+    // Find boundary
+    const boundaryMatch = emlContent.match(/boundary="?([^"\r\n;]+)"?/i);
+    if (!boundaryMatch) {
+      // Simple single-part email
+      const bodyStart =
+        emlContent.indexOf('\r\n\r\n') !== -1
+          ? emlContent.indexOf('\r\n\r\n') + 4
+          : emlContent.indexOf('\n\n') + 2;
+      const raw = emlContent.slice(bodyStart);
+      const isQP = /content-transfer-encoding:\s*quoted-printable/i.test(emlContent.slice(0, bodyStart));
+      const isBase64 = /content-transfer-encoding:\s*base64/i.test(emlContent.slice(0, bodyStart));
+      const isHtml = /content-type:\s*text\/html/i.test(emlContent.slice(0, bodyStart));
+      let decoded = raw;
+      if (isBase64) {
+        try { decoded = decodeBase64Utf8(raw); } catch { /* keep raw */ }
+      } else if (isQP) {
+        decoded = decodeQuotedPrintable(raw);
+      }
+      if (isHtml) return decoded;
+      return `<pre style="white-space:pre-wrap;font-family:inherit">${decoded}</pre>`;
+    }
+
+    const result = extractBodyFromParts(emlContent, boundaryMatch[1]);
+    if (result) return result;
+
     return `<pre style="white-space:pre-wrap;font-family:inherit">${emlContent}</pre>`;
   }
 

@@ -123,7 +123,7 @@ export function getGoogleSsoUrl(): string {
   return client.generateAuthUrl({
     access_type: 'offline',
     scope: SSO_SCOPES,
-    prompt: 'consent',
+    prompt: 'select_account',
     state: 'sso',
   })
 }

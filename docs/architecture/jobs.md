@@ -16,11 +16,17 @@ BullMQ permet :
 
 ## Types de jobs
 
-| Type | Worker | Déclencheur |
-|---|---|---|
-| `bulk_operation` | `bulk.worker.ts` | POST `/api/gmail/:id/messages/bulk` |
-| `archive_mails` | `archive.worker.ts` | POST `/api/archive/:id/archive` |
-| `run_rule` | `rule.worker.ts` | Manuel ou cron (depuis la page Règles) |
+Tous les types de jobs sont traités par un **worker unifié** (`unified.worker.ts`) qui dispatche par `job.name` :
+
+| Type | Déclencheur |
+|---|---|
+| `bulk_operation` | POST `/api/gmail/:id/messages/bulk` |
+| `archive_mails` | POST `/api/archive/:id/archive` |
+| `run_rule` | Manuel ou cron (depuis la page Règles) |
+| `scan_unsubscribe` | POST `/api/unsubscribe/:id/scan` |
+| `scan_tracking` | POST `/api/privacy/:id/tracking/scan` |
+| `scan_pii` | POST `/api/privacy/:id/pii/scan` |
+| `encrypt_archives` | POST `/api/privacy/:id/encryption/encrypt` |
 
 ---
 
@@ -40,10 +46,7 @@ defaultJobOptions: {
 
 ## Concurrence
 
-| Worker | Concurrence | Raison |
-|---|---|---|
-| `bulk.worker` | 3 | Opérations rapides, peu de I/O disque |
-| `archive.worker` | 1 | Écriture disque intensive, limiter la pression NAS |
+Le worker unifié est configuré avec une concurrence de **3** (3 jobs simultanés max). Tous les types de jobs partagent cette concurrence.
 
 ---
 
@@ -54,6 +57,12 @@ Chaque job est tracké dans la table `jobs` (PostgreSQL) pour :
 - Persistance après redémarrage (BullMQ Redis peut être vidé)
 - Accès à l'historique même après `removeOnComplete`
 - Affichage dans le frontend sans dépendance directe à Redis
+
+### Pré-insertion
+
+La fonction `enqueueJob()` insère immédiatement une ligne dans la table `jobs` avec `status: 'pending'` dès l'ajout du job à BullMQ. Cela garantit que le frontend (SSE) peut trouver le job dans la base de données sans délai, avant même que le worker ne le prenne en charge.
+
+Les workers font ensuite un `UPDATE` (et non un `INSERT`) pour passer le job en `active`, puis `completed` ou `failed`.
 
 ```
 pending → active → completed
@@ -69,6 +78,7 @@ Le suivi de progression utilise les **Server-Sent Events** via le endpoint `GET 
 
 - Le hook `useJobSSE` ouvre une connexion SSE persistante
 - Chaque événement contient `{ jobId, status, progress, processed, total }`
+- Le broadcaster SSE interroge la base de données (via `bullmq_id`) à chaque événement de progression pour récupérer l'état complet du job
 - La connexion se reconnecte automatiquement en cas de coupure
 - Un `JobProgressModal` affiche la barre de progression en temps réel
 - Le composant `NotificationBell` reçoit également les événements pour les notifications toast

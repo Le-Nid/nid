@@ -31,6 +31,9 @@ Toutes les variables sont définies dans `.env` à la racine du projet.
 | `GOOGLE_REDIRECT_URI` | URI de callback OAuth2 pour la connexion des comptes Gmail |
 | `GOOGLE_SSO_REDIRECT_URI` | *(optionnel)* URI de callback pour le Google SSO. Si absent, utilise `GOOGLE_REDIRECT_URI` |
 
+!!! info "Docker prod : dérivation automatique"
+    En Docker prod, `docker-compose.yml` dérive automatiquement `GOOGLE_REDIRECT_URI` et `GOOGLE_SSO_REDIRECT_URI` à partir de `FRONTEND_URL` (ex: `${FRONTEND_URL}/api/auth/google/callback`). Il suffit de définir `FRONTEND_URL` dans le `.env`.
+
 ### Multi-utilisateurs (v2.0)
 
 | Variable | Défaut | Description |

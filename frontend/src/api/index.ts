@@ -17,6 +17,9 @@ export const gmailApi = {
   getMessageFull: (accountId: string, messageId: string) =>
     api.get(`/api/gmail/${accountId}/messages/${messageId}/full`).then((r) => r.data),
 
+  batchGetMessages: (accountId: string, ids: string[]) =>
+    api.post(`/api/gmail/${accountId}/messages/batch`, { ids }).then((r) => r.data),
+
   listLabels: (accountId: string) =>
     api.get(`/api/gmail/${accountId}/labels`).then((r) => r.data),
 

@@ -2,15 +2,7 @@ import { Kysely, PostgresDialect, Migrator, MigrationProvider, Migration } from 
 import pg from 'pg'
 import { Database } from './types'
 import { config } from '../config'
-import * as migration001 from './migrations/001_initial'
-import * as migration003 from './migrations/003_multiuser'
-import * as migration004 from './migrations/004_notifications'
-import * as migration005 from './migrations/005_audit_logs'
-import * as migration006 from './migrations/006_totp'
-import * as migration007 from './migrations/007_webhooks'
-import * as migration008 from './migrations/008_notification_preferences'
-import * as migration009 from './migrations/009_notification_channels'
-import * as migration010 from './migrations/010_privacy'
+import * as migration001 from './migrations/001_initial_full'
 
 // ─── Kysely instance ──────────────────────────────────────
 
@@ -32,15 +24,7 @@ export function getDb(): Kysely<Database> {
 // ─── Migration provider (in-code, pas de filesystem) ──────
 
 const migrations: Record<string, Migration> = {
-  '001_initial':       migration001,
-  '003_multiuser':     migration003,
-  '004_notifications': migration004,
-  '005_audit_logs':    migration005,
-  '006_totp':          migration006,
-  '007_webhooks':      migration007,
-  '008_notification_preferences': migration008,
-  '009_notification_channels': migration009,
-  '010_privacy': migration010,
+  '001_initial_full': migration001,
 }
 
 class InCodeMigrationProvider implements MigrationProvider {

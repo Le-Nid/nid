@@ -3,11 +3,7 @@ import Fastify from "fastify";
 import { config } from "./config";
 import { registerPlugins } from "./plugins";
 import { registerRoutes } from "./routes";
-import { startBulkWorker } from "./jobs/workers/bulk.worker";
-import { startArchiveWorker } from "./jobs/workers/archive.worker";
-import { startRuleWorker } from "./jobs/workers/rule.worker";
-import { startUnsubscribeWorker } from "./jobs/workers/unsubscribe.worker";
-import { startPrivacyWorker } from "./jobs/workers/privacy.worker";
+import { startUnifiedWorker } from "./jobs/workers/unified.worker";
 import { startReportScheduler } from "./reports/report.scheduler";
 import { startRuleScheduler } from "./jobs/scheduler";
 import type { Worker } from "bullmq";
@@ -30,14 +26,8 @@ async function bootstrap() {
     await registerPlugins(server);
     await registerRoutes(server);
 
-    // Start BullMQ workers — collect references for shutdown
-    workers.push(
-      startBulkWorker(),
-      startArchiveWorker(),
-      startRuleWorker(),
-      startUnsubscribeWorker(),
-      startPrivacyWorker(),
-    );
+    // Start single unified BullMQ worker
+    workers.push(startUnifiedWorker());
     startRuleScheduler();
     startReportScheduler();
     server.log.info("✅ BullMQ workers started");

@@ -16,6 +16,7 @@ import {
   FilterOutlined,
   PaperClipOutlined,
   MoreOutlined,
+  SaveOutlined,
 } from "@ant-design/icons";
 import { Select } from "antd";
 import { gmailApi, archiveApi } from "../api";
@@ -74,6 +75,7 @@ export default function MailManagerPage() {
   const [viewingId, setViewingId] = useState<string | null>(null);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const [focusedIndex, setFocusedIndex] = useState(-1);
+  const [archiveAllLoading, setArchiveAllLoading] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
 
   // ─── Raccourcis clavier ───────────────────────────────────
@@ -170,15 +172,32 @@ export default function MailManagerPage() {
     loadLabels();
   }, [accountId, quickFilter]);
 
-  // ─── Fetch métadonnées en parallèle ──────────────────────
+  // ─── Archive all (differential) ────────────────────────
+  const handleArchiveAll = async () => {
+    if (!accountId) return;
+    setArchiveAllLoading(true);
+    try {
+      const fullQuery = [quickFilter, query].filter(Boolean).join(' ') || undefined;
+      const { jobId } = await archiveApi.triggerArchive(accountId, {
+        query: fullQuery,
+        differential: true,
+      });
+      setActiveJobId(jobId);
+      notification.success({
+        message: t('mailManager.archiveAllStarted'),
+        description: t('mailManager.archiveAllDesc'),
+      });
+    } catch {
+      messageApi.error(t('mailManager.loadError'));
+    } finally {
+      setArchiveAllLoading(false);
+    }
+  };
+
+  // ─── Fetch métadonnées en batch ────────────────────────
   async function fetchMeta(acctId: string, ids: string[]): Promise<MailRow[]> {
-    return Promise.all(
-      ids.map((id) =>
-        fetch(`/api/gmail/${acctId}/messages/${id}`, {
-          credentials: 'include',
-        }).then((r) => r.json()),
-      ),
-    );
+    if (!ids.length) return [];
+    return gmailApi.batchGetMessages(acctId, ids);
   }
 
   // ─── Bulk actions ─────────────────────────────────────────
@@ -355,6 +374,14 @@ export default function MailManagerPage() {
             onClick={loadFresh}
             loading={loading}
           />
+          <Button
+            icon={<SaveOutlined />}
+            type="primary"
+            onClick={handleArchiveAll}
+            loading={archiveAllLoading}
+          >
+            {t('mailManager.archiveAll')}
+          </Button>
           {total > 0 && (
             <Text type="secondary" style={{ fontSize: 12 }}>
               ~{total.toLocaleString()} {t('mailManager.results', { total, loaded: mails.length }).split('·').pop()}

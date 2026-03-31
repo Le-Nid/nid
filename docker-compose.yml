@@ -18,8 +18,8 @@ services:
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI}
-      GOOGLE_SSO_REDIRECT_URI: ${GOOGLE_SSO_REDIRECT_URI:-}
+      GOOGLE_REDIRECT_URI: ${FRONTEND_URL:-http://localhost:3000}/api/auth/gmail/callback
+      GOOGLE_SSO_REDIRECT_URI: ${FRONTEND_URL:-http://localhost:3000}/api/auth/google/callback
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
       ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-true}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
@@ -53,6 +53,8 @@ services:
     restart: unless-stopped
     networks:
       - gmail-manager-net
+    ports:
+      - "5432:5432"  # Expose for local dev tools (DBeaver, etc.)
 
   redis:
     image: redis:7-alpine
@@ -67,6 +69,8 @@ services:
     restart: unless-stopped
     networks:
       - gmail-manager-net
+    ports: # a supprimer si on ne veut pas exposer Redis à l'extérieur du réseau Docker
+      - "6379:6379"
 
 networks:
   gmail-manager-net:

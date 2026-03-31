@@ -5,6 +5,30 @@ import { getGmailClient } from '../gmail/gmail.service'
 import { gmailRetry } from '../gmail/gmail-throttle'
 import { config } from '../config'
 
+/** Decode RFC 2047 encoded-words: =?charset?encoding?text?= */
+function decodeMimeWords(str: string): string {
+  return str.replaceAll(
+    /=\?([^?]+)\?(B|Q)\?([^?]*)\?=/gi,
+    (_match, charset: string, encoding: string, text: string) => {
+      try {
+        let bytes: Buffer
+        if (encoding.toUpperCase() === 'B') {
+          bytes = Buffer.from(text, 'base64')
+        } else {
+          // Quoted-printable: _ → space, =XX → byte
+          const decoded = text
+            .replaceAll('_', ' ')
+            .replaceAll(/=([0-9A-Fa-f]{2})/g, (_m, hex) => String.fromCharCode(parseInt(hex, 16)))
+          bytes = Buffer.from(decoded, 'binary')
+        }
+        return new TextDecoder(charset).decode(bytes)
+      } catch {
+        return text
+      }
+    },
+  )
+}
+
 export async function archiveMail(accountId: string, messageId: string): Promise<void> {
   const db = getDb()
 
@@ -27,9 +51,22 @@ export async function archiveMail(accountId: string, messageId: string): Promise
   if (!msg.raw) throw new Error(`Empty raw for message ${messageId}`)
 
   const rawEml  = Buffer.from(msg.raw, 'base64url').toString('utf-8')
-  const headers = msg.payload?.headers ?? []
-  const get     = (name: string) =>
-    headers.find((h: any) => h.name?.toLowerCase() === name.toLowerCase())?.value ?? ''
+
+  // Parse headers from raw EML (format: 'raw' doesn't populate payload.headers)
+  const headerSection = rawEml.split(/\r?\n\r?\n/)[0] ?? ''
+  // Unfold continuation lines (lines starting with whitespace are continuations)
+  const unfolded = headerSection.replace(/\r?\n[ \t]+/g, ' ')
+  const headerLines = unfolded.split(/\r?\n/)
+  const parsedHeaders = new Map<string, string>()
+  for (const line of headerLines) {
+    const idx = line.indexOf(':')
+    if (idx > 0) {
+      const key = line.slice(0, idx).trim().toLowerCase()
+      const val = line.slice(idx + 1).trim()
+      if (!parsedHeaders.has(key)) parsedHeaders.set(key, val)
+    }
+  }
+  const get = (name: string) => decodeMimeWords(parsedHeaders.get(name.toLowerCase()) ?? '')
 
   const date  = new Date(get('Date') || Date.now())
   const year  = date.getFullYear()

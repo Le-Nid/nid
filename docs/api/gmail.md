@@ -78,6 +78,39 @@ Message complet (format Gmail API `full` — payload, parts, attachments). Utili
 
 ---
 
+### POST /api/gmail/:accountId/messages/batch
+
+Récupère les métadonnées de plusieurs messages en un seul appel. Évite les appels individuels multiples et les erreurs 429.
+
+**Body**
+```json
+{
+  "ids": ["id1", "id2", "id3"]
+}
+```
+
+| Champ | Type | Description |
+|---|---|---|
+| `ids` | string[] | Liste d'IDs Gmail (max : 100) |
+
+**Réponse 200**
+```json
+[
+  {
+    "id": "id1",
+    "subject": "Facture mars",
+    "from": "factures@exemple.com",
+    "date": "Mon, 01 Mar 2024 10:00:00 +0000",
+    "sizeEstimate": 45678,
+    "snippet": "Retrouvez ci-joint...",
+    "labelIds": ["INBOX"],
+    "hasAttachments": true
+  }
+]
+```
+
+---
+
 ### POST /api/gmail/:accountId/messages/bulk
 
 Déclenche une opération bulk asynchrone. Retourne immédiatement un `jobId`.

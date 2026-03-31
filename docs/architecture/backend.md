@@ -74,6 +74,8 @@ oauth2Client.on('tokens', async (tokens) => {
 !!! warning "Refresh token"
     Google ne retourne le `refresh_token` qu'au **premier** consentement (`prompt: 'consent'`). Si un utilisateur reconnecte le même compte, on conserve l'ancien refresh_token via `COALESCE` en SQL. Ne jamais écraser un refresh_token existant par `null`.
 
+Le Google SSO utilise `prompt: 'select_account'` pour permettre à l'utilisateur de choisir son compte sans redemander le consentement à chaque connexion.
+
 ---
 
 ## Throttling Gmail API
@@ -91,20 +93,20 @@ Avec le throttling, on reste à ~1 000 unités/sec ce qui dépasse le quota si p
 
 ---
 
-## Démarrage des workers
+## Démarrage du worker unifié
 
-Les workers BullMQ doivent être démarrés au boot du backend. À intégrer dans `src/index.ts` :
+Un **worker unifié** (`unified.worker.ts`) écoute la queue `gmail-manager` et dispatche chaque job par `job.name` via un `switch`. Cela évite que plusieurs workers écoutant la même queue se volent mutuellement les jobs.
 
-Chaque worker injecte le `user_id` dans la table `jobs` pour assurer l’isolation des données par utilisateur.
+Chaque worker injecte le `user_id` dans la table `jobs` pour assurer l'isolation des données par utilisateur.
 
 ```typescript
-import { startBulkWorker } from './jobs/workers/bulk.worker'
-import { startArchiveWorker } from './jobs/workers/archive.worker'
+import { startUnifiedWorker } from './jobs/workers/unified.worker'
 
 // Dans bootstrap()
-startBulkWorker()
-startArchiveWorker()
+startUnifiedWorker()
 ```
+
+Les types de jobs gérés : `bulk_operation`, `archive_mails`, `run_rule`, `scan_unsubscribe`, `scan_tracking`, `scan_pii`, `encrypt_archives`.
 
 ---
 
@@ -152,3 +154,15 @@ Le chiffrement utilise `crypto` natif Node.js, sans dépendance externe :
 - **Stockage** : seul un hash scrypt de la phrase secrète est conservé en base (`users.encryption_key_hash`), jamais la phrase elle-même
 - **Idempotence** : les fichiers déjà chiffrés sont détectés par magic bytes `GMENC01` et ignorés
 - **Déchiffrement à la volée** : via l'endpoint `decrypt-mail`, le fichier reste chiffré sur le disque
+
+---
+
+## Décodage EML et MIME
+
+Le service d'archivage récupère les mails au format `raw` (EML complet encodé en base64 URL-safe). Comme ce format ne remplit pas `payload.headers`, les en-têtes (Subject, From, To, Date) sont parsés directement depuis le contenu EML brut.
+
+Les sujets utilisant l'encodage RFC 2047 (`=?UTF-8?B?...?=`, `=?UTF-8?Q?...?=`) sont décodés par la fonction `decodeMimeWords()` qui gère :
+
+- **Base64** (`?B?`) — décodage standard
+- **Quoted-Printable** (`?Q?`) — remplacement des `=XX` et `_` (espace)
+- **Charsets multiples** — via `TextDecoder` (UTF-8, ISO-8859-1, etc.)

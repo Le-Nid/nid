@@ -142,6 +142,9 @@
     "trashAction": "Corbeille",
     "archiveGmail": "Archiver Gmail",
     "archiveNas": "Archiver NAS",
+    "archiveAll": "Tout archiver",
+    "archiveAllStarted": "Archivage lancé",
+    "archiveAllDesc": "Seuls les nouveaux mails seront archivés (différentiel).",
     "shortcuts": "Raccourcis : j/k naviguer · Enter ouvrir · e archiver · # supprimer · / rechercher"
   },
 

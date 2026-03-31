@@ -142,6 +142,9 @@
     "trashAction": "Trash",
     "archiveGmail": "Archive Gmail",
     "archiveNas": "Archive NAS",
+    "archiveAll": "Archive all",
+    "archiveAllStarted": "Archiving started",
+    "archiveAllDesc": "Only new emails will be archived (differential).",
     "shortcuts": "Shortcuts: j/k navigate · Enter open · e archive · # delete · / search"
   },
 

@@ -19,16 +19,9 @@ export function startRuleWorker() {
       const db = getDb();
 
       await db
-        .insertInto("jobs")
-        .values({
-          bullmq_id: String(job.id),
-          type: "run_rule",
-          status: "active",
-          gmail_account_id: accountId,
-          user_id: job.data.userId ?? null,
-          payload: JSON.stringify(job.data),
-        })
-        .onConflict((oc: any) => oc.doNothing())
+        .updateTable("jobs")
+        .set({ status: "active" })
+        .where("bullmq_id", "=", String(job.id))
         .execute();
 
       try {

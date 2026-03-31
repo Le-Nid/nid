@@ -33,17 +33,9 @@ export function startBulkWorker() {
       const total = messageIds.length;
 
       await db
-        .insertInto("jobs")
-        .values({
-          bullmq_id: String(job.id),
-          type: "bulk_operation",
-          status: "active",
-          total,
-          gmail_account_id: accountId,
-          user_id: job.data.userId ?? null,
-          payload: JSON.stringify(job.data),
-        })
-        .onConflict((oc: any) => oc.doNothing())
+        .updateTable("jobs")
+        .set({ status: "active", total })
+        .where("bullmq_id", "=", String(job.id))
         .execute();
 
       const updateProgress = async (processed: number) => {

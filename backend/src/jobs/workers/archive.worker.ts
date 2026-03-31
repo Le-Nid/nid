@@ -23,11 +23,12 @@ export function startArchiveWorker() {
 
       let ids: string[] = messageIds ?? [];
 
-      if (!ids.length && query) {
+      // If no specific IDs provided, fetch all matching messages from Gmail
+      if (!ids.length) {
         let pageToken: string | null = null;
         do {
           const res: any = await listMessages(accountId, {
-            query,
+            query: query || undefined,
             maxResults: 500,
             pageToken: pageToken ?? undefined,
           });
@@ -44,17 +45,9 @@ export function startArchiveWorker() {
       const total = ids.length;
 
       await db
-        .insertInto("jobs")
-        .values({
-          bullmq_id: String(job.id),
-          type: "archive_mails",
-          status: "active",
-          total,
-          gmail_account_id: accountId,
-          user_id: job.data.userId ?? null,
-          payload: JSON.stringify(job.data),
-        })
-        .onConflict((oc: any) => oc.doNothing())
+        .updateTable("jobs")
+        .set({ status: "active", total })
+        .where("bullmq_id", "=", String(job.id))
         .execute();
 
       let processed = 0;
