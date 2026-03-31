@@ -1,5 +1,6 @@
 import { getDb } from "../db";
 import { enqueueJob } from "./queue";
+import { recordInboxSnapshot } from "../analytics/analytics.service";
 
 // Simple cron scheduler — vérifie toutes les minutes si des règles
 // planifiées doivent être exécutées.
@@ -9,6 +10,7 @@ export function startRuleScheduler() {
   const INTERVAL_MS = 60 * 1000; // toutes les minutes
 
   let lastIntegrityCheck: Date | null = null;
+  let lastInboxSnapshot: Date | null = null;
 
   async function tick() {
     const db = getDb();
@@ -22,6 +24,25 @@ export function startRuleScheduler() {
           lastIntegrityCheck = now;
           console.info('[Scheduler] Enqueued daily integrity check');
         }
+      }
+
+      // ─── Inbox Zero snapshots — toutes les 6h ────────────
+      if (!lastInboxSnapshot || (now.getTime() - lastInboxSnapshot.getTime()) > 6 * 3600 * 1000) {
+        const accounts = await db
+          .selectFrom('gmail_accounts')
+          .select('id')
+          .where('is_active', '=', true)
+          .execute();
+
+        for (const account of accounts) {
+          try {
+            await recordInboxSnapshot(account.id);
+          } catch (err) {
+            console.error(`[Scheduler] Inbox snapshot failed for ${account.id}:`, err);
+          }
+        }
+        lastInboxSnapshot = now;
+        console.info(`[Scheduler] Inbox zero snapshots recorded (${accounts.length} accounts)`);
       }
 
       // Récupère les règles actives avec un schedule cron

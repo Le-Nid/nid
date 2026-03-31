@@ -3,6 +3,7 @@ import pg from 'pg'
 import { Database } from './types'
 import { config } from '../config'
 import * as migration001 from './migrations/001_initial_full'
+import * as migration004 from './migrations/004_analytics'
 
 // ─── Kysely instance ──────────────────────────────────────
 
@@ -25,6 +26,7 @@ export function getDb(): Kysely<Database> {
 
 const migrations: Record<string, Migration> = {
   '001_initial_full': migration001,
+  '004_analytics': migration004,
 }
 
 class InCodeMigrationProvider implements MigrationProvider {

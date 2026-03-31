@@ -171,6 +171,12 @@ export const notificationsApi = {
   markAllRead: () =>
     api.patch('/api/notifications/read-all').then((r) => r.data),
 
+  remove: (notificationId: string) =>
+    api.delete(`/api/notifications/${notificationId}`).then((r) => r.data),
+
+  removeAllRead: () =>
+    api.delete('/api/notifications').then((r) => r.data),
+
   getPreferences: () =>
     api.get('/api/notifications/preferences').then((r) => r.data),
 
@@ -269,4 +275,25 @@ export const privacyApi = {
 
   decryptMail: (accountId: string, mailId: string, passphrase: string) =>
     api.post(`/api/privacy/${accountId}/encryption/decrypt-mail`, { mailId, passphrase }).then((r) => r.data),
+}
+
+// ─── Analytics ────────────────────────────────────────────
+export const analyticsApi = {
+  getHeatmap: (accountId: string, refresh = false) =>
+    api.get(`/api/analytics/${accountId}/heatmap`, { params: refresh ? { refresh: '1' } : {} }).then((r) => r.data),
+
+  getSenderScores: (accountId: string, refresh = false) =>
+    api.get(`/api/analytics/${accountId}/sender-scores`, { params: refresh ? { refresh: '1' } : {} }).then((r) => r.data),
+
+  getCleanupSuggestions: (accountId: string, refresh = false) =>
+    api.get(`/api/analytics/${accountId}/cleanup-suggestions`, { params: refresh ? { refresh: '1' } : {} }).then((r) => r.data),
+
+  dismissSuggestion: (suggestionId: string) =>
+    api.patch(`/api/analytics/suggestions/${suggestionId}/dismiss`).then((r) => r.data),
+
+  getInboxZero: (accountId: string, refresh = false) =>
+    api.get(`/api/analytics/${accountId}/inbox-zero`, { params: refresh ? { refresh: '1' } : {} }).then((r) => r.data),
+
+  recordSnapshot: (accountId: string) =>
+    api.post(`/api/analytics/${accountId}/inbox-zero/snapshot`).then((r) => r.data),
 }

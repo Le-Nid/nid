@@ -128,10 +128,10 @@
 
 ### Intelligence & Analytics avancées
 
-- [ ] **Heatmap d'activité email** — Visualiser quand vous recevez le plus de mails (grille jour × heure, style contributions GitHub). Identifier les créneaux calmes
-- [ ] **Score d'encombrement par expéditeur** — Score combinant volume, taille, taux de lecture, et présence de `List-Unsubscribe`. Classement des expéditeurs "pollueurs" avec suggestion de nettoyage
-- [ ] **Suggestions de nettoyage intelligent** — Heuristiques basées sur expéditeur + pattern sujet + non lu + ancien. Ex : "Vous avez 847 notifications GitHub non lues (1.2 Go). Supprimer ?"
-- [ ] **Tracker Inbox Zero** — Compteur temps réel + historique de la progression vers inbox zero. Streak, graphique d'évolution, gamification légère
+- [x] **Heatmap d'activité email** — Visualiser quand vous recevez le plus de mails (grille jour × heure, style contributions GitHub). Identifier les créneaux calmes
+- [x] **Score d'encombrement par expéditeur** — Score combinant volume, taille, taux de lecture, et présence de `List-Unsubscribe`. Classement des expéditeurs "pollueurs" avec suggestion de nettoyage
+- [x] **Suggestions de nettoyage intelligent** — Heuristiques basées sur expéditeur + pattern sujet + non lu + ancien. Ex : "Vous avez 847 notifications GitHub non lues (1.2 Go). Supprimer ?"
+- [x] **Tracker Inbox Zero** — Compteur temps réel + historique de la progression vers inbox zero. Streak, graphique d'évolution, gamification légère
 
 ### Gestion avancée
 

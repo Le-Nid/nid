@@ -67,9 +67,37 @@ Marque toutes les notifications de l'utilisateur comme lues.
 
 ---
 
+## Supprimer une notification
+
+### DELETE /api/notifications/:notificationId 🔒
+
+Supprime une notification de l'utilisateur.
+
+**Réponse 200**
+```json
+{ "ok": true }
+```
+
+---
+
+## Supprimer toutes les notifications lues
+
+### DELETE /api/notifications 🔒
+
+Supprime toutes les notifications **déjà lues** de l'utilisateur. Les notifications non lues sont conservées.
+
+**Réponse 200**
+```json
+{ "ok": true }
+```
+
+---
+
 ## Accès dans l'interface
 
 Les notifications sont accessibles via l'icône **🔔** dans le header de l'application. Le badge rouge indique le nombre de notifications non lues.
+
+Chaque notification dispose d'un bouton 🗑️ pour la supprimer individuellement. Un bouton **« Supprimer lues »** permet de purger toutes les notifications déjà lues d'un coup (avec confirmation).
 
 ---
 

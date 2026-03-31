@@ -36,6 +36,7 @@
     "attachments": "Pièces jointes",
     "duplicates": "Doublons",
     "insights": "Insights",
+    "analytics": "Analytics",
     "privacy": "Vie privée",
     "jobs": "Jobs",
     "settings": "Paramètres",
@@ -521,6 +522,8 @@
   "notifications": {
     "title": "Notifications",
     "markAllRead": "Tout marquer lu",
+    "clearRead": "Supprimer lues",
+    "clearReadConfirm": "Supprimer toutes les notifications lues ?",
     "empty": "Aucune notification"
   },
 
@@ -605,5 +608,28 @@
       "minLength": "La phrase secrète doit faire au moins 8 caractères",
       "allEncrypted": "Toutes les archives sont chiffrées ✓"
     }
+  },
+
+  "analytics": {
+    "title": "Intelligence & Analytics",
+    "loadError": "Erreur lors du chargement des analytics",
+    "noAccount": "Sélectionnez un compte Gmail pour voir les analytics",
+    "heatmapTitle": "Heatmap d'activité email",
+    "senderScoresTitle": "Score d'encombrement par expéditeur",
+    "suggestionsTitle": "Suggestions de nettoyage",
+    "inboxZeroHistory": "Évolution Inbox Zero (30 jours)",
+    "sender": "Expéditeur",
+    "volume": "Volume",
+    "size": "Taille",
+    "unread": "Non lus",
+    "readRate": "Taux lecture",
+    "clutterScore": "Score",
+    "inboxCount": "Inbox",
+    "unreadCount": "Non lus",
+    "streak": "Streak",
+    "bestStreak": "Meilleur streak",
+    "days": "jours",
+    "dismiss": "Ignorer",
+    "dismissed": "Suggestion ignorée"
   }
 }

@@ -176,6 +176,52 @@ export interface PiiFindingsTable {
   scanned_at:        Generated<Date>
 }
 
+// ─── Analytics tables ─────────────────────────────────────
+
+export interface EmailActivityHeatmapTable {
+  id:               Generated<string>
+  gmail_account_id: string
+  day_of_week:      number      // 0=lundi … 6=dimanche
+  hour_of_day:      number      // 0-23
+  email_count:      Generated<number>
+  computed_at:      Generated<Date>
+}
+
+export interface SenderScoresTable {
+  id:               Generated<string>
+  gmail_account_id: string
+  sender:           string
+  email_count:      Generated<number>
+  total_size_bytes: Generated<bigint>
+  unread_count:     Generated<number>
+  has_unsubscribe:  Generated<boolean>
+  read_rate:        Generated<number>   // 0.0 - 1.0
+  clutter_score:    Generated<number>   // 0-100
+  computed_at:      Generated<Date>
+}
+
+export interface CleanupSuggestionsTable {
+  id:               Generated<string>
+  gmail_account_id: string
+  type:             string      // 'bulk_unread' | 'large_sender' | 'old_newsletters' | 'duplicate_pattern'
+  title:            string
+  description:      string | null
+  sender:           string | null
+  email_count:      Generated<number>
+  total_size_bytes: Generated<bigint>
+  query:            string | null
+  is_dismissed:     Generated<boolean>
+  computed_at:      Generated<Date>
+}
+
+export interface InboxZeroSnapshotsTable {
+  id:               Generated<string>
+  gmail_account_id: string
+  inbox_count:      number
+  unread_count:     number
+  recorded_at:      Generated<Date>
+}
+
 // ─── Database interface ───────────────────────────────────
 
 export interface Database {
@@ -191,6 +237,10 @@ export interface Database {
   notification_preferences: NotificationPreferencesTable
   tracking_pixels:     TrackingPixelsTable
   pii_findings:        PiiFindingsTable
+  email_activity_heatmap: EmailActivityHeatmapTable
+  sender_scores:       SenderScoresTable
+  cleanup_suggestions: CleanupSuggestionsTable
+  inbox_zero_snapshots: InboxZeroSnapshotsTable
 }
 
 // ─── Row types (Selectable = what you get back from SELECT) ─
@@ -220,3 +270,8 @@ export type TrackingPixel    = Selectable<TrackingPixelsTable>
 export type NewTrackingPixel = Insertable<TrackingPixelsTable>
 export type PiiFinding       = Selectable<PiiFindingsTable>
 export type NewPiiFinding    = Insertable<PiiFindingsTable>
+
+export type EmailActivityHeatmap    = Selectable<EmailActivityHeatmapTable>
+export type SenderScore             = Selectable<SenderScoresTable>
+export type CleanupSuggestion       = Selectable<CleanupSuggestionsTable>
+export type InboxZeroSnapshot       = Selectable<InboxZeroSnapshotsTable>

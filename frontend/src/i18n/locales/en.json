@@ -36,6 +36,7 @@
     "attachments": "Attachments",
     "duplicates": "Duplicates",
     "insights": "Insights",
+    "analytics": "Analytics",
     "privacy": "Privacy",
     "jobs": "Jobs",
     "settings": "Settings",
@@ -521,6 +522,8 @@
   "notifications": {
     "title": "Notifications",
     "markAllRead": "Mark all as read",
+    "clearRead": "Clear read",
+    "clearReadConfirm": "Delete all read notifications?",
     "empty": "No notifications"
   },
 
@@ -605,5 +608,28 @@
       "minLength": "Passphrase must be at least 8 characters",
       "allEncrypted": "All archives are encrypted ✓"
     }
+  },
+
+  "analytics": {
+    "title": "Intelligence & Analytics",
+    "loadError": "Failed to load analytics",
+    "noAccount": "Select a Gmail account to view analytics",
+    "heatmapTitle": "Email Activity Heatmap",
+    "senderScoresTitle": "Sender Clutter Score",
+    "suggestionsTitle": "Cleanup Suggestions",
+    "inboxZeroHistory": "Inbox Zero Trend (30 days)",
+    "sender": "Sender",
+    "volume": "Volume",
+    "size": "Size",
+    "unread": "Unread",
+    "readRate": "Read Rate",
+    "clutterScore": "Score",
+    "inboxCount": "Inbox",
+    "unreadCount": "Unread",
+    "streak": "Streak",
+    "bestStreak": "Best Streak",
+    "days": "days",
+    "dismiss": "Dismiss",
+    "dismissed": "Suggestion dismissed"
   }
 }

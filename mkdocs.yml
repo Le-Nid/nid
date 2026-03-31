@@ -85,6 +85,7 @@ nav:
     - Webhooks: api/webhooks.md
     - Configuration: api/config.md
     - Vie privée: api/privacy.md
+    - Analytics: api/analytics.md
   - Développement:
     - Contribuer: development/contributing.md
     - Roadmap: development/roadmap.md
