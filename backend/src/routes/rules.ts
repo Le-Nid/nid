@@ -13,6 +13,8 @@ import { enqueueJob } from "../jobs/queue";
 import { listMessages } from "../gmail/gmail.service";
 import { RULE_TEMPLATES } from "../rules/rule-templates";
 import { logAudit } from "../audit/audit.service";
+import { notFound } from "../utils/db";
+import { authPresets } from "../utils/auth";
 
 const conditionSchema = z.object({
   field: z.enum([
@@ -65,19 +67,19 @@ const ruleCreateSchema = z.object({
 });
 
 export async function rulesRoutes(app: FastifyInstance) {
-  const auth = { preHandler: [app.authenticate, app.requireAccountOwnership] };
+  const { auth, accountAuth } = authPresets(app);
 
   // ─── Templates ────────────────────────────────────────
-  app.get("/templates", { preHandler: [app.authenticate] }, async () => {
+  app.get("/templates", auth, async () => {
     return RULE_TEMPLATES;
   });
 
-  app.post("/:accountId/from-template", auth, async (request, reply) => {
+  app.post("/:accountId/from-template", accountAuth, async (request, reply) => {
     const { accountId } = request.params as { accountId: string };
-    const { sub: userId } = request.user as { sub: string };
+    const userId = request.user.sub;
     const { templateId } = request.body as { templateId: string };
     const template = RULE_TEMPLATES.find((t) => t.id === templateId);
-    if (!template) return reply.code(404).send({ error: "Template not found" });
+    if (!template) return notFound(reply, "Template not found");
     const rule = await createRule(accountId, template.dto);
     await logAudit(userId, 'rule.create_from_template', {
       targetType: 'rule', targetId: rule.id,
@@ -86,22 +88,22 @@ export async function rulesRoutes(app: FastifyInstance) {
     return reply.code(201).send(rule);
   });
 
-  app.get("/:accountId", auth, async (request) => {
+  app.get("/:accountId", accountAuth, async (request) => {
     const { accountId } = request.params as { accountId: string };
     return getRules(accountId);
   });
 
-  app.get("/:accountId/:ruleId", auth, async (request, reply) => {
+  app.get("/:accountId/:ruleId", accountAuth, async (request, reply) => {
     const { accountId, ruleId } = request.params as {
       accountId: string;
       ruleId: string;
     };
     const rule = await getRule(ruleId, accountId);
-    if (!rule) return reply.code(404).send({ error: "Rule not found" });
+    if (!rule) return notFound(reply, "Rule not found");
     return rule;
   });
 
-  app.post("/:accountId", auth, async (request, reply) => {
+  app.post("/:accountId", accountAuth, async (request, reply) => {
     const { accountId } = request.params as { accountId: string };
     const dto = ruleCreateSchema.parse(request.body);
     const rule = await createRule(accountId, {
@@ -111,7 +113,7 @@ export async function rulesRoutes(app: FastifyInstance) {
     return reply.code(201).send(rule);
   });
 
-  app.put("/:accountId/:ruleId", auth, async (request) => {
+  app.put("/:accountId/:ruleId", accountAuth, async (request) => {
     const { accountId, ruleId } = request.params as {
       accountId: string;
       ruleId: string;
@@ -123,17 +125,17 @@ export async function rulesRoutes(app: FastifyInstance) {
     });
   });
 
-  app.patch("/:accountId/:ruleId/toggle", auth, async (request, reply) => {
+  app.patch("/:accountId/:ruleId/toggle", accountAuth, async (request, reply) => {
     const { accountId, ruleId } = request.params as {
       accountId: string;
       ruleId: string;
     };
     const rule = await getRule(ruleId, accountId);
-    if (!rule) return reply.code(404).send({ error: "Rule not found" });
+    if (!rule) return notFound(reply, "Rule not found");
     return updateRule(ruleId, accountId, { is_active: !rule.is_active });
   });
 
-  app.delete("/:accountId/:ruleId", auth, async (request, reply) => {
+  app.delete("/:accountId/:ruleId", accountAuth, async (request, reply) => {
     const { accountId, ruleId } = request.params as {
       accountId: string;
       ruleId: string;
@@ -142,21 +144,21 @@ export async function rulesRoutes(app: FastifyInstance) {
     return reply.code(204).send();
   });
 
-  app.post("/:accountId/:ruleId/run", auth, async (request, reply) => {
+  app.post("/:accountId/:ruleId/run", accountAuth, async (request, reply) => {
     const { accountId, ruleId } = request.params as {
       accountId: string;
       ruleId: string;
     };
-    const { sub: userId } = request.user as { sub: string };
+    const userId = request.user.sub;
     const rule = await getRule(ruleId, accountId);
-    if (!rule) return reply.code(404).send({ error: "Rule not found" });
+    if (!rule) return notFound(reply, "Rule not found");
     const job = await enqueueJob("run_rule", { accountId, userId, ruleId });
     return reply
       .code(202)
       .send({ jobId: job.id, message: "Rule execution enqueued" });
   });
 
-  app.post("/:accountId/preview", auth, async (request) => {
+  app.post("/:accountId/preview", accountAuth, async (request) => {
     const { accountId } = request.params as { accountId: string };
     const { conditions } = request.body as { conditions: any[] };
     const query = buildGmailQuery(conditions);

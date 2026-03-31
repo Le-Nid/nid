@@ -25,13 +25,7 @@ dayjs.extend(relativeTime);
 
 const { Title, Text } = Typography;
 
-const STATUS_COLOR: Record<string, string> = {
-  pending: "default",
-  active: "processing",
-  completed: "success",
-  failed: "error",
-  cancelled: "warning",
-};
+import { STATUS_COLORS } from "../utils/constants";
 
 export default function JobsPage() {
   const { t } = useTranslation();
@@ -109,7 +103,7 @@ export default function JobsPage() {
       width: 120,
       render: (s: string) => (
         <Badge
-          status={STATUS_COLOR[s] as any}
+          status={STATUS_COLORS[s] as any}
           text={<Text style={{ fontSize: 12 }}>{t(`jobs.${s}`, { defaultValue: s })}</Text>}
         />
       ),
