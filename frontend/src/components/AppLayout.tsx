@@ -6,7 +6,10 @@ import {
   CrownOutlined,
   StopOutlined, PaperClipOutlined, LineChartOutlined, CopyOutlined,
   GlobalOutlined, SafetyOutlined, HeatMapOutlined,
+  MenuFoldOutlined, MenuUnfoldOutlined,
+  InboxOutlined, AppstoreOutlined, FundOutlined, ControlOutlined,
 } from '@ant-design/icons'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/auth.store'
 import { useThemeStore } from '../store/theme.store'
@@ -22,6 +25,7 @@ export default function AppLayout() {
   const location  = useLocation()
   const { user, gmailAccounts, activeAccountId, setActiveAccount, logout } = useAuthStore()
   const { mode, toggle } = useThemeStore()
+  const [collapsed, setCollapsed] = useState(false)
 
   // Notifications globales jobs — poll léger, monté une seule fois ici
   useGlobalJobNotifier()
@@ -29,7 +33,7 @@ export default function AppLayout() {
   const menuItems = [
     {
       key: 'grp-email',
-      type: 'group' as const,
+      icon: <InboxOutlined />,
       label: t('nav.group_email'),
       children: [
         { key: '/dashboard', icon: <DashboardOutlined />, label: t('nav.dashboard') },
@@ -39,7 +43,7 @@ export default function AppLayout() {
     },
     {
       key: 'grp-tools',
-      type: 'group' as const,
+      icon: <AppstoreOutlined />,
       label: t('nav.group_tools'),
       children: [
         { key: '/rules',        icon: <RobotOutlined />,       label: t('nav.rules') },
@@ -50,7 +54,7 @@ export default function AppLayout() {
     },
     {
       key: 'grp-analytics',
-      type: 'group' as const,
+      icon: <FundOutlined />,
       label: t('nav.group_analytics'),
       children: [
         { key: '/insights',      icon: <LineChartOutlined />,   label: t('nav.insights') },
@@ -60,7 +64,7 @@ export default function AppLayout() {
     },
     {
       key: 'grp-system',
-      type: 'group' as const,
+      icon: <ControlOutlined />,
       label: t('nav.group_system'),
       children: [
         { key: '/jobs',          icon: <ScheduleOutlined />,    label: t('nav.jobs') },
@@ -89,21 +93,67 @@ export default function AppLayout() {
     <Layout style={{ minHeight: '100vh' }}>
       <Sider
         width={220}
+        collapsedWidth={64}
+        collapsible
+        collapsed={collapsed}
+        onCollapse={setCollapsed}
+        trigger={null}
         theme={isDark ? 'dark' : 'light'}
         style={{ borderRight: isDark ? '1px solid #303030' : '1px solid #f0f0f0' }}
         role="navigation"
         aria-label={t('layout.mainMenu')}
       >
-        {/* Logo */}
+        {/* Logo + collapse toggle */}
         <div style={{
-          padding: '18px 16px',
+          padding: collapsed ? '18px 0' : '18px 16px',
           borderBottom: isDark ? '1px solid #303030' : '1px solid #f0f0f0',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: collapsed ? 'center' : 'space-between',
         }} aria-label={t('layout.appName')}>
-          <Text strong style={{ fontSize: 15 }}><span aria-hidden="true">📬</span> {t('layout.appName')}</Text>
+          {collapsed
+            ? <span style={{ fontSize: 18 }} aria-hidden="true">📬</span>
+            : <Text strong style={{ fontSize: 15 }}><span aria-hidden="true">📬</span> {t('layout.appName')}</Text>
+          }
+          <button
+            type="button"
+            onClick={() => setCollapsed(!collapsed)}
+            aria-label={collapsed ? t('layout.expandMenu') : t('layout.collapseMenu')}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: isDark ? '#ffffffa6' : '#00000073',
+              fontSize: 16,
+              display: collapsed ? 'none' : 'inline-flex',
+            }}
+          >
+            <MenuFoldOutlined />
+          </button>
         </div>
 
-        {/* Sélecteur compte Gmail */}
-        {gmailAccounts.length > 0 && (
+        {/* Bouton expand quand collapsed */}
+        {collapsed && (
+          <div style={{
+            textAlign: 'center',
+            padding: '8px 0',
+            borderBottom: isDark ? '1px solid #303030' : '1px solid #f0f0f0',
+          }}>
+            <button
+              type="button"
+              onClick={() => setCollapsed(false)}
+              aria-label={t('layout.expandMenu')}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: isDark ? '#ffffffa6' : '#00000073',
+                fontSize: 16,
+              }}
+            >
+              <MenuUnfoldOutlined />
+            </button>
+          </div>
+        )}
+
+        {/* Sélecteur compte Gmail (masqué quand collapsed) */}
+        {!collapsed && gmailAccounts.length > 0 && (
           <div style={{
             padding: '10px 12px',
             borderBottom: isDark ? '1px solid #303030' : '1px solid #f0f0f0',
@@ -126,6 +176,8 @@ export default function AppLayout() {
           mode="inline"
           theme={isDark ? 'dark' : 'light'}
           selectedKeys={[location.pathname]}
+          defaultOpenKeys={['grp-email', 'grp-tools', 'grp-analytics', 'grp-system']}
+          inlineCollapsed={collapsed}
           items={menuItems}
           style={{ border: 'none', paddingTop: 8 }}
           onClick={({ key }) => navigate(key)}

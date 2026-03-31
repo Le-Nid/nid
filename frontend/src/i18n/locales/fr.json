@@ -53,6 +53,8 @@
     "lightMode": "Passer en mode clair",
     "darkMode": "Passer en mode sombre",
     "mainMenu": "Menu principal",
+    "collapseMenu": "Réduire le menu",
+    "expandMenu": "Développer le menu",
     "userMenu": "Menu utilisateur",
     "logout": "Déconnexion"
   },

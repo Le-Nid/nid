@@ -53,6 +53,8 @@
     "lightMode": "Switch to light mode",
     "darkMode": "Switch to dark mode",
     "mainMenu": "Main menu",
+    "collapseMenu": "Collapse menu",
+    "expandMenu": "Expand menu",
     "userMenu": "User menu",
     "logout": "Log out"
   },
