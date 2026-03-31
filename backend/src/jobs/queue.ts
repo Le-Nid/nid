@@ -11,6 +11,9 @@ export type JobType =
   | 'scan_attachments'
   | 'generate_report'
   | 'integrity_check'
+  | 'scan_tracking'
+  | 'scan_pii'
+  | 'encrypt_archives'
 
 export interface JobPayload {
   accountId: string

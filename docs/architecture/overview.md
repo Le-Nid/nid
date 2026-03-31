@@ -91,6 +91,55 @@ sequenceDiagram
 
 ---
 
+## Flux de scan vie privée
+
+```mermaid
+sequenceDiagram
+    participant UI as Frontend
+    participant API as Backend API
+    participant Queue as BullMQ
+    participant Worker as Privacy Worker
+    participant Gmail as Gmail API
+    participant PG as PostgreSQL
+    participant NAS as NAS (EML)
+
+    Note over UI,NAS: Détection de pixels espions
+    UI->>API: POST /api/privacy/:id/tracking/scan
+    API->>Queue: enqueueJob("scan_tracking")
+    API-->>UI: 202 {jobId}
+    Queue->>Worker: Job dépilé
+    loop Pour chaque message récent
+        Worker->>Gmail: messages.get(id, format=full)
+        Worker->>Worker: detectTrackingPixels(html)
+        alt Trackers détectés
+            Worker->>PG: INSERT tracking_pixels
+        end
+    end
+
+    Note over UI,NAS: Scanner PII dans les archives
+    UI->>API: POST /api/privacy/:id/pii/scan
+    API->>Queue: enqueueJob("scan_pii")
+    Queue->>Worker: Job dépilé
+    loop Pour chaque EML archivé
+        Worker->>NAS: Lecture fichier .eml
+        Worker->>Worker: detectPii(contenu)
+        alt PII détectées
+            Worker->>PG: INSERT pii_findings
+        end
+    end
+
+    Note over UI,NAS: Chiffrement des archives
+    UI->>API: POST /api/privacy/:id/encryption/encrypt
+    API->>Queue: enqueueJob("encrypt_archives")
+    Queue->>Worker: Job dépilé
+    loop Pour chaque EML non chiffré
+        Worker->>NAS: Lecture → chiffrement AES-256-GCM → écriture
+        Worker->>PG: UPDATE archived_mails SET is_encrypted=true
+    end
+```
+
+---
+
 ## Décisions d'architecture
 
 ### EML plutôt que mbox
@@ -118,3 +167,15 @@ BullMQ permet :
 ### PostgreSQL pour les métadonnées
 
 Les métadonnées des mails archivés (expéditeur, sujet, date, taille) sont indexées dans PostgreSQL avec un index `tsvector` pour la recherche full-text. Cela évite de parser les fichiers EML pour chaque recherche.
+
+### Chiffrement au repos des archives
+
+Les archives EML peuvent être chiffrées sur le NAS avec AES-256-GCM. La clé est dérivée de la phrase secrète de l'utilisateur via PBKDF2 (SHA-512, 100 000 itérations). À aucun moment la phrase secrète n'est stockée — seul un hash scrypt de vérification est conservé en base.
+
+Format binaire du fichier chiffré :
+
+```
+GMENC01 (7 B) | SALT (32 B) | IV (12 B) | AUTH_TAG (16 B) | CIPHERTEXT
+```
+
+Ce format permet le déchiffrement à la volée sans fichier temporaire, et la détection immédiate d'un fichier chiffré (magic bytes `GMENC01`).

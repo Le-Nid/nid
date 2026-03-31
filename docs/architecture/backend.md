@@ -105,3 +105,50 @@ import { startArchiveWorker } from './jobs/workers/archive.worker'
 startBulkWorker()
 startArchiveWorker()
 ```
+
+---
+
+## Module Vie privée & Sécurité
+
+Le module privacy (`src/privacy/`) contient trois services indépendants :
+
+```
+src/privacy/
+├── tracking.service.ts    ← Détection de pixels espions
+├── pii.service.ts         ← Scanner de données sensibles (PII)
+└── encryption.service.ts  ← Chiffrement AES-256-GCM des archives
+```
+
+### Détecteur de pixels espions
+
+Le service analyse le corps HTML des messages Gmail pour identifier trois types de trackers :
+
+1. **Pixels 1×1** — images avec `width=1 height=1`, `display:none` ou `visibility:hidden`
+2. **Domaines connus** — base de 35+ domaines ESP (Mailchimp, SendGrid, HubSpot, Klaviyo, Brevo…)
+3. **Paramètres UTM** — liens contenant `utm_source`, `utm_medium`, `utm_campaign`, etc.
+
+Le scan est lancé en job asynchrone (BullMQ). Les résultats sont stockés dans `tracking_pixels` avec le détail JSON de chaque tracker détecté.
+
+### Scanner PII
+
+Le service scanne les fichiers EML archivés sur disque pour détecter les données sensibles via regex :
+
+| Type | Description |
+|---|---|
+| `credit_card` | Carte Visa, Mastercard, Amex (avec séparateurs) |
+| `iban` | Numéro IBAN international |
+| `french_ssn` | Numéro de sécurité sociale français |
+| `password_plain` | Mot de passe en clair (`password:`, `mdp=`, etc.) |
+| `phone_fr` | Numéro de téléphone français (+33 / 06…) |
+
+Les snippets stockés sont automatiquement masqués (ex: `****-****-****-4242`) pour ne pas exposer les données réelles.
+
+### Chiffrement des archives
+
+Le chiffrement utilise `crypto` natif Node.js, sans dépendance externe :
+
+- **Algorithme** : AES-256-GCM (confidentialité + intégrité)
+- **Dérivation de clé** : PBKDF2 (SHA-512, 100 000 itérations, salt aléatoire 32 octets)
+- **Stockage** : seul un hash scrypt de la phrase secrète est conservé en base (`users.encryption_key_hash`), jamais la phrase elle-même
+- **Idempotence** : les fichiers déjà chiffrés sont détectés par magic bytes `GMENC01` et ignorés
+- **Déchiffrement à la volée** : via l'endpoint `decrypt-mail`, le fichier reste chiffré sur le disque

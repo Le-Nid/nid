@@ -54,6 +54,7 @@ const { token, user, gmailAccounts, activeAccountId } = useAuthStore()
 /attachments        → AttachmentsPage 🔒
 /duplicates         → DuplicatesPage 🔒
 /insights           → InsightsPage 🔒
+/privacy            → PrivacyPage 🔒 (pixels espions, PII, chiffrement)
 ```
 
 ### Raccourcis clavier
@@ -150,5 +151,5 @@ function MaPage() {
 
 Toutes les pages et composants de l'application sont traduits :
 
-- **Pages** : Login, Dashboard, MailManager, Jobs, Archive, Rules, Settings, Admin, Unsubscribe, Attachments, Insights, Duplicates
+- **Pages** : Login, Dashboard, MailManager, Jobs, Archive, Rules, Settings, Admin, Unsubscribe, Attachments, Insights, Duplicates, Privacy
 - **Composants** : AppLayout, BulkActionBar, NotificationBell, MailViewer, GmailSearchInput, RuleFormModal, JobProgressModal

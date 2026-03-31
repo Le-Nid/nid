@@ -7,6 +7,7 @@ import { startBulkWorker } from "./jobs/workers/bulk.worker";
 import { startArchiveWorker } from "./jobs/workers/archive.worker";
 import { startRuleWorker } from "./jobs/workers/rule.worker";
 import { startUnsubscribeWorker } from "./jobs/workers/unsubscribe.worker";
+import { startPrivacyWorker } from "./jobs/workers/privacy.worker";
 import { startReportScheduler } from "./reports/report.scheduler";
 import { startRuleScheduler } from "./jobs/scheduler";
 import type { Worker } from "bullmq";
@@ -35,6 +36,7 @@ async function bootstrap() {
       startArchiveWorker(),
       startRuleWorker(),
       startUnsubscribeWorker(),
+      startPrivacyWorker(),
     );
     startRuleScheduler();
     startReportScheduler();

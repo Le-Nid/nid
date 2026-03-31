@@ -23,6 +23,7 @@ Elle remplace des outils comme Gmail Cleaner et OpenArchiver, sans envoyer vos d
 | 📝 **Audit log** | Journal d'activité traçant les actions sensibles |
 | 🔗 **Webhooks** | Notifications Discord, Slack, Ntfy ou HTTP générique |
 | 🛡️ **Intégrité** | Vérification de cohérence archives disque ↔ BDD |
+| 🔒 **Vie privée** | Détection pixels espions, scanner PII, chiffrement AES-256 des archives |
 | ⌨️ **Raccourcis clavier** | Navigation et actions rapides dans Mes mails |
 | 💾 **Export/Import** | Sauvegarde et restauration de la configuration (règles, webhooks) |
 | 🌐 **Internationalisation** | Français / Anglais, sélecteur de langue, persistance du choix |

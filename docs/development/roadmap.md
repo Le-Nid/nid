@@ -122,9 +122,9 @@
 
 ### Vie privée & Sécurité
 
-- [ ] **Détecteur de pixels-espions** — Scanner les emails pour détecter les tracking pixels (images 1x1, paramètres UTM, domaines connus type Mailchimp/SendGrid). Badge "tracké" dans la liste, rapport mensuel
-- [ ] **Scanner PII dans les archives** — Détecter les données sensibles dans les mails archivés (numéros de CB, IBAN, mots de passe en clair, numéros de sécu). Alerter et proposer le chiffrement ou la suppression
-- [ ] **Chiffrement des archives au repos** — Chiffrer les EML sur le NAS avec une clé dérivée du mot de passe utilisateur (AES-256-GCM). Déchiffrement à la volée pour la consultation
+- [x] **Détecteur de pixels-espions** — Scanner les emails pour détecter les tracking pixels (images 1x1, paramètres UTM, domaines connus type Mailchimp/SendGrid). Badge "tracké" dans la liste, rapport mensuel
+- [x] **Scanner PII dans les archives** — Détecter les données sensibles dans les mails archivés (numéros de CB, IBAN, mots de passe en clair, numéros de sécu). Alerter et proposer le chiffrement ou la suppression
+- [x] **Chiffrement des archives au repos** — Chiffrer les EML sur le NAS avec une clé dérivée du mot de passe utilisateur (AES-256-GCM). Déchiffrement à la volée pour la consultation
 
 ### Intelligence & Analytics avancées
 

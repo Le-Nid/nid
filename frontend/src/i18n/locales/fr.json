@@ -36,6 +36,7 @@
     "attachments": "Pièces jointes",
     "duplicates": "Doublons",
     "insights": "Insights",
+    "privacy": "Vie privée",
     "jobs": "Jobs",
     "settings": "Paramètres",
     "admin": "Administration"
@@ -546,5 +547,60 @@
     "filename": "Nom de pièce jointe",
     "after": "Après date (ex: after:2024/01/01)",
     "before": "Avant date"
+  },
+
+  "privacy": {
+    "title": "Vie privée & Sécurité",
+    "tracking": {
+      "tab": "Pixels espions",
+      "trackedMails": "Mails pistés",
+      "totalTrackers": "Total trackers",
+      "topDomain": "Domaine #1",
+      "topDomains": "Domaines traqueurs les plus fréquents",
+      "scan": "Scanner les mails",
+      "scanError": "Erreur lors du lancement du scan",
+      "sender": "Expéditeur",
+      "subject": "Sujet",
+      "date": "Date",
+      "trackers": "Trackers",
+      "types": "Types"
+    },
+    "pii": {
+      "tab": "Données sensibles",
+      "totalFindings": "Données détectées",
+      "affectedMails": "Mails concernés",
+      "byType": "Par type",
+      "scan": "Scanner les archives",
+      "scanError": "Erreur lors du lancement du scan PII",
+      "alertTitle": "Données sensibles détectées",
+      "alertDesc": "{{count}} donnée(s) sensible(s) trouvée(s) dans {{mails}} mail(s) archivé(s). Nous recommandons de chiffrer vos archives ou de supprimer les mails concernés.",
+      "sender": "Expéditeur",
+      "subject": "Sujet",
+      "type": "Type",
+      "count": "Nb",
+      "preview": "Aperçu (masqué)"
+    },
+    "encryption": {
+      "tab": "Chiffrement",
+      "infoTitle": "Chiffrement AES-256 des archives",
+      "infoDesc": "Protégez vos archives EML en les chiffrant avec une phrase secrète. Le chiffrement utilise AES-256-GCM avec clé dérivée via PBKDF2. La phrase secrète n'est jamais stockée — seul un hash de vérification est conservé.",
+      "totalArchives": "Total archives",
+      "encrypted": "Chiffrées",
+      "unencrypted": "Non chiffrées",
+      "progress": "Progression",
+      "setupTitle": "Configurer le chiffrement",
+      "setupDesc": "Choisissez une phrase secrète d'au moins 8 caractères. Elle sera utilisée pour chiffrer et déchiffrer vos archives. Conservez-la précieusement — elle ne peut pas être récupérée.",
+      "setup": "Configurer",
+      "setupSuccess": "Chiffrement configuré avec succès",
+      "setupError": "Erreur lors de la configuration du chiffrement",
+      "encryptTitle": "Chiffrer les archives",
+      "encryptDesc": "{{count}} archive(s) non chiffrée(s). Entrez votre phrase secrète pour les chiffrer.",
+      "encrypt": "Chiffrer",
+      "encryptError": "Erreur lors du chiffrement",
+      "invalidPassphrase": "Phrase secrète invalide",
+      "passphrasePlaceholder": "Phrase secrète (min. 8 caractères)",
+      "minLength": "La phrase secrète doit faire au moins 8 caractères",
+      "allEncrypted": "Toutes les archives sont chiffrées ✓"
+    }
   }
 }

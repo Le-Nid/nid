@@ -10,6 +10,7 @@ import * as migration006 from './migrations/006_totp'
 import * as migration007 from './migrations/007_webhooks'
 import * as migration008 from './migrations/008_notification_preferences'
 import * as migration009 from './migrations/009_notification_channels'
+import * as migration010 from './migrations/010_privacy'
 
 // ─── Kysely instance ──────────────────────────────────────
 
@@ -39,6 +40,7 @@ const migrations: Record<string, Migration> = {
   '007_webhooks':      migration007,
   '008_notification_preferences': migration008,
   '009_notification_channels': migration009,
+  '010_privacy': migration010,
 }
 
 class InCodeMigrationProvider implements MigrationProvider {

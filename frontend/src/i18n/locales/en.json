@@ -36,6 +36,7 @@
     "attachments": "Attachments",
     "duplicates": "Duplicates",
     "insights": "Insights",
+    "privacy": "Privacy",
     "jobs": "Jobs",
     "settings": "Settings",
     "admin": "Administration"
@@ -546,5 +547,60 @@
     "filename": "Attachment filename",
     "after": "After date (e.g. after:2024/01/01)",
     "before": "Before date"
+  },
+
+  "privacy": {
+    "title": "Privacy & Security",
+    "tracking": {
+      "tab": "Tracking Pixels",
+      "trackedMails": "Tracked emails",
+      "totalTrackers": "Total trackers",
+      "topDomain": "Top domain",
+      "topDomains": "Most frequent tracking domains",
+      "scan": "Scan emails",
+      "scanError": "Failed to start tracking scan",
+      "sender": "Sender",
+      "subject": "Subject",
+      "date": "Date",
+      "trackers": "Trackers",
+      "types": "Types"
+    },
+    "pii": {
+      "tab": "Sensitive Data",
+      "totalFindings": "Data detected",
+      "affectedMails": "Affected emails",
+      "byType": "By type",
+      "scan": "Scan archives",
+      "scanError": "Failed to start PII scan",
+      "alertTitle": "Sensitive data detected",
+      "alertDesc": "{{count}} sensitive data item(s) found in {{mails}} archived email(s). We recommend encrypting your archives or deleting the affected emails.",
+      "sender": "Sender",
+      "subject": "Subject",
+      "type": "Type",
+      "count": "Count",
+      "preview": "Preview (masked)"
+    },
+    "encryption": {
+      "tab": "Encryption",
+      "infoTitle": "AES-256 archive encryption",
+      "infoDesc": "Protect your archived EML files by encrypting them with a passphrase. Encryption uses AES-256-GCM with key derived via PBKDF2. The passphrase is never stored — only a verification hash is kept.",
+      "totalArchives": "Total archives",
+      "encrypted": "Encrypted",
+      "unencrypted": "Unencrypted",
+      "progress": "Progress",
+      "setupTitle": "Set up encryption",
+      "setupDesc": "Choose a passphrase of at least 8 characters. It will be used to encrypt and decrypt your archives. Keep it safe — it cannot be recovered.",
+      "setup": "Set up",
+      "setupSuccess": "Encryption set up successfully",
+      "setupError": "Failed to set up encryption",
+      "encryptTitle": "Encrypt archives",
+      "encryptDesc": "{{count}} unencrypted archive(s). Enter your passphrase to encrypt them.",
+      "encrypt": "Encrypt",
+      "encryptError": "Encryption failed",
+      "invalidPassphrase": "Invalid passphrase",
+      "passphrasePlaceholder": "Passphrase (min. 8 characters)",
+      "minLength": "Passphrase must be at least 8 characters",
+      "allEncrypted": "All archives are encrypted ✓"
+    }
   }
 }

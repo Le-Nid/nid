@@ -5,7 +5,7 @@ import {
   LogoutOutlined, UserOutlined, ScheduleOutlined, RobotOutlined,
   CrownOutlined,
   StopOutlined, PaperClipOutlined, LineChartOutlined, CopyOutlined,
-  GlobalOutlined,
+  GlobalOutlined, SafetyOutlined,
 } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/auth.store'
@@ -35,6 +35,7 @@ export default function AppLayout() {
     { key: '/attachments',   icon: <PaperClipOutlined />,   label: t('nav.attachments') },
     { key: '/duplicates',    icon: <CopyOutlined />,         label: t('nav.duplicates') },
     { key: '/insights',      icon: <LineChartOutlined />,   label: t('nav.insights') },
+    { key: '/privacy',       icon: <SafetyOutlined />,      label: t('nav.privacy') },
     { key: '/jobs',          icon: <ScheduleOutlined />,    label: t('nav.jobs') },
     { key: '/settings',  icon: <SettingOutlined />,   label: t('nav.settings') },
     ...(user?.role === 'admin' ? [

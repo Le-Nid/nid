@@ -17,6 +17,7 @@ import { twoFactorRoutes } from './2fa'
 import { integrityRoutes } from './integrity'
 import { webhookRoutes } from './webhooks'
 import { configRoutes } from './config'
+import { privacyRoutes } from './privacy'
 
 export async function registerRoutes(app: FastifyInstance) {
   // Health check
@@ -41,6 +42,7 @@ export async function registerRoutes(app: FastifyInstance) {
   await app.register(integrityRoutes,     { prefix: '/api/integrity' })
   await app.register(webhookRoutes,       { prefix: '/api/webhooks' })
   await app.register(configRoutes,        { prefix: '/api/config' })
+  await app.register(privacyRoutes,       { prefix: '/api/privacy' })
 
   // Démarrer le broadcaster SSE ← QueueEvents BullMQ
   startQueueEventBroadcaster()
