@@ -120,7 +120,7 @@ export default function LoginPage() {
         onPressEnter={handleTotpSubmit}
         autoComplete="one-time-code"
       />
-      {error && <Alert message={error} type="error" style={{ marginBottom: 16 }} />}
+      {error && <Alert title={error} type="error" style={{ marginBottom: 16 }} />}
       <Button type="primary" loading={loading} block size="large" onClick={handleTotpSubmit} disabled={totpCode.length !== 6}>
         {t('login.totpVerify')}
       </Button>
@@ -136,7 +136,7 @@ export default function LoginPage() {
       <Form.Item name="password" label={t('login.password')} rules={[{ required: true }]}>
         <Input.Password prefix={<LockOutlined />} placeholder={t('login.passwordPlaceholder')} size="large" />
       </Form.Item>
-      {error && <Alert message={error} type="error" style={{ marginBottom: 16 }} />}
+      {error && <Alert title={error} type="error" style={{ marginBottom: 16 }} />}
       <Button type="primary" htmlType="submit" loading={loading} block size="large">
         {t('login.submit')}
       </Button>
@@ -162,7 +162,7 @@ export default function LoginPage() {
       <Form.Item name="password" label={t('login.password')} rules={[{ required: true, min: 8 }]}>
         <Input.Password prefix={<LockOutlined />} placeholder={t('login.passwordMin')} size="large" />
       </Form.Item>
-      {error && <Alert message={error} type="error" style={{ marginBottom: 16 }} />}
+      {error && <Alert title={error} type="error" style={{ marginBottom: 16 }} />}
       <Button type="primary" htmlType="submit" loading={loading} block size="large">
         {t('login.register')}
       </Button>
@@ -186,7 +186,7 @@ export default function LoginPage() {
       justifyContent: 'center', background: '#f0f2f5',
     }} aria-label={t('login.tabLogin')}>
       <Card style={{ width: 400 }}>
-        <Space direction="vertical" align="center" style={{ width: '100%', marginBottom: 24 }}>
+        <Space orientation="vertical" align="center" style={{ width: '100%', marginBottom: 24 }}>
           <Text style={{ fontSize: 32 }} aria-hidden="true">📬</Text>
           <Title level={1} style={{ margin: 0, fontSize: 24 }}>{t('login.title')}</Title>
           <Text type="secondary">{t('login.subtitle')}</Text>

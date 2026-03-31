@@ -174,14 +174,14 @@ export default function MailViewer({ accountId, messageId, onClose }: Props) {
       width={740}
       styles={{ body: { padding: 16 } }}
     >
-      {error && <Alert type="error" message={error} showIcon />}
+      {error && <Alert type="error" title={error} showIcon />}
 
       <Spin spinning={loading}>
         {mail && (
           <>
             {/* En-tête */}
             <Space
-              direction="vertical"
+              orientation="vertical"
               size={2}
               style={{ marginBottom: 12, width: "100%" }}
             >

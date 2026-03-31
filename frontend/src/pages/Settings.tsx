@@ -148,7 +148,7 @@ export default function SettingsPage() {
       const { jobId } = await archiveApi.triggerArchive(accountId, { differential: true })
       setActiveJobId(jobId)
       notification.success({
-        message: t('settings.archiveStarted'),
+        title: t('settings.archiveStarted'),
         description: t('settings.archiveStartedDesc'),
       })
     } catch {
@@ -290,7 +290,7 @@ export default function SettingsPage() {
       <Card title={<><SafetyOutlined /> {t('settings.twoFactor')}</>} style={{ marginTop: 24 }}>
         {(user as any)?.totp_enabled ? (
           <>
-            <Alert type="success" message={t('settings.twoFactorEnabled')} showIcon style={{ marginBottom: 16 }} />
+            <Alert type="success" title={t('settings.twoFactorEnabled')} showIcon style={{ marginBottom: 16 }} />
             <Space>
               <Input
                 placeholder={t('settings.totpCode')}

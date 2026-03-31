@@ -43,7 +43,7 @@ export function useGlobalJobNotifier() {
           if (prev && prev !== "completed" && curr === "completed" && prefs.job_completed_toast !== false) {
             notification.success({
               key: `job-${job.id}`,
-              message: `${TYPE_LABELS[job.type] ?? job.type} terminé`,
+              title: `${TYPE_LABELS[job.type] ?? job.type} terminé`,
               description: `${job.processed ?? 0} éléments traités avec succès.`,
               icon: <CheckCircleOutlined style={{ color: "#52c41a" }} />,
               duration: 6,
@@ -53,7 +53,7 @@ export function useGlobalJobNotifier() {
           if (prev && prev !== "failed" && curr === "failed" && prefs.job_failed_toast !== false) {
             notification.error({
               key: `job-${job.id}`,
-              message: `${TYPE_LABELS[job.type] ?? job.type} échoué`,
+              title: `${TYPE_LABELS[job.type] ?? job.type} échoué`,
               description: job.error ?? "Une erreur est survenue.",
               icon: <CloseCircleOutlined style={{ color: "#ff4d4f" }} />,
               duration: 10,

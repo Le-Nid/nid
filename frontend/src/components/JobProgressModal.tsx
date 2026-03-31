@@ -49,7 +49,7 @@ export default function JobProgressModal({ jobId, onClose }: Props) {
       width={480}
     >
       {job ? (
-        <Space direction="vertical" style={{ width: "100%" }} size={16}>
+        <Space orientation="vertical" style={{ width: "100%" }} size={16}>
           <Space>
             <Tag color={STATUS_COLORS[job.status]}>
               {job.status.toUpperCase()}

@@ -57,7 +57,7 @@ export default function UnsubscribePage() {
       const { jobId, count } = await unsubscribeApi.deleteSender(accountId!, sender.email, permanent)
       setActiveJobId(jobId)
       notification.success({
-        message: t('unsubscribe.deleteStarted'),
+        title: t('unsubscribe.deleteStarted'),
         description: t('unsubscribe.deleteDesc', { count, sender: sender.sender }),
       })
     } catch {
@@ -82,7 +82,7 @@ export default function UnsubscribePage() {
       title: t('unsubscribe.sender'),
       key: 'sender',
       render: (_: any, row: NewsletterSender) => (
-        <Space direction="vertical" size={0}>
+        <Space orientation="vertical" size={0}>
           <Text strong style={{ fontSize: 13 }}>{row.sender}</Text>
           <Text type="secondary" style={{ fontSize: 11 }}>{row.email}</Text>
         </Space>

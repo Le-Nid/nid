@@ -93,7 +93,7 @@ export default function RulesPage() {
     try {
       const { jobId } = await rulesApi.run(accountId!, rule.id);
       notification.success({
-        message: t('rules.runSuccess', { name: rule.name }),
+        title: t('rules.runSuccess', { name: rule.name }),
         description: t('rules.runJobCreated', { jobId }),
         duration: 5,
       });
@@ -176,7 +176,7 @@ export default function RulesPage() {
     {
       title: t('rules.rule'),
       render: (_: any, row: Rule) => (
-        <Space direction="vertical" size={2}>
+        <Space orientation="vertical" size={2}>
           <Text strong>{row.name}</Text>
           {row.description && (
             <Text type="secondary" style={{ fontSize: 12 }}>
@@ -190,7 +190,7 @@ export default function RulesPage() {
       title: t('rules.conditions'),
       dataIndex: "conditions",
       render: (conditions: Rule["conditions"]) => (
-        <Space direction="vertical" size={2}>
+        <Space orientation="vertical" size={2}>
           {conditions.map((c, i) => (
             <Tag key={i} style={{ fontSize: 11 }}>
               {CONDITION_FIELD_LABELS[c.field]}{" "}
@@ -224,7 +224,7 @@ export default function RulesPage() {
       dataIndex: "schedule",
       width: 150,
       render: (s: string | null, row: Rule) => (
-        <Space direction="vertical" size={0}>
+        <Space orientation="vertical" size={0}>
           <Space size={4}>
             {s ? <ClockCircleOutlined style={{ color: "#1677ff" }} /> : null}
             <Text style={{ fontSize: 12 }}>{scheduleLabel(s)}</Text>
@@ -371,7 +371,7 @@ export default function RulesPage() {
               <List.Item.Meta
                 title={tpl.name}
                 description={
-                  <Space direction="vertical" size={2}>
+                  <Space orientation="vertical" size={2}>
                     <Text type="secondary" style={{ fontSize: 12 }}>{tpl.description}</Text>
                     <Tag color={tpl.category === 'cleanup' ? 'red' : tpl.category === 'archive' ? 'blue' : 'green'} style={{ fontSize: 10 }}>
                       {tpl.category === 'cleanup' ? t('rules.categoryCleanup') : tpl.category === 'archive' ? t('rules.categoryArchive') : t('rules.categoryOrganize')}

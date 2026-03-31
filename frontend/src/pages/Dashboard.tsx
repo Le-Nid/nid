@@ -149,7 +149,7 @@ export default function DashboardPage() {
       </Space>
 
       {error && (
-        <Alert type="error" message={error} icon={<WarningOutlined />}
+        <Alert type="error" title={error} icon={<WarningOutlined />}
           showIcon closable style={{ marginBottom: 16 }} />
       )}
 

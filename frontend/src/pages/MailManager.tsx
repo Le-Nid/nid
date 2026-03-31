@@ -184,7 +184,7 @@ export default function MailManagerPage() {
       });
       setActiveJobId(jobId);
       notification.success({
-        message: t('mailManager.archiveAllStarted'),
+        title: t('mailManager.archiveAllStarted'),
         description: t('mailManager.archiveAllDesc'),
       });
     } catch {
@@ -213,7 +213,7 @@ export default function MailManagerPage() {
         });
         setActiveJobId(jobId);
         notification.success({
-          message: "Archivage lancé",
+          title: "Archivage lancé",
           description: `Job créé — suivi temps réel disponible.`,
         });
         setSelected([]);
@@ -233,7 +233,7 @@ export default function MailManagerPage() {
       );
       setActiveJobId(jobId);
       notification.success({
-        message: "Opération lancée",
+        title: "Opération lancée",
         description: `${selected.length} mail(s) — suivi dans Jobs.`,
       });
       setSelected([]);
@@ -267,7 +267,7 @@ export default function MailManagerPage() {
       dataIndex: "subject",
       ellipsis: true,
       render: (v: string, row: MailRow) => (
-        <Space direction="vertical" size={0}>
+        <Space orientation="vertical" size={0}>
           <Space size={4}>
             {row.hasAttachments && (
               <PaperClipOutlined style={{ color: "#8c8c8c", fontSize: 12 }} />

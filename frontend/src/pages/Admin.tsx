@@ -271,7 +271,7 @@ function EditUserForm({
   const [quota, setQuota] = useState(Math.round(user.storage_quota_bytes / 1_073_741_824)) // en Go
 
   return (
-    <Space direction="vertical" style={{ width: '100%' }} size="large">
+    <Space orientation="vertical" style={{ width: '100%' }} size="large">
       <Descriptions column={1} bordered size="small">
         <Descriptions.Item label={t('admin.email')}>{user.email}</Descriptions.Item>
         <Descriptions.Item label={t('admin.role')}>{user.display_name ?? '—'}</Descriptions.Item>
@@ -279,7 +279,7 @@ function EditUserForm({
         <Descriptions.Item label={t('admin.storageUsed')}>{formatBytes(user.storage_used_bytes)}</Descriptions.Item>
       </Descriptions>
 
-      <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+      <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
         <div>
           <Text strong>{t('admin.role')} : </Text>
           <Select value={role} onChange={setRole} style={{ width: 120 }}

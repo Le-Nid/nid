@@ -70,7 +70,7 @@ export default function DuplicatesPage() {
       title: t('duplicates.subject'),
       key: 'subject',
       render: (_: any, row: DuplicateGroup) => (
-        <Space direction="vertical" size={0}>
+        <Space orientation="vertical" size={0}>
           <Text strong style={{ fontSize: 13 }}>{row.subject || t('common.noSubject')}</Text>
           <Text type="secondary" style={{ fontSize: 11 }}>{row.sender}</Text>
         </Space>

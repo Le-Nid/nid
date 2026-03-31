@@ -136,7 +136,7 @@ export default function ArchivePage() {
       a.click();
       URL.revokeObjectURL(url);
       notification.success({
-        message: t('archive.exportDone'),
+        title: t('archive.exportDone'),
         description: t('archive.exportCount', { count: ids.length }),
       });
     } catch {
@@ -270,7 +270,7 @@ export default function ArchivePage() {
       dataIndex: "subject",
       ellipsis: true,
       render: (v: string, row: ArchivedMail) => (
-        <Space direction="vertical" size={0}>
+        <Space orientation="vertical" size={0}>
           <Space size={4}>
             {row.has_attachments && (
               <PaperClipOutlined style={{ color: "#8c8c8c", fontSize: 12 }} />
@@ -459,7 +459,7 @@ export default function ArchivePage() {
         {viewing && (
           <>
             <Space
-              direction="vertical"
+              orientation="vertical"
               size={2}
               style={{ width: "100%", marginBottom: 12 }}
             >
@@ -508,7 +508,7 @@ export default function ArchivePage() {
                       ]}
                     >
                       <Space
-                        direction="vertical"
+                        orientation="vertical"
                         size={4}
                         style={{ width: "100%" }}
                       >

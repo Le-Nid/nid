@@ -134,7 +134,7 @@ export default function NotificationBell() {
               <List.Item.Meta
                 title={<Text style={{ fontSize: 13 }}>{item.title}</Text>}
                 description={
-                  <Space direction="vertical" size={2}>
+                  <Space orientation="vertical" size={2}>
                     {item.body && <Text type="secondary" style={{ fontSize: 12 }}>{item.body}</Text>}
                     <Text type="secondary" style={{ fontSize: 11 }}>{dayjs(item.created_at).locale(i18n.language).fromNow()}</Text>
                   </Space>
@@ -149,7 +149,7 @@ export default function NotificationBell() {
 
   return (
     <Dropdown
-      dropdownRender={() => dropdownContent}
+      popupRender={() => dropdownContent}
       trigger={['click']}
       open={open}
       onOpenChange={setOpen}

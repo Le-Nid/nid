@@ -112,7 +112,7 @@ export default function JobsPage() {
       title: t('jobs.progress'),
       width: 240,
       render: (_: any, record: any) => (
-        <Space direction="vertical" size={2} style={{ width: "100%" }}>
+        <Space orientation="vertical" size={2} style={{ width: "100%" }}>
           <Progress
             percent={record.progress ?? 0}
             size="small"

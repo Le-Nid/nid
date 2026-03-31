@@ -127,7 +127,7 @@ export default function AttachmentsPage() {
       title: t('attachments.mail'),
       key: 'mail',
       render: (_: any, row: ArchivedAttachment) => (
-        <Space direction="vertical" size={0}>
+        <Space orientation="vertical" size={0}>
           <Text style={{ fontSize: 12 }}>{row.mail_subject || t('common.noSubject')}</Text>
           <Text type="secondary" style={{ fontSize: 11 }}>{row.mail_sender}</Text>
         </Space>
@@ -174,7 +174,7 @@ export default function AttachmentsPage() {
       title: t('attachments.mail'),
       key: 'mail',
       render: (_: any, row: LiveAttachment) => (
-        <Space direction="vertical" size={0}>
+        <Space orientation="vertical" size={0}>
           <Text style={{ fontSize: 12 }}>{row.mailSubject || t('common.noSubject')}</Text>
           <Text type="secondary" style={{ fontSize: 11 }}>{row.mailSender}</Text>
         </Space>

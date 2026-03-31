@@ -250,7 +250,7 @@ export default function RuleFormModal({
         </Text>
       </Divider>
 
-      <Space direction="vertical" style={{ width: "100%" }} size={8}>
+      <Space orientation="vertical" style={{ width: "100%" }} size={8}>
         {conditions.map((cond, i) => (
           <Row key={i} gutter={8} align="middle">
             <Col span={7}>

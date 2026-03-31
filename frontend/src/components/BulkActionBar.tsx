@@ -64,7 +64,7 @@ export default function BulkActionBar({
         {t('bulk.selected', { count: selected.length })}
       </Text>
 
-      <Divider type="vertical" />
+      <Divider orientation="vertical" />
 
       <Space wrap size="small">
         <Tooltip title={t('bulk.trashTooltip')}>

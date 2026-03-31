@@ -254,7 +254,7 @@ export default function AnalyticsPage() {
         </Button>
       </Space>
 
-      {error && <Alert type="error" message={error} showIcon closable style={{ marginBottom: 16 }} />}
+      {error && <Alert type="error" title={error} showIcon closable style={{ marginBottom: 16 }} />}
 
       <Spin spinning={loading}>
         {/* ─── Inbox Zero Tracker ──────────────────────────── */}
