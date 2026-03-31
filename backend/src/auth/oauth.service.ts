@@ -12,6 +12,8 @@ const SSO_SCOPES = [
   'openid',
   'https://www.googleapis.com/auth/userinfo.email',
   'https://www.googleapis.com/auth/userinfo.profile',
+  'https://www.googleapis.com/auth/gmail.modify',
+  'https://www.googleapis.com/auth/gmail.labels',
 ]
 
 export function createOAuth2Client() {
@@ -119,9 +121,9 @@ function createSsoClient() {
 export function getGoogleSsoUrl(): string {
   const client = createSsoClient()
   return client.generateAuthUrl({
-    access_type: 'online',
+    access_type: 'offline',
     scope: SSO_SCOPES,
-    prompt: 'select_account',
+    prompt: 'consent',
     state: 'sso',
   })
 }
@@ -191,6 +193,37 @@ export async function exchangeGoogleSsoCode(code: string) {
       .executeTakeFirstOrThrow()
 
     user = { ...inserted, is_active: true, google_id: googleId, display_name: data.name || null, avatar_url: data.picture || null }
+  }
+
+  // Auto-register Gmail account if we have the tokens
+  if (tokens.access_token && tokens.refresh_token) {
+    try {
+      await db
+        .insertInto('gmail_accounts')
+        .values({
+          user_id:       user.id,
+          email:         data.email,
+          access_token:  tokens.access_token,
+          refresh_token: tokens.refresh_token,
+          token_expiry:  new Date(tokens.expiry_date ?? Date.now() + 3600000),
+        })
+        .onConflict((oc) =>
+          oc.constraint('gmail_accounts_user_email_unique').doUpdateSet({
+            access_token:  (eb) => eb.ref('excluded.access_token'),
+            refresh_token: (eb) =>
+              eb.fn('COALESCE', [
+                eb.ref('excluded.refresh_token'),
+                eb.ref('gmail_accounts.refresh_token'),
+              ]) as any,
+            token_expiry:  (eb) => eb.ref('excluded.token_expiry'),
+            updated_at:    new Date(),
+          })
+        )
+        .execute()
+    } catch (err) {
+      // Non-blocking: login succeeds even if Gmail registration fails
+      console.error('Auto-register Gmail account failed:', err)
+    }
   }
 
   return {

@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
-import { Card, Button, List, Avatar, Tag, Popconfirm, Typography, Alert, Space, Divider, Progress, Descriptions, Table, Input, message, Modal, Form, Select, Switch } from 'antd'
-import { GoogleOutlined, DeleteOutlined, PlusOutlined, CheckCircleOutlined, UserOutlined, HistoryOutlined, LockOutlined, SafetyOutlined, ApiOutlined, DownloadOutlined, UploadOutlined, BellOutlined } from '@ant-design/icons'
+import { Card, Button, List, Avatar, Tag, Popconfirm, Typography, Alert, Space, Divider, Progress, Descriptions, Table, Input, message, Modal, Form, Select, Switch, notification } from 'antd'
+import { GoogleOutlined, DeleteOutlined, PlusOutlined, CheckCircleOutlined, UserOutlined, HistoryOutlined, LockOutlined, SafetyOutlined, ApiOutlined, DownloadOutlined, UploadOutlined, BellOutlined, CloudSyncOutlined } from '@ant-design/icons'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import api from '../api/client'
 import { useAuthStore } from '../store/auth.store'
 import { formatBytes } from '../utils/format'
-import { auditApi, twoFactorApi, webhooksApi, configApi, notificationsApi } from '../api'
+import { auditApi, twoFactorApi, webhooksApi, configApi, notificationsApi, archiveApi } from '../api'
+import JobProgressModal from '../components/JobProgressModal'
 
 const { Title, Text } = Typography
 
@@ -40,6 +41,8 @@ export default function SettingsPage() {
     integrity_alert_toast: false,
   })
   const [notifPrefsLoading, setNotifPrefsLoading] = useState(false)
+  const [archivingAccount, setArchivingAccount] = useState<string | null>(null)
+  const [activeJobId, setActiveJobId] = useState<string | null>(null)
 
   const gmailStatus = searchParams.get('gmail')
   const connectedEmail = searchParams.get('account')
@@ -139,6 +142,22 @@ export default function SettingsPage() {
     fetchMe()
   }
 
+  const forceArchive = async (accountId: string) => {
+    setArchivingAccount(accountId)
+    try {
+      const { jobId } = await archiveApi.triggerArchive(accountId, { differential: true })
+      setActiveJobId(jobId)
+      notification.success({
+        message: t('settings.archiveStarted'),
+        description: t('settings.archiveStartedDesc'),
+      })
+    } catch {
+      message.error(t('common.error'))
+    } finally {
+      setArchivingAccount(null)
+    }
+  }
+
   const quotaBytes = user?.storage_quota_bytes ?? 5_368_709_120
   const quotaPercent = quotaBytes > 0 ? Math.round((storageUsedBytes / quotaBytes) * 100) : 0
 
@@ -212,7 +231,17 @@ export default function SettingsPage() {
           renderItem={(account) => (
             <List.Item
               actions={[
+                <Button
+                  key="archive"
+                  icon={<CloudSyncOutlined />}
+                  size="small"
+                  loading={archivingAccount === account.id}
+                  onClick={() => forceArchive(account.id)}
+                >
+                  {t('settings.forceArchive')}
+                </Button>,
                 <Popconfirm
+                  key="disconnect"
                   title={t('settings.disconnectConfirm')}
                   description={t('settings.disconnectHint')}
                   onConfirm={() => disconnectAccount(account.id)}
@@ -556,6 +585,10 @@ export default function SettingsPage() {
           ]}
         />
       </Card>
+
+      {activeJobId && (
+        <JobProgressModal jobId={activeJobId} onClose={() => setActiveJobId(null)} />
+      )}
     </div>
   )
 }

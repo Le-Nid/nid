@@ -117,7 +117,8 @@
 
 ## v2.3 — Evolution
 
-- [ ] Si on se connecte avec son compte Google, on enregistre automatiquement son compte Gmail
+- [x] Si on se connecte avec son compte Google, on enregistre automatiquement son compte Gmail
+- [x] Ajouter un bouton pour forcer l'archivage
 
 ### Vie privée & Sécurité
 
@@ -149,7 +150,5 @@
 
 ### Idées originales
 
-- [ ] **Newsletter → RSS** — Convertir les newsletters reçues par email en flux RSS consultable dans un lecteur dédié intégré. Désencombrer l'inbox tout en gardant le contenu
 - [ ] **Email "expiration"** — Marquer des emails comme temporaires (codes OTP, confirmations de livraison, promos). Auto-suppression après N jours. Détection heuristique possible
-- [ ] **Mode "Focus"** — Masquer temporairement tous les mails sauf ceux d'une liste blanche d'expéditeurs
 - [ ] **Partage d'archive temporaire** — Générer un lien temporaire (token + expiration) pour partager un mail archivé avec quelqu'un sans compte
