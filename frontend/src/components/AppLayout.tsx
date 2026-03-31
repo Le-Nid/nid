@@ -27,21 +27,49 @@ export default function AppLayout() {
   useGlobalJobNotifier()
 
   const menuItems = [
-    { key: '/dashboard', icon: <DashboardOutlined />, label: t('nav.dashboard') },
-    { key: '/mails',     icon: <MailOutlined />,      label: t('nav.mails') },
-    { key: '/archive',   icon: <DatabaseOutlined />,  label: t('nav.archives') },
-    { key: '/rules',        icon: <RobotOutlined />,       label: t('nav.rules') },
-    { key: '/unsubscribe',   icon: <StopOutlined />,        label: t('nav.newsletters') },
-    { key: '/attachments',   icon: <PaperClipOutlined />,   label: t('nav.attachments') },
-    { key: '/duplicates',    icon: <CopyOutlined />,         label: t('nav.duplicates') },
-    { key: '/insights',      icon: <LineChartOutlined />,   label: t('nav.insights') },
-    { key: '/analytics',     icon: <HeatMapOutlined />,     label: t('nav.analytics') },
-    { key: '/privacy',       icon: <SafetyOutlined />,      label: t('nav.privacy') },
-    { key: '/jobs',          icon: <ScheduleOutlined />,    label: t('nav.jobs') },
-    { key: '/settings',  icon: <SettingOutlined />,   label: t('nav.settings') },
-    ...(user?.role === 'admin' ? [
-      { key: '/admin', icon: <CrownOutlined />, label: t('nav.admin') },
-    ] : []),
+    {
+      key: 'grp-email',
+      type: 'group' as const,
+      label: t('nav.group_email'),
+      children: [
+        { key: '/dashboard', icon: <DashboardOutlined />, label: t('nav.dashboard') },
+        { key: '/mails',     icon: <MailOutlined />,      label: t('nav.mails') },
+        { key: '/archive',   icon: <DatabaseOutlined />,  label: t('nav.archives') },
+      ],
+    },
+    {
+      key: 'grp-tools',
+      type: 'group' as const,
+      label: t('nav.group_tools'),
+      children: [
+        { key: '/rules',        icon: <RobotOutlined />,       label: t('nav.rules') },
+        { key: '/unsubscribe',  icon: <StopOutlined />,        label: t('nav.newsletters') },
+        { key: '/attachments',  icon: <PaperClipOutlined />,   label: t('nav.attachments') },
+        { key: '/duplicates',   icon: <CopyOutlined />,        label: t('nav.duplicates') },
+      ],
+    },
+    {
+      key: 'grp-analytics',
+      type: 'group' as const,
+      label: t('nav.group_analytics'),
+      children: [
+        { key: '/insights',      icon: <LineChartOutlined />,   label: t('nav.insights') },
+        { key: '/analytics',     icon: <HeatMapOutlined />,     label: t('nav.analytics') },
+        { key: '/privacy',       icon: <SafetyOutlined />,      label: t('nav.privacy') },
+      ],
+    },
+    {
+      key: 'grp-system',
+      type: 'group' as const,
+      label: t('nav.group_system'),
+      children: [
+        { key: '/jobs',          icon: <ScheduleOutlined />,    label: t('nav.jobs') },
+        { key: '/settings',      icon: <SettingOutlined />,     label: t('nav.settings') },
+        ...(user?.role === 'admin' ? [
+          { key: '/admin', icon: <CrownOutlined />, label: t('nav.admin') },
+        ] : []),
+      ],
+    },
   ]
 
   const userMenu = {

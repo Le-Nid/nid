@@ -34,6 +34,33 @@ Toutes les variables sont définies dans `.env` à la racine du projet.
 !!! info "Docker prod : dérivation automatique"
     En Docker prod, `docker-compose.yml` dérive automatiquement `GOOGLE_REDIRECT_URI` et `GOOGLE_SSO_REDIRECT_URI` à partir de `FRONTEND_URL` (ex: `${FRONTEND_URL}/api/auth/google/callback`). Il suffit de définir `FRONTEND_URL` dans le `.env`.
 
+### Social Login (OAuth2 via Arctic)
+
+En plus du Google SSO (ci-dessus), vous pouvez activer d'autres fournisseurs de connexion sociale. Chaque provider est **activé automatiquement** dès que ses variables `CLIENT_ID` et `CLIENT_SECRET` sont définies.
+
+| Variable | Description |
+|---|---|
+| `MICROSOFT_CLIENT_ID` | Client ID de votre app Microsoft Entra (Azure AD). Créez-la sur [portal.azure.com](https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps) |
+| `MICROSOFT_CLIENT_SECRET` | Client Secret de votre app Microsoft Entra |
+| `DISCORD_CLIENT_ID` | Client ID de votre app Discord. Créez-la sur [discord.com/developers](https://discord.com/developers/applications) |
+| `DISCORD_CLIENT_SECRET` | Client Secret de votre app Discord |
+| `FACEBOOK_CLIENT_ID` | App ID de votre app Meta (Facebook). Créez-la sur [developers.facebook.com](https://developers.facebook.com/apps) |
+| `FACEBOOK_CLIENT_SECRET` | App Secret de votre app Meta |
+| `LINKEDIN_CLIENT_ID` | Client ID de votre app LinkedIn. Créez-la sur [linkedin.com/developers](https://www.linkedin.com/developers/apps) |
+| `LINKEDIN_CLIENT_SECRET` | Client Secret de votre app LinkedIn |
+| `KEYCLOAK_REALM_URL` | URL du realm Keycloak (ex: `https://auth.example.com/realms/myrealm`) |
+| `KEYCLOAK_CLIENT_ID` | Client ID du client Keycloak |
+| `KEYCLOAK_CLIENT_SECRET` | Client Secret du client Keycloak |
+
+!!! tip "URIs de callback à configurer"
+    Pour chaque provider, l'URI de callback à enregistrer dans la console du fournisseur est :
+    ```
+    {FRONTEND_URL}/api/auth/social/{provider}/callback
+    ```
+    Exemple : `http://localhost:4000/api/auth/social/microsoft/callback`
+
+    Exception : Google utilise `GOOGLE_SSO_REDIRECT_URI` (voir section précédente).
+
 ### Multi-utilisateurs (v2.0)
 
 | Variable | Défaut | Description |

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Card, Button, List, Avatar, Tag, Popconfirm, Typography, Alert, Space, Divider, Progress, Descriptions, Table, Input, message, Modal, Form, Select, Switch, notification } from 'antd'
+import { Card, Button, Avatar, Tag, Popconfirm, Typography, Alert, Space, Divider, Progress, Descriptions, Table, Input, message, Modal, Form, Select, Switch, notification } from 'antd'
 import { GoogleOutlined, DeleteOutlined, PlusOutlined, CheckCircleOutlined, UserOutlined, HistoryOutlined, LockOutlined, SafetyOutlined, ApiOutlined, DownloadOutlined, UploadOutlined, BellOutlined, CloudSyncOutlined } from '@ant-design/icons'
 import { useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
@@ -225,23 +225,26 @@ export default function SettingsPage() {
       </Card>
 
       <Card title={t('settings.gmailAccounts')}>
-        <List
-          dataSource={gmailAccounts}
-          locale={{ emptyText: t('settings.noGmailAccount') }}
-          renderItem={(account) => (
-            <List.Item
-              actions={[
+        {gmailAccounts.length === 0 ? (
+          <Typography.Text type="secondary">{t('settings.noGmailAccount')}</Typography.Text>
+        ) : (
+          gmailAccounts.map((account) => (
+            <div key={account.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--ant-color-split, #f0f0f0)' }}>
+              <Space>
+                <Avatar icon={<GoogleOutlined />} style={{ backgroundColor: '#4285F4' }} />
+                <span>{account.email}</span>
+                {account.is_active && <Tag color="success">{t('common.active')}</Tag>}
+              </Space>
+              <Space>
                 <Button
-                  key="archive"
                   icon={<CloudSyncOutlined />}
                   size="small"
                   loading={archivingAccount === account.id}
                   onClick={() => forceArchive(account.id)}
                 >
                   {t('settings.forceArchive')}
-                </Button>,
+                </Button>
                 <Popconfirm
-                  key="disconnect"
                   title={t('settings.disconnectConfirm')}
                   description={t('settings.disconnectHint')}
                   onConfirm={() => disconnectAccount(account.id)}
@@ -252,21 +255,11 @@ export default function SettingsPage() {
                   <Button danger icon={<DeleteOutlined />} size="small">
                     {t('settings.disconnect')}
                   </Button>
-                </Popconfirm>,
-              ]}
-            >
-              <List.Item.Meta
-                avatar={<Avatar icon={<GoogleOutlined />} style={{ backgroundColor: '#4285F4' }} />}
-                title={
-                  <Space>
-                    {account.email}
-                    {account.is_active && <Tag color="success">{t('common.active')}</Tag>}
-                  </Space>
-                }
-              />
-            </List.Item>
-          )}
-        />
+                </Popconfirm>
+              </Space>
+            </div>
+          ))
+        )}
 
         <Divider />
 
@@ -472,24 +465,25 @@ export default function SettingsPage() {
 
       {/* Webhooks */}
       <Card title={<><ApiOutlined /> {t('settings.webhooks')}</>} style={{ marginTop: 24 }}>
-        <List
-          dataSource={webhooks}
-          locale={{ emptyText: t('settings.noWebhook') }}
-          renderItem={(wh: any) => (
-            <List.Item actions={[
-              <Switch size="small" checked={wh.is_active} onChange={() => webhooksApi.toggle(wh.id).then(fetchWebhooks)} />,
-              <Button size="small" onClick={async () => { await webhooksApi.test(wh.id); message.success(t('settings.testSent')) }}>{t('common.test')}</Button>,
-              <Popconfirm title="Supprimer ce webhook ?" onConfirm={() => webhooksApi.remove(wh.id).then(fetchWebhooks)}>
-                <Button danger size="small" icon={<DeleteOutlined />} />
-              </Popconfirm>,
-            ]}>
-              <List.Item.Meta
-                title={<Space>{wh.name} <Tag>{wh.type}</Tag> {wh.last_status && <Tag color={wh.last_status < 300 ? 'green' : 'red'}>{wh.last_status}</Tag>}</Space>}
-                description={<Text type="secondary" style={{ fontSize: 12 }}>{wh.events.join(', ')}</Text>}
-              />
-            </List.Item>
-          )}
-        />
+        {webhooks.length === 0 ? (
+          <Typography.Text type="secondary">{t('settings.noWebhook')}</Typography.Text>
+        ) : (
+          webhooks.map((wh: any) => (
+            <div key={wh.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--ant-color-split, #f0f0f0)' }}>
+              <div>
+                <Space>{wh.name} <Tag>{wh.type}</Tag> {wh.last_status && <Tag color={wh.last_status < 300 ? 'green' : 'red'}>{wh.last_status}</Tag>}</Space>
+                <div><Text type="secondary" style={{ fontSize: 12 }}>{wh.events.join(', ')}</Text></div>
+              </div>
+              <Space>
+                <Switch size="small" checked={wh.is_active} onChange={() => webhooksApi.toggle(wh.id).then(fetchWebhooks)} />
+                <Button size="small" onClick={async () => { await webhooksApi.test(wh.id); message.success(t('settings.testSent')) }}>{t('common.test')}</Button>
+                <Popconfirm title="Supprimer ce webhook ?" onConfirm={() => webhooksApi.remove(wh.id).then(fetchWebhooks)}>
+                  <Button danger size="small" icon={<DeleteOutlined />} />
+                </Popconfirm>
+              </Space>
+            </div>
+          ))
+        )}
         <Divider />
         <Button icon={<PlusOutlined />} onClick={() => { webhookForm.resetFields(); setWebhookModal(true) }}>
           {t('settings.newWebhook')}
@@ -498,6 +492,7 @@ export default function SettingsPage() {
           title={t('settings.newWebhook')}
           open={webhookModal}
           onCancel={() => setWebhookModal(false)}
+          forceRender
           onOk={() => webhookForm.validateFields().then(async (vals) => {
             await webhooksApi.create(vals)
             setWebhookModal(false)

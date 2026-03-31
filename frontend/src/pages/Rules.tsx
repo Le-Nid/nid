@@ -13,7 +13,7 @@ import {
   Card,
   Empty,
   Drawer,
-  List,
+  Spin,
 } from "antd";
 import {
   PlusOutlined,
@@ -351,37 +351,30 @@ export default function RulesPage() {
         <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
           {t('rules.templateHint')}
         </Text>
-        <List
-          loading={templateLoading}
-          dataSource={templates}
-          renderItem={(tpl: any) => (
-            <List.Item
-              actions={[
-                <Button
-                  key="apply"
-                  type="primary"
-                  size="small"
-                  onClick={() => applyTemplate(tpl.id)}
-                  disabled={!accountId}
-                >
-                  Activer
-                </Button>,
-              ]}
-            >
-              <List.Item.Meta
-                title={tpl.name}
-                description={
-                  <Space orientation="vertical" size={2}>
-                    <Text type="secondary" style={{ fontSize: 12 }}>{tpl.description}</Text>
-                    <Tag color={tpl.category === 'cleanup' ? 'red' : tpl.category === 'archive' ? 'blue' : 'green'} style={{ fontSize: 10 }}>
-                      {tpl.category === 'cleanup' ? t('rules.categoryCleanup') : tpl.category === 'archive' ? t('rules.categoryArchive') : t('rules.categoryOrganize')}
-                    </Tag>
-                  </Space>
-                }
-              />
-            </List.Item>
-          )}
-        />
+        <Spin spinning={templateLoading}>
+          {templates.map((tpl: any) => (
+            <div key={tpl.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--ant-color-split, #f0f0f0)' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div>{tpl.name}</div>
+                <Space orientation="vertical" size={2}>
+                  <Text type="secondary" style={{ fontSize: 12 }}>{tpl.description}</Text>
+                  <Tag color={tpl.category === 'cleanup' ? 'red' : tpl.category === 'archive' ? 'blue' : 'green'} style={{ fontSize: 10 }}>
+                    {tpl.category === 'cleanup' ? t('rules.categoryCleanup') : tpl.category === 'archive' ? t('rules.categoryArchive') : t('rules.categoryOrganize')}
+                  </Tag>
+                </Space>
+              </div>
+              <Button
+                type="primary"
+                size="small"
+                onClick={() => applyTemplate(tpl.id)}
+                disabled={!accountId}
+                style={{ flexShrink: 0, marginLeft: 8 }}
+              >
+                Activer
+              </Button>
+            </div>
+          ))}
+        </Spin>
       </Drawer>
     </div>
   );

@@ -9,9 +9,9 @@
     "npm": ">=10.0.0"
   },
   "scripts": {
-    "dev": "vite-node --watch src/index.ts",
+    "dev": "NODE_OPTIONS='--dns-result-order=ipv4first' vite-node --watch src/index.ts",
     "build": "vite build",
-    "start": "node dist/index.js",
+    "start": "NODE_OPTIONS='--dns-result-order=ipv4first' node dist/index.js",
     "typecheck": "tsc --noEmit",
     "check": "npm ci && npm run typecheck",
     "test": "vitest run",
@@ -28,6 +28,7 @@
     "@fastify/swagger": "^9.7.0",
     "@fastify/swagger-ui": "^5.2.5",
     "archiver": "^7.0.1",
+    "arctic": "^3.7.0",
     "bcrypt": "^6.0.0",
     "bullmq": "^5.7.0",
     "dotenv": "^17.3.1",

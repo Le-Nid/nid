@@ -4,7 +4,8 @@ import bcrypt from 'bcrypt'
 import crypto from 'node:crypto'
 import { verifySync as otpVerify } from 'otplib'
 import { getDb } from '../db'
-import { getGmailAuthUrl, exchangeGmailCode, getGoogleSsoUrl, exchangeGoogleSsoCode } from '../auth/oauth.service'
+import { getGmailAuthUrl, exchangeGmailCode } from '../auth/oauth.service'
+import { getEnabledProviders, isProviderEnabled, createAuthorizationUrl, exchangeSocialCode } from '../auth/social.service'
 import { config } from '../config'
 import { logAudit } from '../audit/audit.service'
 import { setAuthCookie, clearAuthCookie } from '../plugins'
@@ -28,6 +29,7 @@ export async function authRoutes(app: FastifyInstance) {
     return {
       allowRegistration: config.ALLOW_REGISTRATION,
       googleSsoEnabled: !!config.GOOGLE_SSO_REDIRECT_URI,
+      socialProviders: getEnabledProviders(),
     }
   })
 
@@ -132,23 +134,35 @@ export async function authRoutes(app: FastifyInstance) {
     return { user: { id: userId, email, role } }
   })
 
-  // ─── Google SSO ───────────────────────────────────────────
+  // ─── Google SSO (redirige vers le flow social Arctic) ──────
   app.get('/google', async () => {
-    return { url: getGoogleSsoUrl() }
+    // Use the social provider URL which goes through Arctic
+    const state = crypto.randomBytes(32).toString('hex')
+    const { url, codeVerifier } = createAuthorizationUrl('google', state)
+    const redis = getRedis()
+    await redis.set(`social:state:${state}`, JSON.stringify({ provider: 'google', codeVerifier }), 'EX', 300)
+    return { url }
   })
 
-  // Point 3: use httpOnly cookie + short-lived auth code instead of token in URL
+  // Google callback — uses Arctic for code validation
   app.get('/google/callback', async (request, reply) => {
-    const { code } = request.query as { code: string }
+    const { code, state } = request.query as { code: string; state: string }
+
+    const redis = getRedis()
+    const stored = await redis.get(`social:state:${state}`)
+    if (!stored) {
+      return reply.redirect(`${config.FRONTEND_URL}/login?google=error`)
+    }
+    await redis.del(`social:state:${state}`)
+
+    const { codeVerifier } = JSON.parse(stored)
+
     try {
-      const user = await exchangeGoogleSsoCode(code)
+      const user = await exchangeSocialCode('google', code, codeVerifier)
       const token = app.jwt.sign({ sub: user.id, email: user.email, role: user.role })
       await logAudit(user.id, 'user.login_sso', { ipAddress: request.ip })
-      // Set httpOnly cookie directly on redirect — no token in URL
       setAuthCookie(reply, token)
-      // Pass only a short-lived auth code for user info
       const authCode = crypto.randomBytes(32).toString('hex')
-      const redis = getRedis()
       await redis.set(`sso:code:${authCode}`, JSON.stringify({ id: user.id, email: user.email, role: user.role }), 'EX', 60)
       return reply.redirect(`${config.FRONTEND_URL}/login?sso_code=${authCode}`)
     } catch (err: any) {
@@ -247,5 +261,61 @@ export async function authRoutes(app: FastifyInstance) {
       .execute()
 
     return reply.code(204).send()
+  })
+
+  // ─── Social OAuth (Arctic — server-side callback) ──────────
+
+  app.get('/social/:provider/url', async (request, reply) => {
+    const { provider } = request.params as { provider: string }
+
+    if (!isProviderEnabled(provider)) {
+      return reply.code(400).send({ error: `Provider ${provider} is not configured` })
+    }
+
+    const state = crypto.randomBytes(32).toString('hex')
+    const { url, codeVerifier } = createAuthorizationUrl(provider, state)
+
+    // Store state + codeVerifier in Redis (5 min TTL)
+    const redis = getRedis()
+    await redis.set(`social:state:${state}`, JSON.stringify({ provider, codeVerifier }), 'EX', 300)
+
+    return { url }
+  })
+
+  app.get('/social/:provider/callback', async (request, reply) => {
+    const { provider } = request.params as { provider: string }
+    const { code, state } = request.query as { code: string; state: string }
+
+    if (!isProviderEnabled(provider)) {
+      return reply.redirect(`${config.FRONTEND_URL}/login?social=error`)
+    }
+
+    const redis = getRedis()
+    const stored = await redis.get(`social:state:${state}`)
+    if (!stored) {
+      return reply.redirect(`${config.FRONTEND_URL}/login?social=error`)
+    }
+    await redis.del(`social:state:${state}`)
+
+    const { provider: storedProvider, codeVerifier } = JSON.parse(stored)
+    if (storedProvider !== provider) {
+      return reply.redirect(`${config.FRONTEND_URL}/login?social=error`)
+    }
+
+    try {
+      const user = await exchangeSocialCode(provider, code, codeVerifier)
+      const token = app.jwt.sign({ sub: user.id, email: user.email, role: user.role })
+      await logAudit(user.id, 'user.login_social', { details: { provider }, ipAddress: request.ip })
+      setAuthCookie(reply, token)
+
+      // Pass a short-lived auth code for frontend user info (same pattern as Google SSO)
+      const authCode = crypto.randomBytes(32).toString('hex')
+      await redis.set(`sso:code:${authCode}`, JSON.stringify({ id: user.id, email: user.email, role: user.role }), 'EX', 60)
+      return reply.redirect(`${config.FRONTEND_URL}/login?sso_code=${authCode}`)
+    } catch (err: any) {
+      app.log.error(err)
+      const msg = err.message === 'Account is disabled' ? 'disabled' : 'error'
+      return reply.redirect(`${config.FRONTEND_URL}/login?social=${msg}`)
+    }
   })
 }

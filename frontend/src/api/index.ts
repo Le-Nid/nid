@@ -97,10 +97,10 @@ export const jobsApi = {
     api.delete(`/api/jobs/${jobId}`).then((r) => r.data),
 }
 
-// ─── Auth (Google SSO) ────────────────────────────────────
+// ─── Auth (Social providers — Google, Microsoft, Discord, etc.) ──
 export const authApi = {
-  getGoogleSsoUrl: () =>
-    api.get('/api/auth/google').then((r) => r.data),
+  getSocialAuthUrl: (provider: string) =>
+    api.get(`/api/auth/social/${provider}/url`).then((r) => r.data),
 }
 
 // ─── Admin ────────────────────────────────────────────────

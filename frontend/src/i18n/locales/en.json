@@ -28,6 +28,10 @@
   },
 
   "nav": {
+    "group_email": "Email",
+    "group_tools": "Tools",
+    "group_analytics": "Analytics",
+    "group_system": "System",
     "dashboard": "Dashboard",
     "mails": "My Emails",
     "archives": "Archives",
@@ -76,7 +80,15 @@
     "errorRegister": "Error creating account",
     "errorGoogle": "Error signing in with Google",
     "errorGoogleStart": "Could not start Google sign in",
-    "errorDisabled": "This account has been disabled"
+    "errorDisabled": "This account has been disabled",
+    "errorSocial": "Error signing in",
+    "errorSocialStart": "Could not start sign in",
+    "social_google": "Sign in with Google",
+    "social_microsoft": "Sign in with Microsoft",
+    "social_discord": "Sign in with Discord",
+    "social_facebook": "Sign in with Facebook",
+    "social_linkedin": "Sign in with LinkedIn",
+    "social_keycloak": "Sign in via SSO"
   },
 
   "dashboard": {

@@ -156,8 +156,8 @@
 ### open-core / dual offering
 - [ ] **application modèle saas + self hosted gratuit** création d'un business model du genre self hosted gratuit + saas via stripe + vercel
 
-### authen,tification
-- [ ] ajouter un systeme d'authent auth0 ? le but est de proposer une integration native des providers de reseau sociaux pour se connecter
+### authentification
+- [x] Ajout de l'authentification multi-provider via Arctic (OAuth2). Providers supportés : Google, Microsoft, Discord, Facebook (Meta), LinkedIn, Keycloak. Activation par simple configuration des `CLIENT_ID`/`CLIENT_SECRET`. Sans conteneur supplémentaire
 
 ### ui / ux
-- [ ] mettre des catégories sur le menu latérale. prendre en compte la meilleure ux de ce qui se fait aujourd'hui sur le marché
+- [x] mettre des catégories sur le menu latérale (Email, Outils, Analyse, Système). Meilleure UX avec groupes visuels dans le sidebar

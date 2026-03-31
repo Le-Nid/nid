@@ -222,6 +222,17 @@ export interface InboxZeroSnapshotsTable {
   recorded_at:      Generated<Date>
 }
 
+export interface UserSocialAccountsTable {
+  id:           Generated<string>
+  user_id:      string
+  provider:     string    // 'google' | 'github' | 'discord' | 'microsoft'
+  provider_id:  string
+  email:        string | null
+  display_name: string | null
+  avatar_url:   string | null
+  created_at:   Generated<Date>
+}
+
 // ─── Database interface ───────────────────────────────────
 
 export interface Database {
@@ -241,6 +252,7 @@ export interface Database {
   sender_scores:       SenderScoresTable
   cleanup_suggestions: CleanupSuggestionsTable
   inbox_zero_snapshots: InboxZeroSnapshotsTable
+  user_social_accounts: UserSocialAccountsTable
 }
 
 // ─── Row types (Selectable = what you get back from SELECT) ─
@@ -275,3 +287,6 @@ export type EmailActivityHeatmap    = Selectable<EmailActivityHeatmapTable>
 export type SenderScore             = Selectable<SenderScoresTable>
 export type CleanupSuggestion       = Selectable<CleanupSuggestionsTable>
 export type InboxZeroSnapshot       = Selectable<InboxZeroSnapshotsTable>
+
+export type UserSocialAccount    = Selectable<UserSocialAccountsTable>
+export type NewUserSocialAccount = Insertable<UserSocialAccountsTable>

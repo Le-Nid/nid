@@ -28,6 +28,10 @@
   },
 
   "nav": {
+    "group_email": "Email",
+    "group_tools": "Outils",
+    "group_analytics": "Analyse",
+    "group_system": "Système",
     "dashboard": "Dashboard",
     "mails": "Mes mails",
     "archives": "Archives",
@@ -76,7 +80,15 @@
     "errorRegister": "Erreur lors de la création du compte",
     "errorGoogle": "Erreur lors de la connexion Google",
     "errorGoogleStart": "Impossible de lancer la connexion Google",
-    "errorDisabled": "Ce compte a été désactivé"
+    "errorDisabled": "Ce compte a été désactivé",
+    "errorSocial": "Erreur lors de la connexion",
+    "errorSocialStart": "Impossible de lancer la connexion",
+    "social_google": "Se connecter avec Google",
+    "social_microsoft": "Se connecter avec Microsoft",
+    "social_discord": "Se connecter avec Discord",
+    "social_facebook": "Se connecter avec Facebook",
+    "social_linkedin": "Se connecter avec LinkedIn",
+    "social_keycloak": "Se connecter via SSO"
   },
 
   "dashboard": {

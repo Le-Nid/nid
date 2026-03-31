@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Badge, Dropdown, List, Typography, Button, Space, Empty, Popconfirm } from 'antd'
+import { Badge, Dropdown, Typography, Button, Space, Empty, Popconfirm } from 'antd'
 import { BellOutlined, CheckOutlined, DeleteOutlined, ClearOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import { notificationsApi } from '../api'
@@ -110,39 +110,43 @@ export default function NotificationBell() {
           <Empty description={t('notifications.empty')} image={Empty.PRESENTED_IMAGE_SIMPLE} />
         </div>
       ) : (
-        <List
-          dataSource={notifications}
-          renderItem={(item) => (
-            <List.Item
+        <div>
+          {notifications.map((item) => (
+            <div
+              key={item.id}
+              role={!item.is_read ? 'button' : undefined}
+              tabIndex={!item.is_read ? 0 : undefined}
+              onKeyDown={!item.is_read ? (e) => { if (e.key === 'Enter' || e.key === ' ') handleMarkRead(item.id) } : undefined}
               style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between',
                 padding: '10px 16px',
-                cursor: !item.is_read ? 'pointer' : 'default',
+                cursor: item.is_read ? 'default' : 'pointer',
                 background: item.is_read ? 'transparent' : 'var(--ant-color-primary-bg, #e6f4ff)',
+                borderBottom: '1px solid var(--ant-color-split, #f0f0f0)',
               }}
               onClick={() => !item.is_read && handleMarkRead(item.id)}
-              extra={
-                <Button
-                  size="small"
-                  type="text"
-                  danger
-                  icon={<DeleteOutlined />}
-                  onClick={(e) => { e.stopPropagation(); handleDelete(item.id, !item.is_read) }}
-                  aria-label={t('common.delete')}
-                />
-              }
             >
-              <List.Item.Meta
-                title={<Text style={{ fontSize: 13 }}>{item.title}</Text>}
-                description={
-                  <Space orientation="vertical" size={2}>
-                    {item.body && <Text type="secondary" style={{ fontSize: 12 }}>{item.body}</Text>}
-                    <Text type="secondary" style={{ fontSize: 11 }}>{dayjs(item.created_at).locale(i18n.language).fromNow()}</Text>
-                  </Space>
-                }
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <Text style={{ fontSize: 13 }}>{item.title}</Text>
+                <div>
+                  {item.body && <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>{item.body}</Text>}
+                  <Text type="secondary" style={{ fontSize: 11 }}>{dayjs(item.created_at).locale(i18n.language).fromNow()}</Text>
+                </div>
+              </div>
+              <Button
+                size="small"
+                type="text"
+                danger
+                icon={<DeleteOutlined />}
+                onClick={(e) => { e.stopPropagation(); handleDelete(item.id, !item.is_read) }}
+                aria-label={t('common.delete')}
+                style={{ marginLeft: 8, flexShrink: 0 }}
               />
-            </List.Item>
-          )}
-        />
+            </div>
+          ))}
+        </div>
       )}
     </div>
   )

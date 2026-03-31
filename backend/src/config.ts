@@ -27,6 +27,23 @@ export const config = {
   FRONTEND_URL: process.env.FRONTEND_URL ?? 'http://localhost:3000',
   ARCHIVE_PATH: process.env.ARCHIVE_PATH ?? '/archives',
 
+  // Social OAuth providers (optionnels — les providers non configurés sont désactivés)
+  MICROSOFT_CLIENT_ID:     process.env.MICROSOFT_CLIENT_ID ?? '',
+  MICROSOFT_CLIENT_SECRET: process.env.MICROSOFT_CLIENT_SECRET ?? '',
+
+  DISCORD_CLIENT_ID:     process.env.DISCORD_CLIENT_ID ?? '',
+  DISCORD_CLIENT_SECRET: process.env.DISCORD_CLIENT_SECRET ?? '',
+
+  FACEBOOK_CLIENT_ID:     process.env.FACEBOOK_CLIENT_ID ?? '',
+  FACEBOOK_CLIENT_SECRET: process.env.FACEBOOK_CLIENT_SECRET ?? '',
+
+  LINKEDIN_CLIENT_ID:     process.env.LINKEDIN_CLIENT_ID ?? '',
+  LINKEDIN_CLIENT_SECRET: process.env.LINKEDIN_CLIENT_SECRET ?? '',
+
+  KEYCLOAK_REALM_URL:     process.env.KEYCLOAK_REALM_URL ?? '',
+  KEYCLOAK_CLIENT_ID:     process.env.KEYCLOAK_CLIENT_ID ?? '',
+  KEYCLOAK_CLIENT_SECRET: process.env.KEYCLOAK_CLIENT_SECRET ?? '',
+
   // Premier utilisateur avec ce mail devient admin automatiquement
   ADMIN_EMAIL: process.env.ADMIN_EMAIL ?? '',
 

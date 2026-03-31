@@ -9,7 +9,6 @@ import {
   Card,
   Drawer,
   Divider,
-  List,
   Empty,
   message,
   notification,
@@ -491,26 +490,13 @@ export default function ArchivePage() {
                 <Text strong>
                   <PaperClipOutlined /> {t('archive.attachments', { count: viewing.attachments.length })}
                 </Text>
-                <List
-                  size="small"
-                  dataSource={viewing.attachments}
-                  renderItem={(att: Attachment) => (
-                    <List.Item
-                      actions={[
-                        <Button
-                          size="small"
-                          icon={<DownloadOutlined />}
-                          href={downloadUrl(att.id)}
-                          download={att.filename}
-                        >
-                          {t('common.download')}
-                        </Button>,
-                      ]}
-                    >
+                <div>
+                  {viewing.attachments.map((att: Attachment) => (
+                    <div key={att.id} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid var(--ant-color-split, #f0f0f0)' }}>
                       <Space
                         orientation="vertical"
                         size={4}
-                        style={{ width: "100%" }}
+                        style={{ width: "100%", flex: 1, minWidth: 0 }}
                       >
                         <Space>
                           <Text style={{ fontSize: 12 }}>{att.filename}</Text>
@@ -534,9 +520,18 @@ export default function ArchivePage() {
                           />
                         )}
                       </Space>
-                    </List.Item>
-                  )}
-                />
+                      <Button
+                        size="small"
+                        icon={<DownloadOutlined />}
+                        href={downloadUrl(att.id)}
+                        download={att.filename}
+                        style={{ flexShrink: 0, marginLeft: 8 }}
+                      >
+                        {t('common.download')}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
                 <Divider style={{ margin: "8px 0" }} />
               </div>
             )}
