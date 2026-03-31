@@ -3,7 +3,7 @@ import { Layout, Menu, Select, Avatar, Dropdown, Typography, Switch, Tooltip, Ta
 import {
   DashboardOutlined, MailOutlined, DatabaseOutlined, SettingOutlined,
   LogoutOutlined, UserOutlined, ScheduleOutlined, RobotOutlined,
-  BulbOutlined, BulbFilled, CrownOutlined,
+  CrownOutlined,
   StopOutlined, PaperClipOutlined, LineChartOutlined, CopyOutlined,
   GlobalOutlined,
 } from '@ant-design/icons'
@@ -130,22 +130,13 @@ export default function AppLayout() {
 
           {/* Dark mode toggle */}
           <Tooltip title={isDark ? t('layout.lightMode') : t('layout.darkMode')}>
-            <button
-              type="button"
-              onClick={toggle}
+            <Switch
+              checked={isDark}
+              onChange={toggle}
+              checkedChildren="🌙"
+              unCheckedChildren="☀️"
               aria-label={isDark ? t('layout.lightMode') : t('layout.darkMode')}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
-            >
-              {isDark ? <BulbFilled style={{ color: '#faad14' }} /> : <BulbOutlined />}
-              <Switch
-                size="small"
-                checked={isDark}
-                onChange={toggle}
-                checkedChildren="🌙"
-                unCheckedChildren="☀️"
-                tabIndex={-1}
-              />
-            </button>
+            />
           </Tooltip>
 
           {/* User menu */}
