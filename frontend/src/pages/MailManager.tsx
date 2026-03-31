@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   Table,
   Space,
@@ -29,6 +29,7 @@ import GmailSearchInput from "../components/GmailSearchInput";
 import JobProgressModal from "../components/JobProgressModal";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { useTranslation } from 'react-i18next';
+import { useMailCache, cacheKey } from '../store/mail.store';
 import dayjs from "dayjs";
 
 const { Text } = Typography;
@@ -77,6 +78,10 @@ export default function MailManagerPage() {
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const [archiveAllLoading, setArchiveAllLoading] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
+  const mailCache = useMailCache();
+  const loadIdRef = useRef(0);
+
+  const PROGRESSIVE_BATCH = 10;
 
   // ─── Raccourcis clavier ───────────────────────────────────
   useKeyboardShortcuts({
@@ -101,11 +106,25 @@ export default function MailManagerPage() {
     enabled: !viewingId,
   });
 
-  // ─── Chargement initial ───────────────────────────────────
-  const loadFresh = useCallback(async () => {
+  // ─── Chargement initial (progressif + cache) ─────────────
+  const loadFresh = useCallback(async (forceRefresh = false) => {
     if (!accountId) return;
+
+    const currentLoadId = ++loadIdRef.current;
+    const key = cacheKey(accountId, query, quickFilter);
+    const cached = mailCache.getEntry(key);
+
+    // Restaurer le cache immédiatement
+    if (cached && !forceRefresh) {
+      setMails(cached.mails);
+      setTotal(cached.total);
+      setPageToken(cached.pageToken);
+      setHasMore(cached.hasMore);
+      return;
+    }
+
     setLoading(true);
-    setMails([]);
+    if (!cached) setMails([]);
     setSelected([]);
     setPageToken(null);
     try {
@@ -115,21 +134,48 @@ export default function MailManagerPage() {
         maxResults: 50,
       });
 
-      const ids: string[] = (res.messages ?? []).map((m: any) => m.id);
-      const enriched = await fetchMeta(accountId, ids);
+      if (currentLoadId !== loadIdRef.current) return;
 
-      setMails(enriched);
+      const ids: string[] = (res.messages ?? []).map((m: any) => m.id);
       setTotal(res.resultSizeEstimate ?? 0);
+
+      // Affichage progressif par lots
+      const allMails: MailRow[] = [];
+      if (!cached) setMails([]);
+
+      for (let i = 0; i < ids.length; i += PROGRESSIVE_BATCH) {
+        const chunk = ids.slice(i, i + PROGRESSIVE_BATCH);
+        const enriched = await gmailApi.batchGetMessages(accountId, chunk);
+
+        if (currentLoadId !== loadIdRef.current) return;
+
+        allMails.push(...enriched);
+        setMails([...allMails]);
+        if (i === 0) setLoading(false);
+      }
+
       setPageToken(res.nextPageToken ?? null);
       setHasMore(!!res.nextPageToken);
+
+      // Mettre en cache
+      mailCache.setEntry(key, {
+        mails: allMails,
+        total: res.resultSizeEstimate ?? 0,
+        pageToken: res.nextPageToken ?? null,
+        hasMore: !!res.nextPageToken,
+      });
     } catch {
-      messageApi.error(t('mailManager.loadError'));
+      if (currentLoadId === loadIdRef.current) {
+        messageApi.error(t('mailManager.loadError'));
+      }
     } finally {
-      setLoading(false);
+      if (currentLoadId === loadIdRef.current) {
+        setLoading(false);
+      }
     }
   }, [accountId, query, quickFilter]);
 
-  // ─── Charger la page suivante (infinite scroll) ───────────
+  // ─── Charger la page suivante (infinite scroll, progressif) ─
   const loadMore = useCallback(async () => {
     if (!accountId || !pageToken || loadingMore) return;
     setLoadingMore(true);
@@ -142,17 +188,34 @@ export default function MailManagerPage() {
       });
 
       const ids: string[] = (res.messages ?? []).map((m: any) => m.id);
-      const enriched = await fetchMeta(accountId, ids);
 
-      setMails((prev) => [...prev, ...enriched]);
+      // Affichage progressif
+      for (let i = 0; i < ids.length; i += PROGRESSIVE_BATCH) {
+        const chunk = ids.slice(i, i + PROGRESSIVE_BATCH);
+        const enriched = await gmailApi.batchGetMessages(accountId, chunk);
+        setMails((prev) => [...prev, ...enriched]);
+      }
+
       setPageToken(res.nextPageToken ?? null);
       setHasMore(!!res.nextPageToken);
+
+      // Mettre à jour le cache avec les nouvelles données
+      const key = cacheKey(accountId, query, quickFilter);
+      setMails((currentMails) => {
+        mailCache.setEntry(key, {
+          mails: currentMails,
+          total,
+          pageToken: res.nextPageToken ?? null,
+          hasMore: !!res.nextPageToken,
+        });
+        return currentMails;
+      });
     } catch {
       messageApi.error(t('dashboard.loadError'));
     } finally {
       setLoadingMore(false);
     }
-  }, [accountId, pageToken, query, quickFilter, loadingMore]);
+  }, [accountId, pageToken, query, quickFilter, loadingMore, total]);
 
   // Sentinel div en bas de liste → IntersectionObserver
   const sentinelRef = useInfiniteScroll({
@@ -193,12 +256,6 @@ export default function MailManagerPage() {
       setArchiveAllLoading(false);
     }
   };
-
-  // ─── Fetch métadonnées en batch ────────────────────────
-  async function fetchMeta(acctId: string, ids: string[]): Promise<MailRow[]> {
-    if (!ids.length) return [];
-    return gmailApi.batchGetMessages(acctId, ids);
-  }
 
   // ─── Bulk actions ─────────────────────────────────────────
   const handleBulkAction = async (action: string, labelId?: string) => {
@@ -366,12 +423,12 @@ export default function MailManagerPage() {
           <GmailSearchInput
             value={query}
             onChange={setQuery}
-            onSearch={loadFresh}
+            onSearch={() => loadFresh(true)}
             style={{ width: 400 }}
           />
           <Button
             icon={<ReloadOutlined />}
-            onClick={loadFresh}
+            onClick={() => loadFresh(true)}
             loading={loading}
           />
           <Button
