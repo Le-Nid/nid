@@ -1534,6 +1534,78 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#v23-evolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        v2.3 — Evolution
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="v2.3 — Evolution">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#vie-privee-securite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vie privée &amp; Sécurité
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#intelligence-analytics-avancees" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Intelligence &amp; Analytics avancées
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gestion-avancee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gestion avancée
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ops-resilience" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ops &amp; Résilience
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#idees-originales" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Idées originales
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1714,6 +1786,78 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#v23-evolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        v2.3 — Evolution
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="v2.3 — Evolution">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#vie-privee-securite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vie privée &amp; Sécurité
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#intelligence-analytics-avancees" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Intelligence &amp; Analytics avancées
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gestion-avancee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gestion avancée
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ops-resilience" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ops &amp; Résilience
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#idees-originales" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Idées originales
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1849,6 +1993,45 @@
 <li>[x] Toutes les pages i18n : Login, Dashboard, MailManager, Jobs, Archive, Rules, Settings, Admin, Unsubscribe, Attachments, Insights, Duplicates</li>
 <li>[x] Tous les composants i18n : AppLayout, BulkActionBar, NotificationBell, MailViewer, GmailSearchInput, RuleFormModal, JobProgressModal</li>
 <li>[x] Persistance de la langue (localStorage)</li>
+</ul>
+<h2 id="v23-evolution">v2.3 — Evolution<a class="headerlink" href="#v23-evolution" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] Si on se connecte avec son compte Google, on enregistre automatiquement son compte Gmail</li>
+</ul>
+<h3 id="vie-privee-securite">Vie privée &amp; Sécurité<a class="headerlink" href="#vie-privee-securite" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[ ] <strong>Détecteur de pixels-espions</strong> — Scanner les emails pour détecter les tracking pixels (images 1x1, paramètres UTM, domaines connus type Mailchimp/SendGrid). Badge "tracké" dans la liste, rapport mensuel</li>
+<li>[ ] <strong>Scanner PII dans les archives</strong> — Détecter les données sensibles dans les mails archivés (numéros de CB, IBAN, mots de passe en clair, numéros de sécu). Alerter et proposer le chiffrement ou la suppression</li>
+<li>[ ] <strong>Chiffrement des archives au repos</strong> — Chiffrer les EML sur le NAS avec une clé dérivée du mot de passe utilisateur (AES-256-GCM). Déchiffrement à la volée pour la consultation</li>
+</ul>
+<h3 id="intelligence-analytics-avancees">Intelligence &amp; Analytics avancées<a class="headerlink" href="#intelligence-analytics-avancees" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[ ] <strong>Heatmap d'activité email</strong> — Visualiser quand vous recevez le plus de mails (grille jour × heure, style contributions GitHub). Identifier les créneaux calmes</li>
+<li>[ ] <strong>Score d'encombrement par expéditeur</strong> — Score combinant volume, taille, taux de lecture, et présence de <code>List-Unsubscribe</code>. Classement des expéditeurs "pollueurs" avec suggestion de nettoyage</li>
+<li>[ ] <strong>Suggestions de nettoyage intelligent</strong> — Heuristiques basées sur expéditeur + pattern sujet + non lu + ancien. Ex : "Vous avez 847 notifications GitHub non lues (1.2 Go). Supprimer ?"</li>
+<li>[ ] <strong>Tracker Inbox Zero</strong> — Compteur temps réel + historique de la progression vers inbox zero. Streak, graphique d'évolution, gamification légère</li>
+</ul>
+<h3 id="gestion-avancee">Gestion avancée<a class="headerlink" href="#gestion-avancee" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[ ] <strong>Snooze d'emails</strong> — Cacher un email et le faire réapparaître à une date/heure choisie (via un label temporaire + job BullMQ planifié)</li>
+<li>[ ] <strong>Recherches sauvegardées / dossiers intelligents</strong> — Sauvegarder des requêtes Gmail complexes comme "vues" réutilisables. Ex : "Factures de ce mois", "Mails avec PJ &gt; 5Mo non archivés"</li>
+<li>[ ] <strong>Vue boîte unifiée</strong> — Afficher les mails de tous les comptes Gmail dans une seule timeline, avec filtre par compte</li>
+<li>[ ] <strong>Reconstruction de threads dans les archives</strong> — Regrouper les mails archivés par conversation (via <code>In-Reply-To</code> / <code>References</code> headers) au lieu d'une liste plate</li>
+</ul>
+<h3 id="ops-resilience">Ops &amp; Résilience<a class="headerlink" href="#ops-resilience" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[ ] <strong>Stockage distant (S3/MinIO)</strong> — Alternative au NAS local : archiver vers un bucket S3-compatible. Permet de géo-répliquer les archives</li>
+<li>[ ] <strong>Politiques de rétention</strong> — Supprimer automatiquement les archives de plus de X mois/années. Configurable par compte ou par label</li>
+<li>[ ] <strong>Dashboard quota Gmail API</strong> — Visualiser la consommation du quota Gmail API en temps réel (250 unités/user/sec). Historique et alertes si proche du plafond</li>
+<li>[ ] <strong>Import IMAP</strong> — Importer des mails depuis d'autres providers (Outlook, ProtonMail export) dans le système d'archives</li>
+<li>[ ] <strong>Import mbox</strong> — Importer un fichier mbox (Google Takeout, Thunderbird, Apple Mail) → parser et convertir en EML individuels dans les archives. Upload via l'UI avec barre de progression</li>
+</ul>
+<h3 id="idees-originales">Idées originales<a class="headerlink" href="#idees-originales" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[ ] <strong>Newsletter → RSS</strong> — Convertir les newsletters reçues par email en flux RSS consultable dans un lecteur dédié intégré. Désencombrer l'inbox tout en gardant le contenu</li>
+<li>[ ] <strong>Email "expiration"</strong> — Marquer des emails comme temporaires (codes OTP, confirmations de livraison, promos). Auto-suppression après N jours. Détection heuristique possible</li>
+<li>[ ] <strong>Mode "Focus"</strong> — Masquer temporairement tous les mails sauf ceux d'une liste blanche d'expéditeurs</li>
+<li>[ ] <strong>Partage d'archive temporaire</strong> — Générer un lien temporaire (token + expiration) pour partager un mail archivé avec quelqu'un sans compte</li>
 </ul>
 
 
