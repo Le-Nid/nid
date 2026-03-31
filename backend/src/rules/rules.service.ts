@@ -1,6 +1,7 @@
 import { getDb } from '../db'
 import { listMessages } from '../gmail/gmail.service'
 import { enqueueJob } from '../jobs/queue'
+import { config } from '../config'
 import {
   RuleCondition, RuleAction, RuleCreateDTO, RuleRunResult,
 } from './rules.types'
@@ -132,6 +133,7 @@ export async function runRule(rule: any, accountId: string): Promise<RuleRunResu
     })
     messageIds.push(...(res.messages ?? []).map((m: any) => m.id))
     pageToken = res.nextPageToken
+    if (pageToken) await new Promise((r) => setTimeout(r, config.GMAIL_THROTTLE_MS))
   } while (pageToken)
 
   const matched = messageIds.length

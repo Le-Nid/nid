@@ -2,6 +2,7 @@ import fs from 'fs/promises'
 import path from 'path'
 import { getDb } from '../db'
 import { getGmailClient } from '../gmail/gmail.service'
+import { gmailRetry } from '../gmail/gmail-throttle'
 import { config } from '../config'
 
 export async function archiveMail(accountId: string, messageId: string): Promise<void> {
@@ -18,9 +19,9 @@ export async function archiveMail(accountId: string, messageId: string): Promise
   if (existing) return
 
   const gmail = await getGmailClient(accountId)
-  const res   = await gmail.users.messages.get({
+  const res   = await gmailRetry(() => gmail.users.messages.get({
     userId: 'me', id: messageId, format: 'raw',
-  })
+  }))
 
   const msg = res.data
   if (!msg.raw) throw new Error(`Empty raw for message ${messageId}`)
@@ -90,9 +91,10 @@ async function extractAttachments(
   for (const part of parts) {
     if (!part.filename || !part.body?.attachmentId) continue
 
-    const attachRes = await gmail.users.messages.attachments.get({
-      userId: 'me', messageId, id: part.body.attachmentId,
-    })
+    const attachmentId = part.body.attachmentId
+    const attachRes: any = await gmailRetry(() => gmail.users.messages.attachments.get({
+      userId: 'me', messageId, id: attachmentId,
+    }))
     const data = Buffer.from(attachRes.data.data, 'base64url')
 
     await fs.mkdir(attachDir, { recursive: true })

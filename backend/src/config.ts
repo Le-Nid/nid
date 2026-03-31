@@ -33,9 +33,11 @@ export const config = {
   // Inscription ouverte ou fermée (défaut: true)
   ALLOW_REGISTRATION: process.env.ALLOW_REGISTRATION !== 'false',
 
-  // Gmail API throttle — stay under 250 units/user/sec
-  GMAIL_BATCH_SIZE: 100,
-  GMAIL_THROTTLE_MS: 500,
+  // Gmail API throttle — stay under 250 quota units/user/sec
+  // Most endpoints = 5 units → max ~50 concurrent requests/sec
+  GMAIL_BATCH_SIZE: 25,
+  GMAIL_THROTTLE_MS: 1_000,
+  GMAIL_CONCURRENCY: 10,
 } as const
 
 export type Config = typeof config
