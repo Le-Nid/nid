@@ -5,8 +5,8 @@
 | Librairie | Rôle |
 |---|---|
 | `react 19` | UI, Server Components prêts mais non utilisés (SPA classique) |
-| `react-router-dom v6` | Routing client-side |
-| `antd v5` | Composants UI (Table, Form, Chart, Layout, etc.) |
+| `react-router v7` | Routing client-side |
+| `antd v6` | Composants UI (Table, Form, Chart, Layout, etc.) |
 | `@ant-design/charts` | Graphiques dashboard (basé sur G2) |
 | `zustand` | State management global (stores légers) |
 | `axios` | Client HTTP avec intercepteurs JWT |

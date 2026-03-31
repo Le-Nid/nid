@@ -58,7 +58,7 @@ Hot reload activé sur frontend et backend. Ports debug Node (9229), PostgreSQL 
 
 | | |
 |---|---|
-| Frontend | React 19, Ant Design 5, Zustand, React Router 6 |
+| Frontend | React 19, Ant Design 6, Zustand, React Router 7 |
 | Backend | Fastify, TypeScript, Kysely ORM, Zod |
 | BDD | PostgreSQL 16 |
 | Queue | BullMQ + Redis 7 |
