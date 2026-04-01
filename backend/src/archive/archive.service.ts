@@ -1,5 +1,6 @@
 import fs from 'fs/promises'
 import path from 'path'
+import { simpleParser } from 'mailparser'
 import { getDb } from '../db'
 import { getGmailClient } from '../gmail/gmail.service'
 import { gmailRetry } from '../gmail/gmail-throttle'
@@ -79,7 +80,9 @@ export async function archiveMail(accountId: string, messageId: string): Promise
   await fs.mkdir(mailDir, { recursive: true })
   await fs.writeFile(emlPath, rawEml, 'utf-8')
 
-  const attachments = await extractAttachments(gmail, messageId, msg, attachDir)
+  const attachments = await extractAttachments(rawEml, attachDir)
+
+  const attachmentNames = attachments.map((a) => a.filename).join(' ')
 
   const archived = await db
     .insertInto('archived_mails')
@@ -96,6 +99,7 @@ export async function archiveMail(accountId: string, messageId: string): Promise
       label_ids:        msg.labelIds ?? [],
       eml_path:         emlPath,
       snippet:          msg.snippet ?? null,
+      attachment_names: attachmentNames || null,
     })
     .returning('id')
     .executeTakeFirstOrThrow()
@@ -117,32 +121,26 @@ export async function archiveMail(accountId: string, messageId: string): Promise
 }
 
 async function extractAttachments(
-  gmail: any,
-  messageId: string,
-  msg: any,
+  rawEml: string,
   attachDir: string
 ): Promise<{ filename: string; mimeType: string; size: number; filePath: string }[]> {
   const results: { filename: string; mimeType: string; size: number; filePath: string }[] = []
-  const parts = msg.payload?.parts ?? []
 
-  for (const part of parts) {
-    if (!part.filename || !part.body?.attachmentId) continue
+  const parsed = await simpleParser(rawEml)
+  const attachments = parsed.attachments ?? []
 
-    const attachmentId = part.body.attachmentId
-    const attachRes: any = await gmailRetry(() => gmail.users.messages.attachments.get({
-      userId: 'me', messageId, id: attachmentId,
-    }))
-    const data = Buffer.from(attachRes.data.data, 'base64url')
+  for (const att of attachments) {
+    if (!att.filename) continue
 
     await fs.mkdir(attachDir, { recursive: true })
-    const safeName = part.filename.replace(/[^a-zA-Z0-9._-]/g, '_')
+    const safeName = att.filename.replace(/[^a-zA-Z0-9._-]/g, '_')
     const filePath = path.join(attachDir, safeName)
-    await fs.writeFile(filePath, data)
+    await fs.writeFile(filePath, att.content)
 
     results.push({
-      filename: part.filename,
-      mimeType: part.mimeType ?? 'application/octet-stream',
-      size:     data.length,
+      filename: att.filename,
+      mimeType: att.contentType ?? 'application/octet-stream',
+      size:     att.size,
       filePath,
     })
   }

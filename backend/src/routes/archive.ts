@@ -26,6 +26,7 @@ export async function archiveRoutes(app: FastifyInstance) {
       sender,
       from_date,
       to_date,
+      has_attachments,
       page: pageStr,
       limit: limitStr,
     } = request.query as Record<string, string>;
@@ -46,6 +47,9 @@ export async function archiveRoutes(app: FastifyInstance) {
     if (to_date) {
       query = query.where("date", "<=", new Date(to_date));
     }
+    if (has_attachments === "true" || has_attachments === "false") {
+      query = query.where("has_attachments", "=", has_attachments === "true");
+    }
 
     let mails;
     if (q) {
@@ -64,6 +68,9 @@ export async function archiveRoutes(app: FastifyInstance) {
       }
       if (to_date) {
         fsQuery = fsQuery.where("date", "<=", new Date(to_date));
+      }
+      if (has_attachments === "true" || has_attachments === "false") {
+        fsQuery = fsQuery.where("has_attachments", "=", has_attachments === "true");
       }
 
       mails = await (fsQuery as any)

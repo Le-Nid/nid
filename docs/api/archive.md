@@ -14,6 +14,7 @@
 | `sender` | Filtrer par expéditeur (ILIKE) |
 | `from_date` | Date de début (ISO 8601) |
 | `to_date` | Date de fin (ISO 8601) |
+| `has_attachments` | Filtrer par présence de pièces jointes (`true` / `false`) |
 | `page` | Page (défaut : 1) |
 | `limit` | Résultats par page (défaut : 50) |
 

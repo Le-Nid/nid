@@ -53,6 +53,7 @@ export interface ArchivedMailsTable {
   label_ids:        Generated<string[]>
   eml_path:         string
   snippet:          string | null
+  attachment_names: string | null
   is_encrypted:     Generated<boolean>
   // tsvector — généré par trigger, jamais écrit directement
   search_vector:    ColumnType<string, never, never> | null

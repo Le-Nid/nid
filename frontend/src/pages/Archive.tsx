@@ -14,6 +14,7 @@ import {
   notification,
   DatePicker,
   Tooltip,
+  Select,
 } from "antd";
 import {
   SearchOutlined,
@@ -66,6 +67,7 @@ export default function ArchivePage() {
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs] | null>(
     null,
   );
+  const [hasAttachments, setHasAttachments] = useState<string | undefined>(undefined);
   const [selected, setSelected] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
@@ -83,6 +85,9 @@ export default function ArchivePage() {
   if (dateRange) {
     archiveParams.from_date = dateRange[0].toISOString();
     archiveParams.to_date = dateRange[1].toISOString();
+  }
+  if (hasAttachments !== undefined) {
+    archiveParams.has_attachments = hasAttachments;
   }
 
   const { data: archiveData, isLoading: loading, refetch } = useArchiveMails(accountId, archiveParams);
@@ -348,6 +353,17 @@ export default function ArchivePage() {
             style={{ width: 200 }}
             allowClear
             prefix={<FileOutlined />}
+          />
+          <Select
+            placeholder={t('archive.filterAttachments')}
+            value={hasAttachments}
+            onChange={(v) => { setHasAttachments(v); }}
+            allowClear
+            style={{ width: 180 }}
+            options={[
+              { value: "true", label: t('archive.withAttachments') },
+              { value: "false", label: t('archive.withoutAttachments') },
+            ]}
           />
           <RangePicker
             onChange={(dates) => setDateRange(dates as any)}
