@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   Table,
   Space,
@@ -10,15 +10,19 @@ import {
   Dropdown,
   notification,
   Spin,
+  Tooltip,
+  Select,
 } from "antd";
 import {
   ReloadOutlined,
   FilterOutlined,
   PaperClipOutlined,
   MoreOutlined,
+  SaveOutlined,
+  StarOutlined,
 } from "@ant-design/icons";
-import { Select } from "antd";
-import { gmailApi, archiveApi } from "../api";
+import { useSearchParams } from "react-router";
+import { gmailApi, archiveApi, savedSearchesApi } from "../api";
 import { useAccount } from "../hooks/useAccount";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import { formatBytes, formatSender } from "../utils/format";
@@ -28,6 +32,8 @@ import GmailSearchInput from "../components/GmailSearchInput";
 import JobProgressModal from "../components/JobProgressModal";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { useTranslation } from 'react-i18next';
+import { useMailCache, cacheKey } from '../store/mail.store';
+import { useGmailLabels } from '../hooks/queries';
 import dayjs from "dayjs";
 
 const { Text } = Typography;
@@ -59,22 +65,33 @@ interface MailRow {
 export default function MailManagerPage() {
   const { t } = useTranslation();
   const { accountId } = useAccount();
+  const mailCache = useMailCache();
+  const [searchParams] = useSearchParams();
+  const urlQuery = searchParams.get('q') ?? '';
 
-  const [mails, setMails] = useState<MailRow[]>([]);
-  const [labels, setLabels] = useState<any[]>([]);
+  // Restaurer l'état depuis le cache Zustand au montage (évite le flash vide)
+  const initialKey = accountId ? cacheKey(accountId, urlQuery, '') : '';
+  const initialCache = initialKey ? mailCache.getEntry(initialKey) : null;
+
+  const [mails, setMails] = useState<MailRow[]>(initialCache?.mails ?? []);
+  const { data: labels = [] } = useGmailLabels(accountId);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [bulkLoading, setBulkLoading] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(urlQuery);
   const [quickFilter, setQuickFilter] = useState("");
-  const [pageToken, setPageToken] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [total, setTotal] = useState(0);
+  const [pageToken, setPageToken] = useState<string | null>(initialCache?.pageToken ?? null);
+  const [hasMore, setHasMore] = useState(initialCache?.hasMore ?? false);
+  const [total, setTotal] = useState(initialCache?.total ?? 0);
   const [viewingId, setViewingId] = useState<string | null>(null);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const [focusedIndex, setFocusedIndex] = useState(-1);
+  const [archiveAllLoading, setArchiveAllLoading] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
+  const loadIdRef = useRef(0);
+
+  const PROGRESSIVE_BATCH = 5;
 
   // ─── Raccourcis clavier ───────────────────────────────────
   useKeyboardShortcuts({
@@ -99,35 +116,76 @@ export default function MailManagerPage() {
     enabled: !viewingId,
   });
 
-  // ─── Chargement initial ───────────────────────────────────
-  const loadFresh = useCallback(async () => {
+  // ─── Chargement initial (progressif + cache) ─────────────
+  const loadFresh = useCallback(async (forceRefresh = false) => {
     if (!accountId) return;
+
+    const currentLoadId = ++loadIdRef.current;
+    const key = cacheKey(accountId, query, quickFilter);
+    const cached = mailCache.getEntry(key);
+
+    // Restaurer le cache immédiatement
+    if (cached && !forceRefresh) {
+      setMails(cached.mails);
+      setTotal(cached.total);
+      setPageToken(cached.pageToken);
+      setHasMore(cached.hasMore);
+      return;
+    }
+
     setLoading(true);
-    setMails([]);
+    if (!cached) setMails([]);
     setSelected([]);
     setPageToken(null);
     try {
       const fullQuery = [quickFilter, query].filter(Boolean).join(" ");
       const res = await gmailApi.listMessages(accountId, {
         q: fullQuery || undefined,
-        maxResults: 50,
+        maxResults: 20,
       });
 
-      const ids: string[] = (res.messages ?? []).map((m: any) => m.id);
-      const enriched = await fetchMeta(accountId, ids);
+      if (currentLoadId !== loadIdRef.current) return;
 
-      setMails(enriched);
+      const ids: string[] = (res.messages ?? []).map((m: any) => m.id);
       setTotal(res.resultSizeEstimate ?? 0);
+
+      // Chargement en une seule requête (le backend gère la concurrence)
+      const allMails: MailRow[] = [];
+      if (!cached) setMails([]);
+
+      for (let i = 0; i < ids.length; i += PROGRESSIVE_BATCH) {
+        const chunk = ids.slice(i, i + PROGRESSIVE_BATCH);
+        const enriched = await gmailApi.batchGetMessages(accountId, chunk);
+
+        if (currentLoadId !== loadIdRef.current) return;
+
+        allMails.push(...enriched);
+        setMails([...allMails]);
+        if (i === 0) setLoading(false);
+      }
+
       setPageToken(res.nextPageToken ?? null);
       setHasMore(!!res.nextPageToken);
+
+      // Mettre en cache
+      mailCache.setEntry(key, {
+        mails: allMails,
+        total: res.resultSizeEstimate ?? 0,
+        pageToken: res.nextPageToken ?? null,
+        hasMore: !!res.nextPageToken,
+      });
     } catch {
-      messageApi.error(t('mailManager.loadError'));
+      if (currentLoadId === loadIdRef.current) {
+        messageApi.error(t('mailManager.loadError'));
+      }
     } finally {
-      setLoading(false);
+      if (currentLoadId === loadIdRef.current) {
+        setLoading(false);
+      }
     }
   }, [accountId, query, quickFilter]);
 
-  // ─── Charger la page suivante (infinite scroll) ───────────
+  // ─── Charger la page suivante (infinite scroll, progressif) ─
   const loadMore = useCallback(async () => {
     if (!accountId || !pageToken || loadingMore) return;
     setLoadingMore(true);
@@ -135,22 +193,39 @@ export default function MailManagerPage() {
       const fullQuery = [quickFilter, query].filter(Boolean).join(" ");
       const res = await gmailApi.listMessages(accountId, {
         q: fullQuery || undefined,
-        maxResults: 50,
+        maxResults: 20,
         pageToken,
       });
 
       const ids: string[] = (res.messages ?? []).map((m: any) => m.id);
-      const enriched = await fetchMeta(accountId, ids);
 
-      setMails((prev) => [...prev, ...enriched]);
+      // Chargement séquentiel par lots
+      for (let i = 0; i < ids.length; i += PROGRESSIVE_BATCH) {
+        const chunk = ids.slice(i, i + PROGRESSIVE_BATCH);
+        const enriched = await gmailApi.batchGetMessages(accountId, chunk);
+        setMails((prev) => [...prev, ...enriched]);
+      }
+
       setPageToken(res.nextPageToken ?? null);
       setHasMore(!!res.nextPageToken);
+
+      // Mettre à jour le cache avec les nouvelles données
+      const key = cacheKey(accountId, query, quickFilter);
+      setMails((currentMails) => {
+        mailCache.setEntry(key, {
+          mails: currentMails,
+          total,
+          pageToken: res.nextPageToken ?? null,
+          hasMore: !!res.nextPageToken,
+        });
+        return currentMails;
+      });
     } catch {
       messageApi.error(t('dashboard.loadError'));
     } finally {
       setLoadingMore(false);
     }
-  }, [accountId, pageToken, query, quickFilter, loadingMore]);
+  }, [accountId, pageToken, query, quickFilter, loadingMore, total]);
 
   // Sentinel div en bas de liste → IntersectionObserver
   const sentinelRef = useInfiniteScroll({
@@ -159,27 +234,46 @@ export default function MailManagerPage() {
     loading: loadingMore,
   });
 
-  const loadLabels = useCallback(async () => {
-    if (!accountId) return;
-    const data = await gmailApi.listLabels(accountId);
-    setLabels(data);
-  }, [accountId]);
-
   useEffect(() => {
+    // Increment loadId — any in-flight loadFresh from a previous mount
+    // will see the mismatch and bail out before processing results.
+    loadIdRef.current++;
     loadFresh();
-    loadLabels();
   }, [accountId, quickFilter]);
 
-  // ─── Fetch métadonnées en parallèle ──────────────────────
-  async function fetchMeta(acctId: string, ids: string[]): Promise<MailRow[]> {
-    return Promise.all(
-      ids.map((id) =>
-        fetch(`/api/gmail/${acctId}/messages/${id}`, {
-          credentials: 'include',
-        }).then((r) => r.json()),
-      ),
-    );
-  }
+  // ─── Archive all (differential) ────────────────────────
+  const handleArchiveAll = async () => {
+    if (!accountId) return;
+    setArchiveAllLoading(true);
+    try {
+      const fullQuery = [quickFilter, query].filter(Boolean).join(' ') || undefined;
+      const { jobId } = await archiveApi.triggerArchive(accountId, {
+        query: fullQuery,
+        differential: true,
+      });
+      setActiveJobId(jobId);
+      notification.success({
+        title: t('mailManager.archiveAllStarted'),
+        description: t('mailManager.archiveAllDesc'),
+      });
+    } catch {
+      messageApi.error(t('mailManager.loadError'));
+    } finally {
+      setArchiveAllLoading(false);
+    }
+  };
+
+  // ─── Sauvegarder la recherche courante ────────────────────
+  const handleSaveSearch = async () => {
+    const fullQuery = [quickFilter, query].filter(Boolean).join(' ');
+    if (!fullQuery.trim()) return;
+    try {
+      await savedSearchesApi.create({ name: fullQuery.slice(0, 60), query: fullQuery });
+      messageApi.success(t('mailManager.searchSaved'));
+    } catch {
+      messageApi.error(t('common.error'));
+    }
+  };
 
   // ─── Bulk actions ─────────────────────────────────────────
   const handleBulkAction = async (action: string, labelId?: string) => {
@@ -194,7 +288,7 @@ export default function MailManagerPage() {
         });
         setActiveJobId(jobId);
         notification.success({
-          message: "Archivage lancé",
+          title: "Archivage lancé",
           description: `Job créé — suivi temps réel disponible.`,
         });
         setSelected([]);
@@ -214,7 +308,7 @@ export default function MailManagerPage() {
       );
       setActiveJobId(jobId);
       notification.success({
-        message: "Opération lancée",
+        title: "Opération lancée",
         description: `${selected.length} mail(s) — suivi dans Jobs.`,
       });
       setSelected([]);
@@ -248,7 +342,7 @@ export default function MailManagerPage() {
       dataIndex: "subject",
       ellipsis: true,
       render: (v: string, row: MailRow) => (
-        <Space direction="vertical" size={0}>
+        <Space orientation="vertical" size={0}>
           <Space size={4}>
             {row.hasAttachments && (
               <PaperClipOutlined style={{ color: "#8c8c8c", fontSize: 12 }} />
@@ -276,7 +370,7 @@ export default function MailManagerPage() {
             .filter((id) => !["UNREAD", "IMPORTANT", "STARRED"].includes(id))
             .slice(0, 3)
             .map((id) => {
-              const label = labels.find((l) => l.id === id);
+              const label = labels.find((l: any) => l.id === id);
               return (
                 <Tag key={id} style={{ fontSize: 10, padding: "0 4px" }}>
                   {label?.name ?? id}
@@ -347,14 +441,30 @@ export default function MailManagerPage() {
           <GmailSearchInput
             value={query}
             onChange={setQuery}
-            onSearch={loadFresh}
+            onSearch={() => loadFresh(true)}
             style={{ width: 400 }}
           />
           <Button
             icon={<ReloadOutlined />}
-            onClick={loadFresh}
+            onClick={() => loadFresh(true)}
             loading={loading}
           />
+          <Button
+            icon={<SaveOutlined />}
+            type="primary"
+            onClick={handleArchiveAll}
+            loading={archiveAllLoading}
+          >
+            {t('mailManager.archiveAll')}
+          </Button>
+          {(query || quickFilter) && (
+            <Tooltip title={t('mailManager.saveSearch')}>
+              <Button
+                icon={<StarOutlined />}
+                onClick={handleSaveSearch}
+              />
+            </Tooltip>
+          )}
           {total > 0 && (
             <Text type="secondary" style={{ fontSize: 12 }}>
               ~{total.toLocaleString()} {t('mailManager.results', { total, loaded: mails.length }).split('·').pop()}

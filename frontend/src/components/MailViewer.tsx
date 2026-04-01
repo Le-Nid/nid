@@ -9,7 +9,6 @@ import {
   Divider,
   Alert,
   Tooltip,
-  List,
   Image,
 } from "antd";
 import { DownloadOutlined, PaperClipOutlined } from "@ant-design/icons";
@@ -174,14 +173,14 @@ export default function MailViewer({ accountId, messageId, onClose }: Props) {
       width={740}
       styles={{ body: { padding: 16 } }}
     >
-      {error && <Alert type="error" message={error} showIcon />}
+      {error && <Alert type="error" title={error} showIcon />}
 
       <Spin spinning={loading}>
         {mail && (
           <>
             {/* En-tête */}
             <Space
-              direction="vertical"
+              orientation="vertical"
               size={2}
               style={{ marginBottom: 12, width: "100%" }}
             >
@@ -250,23 +249,9 @@ export default function MailViewer({ accountId, messageId, onClose }: Props) {
                 )}
 
                 {/* Liste complète */}
-                <List
-                  size="small"
-                  dataSource={attachments}
-                  renderItem={(att) => (
-                    <List.Item
-                      actions={[
-                        <Tooltip title={t('common.download')}>
-                          <Button
-                            size="small"
-                            icon={<DownloadOutlined />}
-                            onClick={() =>
-                              downloadAttachment(att.attachmentId, att.filename)
-                            }
-                          />
-                        </Tooltip>,
-                      ]}
-                    >
+                <div>
+                  {attachments.map((att) => (
+                    <div key={att.attachmentId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid var(--ant-color-split, #f0f0f0)' }}>
                       <Space>
                         {IMAGE_MIME_TYPES.has(att.mimeType) && (
                           <span style={{ fontSize: 14 }}>🖼️</span>
@@ -276,9 +261,18 @@ export default function MailViewer({ accountId, messageId, onClose }: Props) {
                           {formatBytes(att.size)}
                         </Text>
                       </Space>
-                    </List.Item>
-                  )}
-                />
+                      <Tooltip title={t('common.download')}>
+                        <Button
+                          size="small"
+                          icon={<DownloadOutlined />}
+                          onClick={() =>
+                            downloadAttachment(att.attachmentId, att.filename)
+                          }
+                        />
+                      </Tooltip>
+                    </div>
+                  ))}
+                </div>
                 <Divider style={{ margin: "8px 0" }} />
               </>
             )}

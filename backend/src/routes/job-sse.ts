@@ -32,8 +32,8 @@ export async function jobSseRoutes(app: FastifyInstance) {
       // Vérifier que le job existe et appartient au user
       const job = await db
         .selectFrom("jobs")
-        .select(["id", "status"])
-        .where("id", "=", jobId)
+        .select(["id", "bullmq_id", "status"])
+        .where("bullmq_id", "=", jobId)
         .where("user_id", "=", userId)
         .executeTakeFirst();
       if (!job) return reply.code(404).send({ error: "Job not found" });
@@ -43,7 +43,7 @@ export async function jobSseRoutes(app: FastifyInstance) {
         const final = await db
           .selectFrom("jobs")
           .selectAll()
-          .where("id", "=", jobId)
+          .where("bullmq_id", "=", jobId)
           .executeTakeFirst();
         reply.raw.writeHead(200, {
           "Content-Type": "text/event-stream",
@@ -86,7 +86,7 @@ export async function jobSseRoutes(app: FastifyInstance) {
       const current = await db
         .selectFrom("jobs")
         .selectAll()
-        .where("id", "=", jobId)
+        .where("bullmq_id", "=", jobId)
         .executeTakeFirst();
       reply.raw.write(`data: ${JSON.stringify(current)}\n\n`);
 
@@ -98,14 +98,24 @@ export async function jobSseRoutes(app: FastifyInstance) {
 // ─── Broadcaster — appelé depuis les workers ───────────────
 // Publie les mises à jour vers tous les clients SSE abonnés à un job
 export function broadcastJobUpdate(bullmqId: string, update: object) {
-  // On cherche par bullmq_id (les workers ont l'id BullMQ, pas l'UUID DB)
   for (const [jobId, subs] of subscribers.entries()) {
-    subs.forEach((raw) => {
-      if (!raw.destroyed) {
-        raw.write(`data: ${JSON.stringify({ bullmqId, ...update })}\n\n`);
-      }
-    });
+    if (jobId === bullmqId) {
+      subs.forEach((raw) => {
+        if (!raw.destroyed) {
+          raw.write(`data: ${JSON.stringify({ bullmqId, ...update })}\n\n`);
+        }
+      });
+    }
   }
+}
+
+async function fetchJobState(bullmqId: string) {
+  const db = getDb();
+  return db
+    .selectFrom("jobs")
+    .selectAll()
+    .where("bullmq_id", "=", bullmqId)
+    .executeTakeFirst();
 }
 
 // ─── Intégration QueueEvents BullMQ ───────────────────────
@@ -115,15 +125,27 @@ export function startQueueEventBroadcaster() {
     connection: getRedis(),
   });
 
-  queueEvents.on("progress", ({ jobId, data }) => {
-    broadcastJobUpdate(jobId, { type: "progress", progress: data });
+  queueEvents.on("progress", async ({ jobId }) => {
+    const row = await fetchJobState(jobId);
+    if (row) {
+      broadcastJobUpdate(jobId, {
+        type: "progress",
+        status: row.status,
+        progress: row.progress,
+        processed: row.processed,
+        total: row.total,
+      });
+    }
   });
 
-  queueEvents.on("completed", ({ jobId }) => {
+  queueEvents.on("completed", async ({ jobId }) => {
+    const row = await fetchJobState(jobId);
     broadcastJobUpdate(jobId, {
       type: "completed",
       status: "completed",
       progress: 100,
+      processed: row?.processed ?? row?.total ?? 0,
+      total: row?.total ?? 0,
     });
   });
 

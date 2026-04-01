@@ -1,16 +1,17 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useState } from 'react'
 import {
   Table, Button, Typography, Space, Tag, Card, Empty,
-  Statistic, Row, Col, message, Input, Segmented,
+  Statistic, Row, Col, message, Input, Segmented, Tooltip,
 } from 'antd'
 import {
   PaperClipOutlined, CloudOutlined, DatabaseOutlined, ReloadOutlined,
   FileImageOutlined, FilePdfOutlined, FileOutlined, FileZipOutlined,
+  CopyOutlined, SyncOutlined,
 } from '@ant-design/icons'
-import { attachmentsApi } from '../api'
 import { useTranslation } from 'react-i18next'
 import { useAccount } from '../hooks/useAccount'
 import { formatBytes } from '../utils/format'
+import { useArchivedAttachments, useLiveAttachments, useDedupStats, useDedupBackfill } from '../hooks/queries'
 
 const { Title, Text } = Typography
 
@@ -49,60 +50,25 @@ export default function AttachmentsPage() {
   const { t } = useTranslation()
   const { accountId } = useAccount()
   const [mode, setMode] = useState<ViewMode>('archived')
-  const [archivedAtts, setArchivedAtts] = useState<ArchivedAttachment[]>([])
-  const [liveAtts, setLiveAtts] = useState<LiveAttachment[]>([])
-  const [loading, setLoading] = useState(false)
-  const [totalSize, setTotalSize] = useState(0)
-  const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
-  const [messageApi, contextHolder] = message.useMessage()
+  const [, contextHolder] = message.useMessage()
 
-  const loadArchived = useCallback(async (p = 1, q = '') => {
-    if (!accountId) return
-    setLoading(true)
-    try {
-      const data = await attachmentsApi.listArchived(accountId, {
-        page: p,
-        limit: 50,
-        sort: 'size',
-        order: 'desc',
-        ...(q ? { q } : {}),
-      })
-      setArchivedAtts(data.attachments)
-      setTotal(data.total)
-      setTotalSize(data.totalSizeBytes)
-    } catch {
-      messageApi.error(t('attachments.loadError'))
-    } finally {
-      setLoading(false)
-    }
-  }, [accountId])
+  const archivedParams = { page, limit: 50, sort: 'size', order: 'desc', ...(search ? { q: search } : {}) }
+  const archivedQuery = useArchivedAttachments(mode === 'archived' ? accountId : null, archivedParams)
+  const liveQuery = useLiveAttachments(mode === 'live' ? accountId : null, { maxResults: 200 })
+  const dedupStats = useDedupStats()
+  const dedupBackfill = useDedupBackfill()
 
-  const loadLive = useCallback(async () => {
-    if (!accountId) return
-    setLoading(true)
-    try {
-      const data = await attachmentsApi.listLive(accountId, { maxResults: 200 })
-      setLiveAtts(data.attachments)
-      setTotalSize(data.totalSizeBytes)
-      setTotal(data.attachments.length)
-    } catch {
-      messageApi.error(t('attachments.scanError'))
-    } finally {
-      setLoading(false)
-    }
-  }, [accountId])
-
-  useEffect(() => {
-    if (mode === 'archived') loadArchived(1, search)
-    else loadLive()
-  }, [mode, accountId])
+  const archivedAtts = archivedQuery.data?.attachments ?? []
+  const liveAtts = liveQuery.data?.attachments ?? []
+  const loading = mode === 'archived' ? archivedQuery.isLoading : liveQuery.isLoading
+  const total = mode === 'archived' ? (archivedQuery.data?.total ?? 0) : liveAtts.length
+  const totalSize = mode === 'archived' ? (archivedQuery.data?.totalSizeBytes ?? 0) : (liveQuery.data?.totalSizeBytes ?? 0)
 
   const handleSearch = (q: string) => {
     setSearch(q)
     setPage(1)
-    if (mode === 'archived') loadArchived(1, q)
   }
 
   const archivedColumns = [
@@ -127,7 +93,7 @@ export default function AttachmentsPage() {
       title: t('attachments.mail'),
       key: 'mail',
       render: (_: any, row: ArchivedAttachment) => (
-        <Space direction="vertical" size={0}>
+        <Space orientation="vertical" size={0}>
           <Text style={{ fontSize: 12 }}>{row.mail_subject || t('common.noSubject')}</Text>
           <Text type="secondary" style={{ fontSize: 11 }}>{row.mail_sender}</Text>
         </Space>
@@ -174,7 +140,7 @@ export default function AttachmentsPage() {
       title: t('attachments.mail'),
       key: 'mail',
       render: (_: any, row: LiveAttachment) => (
-        <Space direction="vertical" size={0}>
+        <Space orientation="vertical" size={0}>
           <Text style={{ fontSize: 12 }}>{row.mailSubject || t('common.noSubject')}</Text>
           <Text type="secondary" style={{ fontSize: 11 }}>{row.mailSender}</Text>
         </Space>
@@ -212,7 +178,7 @@ export default function AttachmentsPage() {
         />
         <Button
           icon={<ReloadOutlined />}
-          onClick={() => mode === 'archived' ? loadArchived(page, search) : loadLive()}
+          onClick={() => mode === 'archived' ? archivedQuery.refetch() : liveQuery.refetch()}
           loading={loading}
         >
           {t('attachments.reload')}
@@ -224,22 +190,49 @@ export default function AttachmentsPage() {
       ) : (
         <>
           <Row gutter={16} style={{ marginBottom: 16 }}>
-            <Col span={8}>
+            <Col span={6}>
               <Card size="small">
                 <Statistic title={t('attachments.totalAttachments')} value={total} prefix={<PaperClipOutlined />} />
               </Card>
             </Col>
-            <Col span={8}>
+            <Col span={6}>
               <Card size="small">
                 <Statistic title={t('attachments.totalSize')} value={formatBytes(totalSize)} />
               </Card>
             </Col>
-            <Col span={8}>
+            <Col span={6}>
               <Card size="small">
                 <Statistic
                   title={t('attachments.source')}
                   value={mode === 'archived' ? t('attachments.sourceArchived') : t('attachments.sourceLive')}
                 />
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card size="small">
+                <Tooltip title={dedupStats.data ? t('attachments.dedupDetails', {
+                  duplicates: dedupStats.data.duplicateFiles,
+                  saved: formatBytes(dedupStats.data.savedBytes),
+                }) : ''}>
+                  <Statistic
+                    title={t('attachments.dedupSaved')}
+                    value={formatBytes(dedupStats.data?.savedBytes ?? 0)}
+                    prefix={<CopyOutlined />}
+                    suffix={
+                      dedupStats.data && dedupStats.data.hashCoverage < 1 ? (
+                        <Button
+                          size="small"
+                          type="link"
+                          icon={<SyncOutlined spin={dedupBackfill.isPending} />}
+                          onClick={() => dedupBackfill.mutate()}
+                          loading={dedupBackfill.isPending}
+                        >
+                          {t('attachments.dedupBackfill')}
+                        </Button>
+                      ) : null
+                    }
+                  />
+                </Tooltip>
               </Card>
             </Col>
           </Row>
@@ -263,7 +256,7 @@ export default function AttachmentsPage() {
               current: page,
               pageSize: 50,
               total,
-              onChange: (p) => { setPage(p); loadArchived(p, search) },
+              onChange: (p) => { setPage(p) },
               showTotal: (t) => `${t} pièces jointes`,
             } : { pageSize: 50, showTotal: (t) => `${t} pièces jointes` }}
             locale={{ emptyText: <Empty description={t('attachments.noAttachment')} /> }}

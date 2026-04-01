@@ -1,5 +1,8 @@
 import { getDb } from "../db";
 import { enqueueJob } from "./queue";
+import { recordInboxSnapshot } from "../analytics/analytics.service";
+import { processExpiredEmails } from "../expiration/expiration.service";
+import { cleanupExpiredShares } from "../archive/sharing.service";
 
 // Simple cron scheduler — vérifie toutes les minutes si des règles
 // planifiées doivent être exécutées.
@@ -9,6 +12,9 @@ export function startRuleScheduler() {
   const INTERVAL_MS = 60 * 1000; // toutes les minutes
 
   let lastIntegrityCheck: Date | null = null;
+  let lastInboxSnapshot: Date | null = null;
+  let lastExpirationCheck: Date | null = null;
+  let lastShareCleanup: Date | null = null;
 
   async function tick() {
     const db = getDb();
@@ -22,6 +28,51 @@ export function startRuleScheduler() {
           lastIntegrityCheck = now;
           console.info('[Scheduler] Enqueued daily integrity check');
         }
+      }
+
+      // ─── Inbox Zero snapshots — toutes les 6h ────────────
+      if (!lastInboxSnapshot || (now.getTime() - lastInboxSnapshot.getTime()) > 6 * 3600 * 1000) {
+        const accounts = await db
+          .selectFrom('gmail_accounts')
+          .select('id')
+          .where('is_active', '=', true)
+          .execute();
+
+        for (const account of accounts) {
+          try {
+            await recordInboxSnapshot(account.id);
+          } catch (err) {
+            console.error(`[Scheduler] Inbox snapshot failed for ${account.id}:`, err);
+          }
+        }
+        lastInboxSnapshot = now;
+        console.info(`[Scheduler] Inbox zero snapshots recorded (${accounts.length} accounts)`);
+      }
+
+      // ─── Process expired emails — every 15 min ─────────────
+      if (!lastExpirationCheck || (now.getTime() - lastExpirationCheck.getTime()) > 15 * 60 * 1000) {
+        try {
+          const result = await processExpiredEmails();
+          if (result.processed > 0 || result.errors > 0) {
+            console.info(`[Scheduler] Expired emails: ${result.processed} trashed, ${result.errors} errors`);
+          }
+        } catch (err) {
+          console.error('[Scheduler] Expiration processing failed:', err);
+        }
+        lastExpirationCheck = now;
+      }
+
+      // ─── Cleanup expired share links — every hour ──────────
+      if (!lastShareCleanup || (now.getTime() - lastShareCleanup.getTime()) > 3600 * 1000) {
+        try {
+          const cleaned = await cleanupExpiredShares();
+          if (cleaned > 0) {
+            console.info(`[Scheduler] Cleaned ${cleaned} expired share link(s)`);
+          }
+        } catch (err) {
+          console.error('[Scheduler] Share cleanup failed:', err);
+        }
+        lastShareCleanup = now;
       }
 
       // Récupère les règles actives avec un schedule cron

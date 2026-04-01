@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import {
   Table,
   Input,
@@ -9,12 +9,15 @@ import {
   Card,
   Drawer,
   Divider,
-  List,
   Empty,
   message,
   notification,
   DatePicker,
   Tooltip,
+  Select,
+  Segmented,
+  Badge,
+  List,
 } from "antd";
 import {
   SearchOutlined,
@@ -24,10 +27,13 @@ import {
   FileZipOutlined,
   FileOutlined,
   EyeOutlined,
+  UnorderedListOutlined,
+  MessageOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
-import { archiveApi } from "../api";
+import { archiveApi, archiveThreadsApi } from "../api";
 import { useAccount } from "../hooks/useAccount";
+import { useArchiveMails, useArchiveThreads } from "../hooks/queries";
 import { formatBytes, formatSender } from "../utils/format";
 import JobProgressModal from "../components/JobProgressModal";
 import api from "../api/client";
@@ -57,18 +63,125 @@ interface Attachment {
   size_bytes: number;
 }
 
+function ThreadsView({ threads, threadsLoading, threadsTotal, page, expandedThread, threadMails, threadLoading, onExpandThread, onOpenMail, onPageChange, t }: {
+  threads: any[]; threadsLoading: boolean; threadsTotal: number; page: number;
+  expandedThread: string | null; threadMails: any[]; threadLoading: boolean;
+  onExpandThread: (threadId: string) => void; onOpenMail: (mail: any) => void;
+  onPageChange: (p: number) => void; t: (key: string, opts?: any) => string;
+}) {
+  if (threadsLoading) return <Card loading style={{ marginBottom: 8 }} />;
+  if (threads.length === 0) return <Empty description={t('archive.noThreads')} />;
+
+  return (
+    <>
+      {threads.map((thread: any) => (
+        <Card
+          key={thread.thread_id}
+          size="small"
+          style={{ marginBottom: 8, cursor: 'pointer' }}
+          onClick={() => onExpandThread(thread.thread_id)}
+          hoverable
+        >
+          <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+            <Space size={12}>
+              <Badge count={thread.message_count} style={{ backgroundColor: '#1677ff' }} />
+              <div>
+                <Space size={4}>
+                  {thread.has_attachments && <PaperClipOutlined style={{ color: '#8c8c8c', fontSize: 12 }} />}
+                  <Text strong style={{ fontSize: 13 }}>
+                    {thread.subject || t('common.noSubject')}
+                  </Text>
+                </Space>
+                <div>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    {formatSender(thread.sender)}
+                    {thread.message_count > 1 && (
+                      <span> · {t('archive.threadParticipants', { count: (thread.senders ?? []).length })}</span>
+                    )}
+                  </Text>
+                </div>
+              </div>
+            </Space>
+            <Space>
+              <Tag color="orange">{formatBytes(Number(thread.total_size))}</Tag>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                {thread.latest_date ? dayjs(thread.latest_date).format('DD/MM/YY') : '—'}
+              </Text>
+            </Space>
+          </Space>
+
+          {expandedThread === thread.thread_id && (
+            <section
+              aria-label={t('archive.threadView')}
+              style={{ marginTop: 12, borderTop: '1px solid #f0f0f0', paddingTop: 8 }}
+            >
+              {threadLoading ? (
+                <Card loading size="small" />
+              ) : (
+                <List
+                  size="small"
+                  dataSource={threadMails}
+                  renderItem={(mail: any, index: number) => (
+                    <List.Item
+                      style={{ cursor: 'pointer', paddingLeft: 16 + Math.min(index, 3) * 8 }}
+                      onClick={() => onOpenMail(mail)}
+                      actions={[
+                        <Tooltip key="view" title={t('mailManager.read')}>
+                          <Button size="small" type="text" icon={<EyeOutlined />} onClick={(e) => { e.stopPropagation(); onOpenMail(mail); }} />
+                        </Tooltip>,
+                      ]}
+                    >
+                      <List.Item.Meta
+                        title={
+                          <Space size={4}>
+                            {mail.has_attachments && <PaperClipOutlined style={{ color: '#8c8c8c', fontSize: 11 }} />}
+                            <Text style={{ fontSize: 12 }}>{mail.subject || t('common.noSubject')}</Text>
+                          </Space>
+                        }
+                        description={
+                          <Space size={8}>
+                            <Text type="secondary" style={{ fontSize: 11 }}>{formatSender(mail.sender)}</Text>
+                            <Text type="secondary" style={{ fontSize: 11 }}>{mail.date ? dayjs(mail.date).format('DD/MM/YY HH:mm') : '—'}</Text>
+                            <Text type="secondary" style={{ fontSize: 11 }}>{formatBytes(Number(mail.size_bytes))}</Text>
+                          </Space>
+                        }
+                      />
+                    </List.Item>
+                  )}
+                />
+              )}
+            </section>
+          )}
+        </Card>
+      ))}
+
+      <div style={{ textAlign: 'center', marginTop: 16 }}>
+        <Space>
+          <Button disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
+            {t('common.back')}
+          </Button>
+          <Text type="secondary">
+            {t('archive.pageInfo', { page, total: Math.ceil(threadsTotal / 50) || 1 })}
+          </Text>
+          <Button disabled={page * 50 >= threadsTotal} onClick={() => onPageChange(page + 1)}>
+            {t('archive.nextPage')}
+          </Button>
+        </Space>
+      </div>
+    </>
+  );
+}
+
 export default function ArchivePage() {
   const { t } = useTranslation();
   const { accountId } = useAccount();
-  const [mails, setMails] = useState<ArchivedMail[]>([]);
-  const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
   const [sender, setSender] = useState("");
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs] | null>(
     null,
   );
+  const [hasAttachments, setHasAttachments] = useState<string | undefined>(undefined);
   const [selected, setSelected] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
@@ -76,37 +189,61 @@ export default function ArchivePage() {
   // Viewer drawer
   const [viewing, setViewing] = useState<any>(null);
   const [viewMode, setViewMode] = useState<"html" | "raw">("html");
+  const [listMode, setListMode] = useState<"list" | "threads">("list");
+  const [expandedThread, setExpandedThread] = useState<string | null>(null);
+  const [threadMails, setThreadMails] = useState<any[]>([]);
+  const [threadLoading, setThreadLoading] = useState(false);
 
   const [messageApi, contextHolder] = message.useMessage();
 
-  const load = useCallback(
-    async (p = 1) => {
-      if (!accountId) return;
-      setLoading(true);
-      try {
-        const params: Record<string, any> = { page: p, limit: 50 };
-        if (query) params.q = query;
-        if (sender) params.sender = sender;
-        if (dateRange) {
-          params.from_date = dateRange[0].toISOString();
-          params.to_date = dateRange[1].toISOString();
-        }
-        const data = await archiveApi.listMails(accountId, params);
-        setMails(data.mails);
-        setTotal(data.total);
-        setPage(p);
-      } catch {
-        messageApi.error(t('archive.loadError'));
-      } finally {
-        setLoading(false);
-      }
-    },
-    [accountId, query, sender, dateRange],
-  );
+  // Build params for the query
+  const archiveParams: Record<string, any> = { page, limit: 50 };
+  if (query) archiveParams.q = query;
+  if (sender) archiveParams.sender = sender;
+  if (dateRange) {
+    archiveParams.from_date = dateRange[0].toISOString();
+    archiveParams.to_date = dateRange[1].toISOString();
+  }
+  if (hasAttachments !== undefined) {
+    archiveParams.has_attachments = hasAttachments;
+  }
 
-  useEffect(() => {
-    load();
-  }, [accountId]);
+  const { data: archiveData, isLoading: loading, refetch } = useArchiveMails(accountId, archiveParams);
+  const mails = archiveData?.mails ?? [];
+  const total = archiveData?.total ?? 0;
+
+  // Threads query (same params)
+  const { data: threadsData, isLoading: threadsLoading, refetch: refetchThreads } = useArchiveThreads(
+    listMode === 'threads' ? accountId : null,
+    archiveParams,
+  );
+  const threads = threadsData?.threads ?? [];
+  const threadsTotal = threadsData?.total ?? 0;
+
+  const load = (p = 1) => {
+    setPage(p);
+    if (p === page) {
+      refetch();
+      if (listMode === 'threads') refetchThreads();
+    }
+  };
+
+  const loadThreadMails = async (threadId: string) => {
+    if (expandedThread === threadId) {
+      setExpandedThread(null);
+      return;
+    }
+    setThreadLoading(true);
+    try {
+      const mails = await archiveThreadsApi.getThread(accountId!, threadId);
+      setThreadMails(mails);
+      setExpandedThread(threadId);
+    } catch {
+      messageApi.error(t('archive.loadMailError'));
+    } finally {
+      setThreadLoading(false);
+    }
+  };
 
   const openMail = async (mail: ArchivedMail) => {
     try {
@@ -136,7 +273,7 @@ export default function ArchivePage() {
       a.click();
       URL.revokeObjectURL(url);
       notification.success({
-        message: t('archive.exportDone'),
+        title: t('archive.exportDone'),
         description: t('archive.exportCount', { count: ids.length }),
       });
     } catch {
@@ -147,39 +284,106 @@ export default function ArchivePage() {
   };
 
   // ─── Preview HTML inline depuis EML ─────────────────────
-  function extractHtmlFromEml(emlContent: string): string {
-    // Chercher le boundary MIME
-    const boundaryMatch = emlContent.match(/boundary="?([^"\r\n;]+)"?/i);
-    if (!boundaryMatch) {
-      // Mail simple texte
-      const bodyStart =
-        emlContent.indexOf("\r\n\r\n") + 4 || emlContent.indexOf("\n\n") + 2;
-      return `<pre style="white-space:pre-wrap;font-family:inherit">${emlContent.slice(bodyStart)}</pre>`;
-    }
+  function decodeBase64Utf8(b64: string): string {
+    const binary = atob(b64.replaceAll(/\s/g, ''));
+    const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+    return new TextDecoder('utf-8').decode(bytes);
+  }
 
-    const boundary = boundaryMatch[1];
-    const parts = emlContent.split(`--${boundary}`);
-    for (const part of parts) {
-      if (/content-type:\s*text\/html/i.test(part)) {
-        const bodyIdx =
-          part.indexOf("\r\n\r\n") !== -1
-            ? part.indexOf("\r\n\r\n") + 4
-            : part.indexOf("\n\n") + 2;
-        const encoding = /content-transfer-encoding:\s*base64/i.test(part)
-          ? "base64"
-          : "plain";
-        const raw = part.slice(bodyIdx).trim();
-        if (encoding === "base64") {
-          try {
-            return atob(raw.replace(/\s/g, ""));
-          } catch {
-            return raw;
-          }
-        }
+  function decodeQuotedPrintable(str: string): string {
+    const decoded = str
+      .replaceAll(/=\r?\n/g, '') // soft line breaks
+      .replaceAll(/=([0-9A-Fa-f]{2})/g, (_m, hex) =>
+        String.fromCharCode(parseInt(hex, 16)),
+      );
+    // The result is raw bytes as Latin-1 chars — re-interpret as UTF-8
+    const bytes = Uint8Array.from(decoded, (c) => c.charCodeAt(0));
+    try {
+      return new TextDecoder('utf-8').decode(bytes);
+    } catch {
+      return decoded;
+    }
+  }
+
+  function decodePartBody(raw: string, part: string): string {
+    const isBase64 = /content-transfer-encoding:\s*base64/i.test(part);
+    const isQP = /content-transfer-encoding:\s*quoted-printable/i.test(part);
+    if (isBase64) {
+      try {
+        return decodeBase64Utf8(raw);
+      } catch {
         return raw;
       }
     }
-    // Fallback : texte brut
+    if (isQP) return decodeQuotedPrintable(raw);
+    return raw;
+  }
+
+  function extractBodyFromParts(emlContent: string, boundary: string, depth = 0): string | null {
+    if (depth > 5) return null; // guard against infinite recursion
+    const parts = emlContent.split(`--${boundary}`);
+    let htmlPart: string | null = null;
+    let textPart: string | null = null;
+
+    for (const part of parts) {
+      // Extract only the header section of this part
+      const headerEnd = part.indexOf('\r\n\r\n') !== -1
+        ? part.indexOf('\r\n\r\n')
+        : part.indexOf('\n\n');
+      if (headerEnd < 0) continue;
+      const partHeader = part.slice(0, headerEnd);
+
+      // Nested multipart (e.g. multipart/alternative inside multipart/mixed)
+      const nestedBoundary = partHeader.match(/content-type:\s*multipart\/\w+[^]*?boundary="?([^"\r\n;]+)"?/i);
+      if (nestedBoundary) {
+        const nested = extractBodyFromParts(part, nestedBoundary[1], depth + 1);
+        if (nested) return nested;
+        continue;
+      }
+
+      const bodyIdx = headerEnd + (part.indexOf('\r\n\r\n') !== -1 ? 4 : 2);
+      const raw = part.slice(bodyIdx).trim();
+
+      if (/content-type:\s*text\/html/i.test(partHeader)) {
+        htmlPart = decodePartBody(raw, partHeader);
+      } else if (/content-type:\s*text\/plain/i.test(partHeader) && !textPart) {
+        textPart = decodePartBody(raw, partHeader);
+      }
+    }
+
+    if (htmlPart) return htmlPart;
+    if (textPart) return `<pre style="white-space:pre-wrap;font-family:inherit">${textPart}</pre>`;
+    return null;
+  }
+
+  function extractHtmlFromEml(emlContent: string): string {
+    if (!emlContent) return '';
+
+    // Find boundary
+    const boundaryMatch = emlContent.match(/boundary="?([^"\r\n;]+)"?/i);
+    if (!boundaryMatch) {
+      // Simple single-part email
+      const bodyStart =
+        emlContent.indexOf('\r\n\r\n') !== -1
+          ? emlContent.indexOf('\r\n\r\n') + 4
+          : emlContent.indexOf('\n\n') + 2;
+      const raw = emlContent.slice(bodyStart);
+      const isQP = /content-transfer-encoding:\s*quoted-printable/i.test(emlContent.slice(0, bodyStart));
+      const isBase64 = /content-transfer-encoding:\s*base64/i.test(emlContent.slice(0, bodyStart));
+      const isHtml = /content-type:\s*text\/html/i.test(emlContent.slice(0, bodyStart));
+      let decoded = raw;
+      if (isBase64) {
+        try { decoded = decodeBase64Utf8(raw); } catch { /* keep raw */ }
+      } else if (isQP) {
+        decoded = decodeQuotedPrintable(raw);
+      }
+      if (isHtml) return decoded;
+      return `<pre style="white-space:pre-wrap;font-family:inherit">${decoded}</pre>`;
+    }
+
+    const result = extractBodyFromParts(emlContent, boundaryMatch[1]);
+    if (result) return result;
+
     return `<pre style="white-space:pre-wrap;font-family:inherit">${emlContent}</pre>`;
   }
 
@@ -203,7 +407,7 @@ export default function ArchivePage() {
       dataIndex: "subject",
       ellipsis: true,
       render: (v: string, row: ArchivedMail) => (
-        <Space direction="vertical" size={0}>
+        <Space orientation="vertical" size={0}>
           <Space size={4}>
             {row.has_attachments && (
               <PaperClipOutlined style={{ color: "#8c8c8c", fontSize: 12 }} />
@@ -264,16 +468,26 @@ export default function ArchivePage() {
   ];
 
   const selectedSizeBytes = mails
-    .filter((m) => selected.includes(m.id))
-    .reduce((s, m) => s + m.size_bytes, 0);
+    .filter((m: { id: string }) => selected.includes(m.id))
+    .reduce((s: number, m: { size_bytes: number }) => s + m.size_bytes, 0);
 
   return (
     <div>
       {contextHolder}
 
-      <Title level={3} style={{ marginBottom: 16 }}>
-        {t('archive.title')}
-      </Title>
+      <Space style={{ marginBottom: 16, justifyContent: 'space-between', width: '100%' }}>
+        <Title level={3} style={{ margin: 0 }}>
+          {t('archive.title')}
+        </Title>
+        <Segmented
+          value={listMode}
+          onChange={(v) => setListMode(v as 'list' | 'threads')}
+          options={[
+            { value: 'list', icon: <UnorderedListOutlined />, label: t('archive.listView') },
+            { value: 'threads', icon: <MessageOutlined />, label: t('archive.threadView') },
+          ]}
+        />
+      </Space>
 
       {/* Filtres */}
       <Card size="small" style={{ marginBottom: 12 }}>
@@ -296,6 +510,17 @@ export default function ArchivePage() {
             allowClear
             prefix={<FileOutlined />}
           />
+          <Select
+            placeholder={t('archive.filterAttachments')}
+            value={hasAttachments}
+            onChange={(v) => { setHasAttachments(v); }}
+            allowClear
+            style={{ width: 180 }}
+            options={[
+              { value: "true", label: t('archive.withAttachments') },
+              { value: "false", label: t('archive.withoutAttachments') },
+            ]}
+          />
           <RangePicker
             onChange={(dates) => setDateRange(dates as any)}
             format="DD/MM/YYYY"
@@ -305,9 +530,14 @@ export default function ArchivePage() {
             <SearchOutlined /> {t('common.search')}
           </Button>
           <Button icon={<ReloadOutlined />} onClick={() => load(1)} />
-          {total > 0 && (
+          {listMode === 'list' && total > 0 && (
             <Text type="secondary">
               {t('archive.totalArchived', { total: total.toLocaleString() })}
+            </Text>
+          )}
+          {listMode === 'threads' && threadsTotal > 0 && (
+            <Text type="secondary">
+              {t('archive.totalThreads', { total: threadsTotal.toLocaleString() })}
             </Text>
           )}
         </Space>
@@ -341,32 +571,51 @@ export default function ArchivePage() {
         </Card>
       )}
 
-      {/* Table */}
-      <Table
-        dataSource={mails}
-        columns={columns}
-        rowKey="id"
-        loading={loading}
-        size="small"
-        scroll={{ x: 800 }}
-        rowSelection={{
-          selectedRowKeys: selected,
-          onChange: (keys) => setSelected(keys as string[]),
-        }}
-        pagination={{
-          current: page,
-          pageSize: 50,
-          total,
-          onChange: (p) => load(p),
-          showSizeChanger: false,
-          showTotal: (t) => `${t.toLocaleString()} mails`,
-        }}
-        onRow={(row) => ({
-          onClick: () => openMail(row),
-          style: { cursor: "pointer" },
-        })}
-        locale={{ emptyText: <Empty description={t('archive.noArchive')} /> }}
-      />
+      {/* Table — mode liste */}
+      {listMode === 'list' && (
+        <Table
+          dataSource={mails}
+          columns={columns}
+          rowKey="id"
+          loading={loading}
+          size="small"
+          scroll={{ x: 800 }}
+          rowSelection={{
+            selectedRowKeys: selected,
+            onChange: (keys) => setSelected(keys as string[]),
+          }}
+          pagination={{
+            current: page,
+            pageSize: 50,
+            total,
+            onChange: (p) => load(p),
+            showSizeChanger: false,
+            showTotal: (t) => `${t.toLocaleString()} mails`,
+          }}
+          onRow={(row) => ({
+            onClick: () => openMail(row),
+            style: { cursor: "pointer" },
+          })}
+          locale={{ emptyText: <Empty description={t('archive.noArchive')} /> }}
+        />
+      )}
+
+      {/* Vue threads / conversations */}
+      {listMode === 'threads' && (
+        <ThreadsView
+          threads={threads}
+          threadsLoading={threadsLoading}
+          threadsTotal={threadsTotal}
+          page={page}
+          expandedThread={expandedThread}
+          threadMails={threadMails}
+          threadLoading={threadLoading}
+          onExpandThread={loadThreadMails}
+          onOpenMail={openMail}
+          onPageChange={load}
+          t={t}
+        />
+      )}
 
       {/* Viewer drawer */}
       <Drawer
@@ -392,7 +641,7 @@ export default function ArchivePage() {
         {viewing && (
           <>
             <Space
-              direction="vertical"
+              orientation="vertical"
               size={2}
               style={{ width: "100%", marginBottom: 12 }}
             >
@@ -424,26 +673,13 @@ export default function ArchivePage() {
                 <Text strong>
                   <PaperClipOutlined /> {t('archive.attachments', { count: viewing.attachments.length })}
                 </Text>
-                <List
-                  size="small"
-                  dataSource={viewing.attachments}
-                  renderItem={(att: Attachment) => (
-                    <List.Item
-                      actions={[
-                        <Button
-                          size="small"
-                          icon={<DownloadOutlined />}
-                          href={downloadUrl(att.id)}
-                          download={att.filename}
-                        >
-                          {t('common.download')}
-                        </Button>,
-                      ]}
-                    >
+                <div>
+                  {viewing.attachments.map((att: Attachment) => (
+                    <div key={att.id} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid var(--ant-color-split, #f0f0f0)' }}>
                       <Space
-                        direction="vertical"
+                        orientation="vertical"
                         size={4}
-                        style={{ width: "100%" }}
+                        style={{ width: "100%", flex: 1, minWidth: 0 }}
                       >
                         <Space>
                           <Text style={{ fontSize: 12 }}>{att.filename}</Text>
@@ -467,9 +703,18 @@ export default function ArchivePage() {
                           />
                         )}
                       </Space>
-                    </List.Item>
-                  )}
-                />
+                      <Button
+                        size="small"
+                        icon={<DownloadOutlined />}
+                        href={downloadUrl(att.id)}
+                        download={att.filename}
+                        style={{ flexShrink: 0, marginLeft: 8 }}
+                      >
+                        {t('common.download')}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
                 <Divider style={{ margin: "8px 0" }} />
               </div>
             )}

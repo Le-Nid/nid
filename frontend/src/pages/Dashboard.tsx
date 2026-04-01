@@ -1,4 +1,3 @@
-import { useEffect, useState, useCallback } from 'react'
 import {
   Row, Col, Card, Statistic, Table, Tag, Spin, Alert,
   Typography, Space, Button, Empty, Tooltip, Progress
@@ -10,46 +9,24 @@ import {
 import { Bar, Pie, Line } from '@ant-design/charts'
 import { useTranslation } from 'react-i18next'
 import { useAccount } from '../hooks/useAccount'
-import { dashboardApi } from '../api'
+import { useDashboardStats, useDashboardArchiveStats } from '../hooks/queries'
 import { formatBytes, formatSender } from '../utils/format'
 import dayjs from 'dayjs'
 
 const { Title, Text } = Typography
 
-interface DashboardStats {
-  totalMessages: number
-  unreadCount: number
-  totalSizeBytes: number
-  bySender: { sender: string; count: number; sizeBytes: number }[]
-  biggestMails: { id: string; subject: string; sizeEstimate: number; from: string; date: string }[]
-  byLabel: { label: string; count: number }[]
-  timeline: { month: string; count: number }[]
-  profile: { emailAddress: string; messagesTotal: number }
-}
+interface DashboardSender { sender: string; count: number; sizeBytes: number }
+interface DashboardLabel { label: string; count: number }
 
 export default function DashboardPage() {
   const { t } = useTranslation()
   const { accountId, account } = useAccount()
-  const [stats, setStats] = useState<DashboardStats | null>(null)
-  const [archiveStats, setArchiveStats] = useState<any>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { data: stats = null, isLoading: loadingStats, error: statsError, refetch: refetchStats } = useDashboardStats(accountId)
+  const { data: archiveStats = null, refetch: refetchArchive } = useDashboardArchiveStats(accountId)
 
-  const load = useCallback(async () => {
-    if (!accountId) return
-    setLoading(true); setError(null)
-    try {
-      const [s, a] = await Promise.all([
-        dashboardApi.getStats(accountId, 20),
-        dashboardApi.getArchiveStats(accountId),
-      ])
-      setStats(s); setArchiveStats(a)
-    } catch (e: any) {
-      setError(e.response?.data?.error ?? t('dashboard.loadError'))
-    } finally { setLoading(false) }
-  }, [accountId])
-
-  useEffect(() => { load() }, [load])
+  const loading = loadingStats
+  const error = statsError ? (statsError as any).response?.data?.error ?? t('dashboard.loadError') : null
+  const load = () => { refetchStats(); refetchArchive() }
 
   if (!accountId) {
     return (
@@ -60,7 +37,7 @@ export default function DashboardPage() {
   }
 
   const topSendersByCount = {
-    data: (stats?.bySender ?? []).slice(0, 15).map((s) => ({
+    data: (stats?.bySender ?? []).slice(0, 15).map((s: DashboardSender) => ({
       sender: formatSender(s.sender).slice(0, 35),
       count: s.count,
     })),
@@ -72,8 +49,8 @@ export default function DashboardPage() {
 
   const topSendersBySize = {
     data: (stats?.bySender ?? [])
-      .slice().sort((a, b) => b.sizeBytes - a.sizeBytes).slice(0, 15)
-      .map((s) => ({
+      .slice().sort((a: DashboardSender, b: DashboardSender) => b.sizeBytes - a.sizeBytes).slice(0, 15)
+      .map((s: DashboardSender) => ({
         sender: formatSender(s.sender).slice(0, 35),
         sizeMo: Math.round((s.sizeBytes / 1024 / 1024) * 10) / 10,
       })),
@@ -100,9 +77,9 @@ export default function DashboardPage() {
 
   const labelPieConfig = {
     data: (stats?.byLabel ?? [])
-      .filter((l) => !['UNREAD', 'STARRED', 'IMPORTANT'].includes(l.label))
+      .filter((l: DashboardLabel) => !['UNREAD', 'STARRED', 'IMPORTANT'].includes(l.label))
       .slice(0, 8)
-      .map((l) => ({ label: t(`labels.${l.label}`, { defaultValue: l.label }), count: l.count })),
+      .map((l: DashboardLabel) => ({ label: t(`labels.${l.label}`, { defaultValue: l.label }), count: l.count })),
     angleField: 'count', colorField: 'label',
     radius: 0.8, innerRadius: 0.55,
     height: 220,
@@ -149,7 +126,7 @@ export default function DashboardPage() {
       </Space>
 
       {error && (
-        <Alert type="error" message={error} icon={<WarningOutlined />}
+        <Alert type="error" title={error} icon={<WarningOutlined />}
           showIcon closable style={{ marginBottom: 16 }} />
       )}
 

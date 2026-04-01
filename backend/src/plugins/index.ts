@@ -56,7 +56,7 @@ export async function registerPlugins(app: FastifyInstance) {
   // ─── Global error handler (Point 16) ──────────────────────
   app.setErrorHandler((error: any, request, reply) => {
     if (error instanceof ZodError) {
-      return reply.code(400).send({ error: 'Validation failed', details: error.format() })
+      return reply.code(400).send({ error: 'Validation failed', details: error.issues })
     }
     if (error.statusCode) {
       return reply.code(error.statusCode).send({ error: error.message })

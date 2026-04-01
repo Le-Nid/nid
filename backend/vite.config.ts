@@ -10,7 +10,7 @@ export default defineConfig({
       formats: ['es'],
       fileName: () => 'index.js',
     },
-    rollupOptions: {
+    rolldownOptions: {
       external: [
         ...builtinModules,
         ...builtinModules.map((m) => `node:${m}`),
@@ -29,6 +29,10 @@ export default defineConfig({
         'pino-pretty',
         'zod',
         /^dotenv(\/.*)?$/,
+        /^@aws-sdk\//,
+        /^@modelcontextprotocol\//,
+        /^zod\//,
+        'imapflow',
       ],
     },
     // Pas de minification pour un serveur Node (debug plus facile + pas de gain réel)
@@ -48,7 +52,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'html'],
-      exclude: ['dist/**', 'src/__tests__/**'],
+      exclude: ['dist/**', 'src/__tests__/**', 'src/db/types.ts', 'src/db/migrations/**'],
     },
     include:  ['src/__tests__/**/*.test.ts'],
     testTimeout: 10_000,

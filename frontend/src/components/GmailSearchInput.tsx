@@ -97,7 +97,7 @@ export default function GmailSearchInput({
         handleSearch(v);
       }}
       onSelect={handleSelect}
-      dropdownMatchSelectWidth={420}
+      popupMatchSelectWidth={420}
     >
       <Input
         prefix={<SearchOutlined />}

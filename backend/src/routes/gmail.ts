@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import {
-  listMessages, getMessage, getMessageFull,
+  listMessages, getMessage, getMessageFull, batchGetMessages,
   trashMessages, deleteMessages, modifyMessages,
   listLabels, createLabel, deleteLabel, getMailboxProfile
 } from '../gmail/gmail.service'
@@ -35,6 +35,17 @@ export async function gmailRoutes(app: FastifyInstance) {
   app.get('/:accountId/messages/:messageId/full', accountAuth, async (request) => {
     const { accountId, messageId } = request.params as { accountId: string; messageId: string }
     return getMessageFull(accountId, messageId)
+  })
+
+  // ─── Batch fetch metadata ─────────────────────────────
+  const batchSchema = z.object({
+    ids: z.array(z.string()).min(1).max(100),
+  })
+
+  app.post('/:accountId/messages/batch', accountAuth, async (request) => {
+    const { accountId } = request.params as { accountId: string }
+    const { ids } = batchSchema.parse(request.body)
+    return batchGetMessages(accountId, ids)
   })
 
   // ─── Bulk operations (async via BullMQ) ───────────────

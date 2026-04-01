@@ -1,6 +1,7 @@
 import { google, gmail_v1 } from 'googleapis'
 import { getAuthenticatedClient } from '../auth/oauth.service'
 import { config } from '../config'
+import { gmailRetry, limitConcurrency, withAccountLimit } from './gmail-throttle'
 
 export interface MailMeta {
   id: string
@@ -26,12 +27,14 @@ export async function listMessages(
   opts: { query?: string; pageToken?: string; maxResults?: number } = {}
 ) {
   const gmail = await getGmailClient(accountId)
-  const res = await gmail.users.messages.list({
-    userId: 'me',
-    q: opts.query,
-    pageToken: opts.pageToken,
-    maxResults: opts.maxResults ?? 50,
-  })
+  const res = await gmailRetry(() =>
+    gmail.users.messages.list({
+      userId: 'me',
+      q: opts.query,
+      pageToken: opts.pageToken,
+      maxResults: opts.maxResults ?? 50,
+    })
+  )
   return {
     messages: res.data.messages ?? [],
     nextPageToken: res.data.nextPageToken ?? null,
@@ -42,23 +45,27 @@ export async function listMessages(
 // ─── Get single message ─────────────────────────────────
 export async function getMessage(accountId: string, messageId: string): Promise<MailMeta> {
   const gmail = await getGmailClient(accountId)
-  const res = await gmail.users.messages.get({
-    userId: 'me',
-    id: messageId,
-    format: 'metadata',
-    metadataHeaders: ['Subject', 'From', 'To', 'Date'],
-  })
+  const res = await gmailRetry(() =>
+    gmail.users.messages.get({
+      userId: 'me',
+      id: messageId,
+      format: 'metadata',
+      metadataHeaders: ['Subject', 'From', 'To', 'Date'],
+    })
+  )
   return formatMeta(res.data)
 }
 
 // ─── Get message full (for reading + archiving) ─────────
 export async function getMessageFull(accountId: string, messageId: string) {
   const gmail = await getGmailClient(accountId)
-  const res = await gmail.users.messages.get({
-    userId: 'me',
-    id: messageId,
-    format: 'full',
-  })
+  const res = await gmailRetry(() =>
+    gmail.users.messages.get({
+      userId: 'me',
+      id: messageId,
+      format: 'full',
+    })
+  )
   return res.data
 }
 
@@ -66,29 +73,27 @@ export async function getMessageFull(accountId: string, messageId: string) {
 export async function batchGetMessages(
   accountId: string,
   messageIds: string[],
-  onProgress?: (done: number, total: number) => void
+  opts?: { onProgress?: (done: number, total: number) => void }
 ): Promise<MailMeta[]> {
-  const results: MailMeta[] = []
+  const t0 = Date.now()
   const gmail = await getGmailClient(accountId)
+  const onProgress = opts?.onProgress
 
-  for (let i = 0; i < messageIds.length; i += config.GMAIL_BATCH_SIZE) {
-    const chunk = messageIds.slice(i, i + config.GMAIL_BATCH_SIZE)
-
-    const fetched = await Promise.all(
-      chunk.map((id) =>
-        gmail.users.messages
-          .get({ userId: 'me', id, format: 'metadata', metadataHeaders: ['Subject', 'From', 'To', 'Date'] })
-          .then((r) => formatMeta(r.data))
+  // All calls go through the global per-account semaphore (5 concurrent max).
+  // No chunking or local concurrency control needed — the semaphore handles it.
+  const results = await Promise.all(
+    messageIds.map((id) =>
+      withAccountLimit(accountId, () =>
+        gmailRetry(() =>
+          gmail.users.messages
+            .get({ userId: 'me', id, format: 'metadata', metadataHeaders: ['Subject', 'From', 'To', 'Date'] })
+            .then((r) => formatMeta(r.data))
+        )
       )
     )
-    results.push(...fetched)
-    onProgress?.(Math.min(i + config.GMAIL_BATCH_SIZE, messageIds.length), messageIds.length)
-
-    // Throttle between batches
-    if (i + config.GMAIL_BATCH_SIZE < messageIds.length) {
-      await sleep(config.GMAIL_THROTTLE_MS)
-    }
-  }
+  )
+  onProgress?.(messageIds.length, messageIds.length)
+  console.log(`[batchGet] ${messageIds.length} msgs in ${Date.now() - t0}ms`)
   return results
 }
 
@@ -96,7 +101,10 @@ export async function batchGetMessages(
 export async function trashMessages(accountId: string, messageIds: string[]) {
   const gmail = await getGmailClient(accountId)
   for (const chunk of chunks(messageIds, config.GMAIL_BATCH_SIZE)) {
-    await Promise.all(chunk.map((id) => gmail.users.messages.trash({ userId: 'me', id })))
+    await limitConcurrency(
+      chunk.map((id) => () => gmailRetry(() => gmail.users.messages.trash({ userId: 'me', id }))),
+      config.GMAIL_CONCURRENCY
+    )
     await sleep(config.GMAIL_THROTTLE_MS)
   }
 }
@@ -104,7 +112,10 @@ export async function trashMessages(accountId: string, messageIds: string[]) {
 export async function deleteMessages(accountId: string, messageIds: string[]) {
   const gmail = await getGmailClient(accountId)
   for (const chunk of chunks(messageIds, config.GMAIL_BATCH_SIZE)) {
-    await Promise.all(chunk.map((id) => gmail.users.messages.delete({ userId: 'me', id })))
+    await limitConcurrency(
+      chunk.map((id) => () => gmailRetry(() => gmail.users.messages.delete({ userId: 'me', id }))),
+      config.GMAIL_CONCURRENCY
+    )
     await sleep(config.GMAIL_THROTTLE_MS)
   }
 }
@@ -117,14 +128,17 @@ export async function modifyMessages(
 ) {
   const gmail = await getGmailClient(accountId)
   for (const chunk of chunks(messageIds, config.GMAIL_BATCH_SIZE)) {
-    await Promise.all(
-      chunk.map((id) =>
-        gmail.users.messages.modify({
-          userId: 'me',
-          id,
-          requestBody: { addLabelIds, removeLabelIds },
-        })
-      )
+    await limitConcurrency(
+      chunk.map((id) => () =>
+        gmailRetry(() =>
+          gmail.users.messages.modify({
+            userId: 'me',
+            id,
+            requestBody: { addLabelIds, removeLabelIds },
+          })
+        )
+      ),
+      config.GMAIL_CONCURRENCY
     )
     await sleep(config.GMAIL_THROTTLE_MS)
   }
@@ -133,28 +147,30 @@ export async function modifyMessages(
 // ─── Labels ─────────────────────────────────────────────
 export async function listLabels(accountId: string) {
   const gmail = await getGmailClient(accountId)
-  const res = await gmail.users.labels.list({ userId: 'me' })
+  const res = await gmailRetry(() => gmail.users.labels.list({ userId: 'me' }))
   return res.data.labels ?? []
 }
 
 export async function createLabel(accountId: string, name: string) {
   const gmail = await getGmailClient(accountId)
-  const res = await gmail.users.labels.create({
-    userId: 'me',
-    requestBody: { name, labelListVisibility: 'labelShow', messageListVisibility: 'show' },
-  })
+  const res = await gmailRetry(() =>
+    gmail.users.labels.create({
+      userId: 'me',
+      requestBody: { name, labelListVisibility: 'labelShow', messageListVisibility: 'show' },
+    })
+  )
   return res.data
 }
 
 export async function deleteLabel(accountId: string, labelId: string) {
   const gmail = await getGmailClient(accountId)
-  await gmail.users.labels.delete({ userId: 'me', id: labelId })
+  await gmailRetry(() => gmail.users.labels.delete({ userId: 'me', id: labelId }))
 }
 
 // ─── Stats for dashboard ────────────────────────────────
 export async function getMailboxProfile(accountId: string) {
   const gmail = await getGmailClient(accountId)
-  const res = await gmail.users.getProfile({ userId: 'me' })
+  const res = await gmailRetry(() => gmail.users.getProfile({ userId: 'me' }))
   return res.data
 }
 

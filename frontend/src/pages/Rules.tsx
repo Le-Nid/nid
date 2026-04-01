@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import {
   Table,
   Button,
@@ -13,7 +13,7 @@ import {
   Card,
   Empty,
   Drawer,
-  List,
+  Spin,
 } from "antd";
 import {
   PlusOutlined,
@@ -25,7 +25,7 @@ import {
   AppstoreOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
-import { rulesApi, gmailApi } from "../api";
+import { rulesApi } from "../api";
 import { useAccount } from "../hooks/useAccount";
 import {
   Rule,
@@ -39,6 +39,7 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/fr";
 import "dayjs/locale/en";
+import { useRules, useRuleTemplates, useToggleRule, useDeleteRule, useRunRule, useGmailLabels } from "../hooks/queries";
 
 dayjs.extend(relativeTime);
 
@@ -47,42 +48,21 @@ const { Title, Text } = Typography;
 export default function RulesPage() {
   const { t, i18n } = useTranslation();
   const { accountId } = useAccount();
-  const [rules, setRules] = useState<Rule[]>([]);
-  const [labels, setLabels] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { data: rules = [], isLoading: loading, refetch: load } = useRules(accountId);
+  const { data: labels = [] } = useGmailLabels(accountId);
   const [runningId, setRunningId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<Rule | null>(null);
   const [messageApi, contextHolder] = message.useMessage();
   const [templateDrawer, setTemplateDrawer] = useState(false);
-  const [templates, setTemplates] = useState<any[]>([]);
-  const [templateLoading, setTemplateLoading] = useState(false);
-
-  const load = useCallback(async () => {
-    if (!accountId) return;
-    setLoading(true);
-    try {
-      const [r, l] = await Promise.all([
-        rulesApi.list(accountId),
-        gmailApi.listLabels(accountId),
-      ]);
-      setRules(r);
-      setLabels(l);
-    } catch {
-      messageApi.error(t('rules.loadError'));
-    } finally {
-      setLoading(false);
-    }
-  }, [accountId]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const { data: templates = [], isLoading: templateLoading } = useRuleTemplates(templateDrawer);
+  const toggleMutation = useToggleRule(accountId!);
+  const deleteMutation = useDeleteRule(accountId!);
+  const runMutation = useRunRule(accountId!);
 
   const handleToggle = async (rule: Rule) => {
     try {
-      const updated = await rulesApi.toggle(accountId!, rule.id);
-      setRules((prev) => prev.map((r) => (r.id === rule.id ? updated : r)));
+      await toggleMutation.mutateAsync(rule.id);
     } catch {
       messageApi.error(t('rules.toggleError'));
     }
@@ -91,9 +71,9 @@ export default function RulesPage() {
   const handleRun = async (rule: Rule) => {
     setRunningId(rule.id);
     try {
-      const { jobId } = await rulesApi.run(accountId!, rule.id);
+      const { jobId } = await runMutation.mutateAsync(rule.id);
       notification.success({
-        message: t('rules.runSuccess', { name: rule.name }),
+        title: t('rules.runSuccess', { name: rule.name }),
         description: t('rules.runJobCreated', { jobId }),
         duration: 5,
       });
@@ -107,8 +87,7 @@ export default function RulesPage() {
 
   const handleDelete = async (rule: Rule) => {
     try {
-      await rulesApi.delete(accountId!, rule.id);
-      setRules((prev) => prev.filter((r) => r.id !== rule.id));
+      await deleteMutation.mutateAsync(rule.id);
       messageApi.success(t('rules.deleteSuccess'));
     } catch {
       messageApi.error(t('rules.deleteError'));
@@ -128,19 +107,8 @@ export default function RulesPage() {
     load();
   };
 
-  const openTemplates = async () => {
+  const openTemplates = () => {
     setTemplateDrawer(true);
-    if (templates.length === 0) {
-      setTemplateLoading(true);
-      try {
-        const data = await rulesApi.getTemplates();
-        setTemplates(data);
-      } catch {
-        messageApi.error(t('rules.templateLoadError'));
-      } finally {
-        setTemplateLoading(false);
-      }
-    }
   };
 
   const applyTemplate = async (templateId: string) => {
@@ -176,7 +144,7 @@ export default function RulesPage() {
     {
       title: t('rules.rule'),
       render: (_: any, row: Rule) => (
-        <Space direction="vertical" size={2}>
+        <Space orientation="vertical" size={2}>
           <Text strong>{row.name}</Text>
           {row.description && (
             <Text type="secondary" style={{ fontSize: 12 }}>
@@ -190,7 +158,7 @@ export default function RulesPage() {
       title: t('rules.conditions'),
       dataIndex: "conditions",
       render: (conditions: Rule["conditions"]) => (
-        <Space direction="vertical" size={2}>
+        <Space orientation="vertical" size={2}>
           {conditions.map((c, i) => (
             <Tag key={i} style={{ fontSize: 11 }}>
               {CONDITION_FIELD_LABELS[c.field]}{" "}
@@ -210,7 +178,7 @@ export default function RulesPage() {
       dataIndex: "action",
       width: 200,
       render: (action: Rule["action"]) => {
-        const label = labels.find((l) => l.id === action.labelId);
+        const label = labels.find((l: { id: string }) => l.id === action.labelId);
         return (
           <Space>
             <Tag color="blue">{ACTION_LABELS[action.type]}</Tag>
@@ -224,7 +192,7 @@ export default function RulesPage() {
       dataIndex: "schedule",
       width: 150,
       render: (s: string | null, row: Rule) => (
-        <Space direction="vertical" size={0}>
+        <Space orientation="vertical" size={0}>
           <Space size={4}>
             {s ? <ClockCircleOutlined style={{ color: "#1677ff" }} /> : null}
             <Text style={{ fontSize: 12 }}>{scheduleLabel(s)}</Text>
@@ -351,37 +319,30 @@ export default function RulesPage() {
         <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
           {t('rules.templateHint')}
         </Text>
-        <List
-          loading={templateLoading}
-          dataSource={templates}
-          renderItem={(tpl: any) => (
-            <List.Item
-              actions={[
-                <Button
-                  key="apply"
-                  type="primary"
-                  size="small"
-                  onClick={() => applyTemplate(tpl.id)}
-                  disabled={!accountId}
-                >
-                  Activer
-                </Button>,
-              ]}
-            >
-              <List.Item.Meta
-                title={tpl.name}
-                description={
-                  <Space direction="vertical" size={2}>
-                    <Text type="secondary" style={{ fontSize: 12 }}>{tpl.description}</Text>
-                    <Tag color={tpl.category === 'cleanup' ? 'red' : tpl.category === 'archive' ? 'blue' : 'green'} style={{ fontSize: 10 }}>
-                      {tpl.category === 'cleanup' ? t('rules.categoryCleanup') : tpl.category === 'archive' ? t('rules.categoryArchive') : t('rules.categoryOrganize')}
-                    </Tag>
-                  </Space>
-                }
-              />
-            </List.Item>
-          )}
-        />
+        <Spin spinning={templateLoading}>
+          {templates.map((tpl: any) => (
+            <div key={tpl.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--ant-color-split, #f0f0f0)' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div>{tpl.name}</div>
+                <Space orientation="vertical" size={2}>
+                  <Text type="secondary" style={{ fontSize: 12 }}>{tpl.description}</Text>
+                  <Tag color={tpl.category === 'cleanup' ? 'red' : tpl.category === 'archive' ? 'blue' : 'green'} style={{ fontSize: 10 }}>
+                    {tpl.category === 'cleanup' ? t('rules.categoryCleanup') : tpl.category === 'archive' ? t('rules.categoryArchive') : t('rules.categoryOrganize')}
+                  </Tag>
+                </Space>
+              </div>
+              <Button
+                type="primary"
+                size="small"
+                onClick={() => applyTemplate(tpl.id)}
+                disabled={!accountId}
+                style={{ flexShrink: 0, marginLeft: 8 }}
+              >
+                Activer
+              </Button>
+            </div>
+          ))}
+        </Spin>
       </Drawer>
     </div>
   );

@@ -1,6 +1,8 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
+import { BrowserRouter } from 'react-router'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+
 import { ConfigProvider, theme as antTheme, App as AntApp } from 'antd'
 import frFR from 'antd/locale/fr_FR'
 import enUS from 'antd/locale/en_US'
@@ -9,6 +11,17 @@ import { useThemeStore } from './store/theme.store'
 import AppRouter from './App'
 import './i18n'
 import './index.css'
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,    // 5 min — same TTL as the old manual cache
+      gcTime: 10 * 60 * 1000,      // 10 min garbage collection
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+})
 
 const antLocales = { fr: frFR, en: enUS } as Record<string, typeof frFR>
 
@@ -50,7 +63,9 @@ function ThemedApp() {
     >
       {/* AntApp injecte les méthodes message/notification/modal dans le contexte */}
       <AntApp>
-        <AppRouter />
+        <QueryClientProvider client={queryClient}>
+          <AppRouter />
+        </QueryClientProvider>
       </AntApp>
     </ConfigProvider>
   )

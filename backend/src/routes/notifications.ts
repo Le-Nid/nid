@@ -70,6 +70,33 @@ export async function notificationsRoutes(app: FastifyInstance) {
     return { ok: true }
   })
 
+  // ─── Delete one notification ──────────────────────────
+  app.delete('/:notificationId', auth, async (request) => {
+    const userId = request.user.sub
+    const { notificationId } = request.params as { notificationId: string }
+
+    await db
+      .deleteFrom('notifications')
+      .where('id', '=', notificationId)
+      .where('user_id', '=', userId)
+      .execute()
+
+    return { ok: true }
+  })
+
+  // ─── Delete all read notifications ────────────────────
+  app.delete('/', auth, async (request) => {
+    const userId = request.user.sub
+
+    await db
+      .deleteFrom('notifications')
+      .where('user_id', '=', userId)
+      .where('is_read', '=', true)
+      .execute()
+
+    return { ok: true }
+  })
+
   // ─── Get notification preferences ────────────────────
   app.get('/preferences', auth, async (request) => {
     const userId = request.user.sub

@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { authenticator } from 'otplib'
+import { generateSecret, generateURI, verifySync as otpVerify } from 'otplib'
 import QRCode from 'qrcode'
 import { getDb } from '../db'
 import { logAudit } from '../audit/audit.service'
@@ -24,7 +24,7 @@ export async function twoFactorRoutes(app: FastifyInstance) {
       return { error: '2FA is already enabled' }
     }
 
-    const secret = authenticator.generateSecret()
+    const secret = generateSecret()
 
     // Store the secret (not yet enabled)
     await db
@@ -33,7 +33,7 @@ export async function twoFactorRoutes(app: FastifyInstance) {
       .where('id', '=', userId)
       .execute()
 
-    const otpauth = authenticator.keyuri(user.email, 'Gmail Manager', secret)
+    const otpauth = generateURI({ label: user.email, issuer: 'Gmail Manager', secret })
     const qrDataUrl = await QRCode.toDataURL(otpauth)
 
     return { secret, qrDataUrl }
@@ -57,8 +57,8 @@ export async function twoFactorRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: 'Call /setup first' })
     }
 
-    const isValid = authenticator.verify({ token, secret: user.totp_secret })
-    if (!isValid) {
+    const result = otpVerify({ token, secret: user.totp_secret })
+    if (!result.valid) {
       return reply.code(400).send({ error: 'Invalid TOTP code' })
     }
 
@@ -88,8 +88,8 @@ export async function twoFactorRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: '2FA is not enabled' })
     }
 
-    const isValid = authenticator.verify({ token, secret: user.totp_secret })
-    if (!isValid) {
+    const result = otpVerify({ token, secret: user.totp_secret })
+    if (!result.valid) {
       return reply.code(400).send({ error: 'Invalid TOTP code' })
     }
 

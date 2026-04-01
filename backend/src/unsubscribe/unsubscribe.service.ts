@@ -1,5 +1,6 @@
 import { google, gmail_v1 } from 'googleapis'
 import { getGmailClient } from '../gmail/gmail.service'
+import { gmailRetry, limitConcurrency } from '../gmail/gmail-throttle'
 import { config } from '../config'
 
 export interface NewsletterSender {
@@ -26,12 +27,12 @@ export async function scanNewsletters(
 
   // List messages with List-Unsubscribe header (Gmail search supports this)
   do {
-    const listRes = await gmail.users.messages.list({
+    const listRes = await gmailRetry(() => gmail.users.messages.list({
       userId: 'me',
       q: 'list:""',  // matches messages with List-* headers
       maxResults: 500,
       pageToken,
-    })
+    }))
 
     const messageIds = (listRes.data.messages ?? []).map((m: gmail_v1.Schema$Message) => m.id!)
     if (messageIds.length === 0) break
@@ -40,17 +41,20 @@ export async function scanNewsletters(
     for (let i = 0; i < messageIds.length; i += config.GMAIL_BATCH_SIZE) {
       const chunk = messageIds.slice(i, i + config.GMAIL_BATCH_SIZE)
 
-      const fetched = await Promise.all(
-        chunk.map((id: string) =>
-          gmail.users.messages
-            .get({
-              userId: 'me',
-              id,
-              format: 'metadata',
-              metadataHeaders: ['Subject', 'From', 'Date', 'List-Unsubscribe'],
-            })
-            .then((r: any) => r.data)
-        )
+      const fetched = await limitConcurrency(
+        chunk.map((id: string) => () =>
+          gmailRetry(() =>
+            gmail.users.messages
+              .get({
+                userId: 'me',
+                id,
+                format: 'metadata',
+                metadataHeaders: ['Subject', 'From', 'Date', 'List-Unsubscribe'],
+              })
+              .then((r: any) => r.data)
+          )
+        ),
+        config.GMAIL_CONCURRENCY
       )
 
       for (const msg of fetched) {
@@ -121,14 +125,15 @@ export async function getNewsletterMessageIds(
   let pageToken: string | undefined
 
   do {
-    const res = await gmail.users.messages.list({
+    const res = await gmailRetry(() => gmail.users.messages.list({
       userId: 'me',
       q: `from:(${senderEmail}) list:""`,
       maxResults: 500,
       pageToken,
-    })
+    }))
     ids.push(...(res.data.messages ?? []).map((m: gmail_v1.Schema$Message) => m.id!))
     pageToken = res.data.nextPageToken ?? undefined
+    if (pageToken) await new Promise((r) => setTimeout(r, config.GMAIL_THROTTLE_MS))
   } while (pageToken)
 
   return ids

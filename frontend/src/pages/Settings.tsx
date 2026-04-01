@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react'
-import { Card, Button, List, Avatar, Tag, Popconfirm, Typography, Alert, Space, Divider, Progress, Descriptions, Table, Input, message, Modal, Form, Select, Switch } from 'antd'
-import { GoogleOutlined, DeleteOutlined, PlusOutlined, CheckCircleOutlined, UserOutlined, HistoryOutlined, LockOutlined, SafetyOutlined, ApiOutlined, DownloadOutlined, UploadOutlined, BellOutlined } from '@ant-design/icons'
-import { useSearchParams } from 'react-router-dom'
+import { Card, Button, Avatar, Tag, Popconfirm, Typography, Alert, Space, Divider, Progress, Descriptions, Table, Input, message, Modal, Form, Select, Switch, notification } from 'antd'
+import { GoogleOutlined, DeleteOutlined, PlusOutlined, CheckCircleOutlined, UserOutlined, HistoryOutlined, LockOutlined, SafetyOutlined, ApiOutlined, DownloadOutlined, UploadOutlined, BellOutlined, CloudSyncOutlined } from '@ant-design/icons'
+import { useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import api from '../api/client'
 import { useAuthStore } from '../store/auth.store'
 import { formatBytes } from '../utils/format'
-import { auditApi, twoFactorApi, webhooksApi, configApi, notificationsApi } from '../api'
+import { twoFactorApi, webhooksApi, configApi, notificationsApi, archiveApi } from '../api'
+import { useAuditLogs, useWebhooks, useNotificationPreferences } from '../hooks/queries'
+import { useQueryClient } from '@tanstack/react-query'
+import JobProgressModal from '../components/JobProgressModal'
 
 const { Title, Text } = Typography
 
@@ -15,17 +18,23 @@ export default function SettingsPage() {
   const { user, gmailAccounts, fetchMe, storageUsedBytes } = useAuthStore()
   const [searchParams] = useSearchParams()
   const [connecting, setConnecting] = useState(false)
-  const [auditLogs, setAuditLogs] = useState<any[]>([])
-  const [auditLoading, setAuditLoading] = useState(false)
-  const [auditTotal, setAuditTotal] = useState(0)
   const [auditPage, setAuditPage] = useState(1)
   const [totpSetup, setTotpSetup] = useState<{ secret: string; qrDataUrl: string } | null>(null)
   const [totpCode, setTotpCode] = useState('')
   const [totpLoading, setTotpLoading] = useState(false)
-  const [webhooks, setWebhooks] = useState<any[]>([])
   const [webhookModal, setWebhookModal] = useState(false)
   const [webhookForm] = Form.useForm()
-  const [notifPrefs, setNotifPrefs] = useState<Record<string, boolean>>({
+  const [notifPrefsLoading, setNotifPrefsLoading] = useState(false)
+  const [archivingAccount, setArchivingAccount] = useState<string | null>(null)
+  const [activeJobId, setActiveJobId] = useState<string | null>(null)
+  const queryClient = useQueryClient()
+
+  const { data: auditData, isLoading: auditLoading } = useAuditLogs({ page: auditPage, limit: 10 })
+  const auditLogs = auditData?.data ?? []
+  const auditTotal = auditData?.total ?? 0
+
+  const { data: webhooks = [] } = useWebhooks()
+  const { data: notifPrefs = {
     weekly_report: true,
     job_completed: true,
     job_failed: true,
@@ -38,55 +47,29 @@ export default function SettingsPage() {
     rule_executed_toast: false,
     quota_warning_toast: false,
     integrity_alert_toast: false,
-  })
-  const [notifPrefsLoading, setNotifPrefsLoading] = useState(false)
+  } } = useNotificationPreferences()
 
   const gmailStatus = searchParams.get('gmail')
   const connectedEmail = searchParams.get('account')
 
-  useEffect(() => {
-    if (gmailStatus === 'connected') fetchMe()
-  }, [gmailStatus])
-
-  const fetchAuditLogs = async (page = 1) => {
-    setAuditLoading(true)
-    try {
-      const data = await auditApi.list({ page, limit: 10 })
-      setAuditLogs(data.data)
-      setAuditTotal(data.total)
-      setAuditPage(page)
-    } finally {
-      setAuditLoading(false)
-    }
-  }
-
-  useEffect(() => { fetchAuditLogs(); fetchWebhooks(); fetchNotifPrefs() }, [])
-
-  const fetchWebhooks = async () => {
-    try { setWebhooks(await webhooksApi.list()) } catch { /* ignore */ }
-  }
-
-  const fetchNotifPrefs = async () => {
-    try {
-      const prefs = await notificationsApi.getPreferences()
-      setNotifPrefs(prefs)
-    } catch { /* ignore */ }
-  }
-
   const updateNotifPref = async (key: string, value: boolean) => {
-    const updated = { ...notifPrefs, [key]: value }
-    setNotifPrefs(updated)
     setNotifPrefsLoading(true)
     try {
       await notificationsApi.updatePreferences({ [key]: value })
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'preferences'] })
     } catch {
-      // Revert on error
-      setNotifPrefs(notifPrefs)
       message.error(t('common.error'))
     } finally {
       setNotifPrefsLoading(false)
     }
   }
+
+  const fetchWebhooks = () => queryClient.invalidateQueries({ queryKey: ['webhooks'] })
+
+  // Restore session after Gmail connect redirect
+  useEffect(() => {
+    if (gmailStatus === 'connected') fetchMe()
+  }, [gmailStatus])
 
   const handleExport = async () => {
     try {
@@ -137,6 +120,22 @@ export default function SettingsPage() {
   const disconnectAccount = async (accountId: string) => {
     await api.delete(`/api/auth/gmail/${accountId}`)
     fetchMe()
+  }
+
+  const forceArchive = async (accountId: string) => {
+    setArchivingAccount(accountId)
+    try {
+      const { jobId } = await archiveApi.triggerArchive(accountId, { differential: true })
+      setActiveJobId(jobId)
+      notification.success({
+        title: t('settings.archiveStarted'),
+        description: t('settings.archiveStartedDesc'),
+      })
+    } catch {
+      message.error(t('common.error'))
+    } finally {
+      setArchivingAccount(null)
+    }
   }
 
   const quotaBytes = user?.storage_quota_bytes ?? 5_368_709_120
@@ -206,12 +205,25 @@ export default function SettingsPage() {
       </Card>
 
       <Card title={t('settings.gmailAccounts')}>
-        <List
-          dataSource={gmailAccounts}
-          locale={{ emptyText: t('settings.noGmailAccount') }}
-          renderItem={(account) => (
-            <List.Item
-              actions={[
+        {gmailAccounts.length === 0 ? (
+          <Typography.Text type="secondary">{t('settings.noGmailAccount')}</Typography.Text>
+        ) : (
+          gmailAccounts.map((account) => (
+            <div key={account.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--ant-color-split, #f0f0f0)' }}>
+              <Space>
+                <Avatar icon={<GoogleOutlined />} style={{ backgroundColor: '#4285F4' }} />
+                <span>{account.email}</span>
+                {account.is_active && <Tag color="success">{t('common.active')}</Tag>}
+              </Space>
+              <Space>
+                <Button
+                  icon={<CloudSyncOutlined />}
+                  size="small"
+                  loading={archivingAccount === account.id}
+                  onClick={() => forceArchive(account.id)}
+                >
+                  {t('settings.forceArchive')}
+                </Button>
                 <Popconfirm
                   title={t('settings.disconnectConfirm')}
                   description={t('settings.disconnectHint')}
@@ -223,21 +235,11 @@ export default function SettingsPage() {
                   <Button danger icon={<DeleteOutlined />} size="small">
                     {t('settings.disconnect')}
                   </Button>
-                </Popconfirm>,
-              ]}
-            >
-              <List.Item.Meta
-                avatar={<Avatar icon={<GoogleOutlined />} style={{ backgroundColor: '#4285F4' }} />}
-                title={
-                  <Space>
-                    {account.email}
-                    {account.is_active && <Tag color="success">{t('common.active')}</Tag>}
-                  </Space>
-                }
-              />
-            </List.Item>
-          )}
-        />
+                </Popconfirm>
+              </Space>
+            </div>
+          ))
+        )}
 
         <Divider />
 
@@ -261,7 +263,7 @@ export default function SettingsPage() {
       <Card title={<><SafetyOutlined /> {t('settings.twoFactor')}</>} style={{ marginTop: 24 }}>
         {(user as any)?.totp_enabled ? (
           <>
-            <Alert type="success" message={t('settings.twoFactorEnabled')} showIcon style={{ marginBottom: 16 }} />
+            <Alert type="success" title={t('settings.twoFactorEnabled')} showIcon style={{ marginBottom: 16 }} />
             <Space>
               <Input
                 placeholder={t('settings.totpCode')}
@@ -443,24 +445,25 @@ export default function SettingsPage() {
 
       {/* Webhooks */}
       <Card title={<><ApiOutlined /> {t('settings.webhooks')}</>} style={{ marginTop: 24 }}>
-        <List
-          dataSource={webhooks}
-          locale={{ emptyText: t('settings.noWebhook') }}
-          renderItem={(wh: any) => (
-            <List.Item actions={[
-              <Switch size="small" checked={wh.is_active} onChange={() => webhooksApi.toggle(wh.id).then(fetchWebhooks)} />,
-              <Button size="small" onClick={async () => { await webhooksApi.test(wh.id); message.success(t('settings.testSent')) }}>{t('common.test')}</Button>,
-              <Popconfirm title="Supprimer ce webhook ?" onConfirm={() => webhooksApi.remove(wh.id).then(fetchWebhooks)}>
-                <Button danger size="small" icon={<DeleteOutlined />} />
-              </Popconfirm>,
-            ]}>
-              <List.Item.Meta
-                title={<Space>{wh.name} <Tag>{wh.type}</Tag> {wh.last_status && <Tag color={wh.last_status < 300 ? 'green' : 'red'}>{wh.last_status}</Tag>}</Space>}
-                description={<Text type="secondary" style={{ fontSize: 12 }}>{wh.events.join(', ')}</Text>}
-              />
-            </List.Item>
-          )}
-        />
+        {webhooks.length === 0 ? (
+          <Typography.Text type="secondary">{t('settings.noWebhook')}</Typography.Text>
+        ) : (
+          webhooks.map((wh: any) => (
+            <div key={wh.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--ant-color-split, #f0f0f0)' }}>
+              <div>
+                <Space>{wh.name} <Tag>{wh.type}</Tag> {wh.last_status && <Tag color={wh.last_status < 300 ? 'green' : 'red'}>{wh.last_status}</Tag>}</Space>
+                <div><Text type="secondary" style={{ fontSize: 12 }}>{wh.events.join(', ')}</Text></div>
+              </div>
+              <Space>
+                <Switch size="small" checked={wh.is_active} onChange={() => webhooksApi.toggle(wh.id).then(fetchWebhooks)} />
+                <Button size="small" onClick={async () => { await webhooksApi.test(wh.id); message.success(t('settings.testSent')) }}>{t('common.test')}</Button>
+                <Popconfirm title="Supprimer ce webhook ?" onConfirm={() => webhooksApi.remove(wh.id).then(fetchWebhooks)}>
+                  <Button danger size="small" icon={<DeleteOutlined />} />
+                </Popconfirm>
+              </Space>
+            </div>
+          ))
+        )}
         <Divider />
         <Button icon={<PlusOutlined />} onClick={() => { webhookForm.resetFields(); setWebhookModal(true) }}>
           {t('settings.newWebhook')}
@@ -469,6 +472,7 @@ export default function SettingsPage() {
           title={t('settings.newWebhook')}
           open={webhookModal}
           onCancel={() => setWebhookModal(false)}
+          forceRender
           onOk={() => webhookForm.validateFields().then(async (vals) => {
             await webhooksApi.create(vals)
             setWebhookModal(false)
@@ -526,7 +530,7 @@ export default function SettingsPage() {
             current: auditPage,
             total: auditTotal,
             pageSize: 10,
-            onChange: (p) => fetchAuditLogs(p),
+            onChange: (p) => setAuditPage(p),
             showSizeChanger: false,
           }}
           columns={[
@@ -556,6 +560,10 @@ export default function SettingsPage() {
           ]}
         />
       </Card>
+
+      {activeJobId && (
+        <JobProgressModal jobId={activeJobId} onClose={() => setActiveJobId(null)} />
+      )}
     </div>
   )
 }

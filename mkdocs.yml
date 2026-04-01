@@ -57,33 +57,64 @@ markdown_extensions:
 
 nav:
   - Accueil: index.md
-  - Démarrage:
-    - Installation: getting-started/installation.md
-    - Configuration: getting-started/configuration.md
-    - Premier lancement: getting-started/first-run.md
-  - Architecture:
-    - Vue d'ensemble: architecture/overview.md
-    - Backend: architecture/backend.md
-    - Frontend: architecture/frontend.md
-    - Base de données: architecture/database.md
-    - Jobs & Queue: architecture/jobs.md
-  - API:
-    - Authentification: api/auth.md
-    - Gmail: api/gmail.md
-    - Archives: api/archive.md
-    - Règles: api/rules.md
-    - Dashboard: api/dashboard.md
-    - Jobs: api/jobs.md
-    - Admin: api/admin.md
-    - Audit log: api/audit.md
-    - Doublons: api/duplicates.md
-    - Newsletters: api/unsubscribe.md
-    - Pièces jointes: api/attachments.md
-    - Rapports: api/reports.md
-    - Notifications: api/notifications.md
-    - Intégrité: api/integrity.md
-    - Webhooks: api/webhooks.md
-    - Configuration: api/config.md
+  - 📥 Installation:
+    - Démarrage rapide: installation/index.md
+    - Configuration Google Cloud: installation/google-cloud.md
+    - Configuration détaillée: installation/configuration.md
+    - Déploiement production: installation/production.md
+    - Environnement de développement: installation/development.md
+  - 📖 Guide utilisateur:
+    - Vue d'ensemble: guide/index.md
+    - Premiers pas: guide/first-steps.md
+    - Dashboard: guide/dashboard.md
+    - Gestion des mails: guide/mail-management.md
+    - Archivage: guide/archiving.md
+    - Règles automatiques: guide/rules.md
+    - Suivi des jobs: guide/jobs.md
+    - Newsletters: guide/newsletters.md
+    - Pièces jointes: guide/attachments.md
+    - Doublons: guide/duplicates.md
+    - Analytics & Insights: guide/analytics.md
+    - Vie privée: guide/privacy.md
+    - Boîte unifiée: guide/unified-inbox.md
+    - Recherches sauvegardées: guide/saved-searches.md
+    - Notifications & Webhooks: guide/notifications.md
+    - Expiration des emails: guide/expiration.md
+    - Partage d'archives: guide/sharing.md
+    - Ops & Résilience: guide/ops-resilience.md
+    - Paramètres: guide/settings.md
+    - Administration: guide/admin.md
+    - Serveur MCP: guide/mcp-server.md
+  - 🔧 Documentation technique:
+    - Vue d'ensemble: technical/overview.md
+    - Backend: technical/backend.md
+    - Frontend: technical/frontend.md
+    - Base de données: technical/database.md
+    - Jobs & Queue: technical/jobs.md
+    - Sécurité: technical/security.md
+    - Référence API:
+      - Index: technical/api/index.md
+      - Authentification: technical/api/auth.md
+      - Gmail: technical/api/gmail.md
+      - Archives: technical/api/archive.md
+      - Règles: technical/api/rules.md
+      - Dashboard: technical/api/dashboard.md
+      - Jobs: technical/api/jobs.md
+      - Admin: technical/api/admin.md
+      - Audit log: technical/api/audit.md
+      - Doublons: technical/api/duplicates.md
+      - Newsletters: technical/api/unsubscribe.md
+      - Pièces jointes: technical/api/attachments.md
+      - Rapports: technical/api/reports.md
+      - Notifications: technical/api/notifications.md
+      - Intégrité: technical/api/integrity.md
+      - Webhooks: technical/api/webhooks.md
+      - Configuration: technical/api/config.md
+      - Vie privée: technical/api/privacy.md
+      - Analytics: technical/api/analytics.md
+      - Recherches sauvegardées: technical/api/saved-searches.md
+      - Boîte unifiée: technical/api/unified.md
+      - Ops & Résilience: technical/api/ops.md
   - Développement:
     - Contribuer: development/contributing.md
     - Roadmap: development/roadmap.md

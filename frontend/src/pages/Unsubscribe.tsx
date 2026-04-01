@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useState } from 'react'
 import {
   Table, Button, Typography, Space, Tag, Popconfirm, Tooltip, Card,
   Empty, Statistic, Row, Col, notification, message, Input,
@@ -7,11 +7,11 @@ import {
   DeleteOutlined, LinkOutlined, MailOutlined,
   ReloadOutlined,
 } from '@ant-design/icons'
-import { unsubscribeApi } from '../api'
 import { useTranslation } from 'react-i18next'
 import { useAccount } from '../hooks/useAccount'
 import { formatBytes } from '../utils/format'
 import JobProgressModal from '../components/JobProgressModal'
+import { useNewsletters, useDeleteSender } from '../hooks/queries'
 
 const { Title, Text } = Typography
 
@@ -29,35 +29,21 @@ interface NewsletterSender {
 export default function UnsubscribePage() {
   const { t } = useTranslation()
   const { accountId } = useAccount()
-  const [newsletters, setNewsletters] = useState<NewsletterSender[]>([])
-  const [loading, setLoading] = useState(false)
+  const { data: newsletters = [], isLoading: loading, refetch } = useNewsletters(accountId)
+  const load = () => { refetch() }
+  const deleteSenderMutation = useDeleteSender(accountId!)
   const [search, setSearch] = useState('')
   const [deletingEmail, setDeletingEmail] = useState<string | null>(null)
   const [activeJobId, setActiveJobId] = useState<string | null>(null)
   const [messageApi, contextHolder] = message.useMessage()
 
-  const load = useCallback(async () => {
-    if (!accountId) return
-    setLoading(true)
-    try {
-      const data = await unsubscribeApi.scanNewsletters(accountId)
-      setNewsletters(data)
-    } catch {
-      messageApi.error(t('unsubscribe.scanError'))
-    } finally {
-      setLoading(false)
-    }
-  }, [accountId])
-
-  useEffect(() => { load() }, [load])
-
   const handleDelete = async (sender: NewsletterSender, permanent = false) => {
     setDeletingEmail(sender.email)
     try {
-      const { jobId, count } = await unsubscribeApi.deleteSender(accountId!, sender.email, permanent)
+      const { jobId, count } = await deleteSenderMutation.mutateAsync({ email: sender.email, permanent })
       setActiveJobId(jobId)
       notification.success({
-        message: t('unsubscribe.deleteStarted'),
+        title: t('unsubscribe.deleteStarted'),
         description: t('unsubscribe.deleteDesc', { count, sender: sender.sender }),
       })
     } catch {
@@ -67,11 +53,11 @@ export default function UnsubscribePage() {
     }
   }
 
-  const totalMails = newsletters.reduce((s, n) => s + n.count, 0)
-  const totalSize = newsletters.reduce((s, n) => s + n.totalSizeBytes, 0)
+  const totalMails = newsletters.reduce((s: number, n: NewsletterSender) => s + n.count, 0)
+  const totalSize = newsletters.reduce((s: number, n: NewsletterSender) => s + n.totalSizeBytes, 0)
 
   const filtered = search
-    ? newsletters.filter((n) =>
+    ? newsletters.filter((n: NewsletterSender) =>
         n.sender.toLowerCase().includes(search.toLowerCase()) ||
         n.email.toLowerCase().includes(search.toLowerCase())
       )
@@ -82,7 +68,7 @@ export default function UnsubscribePage() {
       title: t('unsubscribe.sender'),
       key: 'sender',
       render: (_: any, row: NewsletterSender) => (
-        <Space direction="vertical" size={0}>
+        <Space orientation="vertical" size={0}>
           <Text strong style={{ fontSize: 13 }}>{row.sender}</Text>
           <Text type="secondary" style={{ fontSize: 11 }}>{row.email}</Text>
         </Space>

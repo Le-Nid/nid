@@ -27,15 +27,43 @@ export const config = {
   FRONTEND_URL: process.env.FRONTEND_URL ?? 'http://localhost:3000',
   ARCHIVE_PATH: process.env.ARCHIVE_PATH ?? '/archives',
 
+  // Social OAuth providers (optionnels — les providers non configurés sont désactivés)
+  MICROSOFT_CLIENT_ID:     process.env.MICROSOFT_CLIENT_ID ?? '',
+  MICROSOFT_CLIENT_SECRET: process.env.MICROSOFT_CLIENT_SECRET ?? '',
+
+  DISCORD_CLIENT_ID:     process.env.DISCORD_CLIENT_ID ?? '',
+  DISCORD_CLIENT_SECRET: process.env.DISCORD_CLIENT_SECRET ?? '',
+
+  FACEBOOK_CLIENT_ID:     process.env.FACEBOOK_CLIENT_ID ?? '',
+  FACEBOOK_CLIENT_SECRET: process.env.FACEBOOK_CLIENT_SECRET ?? '',
+
+  LINKEDIN_CLIENT_ID:     process.env.LINKEDIN_CLIENT_ID ?? '',
+  LINKEDIN_CLIENT_SECRET: process.env.LINKEDIN_CLIENT_SECRET ?? '',
+
+  KEYCLOAK_REALM_URL:     process.env.KEYCLOAK_REALM_URL ?? '',
+  KEYCLOAK_CLIENT_ID:     process.env.KEYCLOAK_CLIENT_ID ?? '',
+  KEYCLOAK_CLIENT_SECRET: process.env.KEYCLOAK_CLIENT_SECRET ?? '',
+
   // Premier utilisateur avec ce mail devient admin automatiquement
   ADMIN_EMAIL: process.env.ADMIN_EMAIL ?? '',
 
   // Inscription ouverte ou fermée (défaut: true)
   ALLOW_REGISTRATION: process.env.ALLOW_REGISTRATION !== 'false',
 
-  // Gmail API throttle — stay under 250 units/user/sec
-  GMAIL_BATCH_SIZE: 100,
-  GMAIL_THROTTLE_MS: 500,
+  // Gmail API throttle — stay under 250 quota units/user/sec
+  // Most endpoints = 5 units → max ~50 concurrent requests/sec
+  GMAIL_BATCH_SIZE: 25,
+  GMAIL_THROTTLE_MS: 1_000,
+  GMAIL_CONCURRENCY: 10,
+
+  // S3-compatible storage (MinIO, AWS S3, Backblaze B2, etc.)
+  // Si S3_ENDPOINT est défini, le stockage distant est disponible
+  S3_ENDPOINT:          process.env.S3_ENDPOINT ?? '',
+  S3_REGION:            process.env.S3_REGION ?? 'us-east-1',
+  S3_BUCKET:            process.env.S3_BUCKET ?? 'gmail-manager-archives',
+  S3_ACCESS_KEY_ID:     process.env.S3_ACCESS_KEY_ID ?? '',
+  S3_SECRET_ACCESS_KEY: process.env.S3_SECRET_ACCESS_KEY ?? '',
+  S3_FORCE_PATH_STYLE:  process.env.S3_FORCE_PATH_STYLE !== 'false',  // true pour MinIO
 } as const
 
 export type Config = typeof config
