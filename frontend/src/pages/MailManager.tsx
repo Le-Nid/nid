@@ -61,8 +61,13 @@ interface MailRow {
 export default function MailManagerPage() {
   const { t } = useTranslation();
   const { accountId } = useAccount();
+  const mailCache = useMailCache();
 
-  const [mails, setMails] = useState<MailRow[]>([]);
+  // Restaurer l'état depuis le cache Zustand au montage (évite le flash vide)
+  const initialKey = accountId ? cacheKey(accountId, '', '') : '';
+  const initialCache = initialKey ? mailCache.getEntry(initialKey) : null;
+
+  const [mails, setMails] = useState<MailRow[]>(initialCache?.mails ?? []);
   const [labels, setLabels] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -70,18 +75,17 @@ export default function MailManagerPage() {
   const [selected, setSelected] = useState<string[]>([]);
   const [query, setQuery] = useState("");
   const [quickFilter, setQuickFilter] = useState("");
-  const [pageToken, setPageToken] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [total, setTotal] = useState(0);
+  const [pageToken, setPageToken] = useState<string | null>(initialCache?.pageToken ?? null);
+  const [hasMore, setHasMore] = useState(initialCache?.hasMore ?? false);
+  const [total, setTotal] = useState(initialCache?.total ?? 0);
   const [viewingId, setViewingId] = useState<string | null>(null);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const [archiveAllLoading, setArchiveAllLoading] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
-  const mailCache = useMailCache();
   const loadIdRef = useRef(0);
 
-  const PROGRESSIVE_BATCH = 10;
+  const PROGRESSIVE_BATCH = 20;
 
   // ─── Raccourcis clavier ───────────────────────────────────
   useKeyboardShortcuts({
@@ -131,7 +135,7 @@ export default function MailManagerPage() {
       const fullQuery = [quickFilter, query].filter(Boolean).join(" ");
       const res = await gmailApi.listMessages(accountId, {
         q: fullQuery || undefined,
-        maxResults: 50,
+        maxResults: 20,
       });
 
       if (currentLoadId !== loadIdRef.current) return;
@@ -139,7 +143,7 @@ export default function MailManagerPage() {
       const ids: string[] = (res.messages ?? []).map((m: any) => m.id);
       setTotal(res.resultSizeEstimate ?? 0);
 
-      // Affichage progressif par lots
+      // Chargement en une seule requête (le backend gère la concurrence)
       const allMails: MailRow[] = [];
       if (!cached) setMails([]);
 
@@ -183,13 +187,13 @@ export default function MailManagerPage() {
       const fullQuery = [quickFilter, query].filter(Boolean).join(" ");
       const res = await gmailApi.listMessages(accountId, {
         q: fullQuery || undefined,
-        maxResults: 50,
+        maxResults: 20,
         pageToken,
       });
 
       const ids: string[] = (res.messages ?? []).map((m: any) => m.id);
 
-      // Affichage progressif
+      // Chargement séquentiel par lots
       for (let i = 0; i < ids.length; i += PROGRESSIVE_BATCH) {
         const chunk = ids.slice(i, i + PROGRESSIVE_BATCH);
         const enriched = await gmailApi.batchGetMessages(accountId, chunk);

@@ -1,7 +1,7 @@
 import { google, gmail_v1 } from 'googleapis'
 import { getAuthenticatedClient } from '../auth/oauth.service'
 import { config } from '../config'
-import { gmailRetry, limitConcurrency } from './gmail-throttle'
+import { gmailRetry, limitConcurrency, withAccountLimit } from './gmail-throttle'
 
 export interface MailMeta {
   id: string
@@ -73,32 +73,27 @@ export async function getMessageFull(accountId: string, messageId: string) {
 export async function batchGetMessages(
   accountId: string,
   messageIds: string[],
-  onProgress?: (done: number, total: number) => void
+  opts?: { onProgress?: (done: number, total: number) => void }
 ): Promise<MailMeta[]> {
-  const results: MailMeta[] = []
+  const t0 = Date.now()
   const gmail = await getGmailClient(accountId)
+  const onProgress = opts?.onProgress
 
-  for (let i = 0; i < messageIds.length; i += config.GMAIL_BATCH_SIZE) {
-    const chunk = messageIds.slice(i, i + config.GMAIL_BATCH_SIZE)
-
-    const fetched = await limitConcurrency(
-      chunk.map((id) => () =>
+  // All calls go through the global per-account semaphore (5 concurrent max).
+  // No chunking or local concurrency control needed — the semaphore handles it.
+  const results = await Promise.all(
+    messageIds.map((id) =>
+      withAccountLimit(accountId, () =>
         gmailRetry(() =>
           gmail.users.messages
             .get({ userId: 'me', id, format: 'metadata', metadataHeaders: ['Subject', 'From', 'To', 'Date'] })
             .then((r) => formatMeta(r.data))
         )
-      ),
-      config.GMAIL_CONCURRENCY
+      )
     )
-    results.push(...fetched)
-    onProgress?.(Math.min(i + config.GMAIL_BATCH_SIZE, messageIds.length), messageIds.length)
-
-    // Throttle between batches
-    if (i + config.GMAIL_BATCH_SIZE < messageIds.length) {
-      await sleep(config.GMAIL_THROTTLE_MS)
-    }
-  }
+  )
+  onProgress?.(messageIds.length, messageIds.length)
+  console.log(`[batchGet] ${messageIds.length} msgs in ${Date.now() - t0}ms`)
   return results
 }
 

@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import {
   Typography, Card, Row, Col, Statistic, Table, Empty, Space, Tag, Spin,
 } from 'antd'
@@ -6,9 +5,9 @@ import {
   CheckCircleOutlined, CloseCircleOutlined, DatabaseOutlined,
   RobotOutlined, MailOutlined,
 } from '@ant-design/icons'
-import { reportsApi } from '../api'
 import { useTranslation } from 'react-i18next'
 import { formatBytes } from '../utils/format'
+import { useWeeklyReport } from '../hooks/queries'
 
 const { Title, Text } = Typography
 
@@ -28,16 +27,7 @@ interface WeeklyReport {
 
 export default function InsightsPage() {
   const { t } = useTranslation()
-  const [report, setReport] = useState<WeeklyReport | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
-
-  useEffect(() => {
-    reportsApi.getWeekly()
-      .then(setReport)
-      .catch(() => setError(true))
-      .finally(() => setLoading(false))
-  }, [])
+  const { data: report, isLoading: loading, isError: error } = useWeeklyReport()
 
   if (loading) return <div style={{ textAlign: 'center', padding: 80 }}><Spin size="large" /></div>
   if (error || !report) return <Empty description={t('insights.noData')} />

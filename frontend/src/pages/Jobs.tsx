@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Table,
   Tag,
@@ -13,8 +13,8 @@ import {
 } from "antd";
 import { DeleteOutlined, ReloadOutlined, EyeOutlined } from "@ant-design/icons";
 import { useTranslation } from 'react-i18next';
-import { jobsApi } from "../api";
 import { useAccount } from "../hooks/useAccount";
+import { useJobs, useCancelJob } from "../hooks/queries";
 import JobProgressModal from "../components/JobProgressModal";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -30,64 +30,31 @@ import { STATUS_COLORS } from "../utils/constants";
 export default function JobsPage() {
   const { t } = useTranslation();
   const { accountId } = useAccount();
-  const [jobs, setJobs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [watchingJobId, setWatchingJobId] = useState<string | null>(null);
-  const inFlightLoadRef = useRef<Promise<void> | null>(null);
 
-  const hasActiveJobs = jobs.some((j) =>
+  const params: Record<string, any> = {};
+  if (accountId) params.accountId = accountId;
+  if (statusFilter) params.status = statusFilter;
+
+  const { data: jobs = [], isLoading: loading, refetch } = useJobs(params);
+  const cancelMutation = useCancelJob();
+
+  const hasActiveJobs = jobs.some((j: any) =>
     ["active", "pending"].includes(j.status),
   );
 
-  const load = useCallback(
-    async ({ showLoading = true }: { showLoading?: boolean } = {}) => {
-      if (inFlightLoadRef.current) {
-        return inFlightLoadRef.current;
-      }
-
-      const request = (async () => {
-        if (showLoading) {
-          setLoading(true);
-        }
-
-        try {
-          const params: Record<string, any> = {};
-          if (accountId) params.accountId = accountId;
-          if (statusFilter) params.status = statusFilter;
-          const data = await jobsApi.list(params);
-          setJobs(data);
-        } finally {
-          if (showLoading) {
-            setLoading(false);
-          }
-          inFlightLoadRef.current = null;
-        }
-      })();
-
-      inFlightLoadRef.current = request;
-      return request;
-    },
-    [accountId, statusFilter],
-  );
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
   // Polling léger uniquement quand des jobs sont actifs
-  // (le SSE s'occupe des détails d'un job spécifique via la modal)
   useEffect(() => {
     if (!hasActiveJobs) return;
     const interval = setInterval(() => {
-      void load({ showLoading: false });
+      refetch();
     }, 5000);
     return () => clearInterval(interval);
-  }, [hasActiveJobs, load]);
+  }, [hasActiveJobs, refetch]);
 
   const cancelJob = async (jobId: string) => {
-    await jobsApi.cancel(jobId);
-    load();
+    await cancelMutation.mutateAsync(jobId);
   };
 
   const columns = [
@@ -232,7 +199,7 @@ export default function JobsPage() {
           ]}
         />
 
-        <Button icon={<ReloadOutlined />} onClick={() => load()} loading={loading}>
+        <Button icon={<ReloadOutlined />} onClick={() => refetch()} loading={loading}>
           {t('common.refresh')}
         </Button>
 

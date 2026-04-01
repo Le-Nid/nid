@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useState } from 'react'
 import {
   Table, Button, Typography, Space, Tag, Card, Empty,
   Statistic, Row, Col, message, Popconfirm,
@@ -6,10 +6,10 @@ import {
 import {
   CopyOutlined, DeleteOutlined, ReloadOutlined,
 } from '@ant-design/icons'
-import { duplicatesApi } from '../api'
 import { useTranslation } from 'react-i18next'
 import { useAccount } from '../hooks/useAccount'
 import { formatBytes } from '../utils/format'
+import { useDuplicates, useDeleteDuplicates } from '../hooks/queries'
 
 const { Title, Text } = Typography
 
@@ -25,29 +25,14 @@ interface DuplicateGroup {
 export default function DuplicatesPage() {
   const { t } = useTranslation()
   const { accountId } = useAccount()
-  const [groups, setGroups] = useState<DuplicateGroup[]>([])
-  const [loading, setLoading] = useState(false)
-  const [totalDuplicateMails, setTotalDuplicateMails] = useState(0)
-  const [totalDuplicateSize, setTotalDuplicateSize] = useState(0)
+  const { data, isLoading: loading, refetch } = useDuplicates(accountId)
+  const load = () => { refetch() }
+  const deleteMutation = useDeleteDuplicates(accountId!)
+  const groups = data?.groups ?? []
+  const totalDuplicateMails = data?.totalDuplicateMails ?? 0
+  const totalDuplicateSize = data?.totalDuplicateSizeBytes ?? 0
   const [deletingGroup, setDeletingGroup] = useState<string | null>(null)
   const [messageApi, contextHolder] = message.useMessage()
-
-  const load = useCallback(async () => {
-    if (!accountId) return
-    setLoading(true)
-    try {
-      const data = await duplicatesApi.detectArchived(accountId)
-      setGroups(data.groups)
-      setTotalDuplicateMails(data.totalDuplicateMails)
-      setTotalDuplicateSize(data.totalDuplicateSizeBytes)
-    } catch {
-      messageApi.error(t('duplicates.scanError'))
-    } finally {
-      setLoading(false)
-    }
-  }, [accountId])
-
-  useEffect(() => { load() }, [load])
 
   const handleDeleteDuplicates = async (group: DuplicateGroup) => {
     // Keep first (newest), delete the rest
@@ -55,9 +40,8 @@ export default function DuplicatesPage() {
     const key = `${group.subject}-${group.sender}-${group.dateGroup}`
     setDeletingGroup(key)
     try {
-      const result = await duplicatesApi.deleteArchived(accountId!, toDelete)
+      const result = await deleteMutation.mutateAsync(toDelete)
       messageApi.success(t('duplicates.deleteSuccess', { count: result.deleted }))
-      load()
     } catch {
       messageApi.error(t('duplicates.deleteError'))
     } finally {

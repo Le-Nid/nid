@@ -7,13 +7,15 @@
  *   → ~50 requests / user / second max
  *
  * This module provides:
- *   1. `gmailRetry`  – retries on 429 with exponential backoff + jitter
- *   2. `pThrottle`   – limits per-account concurrency to stay under quota
+ *   1. `gmailRetry`       – retries on 429 with exponential backoff + jitter
+ *   2. `limitConcurrency`  – generic concurrency limiter (per-call)
+ *   3. `accountSemaphore`  – global per-account concurrency limiter (shared across all routes)
  */
 
 const MAX_RETRIES = 5
 const BASE_DELAY_MS = 1_000
 const MAX_DELAY_MS = 60_000
+const GLOBAL_CONCURRENCY = 5
 
 /**
  * Wraps a Gmail API call with retry logic for 429 (rate limit) and
@@ -78,4 +80,66 @@ function parseRetryAfter(err: any): number | null {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+// ─── Global per-account semaphore ───────────────────────
+// Ensures ALL Gmail API calls for the same account share a
+// single concurrency pool, regardless of which route/service
+// triggered them.  Prevents Google's implicit throttling that
+// occurs when too many concurrent connections come from the
+// same OAuth token.
+
+class Semaphore {
+  private queue: (() => void)[] = []
+  private running = 0
+
+  constructor(private max: number) {}
+
+  async acquire(): Promise<void> {
+    if (this.running < this.max) {
+      this.running++
+      return
+    }
+    return new Promise((resolve) => {
+      this.queue.push(() => {
+        this.running++
+        resolve()
+      })
+    })
+  }
+
+  release(): void {
+    this.running--
+    const next = this.queue.shift()
+    if (next) next()
+  }
+}
+
+const semaphores = new Map<string, Semaphore>()
+
+/**
+ * Get (or create) a global concurrency semaphore for a given account.
+ * All Gmail API calls for the same account share this limiter.
+ */
+export function accountSemaphore(accountId: string): Semaphore {
+  let sem = semaphores.get(accountId)
+  if (!sem) {
+    sem = new Semaphore(GLOBAL_CONCURRENCY)
+    semaphores.set(accountId, sem)
+  }
+  return sem
+}
+
+/**
+ * Run a task through the per-account global semaphore.
+ * Use this for every Gmail API call to ensure global concurrency control.
+ */
+export async function withAccountLimit<T>(accountId: string, fn: () => Promise<T>): Promise<T> {
+  const sem = accountSemaphore(accountId)
+  await sem.acquire()
+  try {
+    return await fn()
+  } finally {
+    sem.release()
+  }
 }

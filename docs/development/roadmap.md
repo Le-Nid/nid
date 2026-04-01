@@ -161,3 +161,12 @@
 
 ### ui / ux
 - [x] mettre des catégories sur le menu latérale (Email, Outils, Analyse, Système). Meilleure UX avec groupes visuels dans le sidebar
+
+
+
+
+
+
+pourquoi lorsque l'on quitte le focus de la page et qu'on revient, on arrive sur la page d'authent ? IL n'y a pas de sso ?
+
+Dans les archives, il y a bien les mails mais il n'y a pas les pièces jointes. On ne peut pas non plus chercher par nom de pièce jointe. 

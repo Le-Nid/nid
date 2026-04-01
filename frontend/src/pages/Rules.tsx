@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import {
   Table,
   Button,
@@ -25,7 +25,7 @@ import {
   AppstoreOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
-import { rulesApi, gmailApi } from "../api";
+import { rulesApi } from "../api";
 import { useAccount } from "../hooks/useAccount";
 import {
   Rule,
@@ -39,6 +39,7 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/fr";
 import "dayjs/locale/en";
+import { useRules, useRuleTemplates, useToggleRule, useDeleteRule, useRunRule, useGmailLabels } from "../hooks/queries";
 
 dayjs.extend(relativeTime);
 
@@ -47,42 +48,21 @@ const { Title, Text } = Typography;
 export default function RulesPage() {
   const { t, i18n } = useTranslation();
   const { accountId } = useAccount();
-  const [rules, setRules] = useState<Rule[]>([]);
-  const [labels, setLabels] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { data: rules = [], isLoading: loading, refetch: load } = useRules(accountId);
+  const { data: labels = [] } = useGmailLabels(accountId);
   const [runningId, setRunningId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<Rule | null>(null);
   const [messageApi, contextHolder] = message.useMessage();
   const [templateDrawer, setTemplateDrawer] = useState(false);
-  const [templates, setTemplates] = useState<any[]>([]);
-  const [templateLoading, setTemplateLoading] = useState(false);
-
-  const load = useCallback(async () => {
-    if (!accountId) return;
-    setLoading(true);
-    try {
-      const [r, l] = await Promise.all([
-        rulesApi.list(accountId),
-        gmailApi.listLabels(accountId),
-      ]);
-      setRules(r);
-      setLabels(l);
-    } catch {
-      messageApi.error(t('rules.loadError'));
-    } finally {
-      setLoading(false);
-    }
-  }, [accountId]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const { data: templates = [], isLoading: templateLoading, refetch: fetchTemplates } = useRuleTemplates(templateDrawer);
+  const toggleMutation = useToggleRule(accountId!);
+  const deleteMutation = useDeleteRule(accountId!);
+  const runMutation = useRunRule(accountId!);
 
   const handleToggle = async (rule: Rule) => {
     try {
-      const updated = await rulesApi.toggle(accountId!, rule.id);
-      setRules((prev) => prev.map((r) => (r.id === rule.id ? updated : r)));
+      await toggleMutation.mutateAsync(rule.id);
     } catch {
       messageApi.error(t('rules.toggleError'));
     }
@@ -91,7 +71,7 @@ export default function RulesPage() {
   const handleRun = async (rule: Rule) => {
     setRunningId(rule.id);
     try {
-      const { jobId } = await rulesApi.run(accountId!, rule.id);
+      const { jobId } = await runMutation.mutateAsync(rule.id);
       notification.success({
         title: t('rules.runSuccess', { name: rule.name }),
         description: t('rules.runJobCreated', { jobId }),
@@ -107,8 +87,7 @@ export default function RulesPage() {
 
   const handleDelete = async (rule: Rule) => {
     try {
-      await rulesApi.delete(accountId!, rule.id);
-      setRules((prev) => prev.filter((r) => r.id !== rule.id));
+      await deleteMutation.mutateAsync(rule.id);
       messageApi.success(t('rules.deleteSuccess'));
     } catch {
       messageApi.error(t('rules.deleteError'));
@@ -128,19 +107,8 @@ export default function RulesPage() {
     load();
   };
 
-  const openTemplates = async () => {
+  const openTemplates = () => {
     setTemplateDrawer(true);
-    if (templates.length === 0) {
-      setTemplateLoading(true);
-      try {
-        const data = await rulesApi.getTemplates();
-        setTemplates(data);
-      } catch {
-        messageApi.error(t('rules.templateLoadError'));
-      } finally {
-        setTemplateLoading(false);
-      }
-    }
   };
 
   const applyTemplate = async (templateId: string) => {

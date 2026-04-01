@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useState } from 'react'
 import {
   Table, Button, Typography, Space, Tag, Card, Empty,
   Statistic, Row, Col, message, Input, Segmented,
@@ -7,10 +7,10 @@ import {
   PaperClipOutlined, CloudOutlined, DatabaseOutlined, ReloadOutlined,
   FileImageOutlined, FilePdfOutlined, FileOutlined, FileZipOutlined,
 } from '@ant-design/icons'
-import { attachmentsApi } from '../api'
 import { useTranslation } from 'react-i18next'
 import { useAccount } from '../hooks/useAccount'
 import { formatBytes } from '../utils/format'
+import { useArchivedAttachments, useLiveAttachments } from '../hooks/queries'
 
 const { Title, Text } = Typography
 
@@ -49,60 +49,23 @@ export default function AttachmentsPage() {
   const { t } = useTranslation()
   const { accountId } = useAccount()
   const [mode, setMode] = useState<ViewMode>('archived')
-  const [archivedAtts, setArchivedAtts] = useState<ArchivedAttachment[]>([])
-  const [liveAtts, setLiveAtts] = useState<LiveAttachment[]>([])
-  const [loading, setLoading] = useState(false)
-  const [totalSize, setTotalSize] = useState(0)
-  const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [messageApi, contextHolder] = message.useMessage()
 
-  const loadArchived = useCallback(async (p = 1, q = '') => {
-    if (!accountId) return
-    setLoading(true)
-    try {
-      const data = await attachmentsApi.listArchived(accountId, {
-        page: p,
-        limit: 50,
-        sort: 'size',
-        order: 'desc',
-        ...(q ? { q } : {}),
-      })
-      setArchivedAtts(data.attachments)
-      setTotal(data.total)
-      setTotalSize(data.totalSizeBytes)
-    } catch {
-      messageApi.error(t('attachments.loadError'))
-    } finally {
-      setLoading(false)
-    }
-  }, [accountId])
+  const archivedParams = { page, limit: 50, sort: 'size', order: 'desc', ...(search ? { q: search } : {}) }
+  const archivedQuery = useArchivedAttachments(mode === 'archived' ? accountId : null, archivedParams)
+  const liveQuery = useLiveAttachments(mode === 'live' ? accountId : null, { maxResults: 200 })
 
-  const loadLive = useCallback(async () => {
-    if (!accountId) return
-    setLoading(true)
-    try {
-      const data = await attachmentsApi.listLive(accountId, { maxResults: 200 })
-      setLiveAtts(data.attachments)
-      setTotalSize(data.totalSizeBytes)
-      setTotal(data.attachments.length)
-    } catch {
-      messageApi.error(t('attachments.scanError'))
-    } finally {
-      setLoading(false)
-    }
-  }, [accountId])
-
-  useEffect(() => {
-    if (mode === 'archived') loadArchived(1, search)
-    else loadLive()
-  }, [mode, accountId])
+  const archivedAtts = archivedQuery.data?.attachments ?? []
+  const liveAtts = liveQuery.data?.attachments ?? []
+  const loading = mode === 'archived' ? archivedQuery.isLoading : liveQuery.isLoading
+  const total = mode === 'archived' ? (archivedQuery.data?.total ?? 0) : liveAtts.length
+  const totalSize = mode === 'archived' ? (archivedQuery.data?.totalSizeBytes ?? 0) : (liveQuery.data?.totalSizeBytes ?? 0)
 
   const handleSearch = (q: string) => {
     setSearch(q)
     setPage(1)
-    if (mode === 'archived') loadArchived(1, q)
   }
 
   const archivedColumns = [
@@ -212,7 +175,7 @@ export default function AttachmentsPage() {
         />
         <Button
           icon={<ReloadOutlined />}
-          onClick={() => mode === 'archived' ? loadArchived(page, search) : loadLive()}
+          onClick={() => mode === 'archived' ? archivedQuery.refetch() : liveQuery.refetch()}
           loading={loading}
         >
           {t('attachments.reload')}
@@ -263,7 +226,7 @@ export default function AttachmentsPage() {
               current: page,
               pageSize: 50,
               total,
-              onChange: (p) => { setPage(p); loadArchived(p, search) },
+              onChange: (p) => { setPage(p) },
               showTotal: (t) => `${t} pièces jointes`,
             } : { pageSize: 50, showTotal: (t) => `${t} pièces jointes` }}
             locale={{ emptyText: <Empty description={t('attachments.noAttachment')} /> }}

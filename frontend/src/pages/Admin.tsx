@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import {
   Card, Table, Tag, Typography, Tabs, Statistic, Row, Col, Input,
   Select, Switch, Button, Modal, Descriptions, Space, Badge, InputNumber,
@@ -7,10 +7,10 @@ import {
   UserOutlined, TeamOutlined, CloudOutlined, ScheduleOutlined,
   DatabaseOutlined, SearchOutlined,
 } from '@ant-design/icons'
-import { adminApi } from '../api'
 import { useTranslation } from 'react-i18next'
 import { formatBytes } from '../utils/format'
 import { STATUS_COLORS } from '../utils/constants'
+import { useAdminStats, useAdminUsers, useAdminJobs, useUpdateAdminUser } from '../hooks/queries'
 
 const { Title, Text } = Typography
 
@@ -52,48 +52,24 @@ interface AdminJob {
 
 export default function AdminPage() {
   const { t } = useTranslation()
-  const [stats, setStats] = useState<AdminStats | null>(null)
-  const [users, setUsers] = useState<AdminUser[]>([])
-  const [usersTotal, setUsersTotal] = useState(0)
   const [usersPage, setUsersPage] = useState(1)
   const [usersSearch, setUsersSearch] = useState('')
-  const [jobs, setJobs] = useState<AdminJob[]>([])
-  const [jobsTotal, setJobsTotal] = useState(0)
   const [jobsPage, setJobsPage] = useState(1)
   const [jobsStatus, setJobsStatus] = useState<string | undefined>()
   const [editUser, setEditUser] = useState<AdminUser | null>(null)
-  const [editLoading, setEditLoading] = useState(false)
 
-  const loadStats = useCallback(async () => {
-    const data = await adminApi.getStats()
-    setStats(data)
-  }, [])
-
-  const loadUsers = useCallback(async () => {
-    const data = await adminApi.listUsers({ page: usersPage, limit: 20, search: usersSearch || undefined })
-    setUsers(data.users)
-    setUsersTotal(data.total)
-  }, [usersPage, usersSearch])
-
-  const loadJobs = useCallback(async () => {
-    const data = await adminApi.listJobs({ page: jobsPage, limit: 20, status: jobsStatus })
-    setJobs(data.jobs)
-    setJobsTotal(data.total)
-  }, [jobsPage, jobsStatus])
-
-  useEffect(() => { loadStats() }, [loadStats])
-  useEffect(() => { loadUsers() }, [loadUsers])
-  useEffect(() => { loadJobs() }, [loadJobs])
+  const { data: stats = null } = useAdminStats()
+  const { data: usersData } = useAdminUsers({ page: usersPage, limit: 20, search: usersSearch || undefined })
+  const users = usersData?.users ?? []
+  const usersTotal = usersData?.total ?? 0
+  const { data: jobsData } = useAdminJobs({ page: jobsPage, limit: 20, status: jobsStatus })
+  const jobs = jobsData?.jobs ?? []
+  const jobsTotal = jobsData?.total ?? 0
+  const updateUserMutation = useUpdateAdminUser()
 
   const handleUpdateUser = async (userId: string, updates: Record<string, any>) => {
-    setEditLoading(true)
-    try {
-      await adminApi.updateUser(userId, updates)
-      await loadUsers()
-      setEditUser(null)
-    } finally {
-      setEditLoading(false)
-    }
+    await updateUserMutation.mutateAsync({ userId, updates })
+    setEditUser(null)
   }
 
   const statusColor = STATUS_COLORS
@@ -250,7 +226,7 @@ export default function AdminPage() {
         {editUser && (
           <EditUserForm
             user={editUser}
-            loading={editLoading}
+            loading={updateUserMutation.isPending}
             onSave={(updates) => handleUpdateUser(editUser.id, updates)}
           />
         )}

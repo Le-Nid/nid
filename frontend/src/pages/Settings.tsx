@@ -6,7 +6,9 @@ import { useTranslation } from 'react-i18next'
 import api from '../api/client'
 import { useAuthStore } from '../store/auth.store'
 import { formatBytes } from '../utils/format'
-import { auditApi, twoFactorApi, webhooksApi, configApi, notificationsApi, archiveApi } from '../api'
+import { twoFactorApi, webhooksApi, configApi, notificationsApi, archiveApi } from '../api'
+import { useAuditLogs, useWebhooks, useNotificationPreferences } from '../hooks/queries'
+import { useQueryClient } from '@tanstack/react-query'
 import JobProgressModal from '../components/JobProgressModal'
 
 const { Title, Text } = Typography
@@ -16,17 +18,23 @@ export default function SettingsPage() {
   const { user, gmailAccounts, fetchMe, storageUsedBytes } = useAuthStore()
   const [searchParams] = useSearchParams()
   const [connecting, setConnecting] = useState(false)
-  const [auditLogs, setAuditLogs] = useState<any[]>([])
-  const [auditLoading, setAuditLoading] = useState(false)
-  const [auditTotal, setAuditTotal] = useState(0)
   const [auditPage, setAuditPage] = useState(1)
   const [totpSetup, setTotpSetup] = useState<{ secret: string; qrDataUrl: string } | null>(null)
   const [totpCode, setTotpCode] = useState('')
   const [totpLoading, setTotpLoading] = useState(false)
-  const [webhooks, setWebhooks] = useState<any[]>([])
   const [webhookModal, setWebhookModal] = useState(false)
   const [webhookForm] = Form.useForm()
-  const [notifPrefs, setNotifPrefs] = useState<Record<string, boolean>>({
+  const [notifPrefsLoading, setNotifPrefsLoading] = useState(false)
+  const [archivingAccount, setArchivingAccount] = useState<string | null>(null)
+  const [activeJobId, setActiveJobId] = useState<string | null>(null)
+  const queryClient = useQueryClient()
+
+  const { data: auditData, isLoading: auditLoading } = useAuditLogs({ page: auditPage, limit: 10 })
+  const auditLogs = auditData?.data ?? []
+  const auditTotal = auditData?.total ?? 0
+
+  const { data: webhooks = [] } = useWebhooks()
+  const { data: notifPrefs = {
     weekly_report: true,
     job_completed: true,
     job_failed: true,
@@ -39,57 +47,29 @@ export default function SettingsPage() {
     rule_executed_toast: false,
     quota_warning_toast: false,
     integrity_alert_toast: false,
-  })
-  const [notifPrefsLoading, setNotifPrefsLoading] = useState(false)
-  const [archivingAccount, setArchivingAccount] = useState<string | null>(null)
-  const [activeJobId, setActiveJobId] = useState<string | null>(null)
+  } } = useNotificationPreferences()
 
   const gmailStatus = searchParams.get('gmail')
   const connectedEmail = searchParams.get('account')
 
-  useEffect(() => {
-    if (gmailStatus === 'connected') fetchMe()
-  }, [gmailStatus])
-
-  const fetchAuditLogs = async (page = 1) => {
-    setAuditLoading(true)
-    try {
-      const data = await auditApi.list({ page, limit: 10 })
-      setAuditLogs(data.data)
-      setAuditTotal(data.total)
-      setAuditPage(page)
-    } finally {
-      setAuditLoading(false)
-    }
-  }
-
-  useEffect(() => { fetchAuditLogs(); fetchWebhooks(); fetchNotifPrefs() }, [])
-
-  const fetchWebhooks = async () => {
-    try { setWebhooks(await webhooksApi.list()) } catch { /* ignore */ }
-  }
-
-  const fetchNotifPrefs = async () => {
-    try {
-      const prefs = await notificationsApi.getPreferences()
-      setNotifPrefs(prefs)
-    } catch { /* ignore */ }
-  }
-
   const updateNotifPref = async (key: string, value: boolean) => {
-    const updated = { ...notifPrefs, [key]: value }
-    setNotifPrefs(updated)
     setNotifPrefsLoading(true)
     try {
       await notificationsApi.updatePreferences({ [key]: value })
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'preferences'] })
     } catch {
-      // Revert on error
-      setNotifPrefs(notifPrefs)
       message.error(t('common.error'))
     } finally {
       setNotifPrefsLoading(false)
     }
   }
+
+  const fetchWebhooks = () => queryClient.invalidateQueries({ queryKey: ['webhooks'] })
+
+  // Restore session after Gmail connect redirect
+  useEffect(() => {
+    if (gmailStatus === 'connected') fetchMe()
+  }, [gmailStatus])
 
   const handleExport = async () => {
     try {
@@ -550,7 +530,7 @@ export default function SettingsPage() {
             current: auditPage,
             total: auditTotal,
             pageSize: 10,
-            onChange: (p) => fetchAuditLogs(p),
+            onChange: (p) => setAuditPage(p),
             showSizeChanger: false,
           }}
           columns={[

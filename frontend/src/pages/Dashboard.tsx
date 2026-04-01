@@ -1,4 +1,3 @@
-import { useEffect, useState, useCallback } from 'react'
 import {
   Row, Col, Card, Statistic, Table, Tag, Spin, Alert,
   Typography, Space, Button, Empty, Tooltip, Progress
@@ -10,7 +9,7 @@ import {
 import { Bar, Pie, Line } from '@ant-design/charts'
 import { useTranslation } from 'react-i18next'
 import { useAccount } from '../hooks/useAccount'
-import { dashboardApi } from '../api'
+import { useDashboardStats, useDashboardArchiveStats } from '../hooks/queries'
 import { formatBytes, formatSender } from '../utils/format'
 import dayjs from 'dayjs'
 
@@ -30,26 +29,12 @@ interface DashboardStats {
 export default function DashboardPage() {
   const { t } = useTranslation()
   const { accountId, account } = useAccount()
-  const [stats, setStats] = useState<DashboardStats | null>(null)
-  const [archiveStats, setArchiveStats] = useState<any>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { data: stats = null, isLoading: loadingStats, error: statsError, refetch: refetchStats } = useDashboardStats(accountId)
+  const { data: archiveStats = null, refetch: refetchArchive } = useDashboardArchiveStats(accountId)
 
-  const load = useCallback(async () => {
-    if (!accountId) return
-    setLoading(true); setError(null)
-    try {
-      const [s, a] = await Promise.all([
-        dashboardApi.getStats(accountId, 20),
-        dashboardApi.getArchiveStats(accountId),
-      ])
-      setStats(s); setArchiveStats(a)
-    } catch (e: any) {
-      setError(e.response?.data?.error ?? t('dashboard.loadError'))
-    } finally { setLoading(false) }
-  }, [accountId])
-
-  useEffect(() => { load() }, [load])
+  const loading = loadingStats
+  const error = statsError ? (statsError as any).response?.data?.error ?? t('dashboard.loadError') : null
+  const load = () => { refetchStats(); refetchArchive() }
 
   if (!accountId) {
     return (

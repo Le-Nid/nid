@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useState } from 'react'
 import {
   Typography, Card, Row, Col, Statistic, Table, Tabs, Button, Space,
   Tag, Tooltip, Progress, Input, Alert, message, Spin,
@@ -17,6 +17,7 @@ import type {
   EncryptionStatus, TrackerInfo,
 } from '../types/privacy'
 import { PII_TYPE_LABELS, TRACKER_TYPE_LABELS } from '../types/privacy'
+import { useTrackingStats, useTrackedMessages, usePiiStats, usePiiFindings, useEncryptionStatus } from '../hooks/queries'
 
 const { Title, Text } = Typography
 
@@ -73,34 +74,13 @@ function TrackingTab({ accountId, lang, messageApi, setActiveJobId }: Readonly<{
   accountId: string | null; lang: string; messageApi: any; setActiveJobId: (id: string | null) => void
 }>) {
   const { t } = useTranslation()
-  const [stats, setStats] = useState<TrackingStats | null>(null)
-  const [messages, setMessages] = useState<TrackedMessage[]>([])
-  const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
-  const [loading, setLoading] = useState(false)
   const [scanning, setScanning] = useState(false)
 
-  const loadStats = useCallback(async () => {
-    if (!accountId) return
-    try {
-      const data = await privacyApi.getTrackingStats(accountId)
-      setStats(data)
-    } catch { /* ignore */ }
-  }, [accountId])
-
-  const loadMessages = useCallback(async (p = 1) => {
-    if (!accountId) return
-    setLoading(true)
-    try {
-      const data = await privacyApi.listTrackedMessages(accountId, { page: p, limit: 20 })
-      setMessages(data.items)
-      setTotal(data.total)
-      setPage(p)
-    } catch { /* ignore */ }
-    setLoading(false)
-  }, [accountId])
-
-  useEffect(() => { loadStats(); loadMessages() }, [loadStats, loadMessages])
+  const { data: stats = null, refetch: refetchStats } = useTrackingStats(accountId)
+  const { data: messagesData, isLoading: loading, refetch: refetchMessages } = useTrackedMessages(accountId, { page, limit: 20 })
+  const messages = messagesData?.items ?? []
+  const total = messagesData?.total ?? 0
 
   const handleScan = async () => {
     if (!accountId) return
@@ -216,7 +196,7 @@ function TrackingTab({ accountId, lang, messageApi, setActiveJobId }: Readonly<{
         >
           {t('privacy.tracking.scan')}
         </Button>
-        <Button icon={<ReloadOutlined />} onClick={() => { loadStats(); loadMessages() }}>
+        <Button icon={<ReloadOutlined />} onClick={() => { refetchStats(); refetchMessages() }}>
           {t('common.refresh')}
         </Button>
       </Space>
@@ -231,7 +211,7 @@ function TrackingTab({ accountId, lang, messageApi, setActiveJobId }: Readonly<{
           current: page,
           total,
           pageSize: 20,
-          onChange: loadMessages,
+          onChange: (p: number) => setPage(p),
           showTotal: (t) => `${t} messages`,
         }}
       />
@@ -247,34 +227,13 @@ function PiiTab({ accountId, lang, messageApi, setActiveJobId }: Readonly<{
   accountId: string | null; lang: string; messageApi: any; setActiveJobId: (id: string | null) => void
 }>) {
   const { t } = useTranslation()
-  const [stats, setStats] = useState<PiiStats | null>(null)
-  const [findings, setFindings] = useState<PiiFinding[]>([])
-  const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
-  const [loading, setLoading] = useState(false)
   const [scanning, setScanning] = useState(false)
 
-  const loadStats = useCallback(async () => {
-    if (!accountId) return
-    try {
-      const data = await privacyApi.getPiiStats(accountId)
-      setStats(data)
-    } catch { /* ignore */ }
-  }, [accountId])
-
-  const loadFindings = useCallback(async (p = 1) => {
-    if (!accountId) return
-    setLoading(true)
-    try {
-      const data = await privacyApi.listPiiFindings(accountId, { page: p, limit: 20 })
-      setFindings(data.items)
-      setTotal(data.total)
-      setPage(p)
-    } catch { /* ignore */ }
-    setLoading(false)
-  }, [accountId])
-
-  useEffect(() => { loadStats(); loadFindings() }, [loadStats, loadFindings])
+  const { data: stats = null, refetch: refetchStats } = usePiiStats(accountId)
+  const { data: findingsData, isLoading: loading, refetch: refetchFindings } = usePiiFindings(accountId, { page, limit: 20 })
+  const findings = findingsData?.items ?? []
+  const total = findingsData?.total ?? 0
 
   const handleScan = async () => {
     if (!accountId) return
@@ -391,7 +350,7 @@ function PiiTab({ accountId, lang, messageApi, setActiveJobId }: Readonly<{
         >
           {t('privacy.pii.scan')}
         </Button>
-        <Button icon={<ReloadOutlined />} onClick={() => { loadStats(); loadFindings() }}>
+        <Button icon={<ReloadOutlined />} onClick={() => { refetchStats(); refetchFindings() }}>
           {t('common.refresh')}
         </Button>
       </Space>
@@ -406,7 +365,7 @@ function PiiTab({ accountId, lang, messageApi, setActiveJobId }: Readonly<{
           current: page,
           total,
           pageSize: 20,
-          onChange: loadFindings,
+          onChange: (p: number) => setPage(p),
         }}
       />
     </div>
@@ -421,22 +380,9 @@ function EncryptionTab({ accountId, messageApi, setActiveJobId }: Readonly<{
   accountId: string | null; messageApi: any; setActiveJobId: (id: string | null) => void
 }>) {
   const { t } = useTranslation()
-  const [status, setStatus] = useState<EncryptionStatus | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { data: status = null, isLoading: loading, refetch: loadStatus } = useEncryptionStatus(accountId)
   const [passphrase, setPassphrase] = useState('')
   const [encrypting, setEncrypting] = useState(false)
-
-  const loadStatus = useCallback(async () => {
-    if (!accountId) return
-    setLoading(true)
-    try {
-      const data = await privacyApi.getEncryptionStatus(accountId)
-      setStatus(data)
-    } catch { /* ignore */ }
-    setLoading(false)
-  }, [accountId])
-
-  useEffect(() => { loadStatus() }, [loadStatus])
 
   const handleSetup = async () => {
     if (passphrase.length < 8) {

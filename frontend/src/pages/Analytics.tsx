@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react'
+import React from 'react'
 import {
   Typography, Card, Row, Col, Table, Tag, Spin, Alert, Space, Button,
   Tooltip, Progress, Statistic, Empty, message,
@@ -10,8 +10,9 @@ import {
 import { Line } from '@ant-design/charts'
 import { useTranslation } from 'react-i18next'
 import { useAccount } from '../hooks/useAccount'
-import { analyticsApi } from '../api'
+import { useAnalytics, useDismissSuggestion, queryKeys } from '../hooks/queries'
 import { formatBytes, formatSender } from '../utils/format'
+import { useQueryClient } from '@tanstack/react-query'
 
 const { Title, Text } = Typography
 
@@ -128,42 +129,27 @@ function ScoreTag({ score }: Readonly<{ score: number }>) {
 export default function AnalyticsPage() {
   const { t, i18n } = useTranslation()
   const { accountId } = useAccount()
+  const queryClient = useQueryClient()
 
-  const [heatmap, setHeatmap] = useState<HeatmapCell[]>([])
-  const [senderScores, setSenderScores] = useState<SenderScore[]>([])
-  const [suggestions, setSuggestions] = useState<CleanupSuggestion[]>([])
-  const [inboxZero, setInboxZero] = useState<InboxZeroData | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { heatmap: heatmapQuery, senderScores: senderScoresQuery, suggestions: suggestionsQuery, inboxZero: inboxZeroQuery } = useAnalytics(accountId)
+  const dismissMutation = useDismissSuggestion()
 
-  const load = useCallback(async (refresh = false) => {
-    if (!accountId) return
-    setLoading(true)
-    setError(null)
-    try {
-      const [h, s, c, iz] = await Promise.all([
-        analyticsApi.getHeatmap(accountId, refresh),
-        analyticsApi.getSenderScores(accountId, refresh),
-        analyticsApi.getCleanupSuggestions(accountId, refresh),
-        analyticsApi.getInboxZero(accountId, refresh),
-      ])
-      setHeatmap(h)
-      setSenderScores(s)
-      setSuggestions(c)
-      setInboxZero(iz)
-    } catch (e: any) {
-      setError(e.response?.data?.error ?? t('analytics.loadError'))
-    } finally {
-      setLoading(false)
+  const heatmap = heatmapQuery.data ?? []
+  const senderScores = senderScoresQuery.data ?? []
+  const suggestions = suggestionsQuery.data ?? []
+  const inboxZero = inboxZeroQuery.data ?? null
+  const loading = heatmapQuery.isLoading || senderScoresQuery.isLoading
+  const error = heatmapQuery.error ? (heatmapQuery.error as any).response?.data?.error ?? t('analytics.loadError') : null
+
+  const load = (refresh = false) => {
+    if (refresh && accountId) {
+      queryClient.invalidateQueries({ queryKey: ['analytics', accountId] })
     }
-  }, [accountId, t])
-
-  useEffect(() => { load() }, [load])
+  }
 
   const handleDismiss = async (id: string) => {
     try {
-      await analyticsApi.dismissSuggestion(id)
-      setSuggestions((prev) => prev.filter((s) => s.id !== id))
+      await dismissMutation.mutateAsync(id)
       message.success(t('analytics.dismissed'))
     } catch {
       message.error(t('common.error'))

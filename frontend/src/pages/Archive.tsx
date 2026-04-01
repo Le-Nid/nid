@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import {
   Table,
   Input,
@@ -27,6 +27,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { archiveApi } from "../api";
 import { useAccount } from "../hooks/useAccount";
+import { useArchiveMails } from "../hooks/queries";
 import { formatBytes, formatSender } from "../utils/format";
 import JobProgressModal from "../components/JobProgressModal";
 import api from "../api/client";
@@ -59,10 +60,7 @@ interface Attachment {
 export default function ArchivePage() {
   const { t } = useTranslation();
   const { accountId } = useAccount();
-  const [mails, setMails] = useState<ArchivedMail[]>([]);
-  const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
   const [sender, setSender] = useState("");
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs] | null>(
@@ -78,34 +76,23 @@ export default function ArchivePage() {
 
   const [messageApi, contextHolder] = message.useMessage();
 
-  const load = useCallback(
-    async (p = 1) => {
-      if (!accountId) return;
-      setLoading(true);
-      try {
-        const params: Record<string, any> = { page: p, limit: 50 };
-        if (query) params.q = query;
-        if (sender) params.sender = sender;
-        if (dateRange) {
-          params.from_date = dateRange[0].toISOString();
-          params.to_date = dateRange[1].toISOString();
-        }
-        const data = await archiveApi.listMails(accountId, params);
-        setMails(data.mails);
-        setTotal(data.total);
-        setPage(p);
-      } catch {
-        messageApi.error(t('archive.loadError'));
-      } finally {
-        setLoading(false);
-      }
-    },
-    [accountId, query, sender, dateRange],
-  );
+  // Build params for the query
+  const archiveParams: Record<string, any> = { page, limit: 50 };
+  if (query) archiveParams.q = query;
+  if (sender) archiveParams.sender = sender;
+  if (dateRange) {
+    archiveParams.from_date = dateRange[0].toISOString();
+    archiveParams.to_date = dateRange[1].toISOString();
+  }
 
-  useEffect(() => {
-    load();
-  }, [accountId]);
+  const { data: archiveData, isLoading: loading, refetch } = useArchiveMails(accountId, archiveParams);
+  const mails = archiveData?.mails ?? [];
+  const total = archiveData?.total ?? 0;
+
+  const load = (p = 1) => {
+    setPage(p);
+    if (p === page) refetch();
+  };
 
   const openMail = async (mail: ArchivedMail) => {
     try {
