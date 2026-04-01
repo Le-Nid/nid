@@ -39,6 +39,13 @@ Object.defineProperty(globalThis, 'matchMedia', {
   })),
 })
 
+// Mock ResizeObserver for antd components
+globalThis.ResizeObserver = class {
+  observe = vi.fn()
+  unobserve = vi.fn()
+  disconnect = vi.fn()
+} as any
+
 Object.defineProperty(globalThis, 'getComputedStyle', {
   writable: true,
   value: vi.fn().mockImplementation(() => ({
