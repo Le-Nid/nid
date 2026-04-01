@@ -85,7 +85,7 @@ export default function MailManagerPage() {
   const [messageApi, contextHolder] = message.useMessage();
   const loadIdRef = useRef(0);
 
-  const PROGRESSIVE_BATCH = 20;
+  const PROGRESSIVE_BATCH = 5;
 
   // ─── Raccourcis clavier ───────────────────────────────────
   useKeyboardShortcuts({
