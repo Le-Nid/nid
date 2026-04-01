@@ -44,6 +44,8 @@ export interface ArchivedMailsTable {
   gmail_account_id: string
   gmail_message_id: string
   thread_id:        string | null
+  in_reply_to:      string | null
+  references_header: string | null
   subject:          string | null
   sender:           string | null
   recipient:        string | null
@@ -234,6 +236,18 @@ export interface UserSocialAccountsTable {
   created_at:   Generated<Date>
 }
 
+export interface SavedSearchesTable {
+  id:         Generated<string>
+  user_id:    string
+  name:       string
+  query:      string
+  icon:       string | null
+  color:      string | null
+  sort_order: Generated<number>
+  created_at: Generated<Date>
+  updated_at: Generated<Date>
+}
+
 // ─── Database interface ───────────────────────────────────
 
 export interface Database {
@@ -254,6 +268,7 @@ export interface Database {
   cleanup_suggestions: CleanupSuggestionsTable
   inbox_zero_snapshots: InboxZeroSnapshotsTable
   user_social_accounts: UserSocialAccountsTable
+  saved_searches:       SavedSearchesTable
 }
 
 // ─── Row types (Selectable = what you get back from SELECT) ─
@@ -291,3 +306,6 @@ export type InboxZeroSnapshot       = Selectable<InboxZeroSnapshotsTable>
 
 export type UserSocialAccount    = Selectable<UserSocialAccountsTable>
 export type NewUserSocialAccount = Insertable<UserSocialAccountsTable>
+
+export type SavedSearch    = Selectable<SavedSearchesTable>
+export type NewSavedSearch = Insertable<SavedSearchesTable>

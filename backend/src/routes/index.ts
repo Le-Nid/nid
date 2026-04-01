@@ -19,6 +19,8 @@ import { webhookRoutes } from './webhooks'
 import { configRoutes } from './config'
 import { privacyRoutes } from './privacy'
 import { analyticsRoutes } from './analytics'
+import { savedSearchRoutes } from './saved-searches'
+import { unifiedRoutes } from './unified'
 
 export async function registerRoutes(app: FastifyInstance) {
   // Health check
@@ -45,6 +47,8 @@ export async function registerRoutes(app: FastifyInstance) {
   await app.register(configRoutes,        { prefix: '/api/config' })
   await app.register(privacyRoutes,       { prefix: '/api/privacy' })
   await app.register(analyticsRoutes,     { prefix: '/api/analytics' })
+  await app.register(savedSearchRoutes,   { prefix: '/api/saved-searches' })
+  await app.register(unifiedRoutes,       { prefix: '/api/unified' })
 
   // Démarrer le broadcaster SSE ← QueueEvents BullMQ
   startQueueEventBroadcaster()

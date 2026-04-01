@@ -3,7 +3,7 @@ import {
   dashboardApi, gmailApi, archiveApi, rulesApi, jobsApi,
   adminApi, unsubscribeApi, attachmentsApi, reportsApi,
   duplicatesApi, analyticsApi, privacyApi, notificationsApi,
-  auditApi, webhooksApi,
+  auditApi, webhooksApi, savedSearchesApi, unifiedApi, archiveThreadsApi,
 } from '../api'
 
 // ─── Query key factories ──────────────────────────────────
@@ -18,6 +18,12 @@ export const queryKeys = {
     ['archive', accountId, 'mails', params] as const,
   archiveMail: (accountId: string, mailId: string) =>
     ['archive', accountId, 'mail', mailId] as const,
+  archiveThreads: (accountId: string, params?: Record<string, any>) =>
+    ['archive', accountId, 'threads', params] as const,
+  archiveThread: (accountId: string, threadId: string) =>
+    ['archive', accountId, 'thread', threadId] as const,
+  savedSearches: () => ['saved-searches'] as const,
+  unified: (params?: Record<string, any>) => ['unified', params] as const,
   rules: (accountId: string) => ['rules', accountId] as const,
   ruleTemplates: () => ['rules', 'templates'] as const,
   jobs: (params?: Record<string, any>) => ['jobs', params] as const,
@@ -348,5 +354,68 @@ export function useWebhooks() {
   return useQuery({
     queryKey: queryKeys.webhooks(),
     queryFn: () => webhooksApi.list(),
+  })
+}
+
+// ─── Saved Searches ───────────────────────────────────────
+
+export function useSavedSearches() {
+  return useQuery({
+    queryKey: queryKeys.savedSearches(),
+    queryFn: () => savedSearchesApi.list(),
+  })
+}
+
+export function useCreateSavedSearch() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: { name: string; query: string; icon?: string; color?: string }) =>
+      savedSearchesApi.create(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.savedSearches() }),
+  })
+}
+
+export function useDeleteSavedSearch() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (searchId: string) => savedSearchesApi.remove(searchId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.savedSearches() }),
+  })
+}
+
+export function useUpdateSavedSearch() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...data }: { id: string } & Record<string, any>) =>
+      savedSearchesApi.update(id, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.savedSearches() }),
+  })
+}
+
+// ─── Unified Inbox ────────────────────────────────────────
+
+export function useUnifiedMessages(params: Record<string, any>, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.unified(params),
+    queryFn: () => unifiedApi.listMessages(params),
+    enabled,
+  })
+}
+
+// ─── Archive Threads ──────────────────────────────────────
+
+export function useArchiveThreads(accountId: string | null, params: Record<string, any>) {
+  return useQuery({
+    queryKey: queryKeys.archiveThreads(accountId!, params),
+    queryFn: () => archiveThreadsApi.listThreads(accountId!, params),
+    enabled: !!accountId,
+  })
+}
+
+export function useArchiveThread(accountId: string | null, threadId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.archiveThread(accountId!, threadId!),
+    queryFn: () => archiveThreadsApi.getThread(accountId!, threadId!),
+    enabled: !!accountId && !!threadId,
   })
 }

@@ -34,7 +34,9 @@
     "group_system": "System",
     "dashboard": "Dashboard",
     "mails": "My Emails",
+    "unified": "Unified Inbox",
     "archives": "Archives",
+    "savedSearches": "Searches",
     "rules": "Auto Rules",
     "newsletters": "Newsletters",
     "attachments": "Attachments",
@@ -160,7 +162,9 @@
     "archiveAll": "Archive all",
     "archiveAllStarted": "Archiving started",
     "archiveAllDesc": "Only new emails will be archived (differential).",
-    "shortcuts": "Shortcuts: j/k navigate · Enter open · e archive · # delete · / search"
+    "shortcuts": "Shortcuts: j/k navigate · Enter open · e archive · # delete · / search",
+    "saveSearch": "Save this search",
+    "searchSaved": "Search saved"
   },
 
   "archive": {
@@ -192,7 +196,14 @@
     "loadMailError": "Could not load this archived email",
     "exportError": "Error exporting ZIP",
     "exportDone": "ZIP export completed",
-    "exportCount": "{{count}} email(s) exported"
+    "exportCount": "{{count}} email(s) exported",
+    "listView": "List",
+    "threadView": "Conversations",
+    "totalThreads": "{{total}} conversations",
+    "noThreads": "No conversations found",
+    "threadParticipants": "{{count}} participant(s)",
+    "pageInfo": "Page {{page}} / {{total}}",
+    "nextPage": "Next"
   },
 
   "rules": {
@@ -648,5 +659,42 @@
     "days": "days",
     "dismiss": "Dismiss",
     "dismissed": "Suggestion dismissed"
+  },
+
+  "savedSearches": {
+    "title": "🔍 Saved Searches",
+    "newSearch": "New search",
+    "hint": "Save your complex Gmail queries as reusable views. E.g., \"Invoices this month\", \"Emails with attachments > 5 MB not archived\".",
+    "noSearches": "No saved searches",
+    "createFirst": "Create my first search",
+    "name": "Name",
+    "query": "Gmail query",
+    "icon": "Icon",
+    "color": "Color",
+    "created": "Created",
+    "editTitle": "Edit search",
+    "createTitle": "New saved search",
+    "namePlaceholder": "E.g.: Recent invoices",
+    "queryPlaceholder": "E.g.: from:invoices@example.com has:attachment newer_than:30d",
+    "nameRequired": "Name is required",
+    "queryRequired": "Query is required",
+    "use": "Use",
+    "created_success": "Search created",
+    "updated": "Search updated",
+    "deleted": "Search deleted",
+    "deleteConfirm": "Delete this search?"
+  },
+
+  "unified": {
+    "title": "📬 Unified Inbox",
+    "allAccounts": "All accounts",
+    "account": "Account",
+    "sender": "Sender",
+    "subject": "Subject",
+    "size": "Size",
+    "date": "Date",
+    "results": "result(s)",
+    "noMail": "No email",
+    "needMultipleAccounts": "Connect at least 2 Gmail accounts to use the unified inbox."
   }
 }

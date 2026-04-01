@@ -10,6 +10,8 @@ import {
   Dropdown,
   notification,
   Spin,
+  Tooltip,
+  Select,
 } from "antd";
 import {
   ReloadOutlined,
@@ -17,9 +19,10 @@ import {
   PaperClipOutlined,
   MoreOutlined,
   SaveOutlined,
+  StarOutlined,
 } from "@ant-design/icons";
-import { Select } from "antd";
-import { gmailApi, archiveApi } from "../api";
+import { useSearchParams } from "react-router";
+import { gmailApi, archiveApi, savedSearchesApi } from "../api";
 import { useAccount } from "../hooks/useAccount";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import { formatBytes, formatSender } from "../utils/format";
@@ -63,9 +66,11 @@ export default function MailManagerPage() {
   const { t } = useTranslation();
   const { accountId } = useAccount();
   const mailCache = useMailCache();
+  const [searchParams] = useSearchParams();
+  const urlQuery = searchParams.get('q') ?? '';
 
   // Restaurer l'état depuis le cache Zustand au montage (évite le flash vide)
-  const initialKey = accountId ? cacheKey(accountId, '', '') : '';
+  const initialKey = accountId ? cacheKey(accountId, urlQuery, '') : '';
   const initialCache = initialKey ? mailCache.getEntry(initialKey) : null;
 
   const [mails, setMails] = useState<MailRow[]>(initialCache?.mails ?? []);
@@ -74,7 +79,7 @@ export default function MailManagerPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [bulkLoading, setBulkLoading] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(urlQuery);
   const [quickFilter, setQuickFilter] = useState("");
   const [pageToken, setPageToken] = useState<string | null>(initialCache?.pageToken ?? null);
   const [hasMore, setHasMore] = useState(initialCache?.hasMore ?? false);
@@ -255,6 +260,18 @@ export default function MailManagerPage() {
       messageApi.error(t('mailManager.loadError'));
     } finally {
       setArchiveAllLoading(false);
+    }
+  };
+
+  // ─── Sauvegarder la recherche courante ────────────────────
+  const handleSaveSearch = async () => {
+    const fullQuery = [quickFilter, query].filter(Boolean).join(' ');
+    if (!fullQuery.trim()) return;
+    try {
+      await savedSearchesApi.create({ name: fullQuery.slice(0, 60), query: fullQuery });
+      messageApi.success(t('mailManager.searchSaved'));
+    } catch {
+      messageApi.error(t('common.error'));
     }
   };
 
@@ -440,6 +457,14 @@ export default function MailManagerPage() {
           >
             {t('mailManager.archiveAll')}
           </Button>
+          {(query || quickFilter) && (
+            <Tooltip title={t('mailManager.saveSearch')}>
+              <Button
+                icon={<StarOutlined />}
+                onClick={handleSaveSearch}
+              />
+            </Tooltip>
+          )}
           {total > 0 && (
             <Text type="secondary" style={{ fontSize: 12 }}>
               ~{total.toLocaleString()} {t('mailManager.results', { total, loaded: mails.length }).split('·').pop()}

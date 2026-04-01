@@ -199,4 +199,139 @@ export async function archiveRoutes(app: FastifyInstance) {
 
     return reply;
   });
+
+  // ─── Liste mails archivés groupés par thread ─────────────
+  app.get("/:accountId/threads", accountAuth, async (request) => {
+    const { accountId } = request.params as { accountId: string };
+    const {
+      q,
+      sender,
+      from_date,
+      to_date,
+      has_attachments,
+      page: pageStr,
+      limit: limitStr,
+    } = request.query as Record<string, string>;
+
+    const { page, limit: lim, offset } = extractPagination({ page: pageStr, limit: limitStr });
+
+    // Get threads: group by thread_id, return latest mail per thread
+    let baseQuery = db
+      .selectFrom("archived_mails")
+      .where("gmail_account_id", "=", accountId)
+      .where("thread_id", "is not", null);
+
+    if (sender) {
+      baseQuery = baseQuery.where("sender", "ilike", `%${escapeIlike(sender)}%`);
+    }
+    if (from_date) {
+      baseQuery = baseQuery.where("date", ">=", new Date(from_date));
+    }
+    if (to_date) {
+      baseQuery = baseQuery.where("date", "<=", new Date(to_date));
+    }
+    if (has_attachments === "true" || has_attachments === "false") {
+      baseQuery = baseQuery.where("has_attachments", "=", has_attachments === "true");
+    }
+
+    if (q) {
+      const searchTerm = q.trim().slice(0, 200);
+      baseQuery = (baseQuery as any).where(
+        sql`search_vector @@ plainto_tsquery('french', ${searchTerm})`
+      );
+    }
+
+    // Count distinct threads
+    const countResult = await (baseQuery as any)
+      .select((eb: any) => eb.fn.count(sql`DISTINCT thread_id`).as("count"))
+      .executeTakeFirstOrThrow();
+
+    // Get thread summaries: latest mail per thread + message count
+    const threads = await sql`
+      WITH thread_data AS (
+        SELECT
+          thread_id,
+          COUNT(*)::int AS message_count,
+          MAX(date) AS latest_date,
+          ARRAY_AGG(DISTINCT sender) AS senders,
+          SUM(size_bytes)::bigint AS total_size,
+          BOOL_OR(has_attachments) AS has_attachments
+        FROM archived_mails
+        WHERE gmail_account_id = ${accountId}
+          AND thread_id IS NOT NULL
+          ${sender ? sql`AND sender ILIKE ${'%' + escapeIlike(sender) + '%'}` : sql``}
+          ${from_date ? sql`AND date >= ${new Date(from_date)}` : sql``}
+          ${to_date ? sql`AND date <= ${new Date(to_date)}` : sql``}
+          ${has_attachments === "true" ? sql`AND has_attachments = true` : has_attachments === "false" ? sql`AND has_attachments = false` : sql``}
+          ${q ? sql`AND search_vector @@ plainto_tsquery('french', ${q.trim().slice(0, 200)})` : sql``}
+        GROUP BY thread_id
+        ORDER BY latest_date DESC
+        LIMIT ${lim} OFFSET ${offset}
+      )
+      SELECT
+        td.thread_id,
+        td.message_count,
+        td.latest_date,
+        td.senders,
+        td.total_size,
+        td.has_attachments,
+        am.id,
+        am.subject,
+        am.sender,
+        am.snippet,
+        am.date,
+        am.archived_at
+      FROM thread_data td
+      JOIN archived_mails am ON am.thread_id = td.thread_id
+        AND am.gmail_account_id = ${accountId}
+        AND am.date = td.latest_date
+      ORDER BY td.latest_date DESC
+    `.execute(db);
+
+    return {
+      threads: threads.rows,
+      total: Number(countResult.count),
+      page,
+      limit: lim,
+    };
+  });
+
+  // ─── Get all mails in a thread ────────────────────────────
+  app.get("/:accountId/threads/:threadId", accountAuth, async (request) => {
+    const { accountId, threadId } = request.params as {
+      accountId: string;
+      threadId: string;
+    };
+
+    const mails = await db
+      .selectFrom("archived_mails")
+      .selectAll()
+      .where("gmail_account_id", "=", accountId)
+      .where("thread_id", "=", threadId)
+      .orderBy("date", "asc")
+      .execute();
+
+    // Fetch attachments for all mails in thread
+    const mailIds = mails.map((m) => m.id);
+    const attachments = mailIds.length
+      ? await db
+          .selectFrom("archived_attachments")
+          .selectAll()
+          .where("archived_mail_id", "in", mailIds)
+          .execute()
+      : [];
+
+    // Group attachments by mail
+    const attMap = new Map<string, typeof attachments>();
+    for (const att of attachments) {
+      const list = attMap.get(att.archived_mail_id) ?? [];
+      list.push(att);
+      attMap.set(att.archived_mail_id, list);
+    }
+
+    return mails.map((m) => ({
+      ...m,
+      attachments: attMap.get(m.id) ?? [],
+    }));
+  });
 }

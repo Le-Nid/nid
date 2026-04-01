@@ -90,6 +90,8 @@ export async function archiveMail(accountId: string, messageId: string): Promise
       gmail_account_id: accountId,
       gmail_message_id: messageId,
       thread_id:        msg.threadId ?? null,
+      in_reply_to:      get('In-Reply-To') || null,
+      references_header: get('References') || null,
       subject:          get('Subject') || null,
       sender:           get('From') || null,
       recipient:        get('To') || null,

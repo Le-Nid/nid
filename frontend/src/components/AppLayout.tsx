@@ -8,6 +8,7 @@ import {
   GlobalOutlined, SafetyOutlined, HeatMapOutlined,
   MenuFoldOutlined, MenuUnfoldOutlined,
   InboxOutlined, AppstoreOutlined, FundOutlined, ControlOutlined,
+  FolderOpenOutlined, MergeCellsOutlined,
 } from '@ant-design/icons'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -38,7 +39,9 @@ export default function AppLayout() {
       children: [
         { key: '/dashboard', icon: <DashboardOutlined />, label: t('nav.dashboard') },
         { key: '/mails',     icon: <MailOutlined />,      label: t('nav.mails') },
+        { key: '/unified',   icon: <MergeCellsOutlined />, label: t('nav.unified') },
         { key: '/archive',   icon: <DatabaseOutlined />,  label: t('nav.archives') },
+        { key: '/saved-searches', icon: <FolderOpenOutlined />, label: t('nav.savedSearches') },
       ],
     },
     {

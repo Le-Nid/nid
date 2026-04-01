@@ -297,3 +297,36 @@ export const analyticsApi = {
   recordSnapshot: (accountId: string) =>
     api.post(`/api/analytics/${accountId}/inbox-zero/snapshot`).then((r) => r.data),
 }
+
+// ─── Saved Searches ───────────────────────────────────────
+export const savedSearchesApi = {
+  list: () =>
+    api.get('/api/saved-searches').then((r) => r.data),
+
+  create: (data: { name: string; query: string; icon?: string; color?: string }) =>
+    api.post('/api/saved-searches', data).then((r) => r.data),
+
+  update: (searchId: string, data: Record<string, any>) =>
+    api.put(`/api/saved-searches/${searchId}`, data).then((r) => r.data),
+
+  remove: (searchId: string) =>
+    api.delete(`/api/saved-searches/${searchId}`).then((r) => r.data),
+
+  reorder: (ids: string[]) =>
+    api.put('/api/saved-searches/reorder', { ids }).then((r) => r.data),
+}
+
+// ─── Unified Inbox ────────────────────────────────────────
+export const unifiedApi = {
+  listMessages: (params: Record<string, any> = {}) =>
+    api.get('/api/unified/messages', { params }).then((r) => r.data),
+}
+
+// ─── Archive Threads ──────────────────────────────────────
+export const archiveThreadsApi = {
+  listThreads: (accountId: string, params: Record<string, any> = {}) =>
+    api.get(`/api/archive/${accountId}/threads`, { params }).then((r) => r.data),
+
+  getThread: (accountId: string, threadId: string) =>
+    api.get(`/api/archive/${accountId}/threads/${threadId}`).then((r) => r.data),
+}

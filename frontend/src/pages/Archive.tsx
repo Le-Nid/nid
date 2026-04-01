@@ -15,6 +15,9 @@ import {
   DatePicker,
   Tooltip,
   Select,
+  Segmented,
+  Badge,
+  List,
 } from "antd";
 import {
   SearchOutlined,
@@ -24,11 +27,13 @@ import {
   FileZipOutlined,
   FileOutlined,
   EyeOutlined,
+  UnorderedListOutlined,
+  MessageOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
-import { archiveApi } from "../api";
+import { archiveApi, archiveThreadsApi } from "../api";
 import { useAccount } from "../hooks/useAccount";
-import { useArchiveMails } from "../hooks/queries";
+import { useArchiveMails, useArchiveThreads } from "../hooks/queries";
 import { formatBytes, formatSender } from "../utils/format";
 import JobProgressModal from "../components/JobProgressModal";
 import api from "../api/client";
@@ -58,6 +63,115 @@ interface Attachment {
   size_bytes: number;
 }
 
+function ThreadsView({ threads, threadsLoading, threadsTotal, page, expandedThread, threadMails, threadLoading, onExpandThread, onOpenMail, onPageChange, t }: {
+  threads: any[]; threadsLoading: boolean; threadsTotal: number; page: number;
+  expandedThread: string | null; threadMails: any[]; threadLoading: boolean;
+  onExpandThread: (threadId: string) => void; onOpenMail: (mail: any) => void;
+  onPageChange: (p: number) => void; t: (key: string, opts?: any) => string;
+}) {
+  if (threadsLoading) return <Card loading style={{ marginBottom: 8 }} />;
+  if (threads.length === 0) return <Empty description={t('archive.noThreads')} />;
+
+  return (
+    <>
+      {threads.map((thread: any) => (
+        <Card
+          key={thread.thread_id}
+          size="small"
+          style={{ marginBottom: 8, cursor: 'pointer' }}
+          onClick={() => onExpandThread(thread.thread_id)}
+          hoverable
+        >
+          <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+            <Space size={12}>
+              <Badge count={thread.message_count} style={{ backgroundColor: '#1677ff' }} />
+              <div>
+                <Space size={4}>
+                  {thread.has_attachments && <PaperClipOutlined style={{ color: '#8c8c8c', fontSize: 12 }} />}
+                  <Text strong style={{ fontSize: 13 }}>
+                    {thread.subject || t('common.noSubject')}
+                  </Text>
+                </Space>
+                <div>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    {formatSender(thread.sender)}
+                    {thread.message_count > 1 && (
+                      <span> · {t('archive.threadParticipants', { count: (thread.senders ?? []).length })}</span>
+                    )}
+                  </Text>
+                </div>
+              </div>
+            </Space>
+            <Space>
+              <Tag color="orange">{formatBytes(Number(thread.total_size))}</Tag>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                {thread.latest_date ? dayjs(thread.latest_date).format('DD/MM/YY') : '—'}
+              </Text>
+            </Space>
+          </Space>
+
+          {expandedThread === thread.thread_id && (
+            <section
+              aria-label={t('archive.threadView')}
+              style={{ marginTop: 12, borderTop: '1px solid #f0f0f0', paddingTop: 8 }}
+            >
+              {threadLoading ? (
+                <Card loading size="small" />
+              ) : (
+                <List
+                  size="small"
+                  dataSource={threadMails}
+                  renderItem={(mail: any, index: number) => (
+                    <List.Item
+                      style={{ cursor: 'pointer', paddingLeft: 16 + Math.min(index, 3) * 8 }}
+                      onClick={() => onOpenMail(mail)}
+                      actions={[
+                        <Tooltip key="view" title={t('mailManager.read')}>
+                          <Button size="small" type="text" icon={<EyeOutlined />} onClick={(e) => { e.stopPropagation(); onOpenMail(mail); }} />
+                        </Tooltip>,
+                      ]}
+                    >
+                      <List.Item.Meta
+                        title={
+                          <Space size={4}>
+                            {mail.has_attachments && <PaperClipOutlined style={{ color: '#8c8c8c', fontSize: 11 }} />}
+                            <Text style={{ fontSize: 12 }}>{mail.subject || t('common.noSubject')}</Text>
+                          </Space>
+                        }
+                        description={
+                          <Space size={8}>
+                            <Text type="secondary" style={{ fontSize: 11 }}>{formatSender(mail.sender)}</Text>
+                            <Text type="secondary" style={{ fontSize: 11 }}>{mail.date ? dayjs(mail.date).format('DD/MM/YY HH:mm') : '—'}</Text>
+                            <Text type="secondary" style={{ fontSize: 11 }}>{formatBytes(Number(mail.size_bytes))}</Text>
+                          </Space>
+                        }
+                      />
+                    </List.Item>
+                  )}
+                />
+              )}
+            </section>
+          )}
+        </Card>
+      ))}
+
+      <div style={{ textAlign: 'center', marginTop: 16 }}>
+        <Space>
+          <Button disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
+            {t('common.back')}
+          </Button>
+          <Text type="secondary">
+            {t('archive.pageInfo', { page, total: Math.ceil(threadsTotal / 50) || 1 })}
+          </Text>
+          <Button disabled={page * 50 >= threadsTotal} onClick={() => onPageChange(page + 1)}>
+            {t('archive.nextPage')}
+          </Button>
+        </Space>
+      </div>
+    </>
+  );
+}
+
 export default function ArchivePage() {
   const { t } = useTranslation();
   const { accountId } = useAccount();
@@ -75,6 +189,10 @@ export default function ArchivePage() {
   // Viewer drawer
   const [viewing, setViewing] = useState<any>(null);
   const [viewMode, setViewMode] = useState<"html" | "raw">("html");
+  const [listMode, setListMode] = useState<"list" | "threads">("list");
+  const [expandedThread, setExpandedThread] = useState<string | null>(null);
+  const [threadMails, setThreadMails] = useState<any[]>([]);
+  const [threadLoading, setThreadLoading] = useState(false);
 
   const [messageApi, contextHolder] = message.useMessage();
 
@@ -94,9 +212,37 @@ export default function ArchivePage() {
   const mails = archiveData?.mails ?? [];
   const total = archiveData?.total ?? 0;
 
+  // Threads query (same params)
+  const { data: threadsData, isLoading: threadsLoading, refetch: refetchThreads } = useArchiveThreads(
+    listMode === 'threads' ? accountId : null,
+    archiveParams,
+  );
+  const threads = threadsData?.threads ?? [];
+  const threadsTotal = threadsData?.total ?? 0;
+
   const load = (p = 1) => {
     setPage(p);
-    if (p === page) refetch();
+    if (p === page) {
+      refetch();
+      if (listMode === 'threads') refetchThreads();
+    }
+  };
+
+  const loadThreadMails = async (threadId: string) => {
+    if (expandedThread === threadId) {
+      setExpandedThread(null);
+      return;
+    }
+    setThreadLoading(true);
+    try {
+      const mails = await archiveThreadsApi.getThread(accountId!, threadId);
+      setThreadMails(mails);
+      setExpandedThread(threadId);
+    } catch {
+      messageApi.error(t('archive.loadMailError'));
+    } finally {
+      setThreadLoading(false);
+    }
   };
 
   const openMail = async (mail: ArchivedMail) => {
@@ -329,9 +475,19 @@ export default function ArchivePage() {
     <div>
       {contextHolder}
 
-      <Title level={3} style={{ marginBottom: 16 }}>
-        {t('archive.title')}
-      </Title>
+      <Space style={{ marginBottom: 16, justifyContent: 'space-between', width: '100%' }}>
+        <Title level={3} style={{ margin: 0 }}>
+          {t('archive.title')}
+        </Title>
+        <Segmented
+          value={listMode}
+          onChange={(v) => setListMode(v as 'list' | 'threads')}
+          options={[
+            { value: 'list', icon: <UnorderedListOutlined />, label: t('archive.listView') },
+            { value: 'threads', icon: <MessageOutlined />, label: t('archive.threadView') },
+          ]}
+        />
+      </Space>
 
       {/* Filtres */}
       <Card size="small" style={{ marginBottom: 12 }}>
@@ -374,9 +530,14 @@ export default function ArchivePage() {
             <SearchOutlined /> {t('common.search')}
           </Button>
           <Button icon={<ReloadOutlined />} onClick={() => load(1)} />
-          {total > 0 && (
+          {listMode === 'list' && total > 0 && (
             <Text type="secondary">
               {t('archive.totalArchived', { total: total.toLocaleString() })}
+            </Text>
+          )}
+          {listMode === 'threads' && threadsTotal > 0 && (
+            <Text type="secondary">
+              {t('archive.totalThreads', { total: threadsTotal.toLocaleString() })}
             </Text>
           )}
         </Space>
@@ -410,32 +571,51 @@ export default function ArchivePage() {
         </Card>
       )}
 
-      {/* Table */}
-      <Table
-        dataSource={mails}
-        columns={columns}
-        rowKey="id"
-        loading={loading}
-        size="small"
-        scroll={{ x: 800 }}
-        rowSelection={{
-          selectedRowKeys: selected,
-          onChange: (keys) => setSelected(keys as string[]),
-        }}
-        pagination={{
-          current: page,
-          pageSize: 50,
-          total,
-          onChange: (p) => load(p),
-          showSizeChanger: false,
-          showTotal: (t) => `${t.toLocaleString()} mails`,
-        }}
-        onRow={(row) => ({
-          onClick: () => openMail(row),
-          style: { cursor: "pointer" },
-        })}
-        locale={{ emptyText: <Empty description={t('archive.noArchive')} /> }}
-      />
+      {/* Table — mode liste */}
+      {listMode === 'list' && (
+        <Table
+          dataSource={mails}
+          columns={columns}
+          rowKey="id"
+          loading={loading}
+          size="small"
+          scroll={{ x: 800 }}
+          rowSelection={{
+            selectedRowKeys: selected,
+            onChange: (keys) => setSelected(keys as string[]),
+          }}
+          pagination={{
+            current: page,
+            pageSize: 50,
+            total,
+            onChange: (p) => load(p),
+            showSizeChanger: false,
+            showTotal: (t) => `${t.toLocaleString()} mails`,
+          }}
+          onRow={(row) => ({
+            onClick: () => openMail(row),
+            style: { cursor: "pointer" },
+          })}
+          locale={{ emptyText: <Empty description={t('archive.noArchive')} /> }}
+        />
+      )}
+
+      {/* Vue threads / conversations */}
+      {listMode === 'threads' && (
+        <ThreadsView
+          threads={threads}
+          threadsLoading={threadsLoading}
+          threadsTotal={threadsTotal}
+          page={page}
+          expandedThread={expandedThread}
+          threadMails={threadMails}
+          threadLoading={threadLoading}
+          onExpandThread={loadThreadMails}
+          onOpenMail={openMail}
+          onPageChange={load}
+          t={t}
+        />
+      )}
 
       {/* Viewer drawer */}
       <Drawer

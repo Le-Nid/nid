@@ -34,7 +34,9 @@
     "group_system": "Système",
     "dashboard": "Dashboard",
     "mails": "Mes mails",
+    "unified": "Boîte unifiée",
     "archives": "Archives",
+    "savedSearches": "Recherches",
     "rules": "Règles auto",
     "newsletters": "Newsletters",
     "attachments": "Pièces jointes",
@@ -160,7 +162,9 @@
     "archiveAll": "Tout archiver",
     "archiveAllStarted": "Archivage lancé",
     "archiveAllDesc": "Seuls les nouveaux mails seront archivés (différentiel).",
-    "shortcuts": "Raccourcis : j/k naviguer · Enter ouvrir · e archiver · # supprimer · / rechercher"
+    "shortcuts": "Raccourcis : j/k naviguer · Enter ouvrir · e archiver · # supprimer · / rechercher",
+    "saveSearch": "Sauvegarder cette recherche",
+    "searchSaved": "Recherche sauvegardée"
   },
 
   "archive": {
@@ -192,7 +196,14 @@
     "loadMailError": "Impossible de charger ce mail archivé",
     "exportError": "Erreur lors de l'export ZIP",
     "exportDone": "Export ZIP terminé",
-    "exportCount": "{{count}} mail(s) exporté(s)"
+    "exportCount": "{{count}} mail(s) exporté(s)",
+    "listView": "Liste",
+    "threadView": "Conversations",
+    "totalThreads": "{{total}} conversations",
+    "noThreads": "Aucune conversation trouvée",
+    "threadParticipants": "{{count}} participant(s)",
+    "pageInfo": "Page {{page}} / {{total}}",
+    "nextPage": "Suivant"
   },
 
   "rules": {
@@ -648,5 +659,42 @@
     "days": "jours",
     "dismiss": "Ignorer",
     "dismissed": "Suggestion ignorée"
+  },
+
+  "savedSearches": {
+    "title": "🔍 Recherches sauvegardées",
+    "newSearch": "Nouvelle recherche",
+    "hint": "Sauvegardez vos requêtes Gmail complexes comme des vues réutilisables. Ex : « Factures de ce mois », « Mails avec PJ > 5 Mo non archivés ».",
+    "noSearches": "Aucune recherche sauvegardée",
+    "createFirst": "Créer ma première recherche",
+    "name": "Nom",
+    "query": "Requête Gmail",
+    "icon": "Icône",
+    "color": "Couleur",
+    "created": "Créée le",
+    "editTitle": "Modifier la recherche",
+    "createTitle": "Nouvelle recherche sauvegardée",
+    "namePlaceholder": "Ex : Factures récentes",
+    "queryPlaceholder": "Ex : from:factures@example.com has:attachment newer_than:30d",
+    "nameRequired": "Le nom est requis",
+    "queryRequired": "La requête est requise",
+    "use": "Utiliser",
+    "created_success": "Recherche créée",
+    "updated": "Recherche mise à jour",
+    "deleted": "Recherche supprimée",
+    "deleteConfirm": "Supprimer cette recherche ?"
+  },
+
+  "unified": {
+    "title": "📬 Boîte unifiée",
+    "allAccounts": "Tous les comptes",
+    "account": "Compte",
+    "sender": "Expéditeur",
+    "subject": "Sujet",
+    "size": "Taille",
+    "date": "Date",
+    "results": "résultat(s)",
+    "noMail": "Aucun mail",
+    "needMultipleAccounts": "Connectez au moins 2 comptes Gmail pour utiliser la boîte unifiée."
   }
 }
