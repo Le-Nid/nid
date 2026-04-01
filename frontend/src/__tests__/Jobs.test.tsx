@@ -2,13 +2,28 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, act } from "@testing-library/react";
 import JobsPage from "../pages/Jobs";
 
-const jobsListMock = vi.fn();
+const refetchMock = vi.fn();
+const activeJob = {
+  id: "job-1",
+  type: "bulk_operation",
+  status: "active",
+  progress: 10,
+  processed: 1,
+  total: 10,
+  created_at: "2026-03-30T10:00:00.000Z",
+  completed_at: null,
+  gmail_account_id: "account-1",
+};
 
-vi.mock("../api", () => ({
-  jobsApi: {
-    list: (...args: unknown[]) => jobsListMock(...args),
-    cancel: vi.fn(),
-  },
+const useJobsReturn = {
+  data: [] as any[],
+  isLoading: false,
+  refetch: refetchMock,
+};
+
+vi.mock("../hooks/queries", () => ({
+  useJobs: () => useJobsReturn,
+  useCancelJob: () => ({ mutateAsync: vi.fn() }),
 }));
 
 vi.mock("../hooks/useAccount", () => ({
@@ -22,77 +37,45 @@ vi.mock("../components/JobProgressModal", () => ({
   default: () => null,
 }));
 
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({ t: (key: string) => key }),
+}));
+
 describe("JobsPage", () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    jobsListMock.mockReset();
+    refetchMock.mockReset();
   });
 
   afterEach(() => {
     vi.useRealTimers();
   });
 
-  it("n'empile pas les appels de polling si un chargement est déjà en cours", async () => {
-    jobsListMock.mockResolvedValueOnce([
-      {
-        id: "job-1",
-        type: "bulk_operation",
-        status: "active",
-        progress: 10,
-        processed: 1,
-        total: 10,
-        created_at: "2026-03-30T10:00:00.000Z",
-        completed_at: null,
-        gmail_account_id: "account-1",
-      },
-    ]);
-
-    let resolveSecondRequest: ((value: any[]) => void) | null = null;
-    jobsListMock.mockImplementationOnce(
-      () =>
-        new Promise<any[]>((resolve) => {
-          resolveSecondRequest = resolve;
-        }),
-    );
+  it("polling toutes les 5s uniquement quand des jobs sont actifs", () => {
+    useJobsReturn.data = [activeJob];
 
     const { unmount } = render(<JobsPage />);
 
-    await act(async () => {
-      await Promise.resolve();
-    });
+    // Pas encore de polling
+    expect(refetchMock).toHaveBeenCalledTimes(0);
 
-    expect(jobsListMock).toHaveBeenCalledTimes(1);
-
-    await act(async () => {
+    // Après 5s → 1er refetch
+    act(() => {
       vi.advanceTimersByTime(5000);
-      await Promise.resolve();
     });
+    expect(refetchMock).toHaveBeenCalledTimes(1);
 
-    expect(jobsListMock).toHaveBeenCalledTimes(2);
-
-    await act(async () => {
-      vi.advanceTimersByTime(15000);
-      await Promise.resolve();
+    // Après 10s → 2e refetch
+    act(() => {
+      vi.advanceTimersByTime(5000);
     });
+    expect(refetchMock).toHaveBeenCalledTimes(2);
 
-    expect(jobsListMock).toHaveBeenCalledTimes(2);
-
-    await act(async () => {
-      resolveSecondRequest?.([
-        {
-          id: "job-1",
-          type: "bulk_operation",
-          status: "completed",
-          progress: 100,
-          processed: 10,
-          total: 10,
-          created_at: "2026-03-30T10:00:00.000Z",
-          completed_at: "2026-03-30T10:01:00.000Z",
-          gmail_account_id: "account-1",
-        },
-      ]);
-      await Promise.resolve();
+    // Après 15s → 3e refetch
+    act(() => {
+      vi.advanceTimersByTime(5000);
     });
+    expect(refetchMock).toHaveBeenCalledTimes(3);
 
     unmount();
   });
