@@ -30,6 +30,7 @@ import JobProgressModal from "../components/JobProgressModal";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { useTranslation } from 'react-i18next';
 import { useMailCache, cacheKey } from '../store/mail.store';
+import { useGmailLabels } from '../hooks/queries';
 import dayjs from "dayjs";
 
 const { Text } = Typography;
@@ -68,7 +69,7 @@ export default function MailManagerPage() {
   const initialCache = initialKey ? mailCache.getEntry(initialKey) : null;
 
   const [mails, setMails] = useState<MailRow[]>(initialCache?.mails ?? []);
-  const [labels, setLabels] = useState<any[]>([]);
+  const { data: labels = [] } = useGmailLabels(accountId);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [bulkLoading, setBulkLoading] = useState(false);
@@ -228,15 +229,11 @@ export default function MailManagerPage() {
     loading: loadingMore,
   });
 
-  const loadLabels = useCallback(async () => {
-    if (!accountId) return;
-    const data = await gmailApi.listLabels(accountId);
-    setLabels(data);
-  }, [accountId]);
-
   useEffect(() => {
+    // Increment loadId — any in-flight loadFresh from a previous mount
+    // will see the mismatch and bail out before processing results.
+    loadIdRef.current++;
     loadFresh();
-    loadLabels();
   }, [accountId, quickFilter]);
 
   // ─── Archive all (differential) ────────────────────────
@@ -356,7 +353,7 @@ export default function MailManagerPage() {
             .filter((id) => !["UNREAD", "IMPORTANT", "STARRED"].includes(id))
             .slice(0, 3)
             .map((id) => {
-              const label = labels.find((l) => l.id === id);
+              const label = labels.find((l: any) => l.id === id);
               return (
                 <Tag key={id} style={{ fontSize: 10, padding: "0 4px" }}>
                   {label?.name ?? id}
