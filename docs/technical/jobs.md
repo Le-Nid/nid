@@ -27,6 +27,9 @@ Tous les types de jobs sont traités par un **worker unifié** (`unified.worker.
 | `scan_tracking` | POST `/api/privacy/:id/tracking/scan` |
 | `scan_pii` | POST `/api/privacy/:id/pii/scan` |
 | `encrypt_archives` | POST `/api/privacy/:id/encryption/encrypt` |
+| `import_mbox` | POST `/api/import/:id/mbox` |
+| `import_imap` | POST `/api/import/:id/imap` |
+| `apply_retention` | POST `/api/retention/run` |
 
 ---
 

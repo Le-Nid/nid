@@ -133,12 +133,24 @@ export function accountSemaphore(accountId: string): Semaphore {
 /**
  * Run a task through the per-account global semaphore.
  * Use this for every Gmail API call to ensure global concurrency control.
+ * Optionally tracks the API call for quota monitoring.
  */
-export async function withAccountLimit<T>(accountId: string, fn: () => Promise<T>): Promise<T> {
+export async function withAccountLimit<T>(
+  accountId: string,
+  fn: () => Promise<T>,
+  endpoint?: string,
+): Promise<T> {
   const sem = accountSemaphore(accountId)
   await sem.acquire()
   try {
-    return await fn()
+    const result = await fn()
+    // Fire-and-forget quota tracking
+    if (endpoint) {
+      import('./quota.service').then(({ trackApiCall }) =>
+        trackApiCall(accountId, endpoint).catch(() => {}),
+      )
+    }
+    return result
   } finally {
     sem.release()
   }

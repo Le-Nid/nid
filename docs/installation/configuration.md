@@ -139,6 +139,47 @@ Gmail API impose des quotas (250 unités/user/seconde). Ces variables permettent
 
 ---
 
+## Stockage distant (S3/MinIO)
+
+En plus du stockage local, Gmail Manager peut archiver vers un bucket S3-compatible. Ces variables définissent la configuration **globale** (tous les utilisateurs). Chaque utilisateur peut aussi configurer son propre stockage S3 via l'interface.
+
+| Variable | Défaut | Description |
+|---|---|---|
+| `S3_ENDPOINT` | *(vide)* | URL du serveur S3 (ex. `https://s3.amazonaws.com` ou `https://minio.local:9000`). Si vide, le stockage S3 global est désactivé |
+| `S3_REGION` | `us-east-1` | Région du bucket S3 |
+| `S3_BUCKET` | `gmail-manager-archives` | Nom du bucket de stockage |
+| `S3_ACCESS_KEY_ID` | *(vide)* | Access Key ID pour l'authentification S3 |
+| `S3_SECRET_ACCESS_KEY` | *(vide)* | Secret Access Key pour l'authentification S3 |
+| `S3_FORCE_PATH_STYLE` | `true` | Utiliser le path-style pour les requêtes S3. Requis pour MinIO, désactiver pour AWS S3 |
+
+!!! tip "MinIO en Docker"
+    Pour utiliser MinIO auto-hébergé, ajoutez un service `minio` à votre `docker-compose.yml` :
+
+    ```yaml
+    minio:
+      image: minio/minio
+      command: server /data --console-address ":9001"
+      environment:
+        MINIO_ROOT_USER: minioadmin
+        MINIO_ROOT_PASSWORD: minioadmin
+      volumes:
+        - minio_data:/data
+      ports:
+        - "9000:9000"
+        - "9001:9001"
+    ```
+
+    Puis configurez :
+    ```bash
+    S3_ENDPOINT=http://minio:9000
+    S3_ACCESS_KEY_ID=minioadmin
+    S3_SECRET_ACCESS_KEY=minioadmin
+    S3_BUCKET=gmail-manager-archives
+    S3_FORCE_PATH_STYLE=true
+    ```
+
+---
+
 ## Volumes Docker
 
 ### Configuration par défaut

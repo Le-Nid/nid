@@ -9,6 +9,7 @@ import {
   MenuFoldOutlined, MenuUnfoldOutlined,
   InboxOutlined, AppstoreOutlined, FundOutlined, ControlOutlined,
   FolderOpenOutlined, MergeCellsOutlined,
+  CloudServerOutlined,
 } from '@ant-design/icons'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -71,6 +72,7 @@ export default function AppLayout() {
       label: t('nav.group_system'),
       children: [
         { key: '/jobs',          icon: <ScheduleOutlined />,    label: t('nav.jobs') },
+        { key: '/ops',           icon: <CloudServerOutlined />, label: t('nav.ops') },
         { key: '/settings',      icon: <SettingOutlined />,     label: t('nav.settings') },
         ...(user?.role === 'admin' ? [
           { key: '/admin', icon: <CrownOutlined />, label: t('nav.admin') },

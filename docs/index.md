@@ -29,6 +29,7 @@ Elle remplace des outils comme Gmail Cleaner et OpenArchiver, sans envoyer vos d
 | 🌐 **i18n** | Français / Anglais, sélecteur de langue, persistance du choix |
 | 📬 **Boîte unifiée** | Tous vos comptes Gmail en une seule vue |
 | 🔍 **Recherches** | Recherches sauvegardées avec icônes et couleurs |
+| ⚙️ **Ops & Résilience** | Stockage S3/MinIO, politiques de rétention, suivi quota Gmail API, import IMAP/mbox, export mbox |
 
 ---
 

@@ -45,6 +45,7 @@
     "analytics": "Analytics",
     "privacy": "Privacy",
     "jobs": "Jobs",
+    "ops": "Ops & Resilience",
     "settings": "Settings",
     "admin": "Administration"
   },
@@ -696,5 +697,86 @@
     "results": "result(s)",
     "noMail": "No email",
     "needMultipleAccounts": "Connect at least 2 Gmail accounts to use the unified inbox."
+  },
+
+  "ops": {
+    "title": "⚙️ Ops & Resilience",
+    "description": "Remote storage, retention policies, Gmail API quota monitoring, mail import/export.",
+    "selectAccount": "Select a Gmail account to access this feature.",
+    "tabs": {
+      "storage": "S3 Storage",
+      "retention": "Retention",
+      "quota": "API Quota",
+      "import": "Import / Export"
+    },
+    "storage": {
+      "info": "Configure an S3-compatible storage (AWS S3, MinIO, Backblaze B2…) as an alternative to local NAS storage for your archives.",
+      "type": "Storage type",
+      "local": "Local (NAS / disk)",
+      "s3": "S3-compatible",
+      "endpoint": "S3 Endpoint",
+      "region": "Region",
+      "bucket": "Bucket",
+      "accessKey": "Access Key ID",
+      "secretKey": "Secret Access Key",
+      "pathStyle": "Path-style (required for MinIO)",
+      "test": "Test connection",
+      "testSuccess": "S3 connection successful",
+      "testFailed": "S3 connection failed",
+      "saved": "Storage configuration saved"
+    },
+    "retention": {
+      "info": "Retention policies automatically delete archives older than the configured duration.",
+      "add": "New policy",
+      "name": "Name",
+      "account": "Account",
+      "allAccounts": "All",
+      "label": "Gmail label",
+      "labelPlaceholder": "Label (optional)",
+      "maxAge": "Max age",
+      "maxAgeDays": "Retention days",
+      "days": "day(s)",
+      "months": "month(s)",
+      "years": "year(s)",
+      "deleted": "Deleted",
+      "lastRun": "Last run",
+      "runNow": "Run now",
+      "runResult": "{{policies}} policy(ies) executed, {{deleted}} archive(s) deleted.",
+      "created": "Retention policy created",
+      "deleteConfirm": "Delete this retention policy?"
+    },
+    "quota": {
+      "info": "Track Gmail API quota usage (250 units/user/second). Data refreshes automatically.",
+      "lastMinute": "Last minute",
+      "lastHour": "Last hour",
+      "last24h": "Last 24 hours",
+      "units": "units",
+      "calls": "calls",
+      "topEndpoints": "Top endpoints (24h)",
+      "endpoint": "Endpoint",
+      "hourlyBreakdown": "Hourly breakdown (24h)",
+      "hour": "Hour"
+    },
+    "import": {
+      "mboxTitle": "Mbox Import",
+      "mboxInfo": "Import a mbox file (Google Takeout, Thunderbird, Apple Mail) into your archives. Emails will be converted to individual EML files.",
+      "dropMbox": "Drop a .mbox file here or click to select",
+      "mboxStarted": "Mbox import started (job {{jobId}}). Track progress in Jobs.",
+      "imapTitle": "IMAP Import",
+      "imapInfo": "Import emails from an IMAP server (Outlook, ProtonMail, Yahoo, etc.).",
+      "imapHost": "IMAP Server",
+      "imapPort": "Port",
+      "imapUser": "Username",
+      "imapPass": "Password",
+      "imapFolder": "Folder",
+      "imapSecure": "Secure connection (TLS)",
+      "maxMessages": "Max messages",
+      "startImport": "Start import",
+      "imapStarted": "IMAP import started (job {{jobId}}). Track progress in Jobs.",
+      "exportTitle": "Mbox Export",
+      "exportInfo": "Export all your archives in mbox format, compatible with Thunderbird, Apple Mail and other email clients.",
+      "exportMbox": "Export as .mbox",
+      "exportSuccess": "Mbox export downloaded"
+    }
   }
 }

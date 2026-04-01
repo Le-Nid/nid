@@ -4,6 +4,7 @@ import {
   adminApi, unsubscribeApi, attachmentsApi, reportsApi,
   duplicatesApi, analyticsApi, privacyApi, notificationsApi,
   auditApi, webhooksApi, savedSearchesApi, unifiedApi, archiveThreadsApi,
+  storageApi, retentionApi, quotaApi, importApi,
 } from '../api'
 
 // ─── Query key factories ──────────────────────────────────
@@ -61,6 +62,9 @@ export const queryKeys = {
   },
   audit: (params?: Record<string, any>) => ['audit', params] as const,
   webhooks: () => ['webhooks'] as const,
+  storage: () => ['storage'] as const,
+  retention: () => ['retention'] as const,
+  quota: (accountId: string) => ['quota', accountId] as const,
 }
 
 // ─── Dashboard ────────────────────────────────────────────
@@ -417,5 +421,105 @@ export function useArchiveThread(accountId: string | null, threadId: string | nu
     queryKey: queryKeys.archiveThread(accountId!, threadId!),
     queryFn: () => archiveThreadsApi.getThread(accountId!, threadId!),
     enabled: !!accountId && !!threadId,
+  })
+}
+
+// ─── Storage ──────────────────────────────────────────────
+
+export function useStorageConfig() {
+  return useQuery({
+    queryKey: queryKeys.storage(),
+    queryFn: () => storageApi.getConfig(),
+  })
+}
+
+export function useSaveStorageConfig() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: Parameters<typeof storageApi.saveConfig>[0]) =>
+      storageApi.saveConfig(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.storage() }),
+  })
+}
+
+export function useTestS3() {
+  return useMutation({
+    mutationFn: (data: Parameters<typeof storageApi.testS3>[0]) =>
+      storageApi.testS3(data),
+  })
+}
+
+// ─── Retention ────────────────────────────────────────────
+
+export function useRetentionPolicies() {
+  return useQuery({
+    queryKey: queryKeys.retention(),
+    queryFn: () => retentionApi.list(),
+  })
+}
+
+export function useCreateRetentionPolicy() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: Parameters<typeof retentionApi.create>[0]) =>
+      retentionApi.create(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.retention() }),
+  })
+}
+
+export function useUpdateRetentionPolicy() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...data }: { id: string } & Record<string, any>) =>
+      retentionApi.update(id, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.retention() }),
+  })
+}
+
+export function useDeleteRetentionPolicy() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => retentionApi.remove(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.retention() }),
+  })
+}
+
+export function useRunRetention() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => retentionApi.run(),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.retention() }),
+  })
+}
+
+// ─── Quota ────────────────────────────────────────────────
+
+export function useQuotaStats(accountId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.quota(accountId!),
+    queryFn: () => quotaApi.getStats(accountId!),
+    enabled: !!accountId,
+    refetchInterval: 30_000,
+  })
+}
+
+// ─── Import ───────────────────────────────────────────────
+
+export function useImportMbox(accountId: string) {
+  return useMutation({
+    mutationFn: (file: File) => importApi.importMbox(accountId, file),
+  })
+}
+
+export function useImportImap(accountId: string) {
+  return useMutation({
+    mutationFn: (data: Parameters<typeof importApi.importImap>[1]) =>
+      importApi.importImap(accountId, data),
+  })
+}
+
+export function useExportMbox(accountId: string) {
+  return useMutation({
+    mutationFn: (mailIds?: string[]) => importApi.exportMbox(accountId, mailIds),
   })
 }

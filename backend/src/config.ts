@@ -55,6 +55,15 @@ export const config = {
   GMAIL_BATCH_SIZE: 25,
   GMAIL_THROTTLE_MS: 1_000,
   GMAIL_CONCURRENCY: 10,
+
+  // S3-compatible storage (MinIO, AWS S3, Backblaze B2, etc.)
+  // Si S3_ENDPOINT est défini, le stockage distant est disponible
+  S3_ENDPOINT:          process.env.S3_ENDPOINT ?? '',
+  S3_REGION:            process.env.S3_REGION ?? 'us-east-1',
+  S3_BUCKET:            process.env.S3_BUCKET ?? 'gmail-manager-archives',
+  S3_ACCESS_KEY_ID:     process.env.S3_ACCESS_KEY_ID ?? '',
+  S3_SECRET_ACCESS_KEY: process.env.S3_SECRET_ACCESS_KEY ?? '',
+  S3_FORCE_PATH_STYLE:  process.env.S3_FORCE_PATH_STYLE !== 'false',  // true pour MinIO
 } as const
 
 export type Config = typeof config

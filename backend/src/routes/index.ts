@@ -21,6 +21,10 @@ import { privacyRoutes } from './privacy'
 import { analyticsRoutes } from './analytics'
 import { savedSearchRoutes } from './saved-searches'
 import { unifiedRoutes } from './unified'
+import { storageRoutes } from './storage'
+import { retentionRoutes } from './retention'
+import { quotaRoutes } from './quota'
+import { importRoutes } from './import'
 
 export async function registerRoutes(app: FastifyInstance) {
   // Health check
@@ -49,6 +53,10 @@ export async function registerRoutes(app: FastifyInstance) {
   await app.register(analyticsRoutes,     { prefix: '/api/analytics' })
   await app.register(savedSearchRoutes,   { prefix: '/api/saved-searches' })
   await app.register(unifiedRoutes,       { prefix: '/api/unified' })
+  await app.register(storageRoutes,       { prefix: '/api/storage' })
+  await app.register(retentionRoutes,     { prefix: '/api/retention' })
+  await app.register(quotaRoutes,         { prefix: '/api/quota' })
+  await app.register(importRoutes,        { prefix: '/api/import' })
 
   // Démarrer le broadcaster SSE ← QueueEvents BullMQ
   startQueueEventBroadcaster()

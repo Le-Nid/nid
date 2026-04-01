@@ -23,6 +23,7 @@ Gmail Manager est une application de gestion et d'archivage de boîtes Gmail, in
 | [**Vie privée**](privacy.md) | Détectez les pixels espions et protégez vos données |
 | [**Boîte unifiée**](unified-inbox.md) | Consultez tous vos comptes Gmail en une seule vue |
 | [**Recherches sauvegardées**](saved-searches.md) | Sauvegardez vos filtres favoris |
+| [**Ops & Résilience**](ops-resilience.md) | Stockage S3, rétention, quota API, import/export |
 | [**Notifications**](notifications.md) | Restez informé via notifications in-app et webhooks |
 | [**Paramètres**](settings.md) | 2FA, export/import, langue, thème |
 | [**Administration**](admin.md) | Gérez les utilisateurs et les quotas (admins) |

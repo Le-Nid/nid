@@ -248,6 +248,44 @@ export interface SavedSearchesTable {
   updated_at: Generated<Date>
 }
 
+// ─── Ops & Résilience tables ──────────────────────────────
+
+export interface RetentionPoliciesTable {
+  id:               Generated<string>
+  user_id:          string
+  gmail_account_id: string | null
+  name:             string
+  label:            string | null
+  max_age_days:     number
+  is_active:        Generated<boolean>
+  last_run_at:      Date | null
+  deleted_count:    Generated<number>
+  created_at:       Generated<Date>
+  updated_at:       Generated<Date>
+}
+
+export interface GmailApiUsageTable {
+  id:               Generated<string>
+  gmail_account_id: string
+  endpoint:         string
+  quota_units:      Generated<number>
+  recorded_at:      Generated<Date>
+}
+
+export interface StorageConfigsTable {
+  id:                   Generated<string>
+  user_id:              string
+  type:                 Generated<string>  // 'local' | 's3'
+  s3_endpoint:          string | null
+  s3_region:            string | null
+  s3_bucket:            string | null
+  s3_access_key_id:     string | null
+  s3_secret_access_key: string | null
+  s3_force_path_style:  Generated<boolean>
+  created_at:           Generated<Date>
+  updated_at:           Generated<Date>
+}
+
 // ─── Database interface ───────────────────────────────────
 
 export interface Database {
@@ -269,6 +307,9 @@ export interface Database {
   inbox_zero_snapshots: InboxZeroSnapshotsTable
   user_social_accounts: UserSocialAccountsTable
   saved_searches:       SavedSearchesTable
+  retention_policies:   RetentionPoliciesTable
+  gmail_api_usage:      GmailApiUsageTable
+  storage_configs:      StorageConfigsTable
 }
 
 // ─── Row types (Selectable = what you get back from SELECT) ─
@@ -298,6 +339,13 @@ export type TrackingPixel    = Selectable<TrackingPixelsTable>
 export type NewTrackingPixel = Insertable<TrackingPixelsTable>
 export type PiiFinding       = Selectable<PiiFindingsTable>
 export type NewPiiFinding    = Insertable<PiiFindingsTable>
+
+export type RetentionPolicy    = Selectable<RetentionPoliciesTable>
+export type NewRetentionPolicy = Insertable<RetentionPoliciesTable>
+export type GmailApiUsage      = Selectable<GmailApiUsageTable>
+export type NewGmailApiUsage   = Insertable<GmailApiUsageTable>
+export type StorageConfig      = Selectable<StorageConfigsTable>
+export type NewStorageConfig   = Insertable<StorageConfigsTable>
 
 export type EmailActivityHeatmap    = Selectable<EmailActivityHeatmapTable>
 export type SenderScore             = Selectable<SenderScoresTable>

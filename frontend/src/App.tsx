@@ -20,6 +20,7 @@ const PrivacyPage = lazy(() => import("./pages/Privacy"));
 const AnalyticsPage = lazy(() => import("./pages/Analytics"));
 const SavedSearchesPage = lazy(() => import("./pages/SavedSearches"));
 const UnifiedInboxPage = lazy(() => import("./pages/UnifiedInbox"));
+const OpsResiliencePage = lazy(() => import("./pages/OpsResilience"));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const initialLoading = useAuthStore((s) => s.initialLoading);
@@ -78,6 +79,7 @@ export default function App() {
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="saved-searches" element={<SavedSearchesPage />} />
           <Route path="unified" element={<UnifiedInboxPage />} />
+          <Route path="ops" element={<OpsResiliencePage />} />
           <Route path="admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
         </Route>
       </Routes>

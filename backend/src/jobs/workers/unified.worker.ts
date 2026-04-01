@@ -9,6 +9,8 @@ import { scanNewsletters } from '../../unsubscribe/unsubscribe.service'
 import { scanTrackingPixels } from '../../privacy/tracking.service'
 import { scanArchivePii } from '../../privacy/pii.service'
 import { encryptArchives } from '../../privacy/encryption.service'
+import { importMbox, importImap } from '../../archive/import.service'
+import { applyRetentionPolicies } from '../../archive/retention.service'
 
 export function startUnifiedWorker() {
   const worker = new Worker(
@@ -27,6 +29,12 @@ export function startUnifiedWorker() {
         case 'scan_pii':
         case 'encrypt_archives':
           return handlePrivacy(job)
+        case 'import_mbox':
+          return handleImportMbox(job)
+        case 'import_imap':
+          return handleImportImap(job)
+        case 'apply_retention':
+          return handleRetention(job)
         default:
           console.warn(`Unknown job type: ${job.name}`)
       }
@@ -415,6 +423,199 @@ async function handlePrivacy(job: Job) {
         userId,
         category: 'job_failed',
         title: `${action} échoué`,
+        body: String(err),
+        data: { jobId: String(job.id) },
+      })
+    }
+    throw err
+  }
+}
+
+// ─── Import mbox ────────────────────────────────────────────
+async function handleImportMbox(job: Job) {
+  const { accountId, userId, filePath } = job.data
+  const db = getDb()
+
+  await db
+    .updateTable('jobs')
+    .set({ status: 'active' })
+    .where('bullmq_id', '=', String(job.id))
+    .execute()
+
+  try {
+    const result = await importMbox(userId, accountId, filePath, {
+      onProgress: async (done: number, total: number) => {
+        const progress = total > 0 ? Math.round((done / total) * 100) : 0
+        await job.updateProgress(progress)
+        if (done % 20 === 0) {
+          await db.updateTable('jobs')
+            .set({ progress, processed: done, total })
+            .where('bullmq_id', '=', String(job.id))
+            .execute()
+        }
+      },
+    })
+
+    await db.updateTable('jobs')
+      .set({
+        status: 'completed',
+        progress: 100,
+        processed: result.imported + result.skipped,
+        total: result.imported + result.skipped + result.errors,
+        completed_at: new Date(),
+      })
+      .where('bullmq_id', '=', String(job.id))
+      .execute()
+
+    // Cleanup temp file
+    try {
+      const fs = await import('fs/promises')
+      await fs.unlink(filePath)
+    } catch { /* ignore */ }
+
+    if (userId) {
+      await notify({
+        userId,
+        category: 'job_completed',
+        title: 'Import mbox terminé',
+        body: `${result.imported} importé(s), ${result.skipped} ignoré(s), ${result.errors} erreur(s).`,
+        data: { jobId: String(job.id), ...result },
+      })
+    }
+
+    return result
+  } catch (err) {
+    await db.updateTable('jobs')
+      .set({ status: 'failed', error: String(err) })
+      .where('bullmq_id', '=', String(job.id))
+      .execute()
+
+    if (userId) {
+      await notify({
+        userId,
+        category: 'job_failed',
+        title: 'Import mbox échoué',
+        body: String(err),
+        data: { jobId: String(job.id) },
+      })
+    }
+    throw err
+  }
+}
+
+// ─── Import IMAP ────────────────────────────────────────────
+async function handleImportImap(job: Job) {
+  const { accountId, userId, imapConfig } = job.data
+  const db = getDb()
+
+  await db
+    .updateTable('jobs')
+    .set({ status: 'active' })
+    .where('bullmq_id', '=', String(job.id))
+    .execute()
+
+  try {
+    const result = await importImap(userId, accountId, imapConfig, {
+      onProgress: async (done: number, total: number) => {
+        const progress = total > 0 ? Math.round((done / total) * 100) : 0
+        await job.updateProgress(progress)
+        if (done % 20 === 0) {
+          await db.updateTable('jobs')
+            .set({ progress, processed: done, total })
+            .where('bullmq_id', '=', String(job.id))
+            .execute()
+        }
+      },
+    })
+
+    await db.updateTable('jobs')
+      .set({
+        status: 'completed',
+        progress: 100,
+        processed: result.imported + result.skipped,
+        total: result.imported + result.skipped + result.errors,
+        completed_at: new Date(),
+      })
+      .where('bullmq_id', '=', String(job.id))
+      .execute()
+
+    if (userId) {
+      await notify({
+        userId,
+        category: 'job_completed',
+        title: 'Import IMAP terminé',
+        body: `${result.imported} importé(s), ${result.skipped} ignoré(s), ${result.errors} erreur(s).`,
+        data: { jobId: String(job.id), ...result },
+      })
+    }
+
+    return result
+  } catch (err) {
+    await db.updateTable('jobs')
+      .set({ status: 'failed', error: String(err) })
+      .where('bullmq_id', '=', String(job.id))
+      .execute()
+
+    if (userId) {
+      await notify({
+        userId,
+        category: 'job_failed',
+        title: 'Import IMAP échoué',
+        body: String(err),
+        data: { jobId: String(job.id) },
+      })
+    }
+    throw err
+  }
+}
+
+// ─── Retention ──────────────────────────────────────────────
+async function handleRetention(job: Job) {
+  const { userId } = job.data
+  const db = getDb()
+
+  await db
+    .updateTable('jobs')
+    .set({ status: 'active' })
+    .where('bullmq_id', '=', String(job.id))
+    .execute()
+
+  try {
+    const result = await applyRetentionPolicies()
+
+    await db.updateTable('jobs')
+      .set({
+        status: 'completed',
+        progress: 100,
+        processed: result.totalDeleted,
+        total: result.policiesRun,
+        completed_at: new Date(),
+      })
+      .where('bullmq_id', '=', String(job.id))
+      .execute()
+
+    if (userId) {
+      await notify({
+        userId,
+        category: 'job_completed',
+        title: 'Rétention appliquée',
+        body: `${result.policiesRun} politique(s) exécutée(s), ${result.totalDeleted} archive(s) supprimée(s).`,
+        data: { jobId: String(job.id), ...result },
+      })
+    }
+
+    return result
+  } catch (err) {
+    await db.updateTable('jobs')
+      .set({ status: 'failed', error: String(err) })
+      .where('bullmq_id', '=', String(job.id))
+      .execute()
+
+    if (userId) {
+      await notify({
+        userId,
+        category: 'job_failed',
+        title: 'Rétention échouée',
         body: String(err),
         data: { jobId: String(job.id) },
       })

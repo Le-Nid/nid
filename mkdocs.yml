@@ -79,6 +79,7 @@ nav:
     - Boîte unifiée: guide/unified-inbox.md
     - Recherches sauvegardées: guide/saved-searches.md
     - Notifications & Webhooks: guide/notifications.md
+    - Ops & Résilience: guide/ops-resilience.md
     - Paramètres: guide/settings.md
     - Administration: guide/admin.md
   - 🔧 Documentation technique:
@@ -110,6 +111,7 @@ nav:
       - Analytics: technical/api/analytics.md
       - Recherches sauvegardées: technical/api/saved-searches.md
       - Boîte unifiée: technical/api/unified.md
+      - Ops & Résilience: technical/api/ops.md
   - Développement:
     - Contribuer: development/contributing.md
     - Roadmap: development/roadmap.md

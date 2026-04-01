@@ -21,3 +21,5 @@ cd frontend && npm ci && npm run typecheck
 Run `npm ci` to ensure dependencies are in sync with the lockfile, then `npm run typecheck` (`tsc --noEmit`) to catch type errors.
 
 If both packages were modified, run both validations. Fix any errors before considering the task complete.
+
+Créé systématiquement la documentation technique et utilisateur pour toute nouvelle fonctionnalité ou modification significative.

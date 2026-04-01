@@ -29,6 +29,8 @@ export default defineConfig({
         'pino-pretty',
         'zod',
         /^dotenv(\/.*)?$/,
+        /^@aws-sdk\//,
+        'imapflow',
       ],
     },
     // Pas de minification pour un serveur Node (debug plus facile + pas de gain réel)

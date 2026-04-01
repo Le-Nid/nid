@@ -330,3 +330,79 @@ export const archiveThreadsApi = {
   getThread: (accountId: string, threadId: string) =>
     api.get(`/api/archive/${accountId}/threads/${threadId}`).then((r) => r.data),
 }
+
+// ─── Storage (S3/MinIO) ──────────────────────────────────
+export const storageApi = {
+  getConfig: () =>
+    api.get('/api/storage/config').then((r) => r.data),
+
+  saveConfig: (data: {
+    type: 'local' | 's3'
+    s3Endpoint?: string
+    s3Region?: string
+    s3Bucket?: string
+    s3AccessKeyId?: string
+    s3SecretAccessKey?: string
+    s3ForcePathStyle?: boolean
+  }) =>
+    api.put('/api/storage/config', data).then((r) => r.data),
+
+  testS3: (data: {
+    endpoint: string
+    region?: string
+    bucket?: string
+    accessKeyId: string
+    secretAccessKey: string
+    forcePathStyle?: boolean
+  }) =>
+    api.post('/api/storage/test-s3', data).then((r) => r.data),
+}
+
+// ─── Retention Policies ──────────────────────────────────
+export const retentionApi = {
+  list: () =>
+    api.get('/api/retention').then((r) => r.data),
+
+  create: (data: { name: string; gmailAccountId?: string; label?: string; maxAgeDays: number }) =>
+    api.post('/api/retention', data).then((r) => r.data),
+
+  update: (policyId: string, data: Record<string, any>) =>
+    api.put(`/api/retention/${policyId}`, data).then((r) => r.data),
+
+  remove: (policyId: string) =>
+    api.delete(`/api/retention/${policyId}`).then((r) => r.data),
+
+  run: () =>
+    api.post('/api/retention/run').then((r) => r.data),
+}
+
+// ─── Gmail API Quota ─────────────────────────────────────
+export const quotaApi = {
+  getStats: (accountId: string) =>
+    api.get(`/api/quota/${accountId}`).then((r) => r.data),
+}
+
+// ─── Import (mbox / IMAP) ────────────────────────────────
+export const importApi = {
+  importMbox: (accountId: string, file: File) => {
+    const form = new FormData()
+    form.append('file', file)
+    return api.post(`/api/import/${accountId}/mbox`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then((r) => r.data)
+  },
+
+  importImap: (accountId: string, data: {
+    host: string
+    port: number
+    secure?: boolean
+    user: string
+    pass: string
+    folder?: string
+    maxMessages?: number
+  }) =>
+    api.post(`/api/import/${accountId}/imap`, data).then((r) => r.data),
+
+  exportMbox: (accountId: string, mailIds?: string[]) =>
+    api.post(`/api/import/${accountId}/export-mbox`, { mailIds }, { responseType: 'blob' }).then((r) => r.data),
+}

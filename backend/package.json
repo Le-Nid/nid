@@ -20,6 +20,8 @@
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1021.0",
+    "@aws-sdk/lib-storage": "^3.1021.0",
     "@fastify/cookie": "^11.0.2",
     "@fastify/cors": "^11.2.0",
     "@fastify/jwt": "^10.0.0",
@@ -34,6 +36,7 @@
     "dotenv": "^17.3.1",
     "fastify": "^5.8.3",
     "googleapis": "^171.4.0",
+    "imapflow": "^1.2.18",
     "ioredis": "^5.3.2",
     "kysely": "^0.28.14",
     "mailparser": "^3.7.1",
@@ -48,6 +51,7 @@
   "devDependencies": {
     "@types/archiver": "^6.0.2",
     "@types/bcrypt": "^5.0.2",
+    "@types/imapflow": "^1.0.23",
     "@types/mailparser": "^3.4.4",
     "@types/node": "^24.0.0",
     "@types/pg": "^8.11.6",

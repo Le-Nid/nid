@@ -101,6 +101,9 @@ erDiagram
     gmail_accounts ||--o{ tracking_pixels : "scanne"
     gmail_accounts ||--o{ pii_findings : "analyse"
     archived_mails ||--o{ pii_findings : "référence"
+    users ||--o{ retention_policies : "configure"
+    gmail_accounts ||--o{ gmail_api_usage : "suit"
+    users ||--|| storage_configs : "paramètre"
 
     tracking_pixels {
         uuid id PK
@@ -177,6 +180,42 @@ erDiagram
         varchar ip_address "nullable"
         timestamptz created_at
     }
+
+    retention_policies {
+        uuid id PK
+        uuid user_id FK
+        uuid gmail_account_id FK "nullable"
+        varchar name
+        varchar label "nullable"
+        integer max_age_days
+        boolean is_active "default true"
+        timestamptz last_run_at "nullable"
+        integer deleted_count "default 0"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    gmail_api_usage {
+        uuid id PK
+        uuid gmail_account_id FK
+        varchar endpoint
+        integer quota_units "default 5"
+        timestamptz recorded_at
+    }
+
+    storage_configs {
+        uuid id PK
+        uuid user_id FK "unique"
+        varchar type "local | s3"
+        varchar s3_endpoint "nullable"
+        varchar s3_region "nullable"
+        varchar s3_bucket "nullable"
+        varchar s3_access_key_id "nullable"
+        varchar s3_secret_access_key "nullable"
+        boolean s3_force_path_style "default true"
+        timestamptz created_at
+        timestamptz updated_at
+    }
 ```
 
 ---
@@ -204,6 +243,10 @@ erDiagram
 | `tracking_pixels` | `(gmail_account_id, gmail_message_id)` | Unique | Dédoublonnage scans |
 | `pii_findings` | `gmail_account_id` | BTree | Filtrage par compte |
 | `pii_findings` | `archived_mail_id` | BTree | Join mails ↔ PII |
+| `retention_policies` | `user_id` | BTree | Filtrage par utilisateur |
+| `gmail_api_usage` | `(gmail_account_id, recorded_at)` | BTree | Stats quota par compte |
+| `gmail_api_usage` | `recorded_at` | BTree | Nettoyage données anciennes |
+| `storage_configs` | `user_id` | Unique | Une config par utilisateur |
 
 ---
 

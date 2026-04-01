@@ -15,6 +15,9 @@ export type JobType =
   | 'scan_tracking'
   | 'scan_pii'
   | 'encrypt_archives'
+  | 'import_mbox'
+  | 'import_imap'
+  | 'apply_retention'
 
 export interface JobPayload {
   accountId: string
