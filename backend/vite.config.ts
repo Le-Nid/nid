@@ -48,7 +48,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'html'],
-      exclude: ['dist/**', 'src/__tests__/**'],
+      exclude: ['dist/**', 'src/__tests__/**', 'src/db/types.ts', 'src/db/migrations/**'],
     },
     include:  ['src/__tests__/**/*.test.ts'],
     testTimeout: 10_000,
