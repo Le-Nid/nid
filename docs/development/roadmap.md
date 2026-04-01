@@ -146,6 +146,7 @@
 - [ ] **Dashboard quota Gmail API** — Visualiser la consommation du quota Gmail API en temps réel (250 unités/user/sec). Historique et alertes si proche du plafond
 - [ ] **Import IMAP** — Importer des mails depuis d'autres providers (Outlook, ProtonMail export) dans le système d'archives
 - [ ] **Import mbox** — Importer un fichier mbox (Google Takeout, Thunderbird, Apple Mail) → parser et convertir en EML individuels dans les archives. Upload via l'UI avec barre de progression
+- [ ] Export archive au format mbox
 
 ### Idées originales
 

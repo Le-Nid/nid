@@ -86,6 +86,8 @@ nav:
     - Configuration: api/config.md
     - Vie privée: api/privacy.md
     - Analytics: api/analytics.md
+    - Recherches sauvegardées: api/saved-searches.md
+    - Boîte unifiée: api/unified.md
   - Développement:
     - Contribuer: development/contributing.md
     - Roadmap: development/roadmap.md
