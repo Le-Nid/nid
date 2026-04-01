@@ -10,7 +10,7 @@ import {
 import { Line } from '@ant-design/charts'
 import { useTranslation } from 'react-i18next'
 import { useAccount } from '../hooks/useAccount'
-import { useAnalytics, useDismissSuggestion, queryKeys } from '../hooks/queries'
+import { useAnalytics, useDismissSuggestion } from '../hooks/queries'
 import { formatBytes, formatSender } from '../utils/format'
 import { useQueryClient } from '@tanstack/react-query'
 
@@ -32,25 +32,6 @@ interface SenderScore {
   hasUnsubscribe: boolean
   readRate: number
   clutterScore: number
-}
-
-interface CleanupSuggestion {
-  id: string
-  type: string
-  title: string
-  description: string | null
-  sender: string | null
-  emailCount: number
-  totalSizeBytes: number
-  query: string | null
-  isDismissed: boolean
-}
-
-interface InboxZeroData {
-  current: { inboxCount: number; unreadCount: number }
-  history: { date: string; inboxCount: number; unreadCount: number }[]
-  streak: number
-  bestStreak: number
 }
 
 // ─── Composant Heatmap ──────────────────────────────────
@@ -206,7 +187,7 @@ export default function AnalyticsPage() {
 
   // Config graphique Inbox Zero
   const inboxZeroChartConfig = {
-    data: inboxZero?.history.map((h) => ({
+    data: inboxZero?.history.map((h: { date: string; inboxCount: number }) => ({
       date: h.date,
       count: h.inboxCount,
     })) ?? [],
@@ -315,7 +296,7 @@ export default function AnalyticsPage() {
           <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
             <Col xs={24}>
               <Card title={<><WarningOutlined style={{ color: '#faad14' }} /> {t('analytics.suggestionsTitle')}</>} size="small">
-                {suggestions.map((s) => (
+                {suggestions.map((s: { id: string; type: string; title: string; description: string | null; emailCount: number; totalSizeBytes: number }) => (
                   <Card
                     key={s.id}
                     size="small"

@@ -14,13 +14,6 @@ import { useAdminStats, useAdminUsers, useAdminJobs, useUpdateAdminUser } from '
 
 const { Title, Text } = Typography
 
-interface AdminStats {
-  users: number
-  gmailAccounts: number
-  jobs: { total: number; completed: number; failed: number; active: number }
-  archives: { totalMails: number; totalSizeBytes: number }
-}
-
 interface AdminUser {
   id: string
   email: string

@@ -13,8 +13,7 @@ import { useTranslation } from 'react-i18next'
 import { useAccount } from '../hooks/useAccount'
 import JobProgressModal from '../components/JobProgressModal'
 import type {
-  TrackingStats, TrackedMessage, PiiStats, PiiFinding,
-  EncryptionStatus, TrackerInfo,
+  TrackerInfo,
 } from '../types/privacy'
 import { PII_TYPE_LABELS, TRACKER_TYPE_LABELS } from '../types/privacy'
 import { useTrackingStats, useTrackedMessages, usePiiStats, usePiiFindings, useEncryptionStatus } from '../hooks/queries'
@@ -177,7 +176,7 @@ function TrackingTab({ accountId, lang, messageApi, setActiveJobId }: Readonly<{
           style={{ marginBottom: 16 }}
         >
           <Space wrap>
-            {stats.topDomains.slice(0, 10).map((d) => (
+            {stats.topDomains.slice(0, 10).map((d: { domain: string; count: number }) => (
               <Tag key={d.domain} color="volcano">
                 {d.domain} ({d.count})
               </Tag>
@@ -329,7 +328,7 @@ function PiiTab({ accountId, lang, messageApi, setActiveJobId }: Readonly<{
             <div>
               <Text type="secondary" style={{ fontSize: 12 }}>{t('privacy.pii.byType')}</Text>
               <div style={{ marginTop: 4 }}>
-                {stats?.byType?.map((bt) => (
+                {stats?.byType?.map((bt: { type: string; count: number }) => (
                   <Tag key={bt.type} color="red" style={{ marginBottom: 4 }}>
                     {PII_TYPE_LABELS[bt.type]?.[lang as 'fr' | 'en'] ?? bt.type}: {bt.count}
                   </Tag>

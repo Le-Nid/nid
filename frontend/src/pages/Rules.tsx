@@ -55,7 +55,7 @@ export default function RulesPage() {
   const [editingRule, setEditingRule] = useState<Rule | null>(null);
   const [messageApi, contextHolder] = message.useMessage();
   const [templateDrawer, setTemplateDrawer] = useState(false);
-  const { data: templates = [], isLoading: templateLoading, refetch: fetchTemplates } = useRuleTemplates(templateDrawer);
+  const { data: templates = [], isLoading: templateLoading } = useRuleTemplates(templateDrawer);
   const toggleMutation = useToggleRule(accountId!);
   const deleteMutation = useDeleteRule(accountId!);
   const runMutation = useRunRule(accountId!);
@@ -178,7 +178,7 @@ export default function RulesPage() {
       dataIndex: "action",
       width: 200,
       render: (action: Rule["action"]) => {
-        const label = labels.find((l) => l.id === action.labelId);
+        const label = labels.find((l: { id: string }) => l.id === action.labelId);
         return (
           <Space>
             <Tag color="blue">{ACTION_LABELS[action.type]}</Tag>

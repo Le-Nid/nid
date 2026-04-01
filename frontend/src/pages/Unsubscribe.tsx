@@ -53,11 +53,11 @@ export default function UnsubscribePage() {
     }
   }
 
-  const totalMails = newsletters.reduce((s, n) => s + n.count, 0)
-  const totalSize = newsletters.reduce((s, n) => s + n.totalSizeBytes, 0)
+  const totalMails = newsletters.reduce((s: number, n: NewsletterSender) => s + n.count, 0)
+  const totalSize = newsletters.reduce((s: number, n: NewsletterSender) => s + n.totalSizeBytes, 0)
 
   const filtered = search
-    ? newsletters.filter((n) =>
+    ? newsletters.filter((n: NewsletterSender) =>
         n.sender.toLowerCase().includes(search.toLowerCase()) ||
         n.email.toLowerCase().includes(search.toLowerCase())
       )

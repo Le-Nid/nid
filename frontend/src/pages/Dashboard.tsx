@@ -15,16 +15,8 @@ import dayjs from 'dayjs'
 
 const { Title, Text } = Typography
 
-interface DashboardStats {
-  totalMessages: number
-  unreadCount: number
-  totalSizeBytes: number
-  bySender: { sender: string; count: number; sizeBytes: number }[]
-  biggestMails: { id: string; subject: string; sizeEstimate: number; from: string; date: string }[]
-  byLabel: { label: string; count: number }[]
-  timeline: { month: string; count: number }[]
-  profile: { emailAddress: string; messagesTotal: number }
-}
+interface DashboardSender { sender: string; count: number; sizeBytes: number }
+interface DashboardLabel { label: string; count: number }
 
 export default function DashboardPage() {
   const { t } = useTranslation()
@@ -45,7 +37,7 @@ export default function DashboardPage() {
   }
 
   const topSendersByCount = {
-    data: (stats?.bySender ?? []).slice(0, 15).map((s) => ({
+    data: (stats?.bySender ?? []).slice(0, 15).map((s: DashboardSender) => ({
       sender: formatSender(s.sender).slice(0, 35),
       count: s.count,
     })),
@@ -57,8 +49,8 @@ export default function DashboardPage() {
 
   const topSendersBySize = {
     data: (stats?.bySender ?? [])
-      .slice().sort((a, b) => b.sizeBytes - a.sizeBytes).slice(0, 15)
-      .map((s) => ({
+      .slice().sort((a: DashboardSender, b: DashboardSender) => b.sizeBytes - a.sizeBytes).slice(0, 15)
+      .map((s: DashboardSender) => ({
         sender: formatSender(s.sender).slice(0, 35),
         sizeMo: Math.round((s.sizeBytes / 1024 / 1024) * 10) / 10,
       })),
@@ -85,9 +77,9 @@ export default function DashboardPage() {
 
   const labelPieConfig = {
     data: (stats?.byLabel ?? [])
-      .filter((l) => !['UNREAD', 'STARRED', 'IMPORTANT'].includes(l.label))
+      .filter((l: DashboardLabel) => !['UNREAD', 'STARRED', 'IMPORTANT'].includes(l.label))
       .slice(0, 8)
-      .map((l) => ({ label: t(`labels.${l.label}`, { defaultValue: l.label }), count: l.count })),
+      .map((l: DashboardLabel) => ({ label: t(`labels.${l.label}`, { defaultValue: l.label }), count: l.count })),
     angleField: 'count', colorField: 'label',
     radius: 0.8, innerRadius: 0.55,
     height: 220,

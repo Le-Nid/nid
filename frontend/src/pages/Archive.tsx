@@ -468,8 +468,8 @@ export default function ArchivePage() {
   ];
 
   const selectedSizeBytes = mails
-    .filter((m) => selected.includes(m.id))
-    .reduce((s, m) => s + m.size_bytes, 0);
+    .filter((m: { id: string }) => selected.includes(m.id))
+    .reduce((s: number, m: { size_bytes: number }) => s + m.size_bytes, 0);
 
   return (
     <div>

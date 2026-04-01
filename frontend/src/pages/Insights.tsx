@@ -11,20 +11,6 @@ import { useWeeklyReport } from '../hooks/queries'
 
 const { Title, Text } = Typography
 
-interface WeeklyReport {
-  userId: string
-  email: string
-  period: { from: string; to: string }
-  stats: {
-    jobsCompleted: number
-    jobsFailed: number
-    mailsArchived: number
-    archiveSizeBytes: number
-    rulesExecuted: number
-    topSenders: { sender: string; count: number }[]
-  }
-}
-
 export default function InsightsPage() {
   const { t } = useTranslation()
   const { data: report, isLoading: loading, isError: error } = useWeeklyReport()

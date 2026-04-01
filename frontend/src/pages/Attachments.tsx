@@ -51,7 +51,7 @@ export default function AttachmentsPage() {
   const [mode, setMode] = useState<ViewMode>('archived')
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
-  const [messageApi, contextHolder] = message.useMessage()
+  const [, contextHolder] = message.useMessage()
 
   const archivedParams = { page, limit: 50, sort: 'size', order: 'desc', ...(search ? { q: search } : {}) }
   const archivedQuery = useArchivedAttachments(mode === 'archived' ? accountId : null, archivedParams)
