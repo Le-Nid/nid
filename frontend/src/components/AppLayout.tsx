@@ -9,7 +9,7 @@ import {
   MenuFoldOutlined, MenuUnfoldOutlined,
   InboxOutlined, AppstoreOutlined, FundOutlined, ControlOutlined,
   FolderOpenOutlined, MergeCellsOutlined,
-  CloudServerOutlined,
+  CloudServerOutlined, ClockCircleOutlined, ShareAltOutlined,
 } from '@ant-design/icons'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -54,6 +54,8 @@ export default function AppLayout() {
         { key: '/unsubscribe',  icon: <StopOutlined />,        label: t('nav.newsletters') },
         { key: '/attachments',  icon: <PaperClipOutlined />,   label: t('nav.attachments') },
         { key: '/duplicates',   icon: <CopyOutlined />,        label: t('nav.duplicates') },
+        { key: '/expiration',   icon: <ClockCircleOutlined />, label: t('nav.expiration') },
+        { key: '/sharing',      icon: <ShareAltOutlined />,    label: t('nav.sharing') },
       ],
     },
     {

@@ -79,6 +79,8 @@ nav:
     - Boîte unifiée: guide/unified-inbox.md
     - Recherches sauvegardées: guide/saved-searches.md
     - Notifications & Webhooks: guide/notifications.md
+    - Expiration des emails: guide/expiration.md
+    - Partage d'archives: guide/sharing.md
     - Ops & Résilience: guide/ops-resilience.md
     - Paramètres: guide/settings.md
     - Administration: guide/admin.md

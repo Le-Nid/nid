@@ -24,7 +24,8 @@
     "noData": "No data",
     "noSubject": "(no subject)",
     "active": "Active",
-    "test": "Test"
+    "test": "Test",
+    "actions": "Actions"
   },
 
   "nav": {
@@ -47,7 +48,9 @@
     "jobs": "Jobs",
     "ops": "Ops & Resilience",
     "settings": "Settings",
-    "admin": "Administration"
+    "admin": "Administration",
+    "expiration": "Expiration",
+    "sharing": "Sharing"
   },
 
   "layout": {
@@ -778,5 +781,84 @@
       "exportMbox": "Export as .mbox",
       "exportSuccess": "Mbox export downloaded"
     }
+  },
+
+  "expiration": {
+    "title": "Email Expiration",
+    "description": "Mark emails as temporary (OTP codes, delivery confirmations, promos). They will be automatically deleted after expiration.",
+    "subject": "Subject",
+    "sender": "Sender",
+    "category": "Category",
+    "categoryLabel": "Category",
+    "expiresAt": "Expires",
+    "expiresInDays": "Expires in (days)",
+    "status": "Status",
+    "active": "Active",
+    "expired": "Expired",
+    "deleted": "Deleted",
+    "messageId": "Gmail message ID",
+    "cat_manual": "Manual",
+    "cat_otp": "OTP Code",
+    "cat_delivery": "Delivery",
+    "cat_promo": "Promotion",
+    "detect": "Auto-detect",
+    "detectTitle": "Detected temporary emails",
+    "detectInfo": "{{count}} temporary email(s) detected by heuristic analysis.",
+    "applySelected": "Apply selection",
+    "suggestedDays": "Suggested duration",
+    "nDays": "{{count}} day(s)",
+    "addManual": "Add manually",
+    "addTitle": "Add expiration",
+    "confirmDelete": "Remove this expiration?",
+    "createSuccess": "Expiration created",
+    "createError": "Error creating expiration",
+    "deleteSuccess": "Expiration removed",
+    "deleteError": "Error removing expiration",
+    "batchSuccess": "{{count}} expiration(s) created",
+    "noMessages": "No recent messages found",
+    "noneDetected": "No temporary emails detected",
+    "detectError": "Error during detection",
+    "statPending": "Pending",
+    "statExpiringSoon": "Expiring soon",
+    "statDeleted": "Deleted",
+    "statTotal": "Total"
+  },
+
+  "sharing": {
+    "title": "Archive Sharing",
+    "description": "Generate temporary links to share an archived email with someone without an account.",
+    "subject": "Subject",
+    "sender": "Sender",
+    "expiresAt": "Expires",
+    "expired": "Expired",
+    "accessCount": "Access",
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied to clipboard",
+    "confirmRevoke": "Revoke this share link?",
+    "revokeSuccess": "Link revoked",
+    "revokeError": "Error revoking link",
+    "createTitle": "Create share link",
+    "createSuccess": "Share link created",
+    "createError": "Error creating share link",
+    "archivedMailId": "Archived mail ID",
+    "expiresInHours": "Validity duration",
+    "maxAccessLabel": "Max access count (optional)",
+    "unlimited": "Unlimited",
+    "hour1": "1 hour",
+    "hours6": "6 hours",
+    "hours24": "24 hours",
+    "hours72": "3 days",
+    "hours168": "7 days",
+    "hours720": "30 days",
+    "noShares": "No active share links",
+    "notFound": "Link not found",
+    "notFoundDesc": "This share link is invalid, has expired, or reached its access limit.",
+    "sharedLink": "Email shared via temporary link",
+    "to": "To",
+    "emailContent": "Email content",
+    "noContent": "No content available",
+    "poweredBy": "Gmail Manager — Temporary archive sharing",
+    "shareButton": "Share",
+    "shareTooltip": "Generate a temporary share link"
   }
 }

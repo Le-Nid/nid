@@ -286,6 +286,32 @@ export interface StorageConfigsTable {
   updated_at:           Generated<Date>
 }
 
+// ─── Expiration & Sharing tables ──────────────────────────
+
+export interface EmailExpirationsTable {
+  id:               Generated<string>
+  gmail_account_id: string
+  gmail_message_id: string
+  subject:          string | null
+  sender:           string | null
+  expires_at:       Timestamp
+  category:         Generated<string>   // 'manual' | 'otp' | 'delivery' | 'promo'
+  is_deleted:       Generated<boolean>
+  deleted_at:       Date | null
+  created_at:       Generated<Date>
+}
+
+export interface ArchiveSharesTable {
+  id:               Generated<string>
+  archived_mail_id: string
+  user_id:          string
+  token:            string
+  expires_at:       Timestamp
+  access_count:     Generated<number>
+  max_access:       number | null
+  created_at:       Generated<Date>
+}
+
 // ─── Database interface ───────────────────────────────────
 
 export interface Database {
@@ -310,6 +336,8 @@ export interface Database {
   retention_policies:   RetentionPoliciesTable
   gmail_api_usage:      GmailApiUsageTable
   storage_configs:      StorageConfigsTable
+  email_expirations:    EmailExpirationsTable
+  archive_shares:       ArchiveSharesTable
 }
 
 // ─── Row types (Selectable = what you get back from SELECT) ─
@@ -357,3 +385,8 @@ export type NewUserSocialAccount = Insertable<UserSocialAccountsTable>
 
 export type SavedSearch    = Selectable<SavedSearchesTable>
 export type NewSavedSearch = Insertable<SavedSearchesTable>
+
+export type EmailExpiration    = Selectable<EmailExpirationsTable>
+export type NewEmailExpiration = Insertable<EmailExpirationsTable>
+export type ArchiveShare       = Selectable<ArchiveSharesTable>
+export type NewArchiveShare    = Insertable<ArchiveSharesTable>

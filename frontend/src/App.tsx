@@ -21,6 +21,9 @@ const AnalyticsPage = lazy(() => import("./pages/Analytics"));
 const SavedSearchesPage = lazy(() => import("./pages/SavedSearches"));
 const UnifiedInboxPage = lazy(() => import("./pages/UnifiedInbox"));
 const OpsResiliencePage = lazy(() => import("./pages/OpsResilience"));
+const ExpirationPage = lazy(() => import("./pages/Expiration"));
+const SharingPage = lazy(() => import("./pages/Sharing"));
+const SharedMailPage = lazy(() => import("./pages/SharedMail"));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const initialLoading = useAuthStore((s) => s.initialLoading);
@@ -56,6 +59,7 @@ export default function App() {
     <Suspense fallback={<RouteFallback />}>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/shared/:token" element={<SharedMailPage />} />
         <Route
           path="/"
           element={
@@ -80,6 +84,8 @@ export default function App() {
           <Route path="saved-searches" element={<SavedSearchesPage />} />
           <Route path="unified" element={<UnifiedInboxPage />} />
           <Route path="ops" element={<OpsResiliencePage />} />
+          <Route path="expiration" element={<ExpirationPage />} />
+          <Route path="sharing" element={<SharingPage />} />
           <Route path="admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
         </Route>
       </Routes>

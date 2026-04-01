@@ -1,6 +1,8 @@
 import { getDb } from "../db";
 import { enqueueJob } from "./queue";
 import { recordInboxSnapshot } from "../analytics/analytics.service";
+import { processExpiredEmails } from "../expiration/expiration.service";
+import { cleanupExpiredShares } from "../archive/sharing.service";
 
 // Simple cron scheduler — vérifie toutes les minutes si des règles
 // planifiées doivent être exécutées.
@@ -11,6 +13,8 @@ export function startRuleScheduler() {
 
   let lastIntegrityCheck: Date | null = null;
   let lastInboxSnapshot: Date | null = null;
+  let lastExpirationCheck: Date | null = null;
+  let lastShareCleanup: Date | null = null;
 
   async function tick() {
     const db = getDb();
@@ -43,6 +47,32 @@ export function startRuleScheduler() {
         }
         lastInboxSnapshot = now;
         console.info(`[Scheduler] Inbox zero snapshots recorded (${accounts.length} accounts)`);
+      }
+
+      // ─── Process expired emails — every 15 min ─────────────
+      if (!lastExpirationCheck || (now.getTime() - lastExpirationCheck.getTime()) > 15 * 60 * 1000) {
+        try {
+          const result = await processExpiredEmails();
+          if (result.processed > 0 || result.errors > 0) {
+            console.info(`[Scheduler] Expired emails: ${result.processed} trashed, ${result.errors} errors`);
+          }
+        } catch (err) {
+          console.error('[Scheduler] Expiration processing failed:', err);
+        }
+        lastExpirationCheck = now;
+      }
+
+      // ─── Cleanup expired share links — every hour ──────────
+      if (!lastShareCleanup || (now.getTime() - lastShareCleanup.getTime()) > 3600 * 1000) {
+        try {
+          const cleaned = await cleanupExpiredShares();
+          if (cleaned > 0) {
+            console.info(`[Scheduler] Cleaned ${cleaned} expired share link(s)`);
+          }
+        } catch (err) {
+          console.error('[Scheduler] Share cleanup failed:', err);
+        }
+        lastShareCleanup = now;
       }
 
       // Récupère les règles actives avec un schedule cron

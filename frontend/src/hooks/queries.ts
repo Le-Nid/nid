@@ -5,6 +5,7 @@ import {
   duplicatesApi, analyticsApi, privacyApi, notificationsApi,
   auditApi, webhooksApi, savedSearchesApi, unifiedApi, archiveThreadsApi,
   storageApi, retentionApi, quotaApi, importApi,
+  expirationApi, sharingApi,
 } from '../api'
 
 // ─── Query key factories ──────────────────────────────────
@@ -65,6 +66,9 @@ export const queryKeys = {
   storage: () => ['storage'] as const,
   retention: () => ['retention'] as const,
   quota: (accountId: string) => ['quota', accountId] as const,
+  expiration: (accountId: string) => ['expiration', accountId] as const,
+  expirationStats: (accountId: string) => ['expiration', accountId, 'stats'] as const,
+  shares: () => ['shares'] as const,
 }
 
 // ─── Dashboard ────────────────────────────────────────────
@@ -521,5 +525,92 @@ export function useImportImap(accountId: string) {
 export function useExportMbox(accountId: string) {
   return useMutation({
     mutationFn: (mailIds?: string[]) => importApi.exportMbox(accountId, mailIds),
+  })
+}
+
+// ─── Email Expiration ─────────────────────────────────────
+
+export function useExpirations(accountId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.expiration(accountId!),
+    queryFn: () => expirationApi.list(accountId!),
+    enabled: !!accountId,
+  })
+}
+
+export function useExpirationStats(accountId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.expirationStats(accountId!),
+    queryFn: () => expirationApi.stats(accountId!),
+    enabled: !!accountId,
+  })
+}
+
+export function useCreateExpiration(accountId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: Parameters<typeof expirationApi.create>[1]) =>
+      expirationApi.create(accountId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.expiration(accountId) })
+      qc.invalidateQueries({ queryKey: queryKeys.expirationStats(accountId) })
+    },
+  })
+}
+
+export function useCreateExpirationBatch(accountId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (items: Parameters<typeof expirationApi.createBatch>[1]) =>
+      expirationApi.createBatch(accountId, items),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.expiration(accountId) })
+      qc.invalidateQueries({ queryKey: queryKeys.expirationStats(accountId) })
+    },
+  })
+}
+
+export function useDeleteExpiration(accountId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (expirationId: string) =>
+      expirationApi.remove(accountId, expirationId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.expiration(accountId) })
+      qc.invalidateQueries({ queryKey: queryKeys.expirationStats(accountId) })
+    },
+  })
+}
+
+export function useDetectExpirations(accountId: string) {
+  return useMutation({
+    mutationFn: (messages: Parameters<typeof expirationApi.detect>[1]) =>
+      expirationApi.detect(accountId, messages),
+  })
+}
+
+// ─── Archive Sharing ──────────────────────────────────────
+
+export function useShares() {
+  return useQuery({
+    queryKey: queryKeys.shares(),
+    queryFn: () => sharingApi.list(),
+  })
+}
+
+export function useCreateShare() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: Parameters<typeof sharingApi.create>[0]) =>
+      sharingApi.create(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.shares() }),
+  })
+}
+
+export function useRevokeShare() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (shareId: string) => sharingApi.revoke(shareId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.shares() }),
   })
 }

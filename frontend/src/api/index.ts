@@ -406,3 +406,63 @@ export const importApi = {
   exportMbox: (accountId: string, mailIds?: string[]) =>
     api.post(`/api/import/${accountId}/export-mbox`, { mailIds }, { responseType: 'blob' }).then((r) => r.data),
 }
+
+// ─── Email Expiration ─────────────────────────────────────
+export const expirationApi = {
+  list: (accountId: string) =>
+    api.get(`/api/expiration/${accountId}`).then((r) => r.data),
+
+  stats: (accountId: string) =>
+    api.get(`/api/expiration/${accountId}/stats`).then((r) => r.data),
+
+  create: (accountId: string, data: {
+    gmailMessageId: string
+    subject?: string
+    sender?: string
+    expiresAt?: string
+    expiresInDays?: number
+    category?: string
+  }) =>
+    api.post(`/api/expiration/${accountId}`, data).then((r) => r.data),
+
+  createBatch: (accountId: string, items: Array<{
+    gmailMessageId: string
+    subject?: string
+    sender?: string
+    expiresInDays?: number
+    category?: string
+  }>) =>
+    api.post(`/api/expiration/${accountId}/batch`, { items }).then((r) => r.data),
+
+  detect: (accountId: string, messages: Array<{
+    gmailMessageId: string
+    subject?: string | null
+    sender?: string | null
+  }>) =>
+    api.post(`/api/expiration/${accountId}/detect`, { messages }).then((r) => r.data),
+
+  update: (accountId: string, expirationId: string, expiresAt: string) =>
+    api.patch(`/api/expiration/${accountId}/${expirationId}`, { expiresAt }).then((r) => r.data),
+
+  remove: (accountId: string, expirationId: string) =>
+    api.delete(`/api/expiration/${accountId}/${expirationId}`).then((r) => r.data),
+}
+
+// ─── Archive Sharing ──────────────────────────────────────
+export const sharingApi = {
+  list: () =>
+    api.get('/api/shares').then((r) => r.data),
+
+  create: (data: {
+    archivedMailId: string
+    expiresInHours?: number
+    maxAccess?: number
+  }) =>
+    api.post('/api/shares', data).then((r) => r.data),
+
+  revoke: (shareId: string) =>
+    api.delete(`/api/shares/${shareId}`).then((r) => r.data),
+
+  getPublic: (token: string) =>
+    api.get(`/api/shares/public/${token}`).then((r) => r.data),
+}

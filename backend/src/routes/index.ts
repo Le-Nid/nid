@@ -25,6 +25,8 @@ import { storageRoutes } from './storage'
 import { retentionRoutes } from './retention'
 import { quotaRoutes } from './quota'
 import { importRoutes } from './import'
+import { expirationRoutes } from './expiration'
+import { sharingRoutes } from './sharing'
 
 export async function registerRoutes(app: FastifyInstance) {
   // Health check
@@ -57,6 +59,8 @@ export async function registerRoutes(app: FastifyInstance) {
   await app.register(retentionRoutes,     { prefix: '/api/retention' })
   await app.register(quotaRoutes,         { prefix: '/api/quota' })
   await app.register(importRoutes,        { prefix: '/api/import' })
+  await app.register(expirationRoutes,    { prefix: '/api/expiration' })
+  await app.register(sharingRoutes,       { prefix: '/api/shares' })
 
   // Démarrer le broadcaster SSE ← QueueEvents BullMQ
   startQueueEventBroadcaster()
