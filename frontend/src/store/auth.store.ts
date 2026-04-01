@@ -18,6 +18,7 @@ interface GmailAccount {
 }
 
 interface AuthState {
+  initialLoading: boolean
   isAuthenticated: boolean
   user: User | null
   gmailAccounts: GmailAccount[]
@@ -34,6 +35,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   // Point 1: no more token in localStorage — auth state determined by cookie presence
+  initialLoading: true,
   isAuthenticated: false,
   user: null,
   gmailAccounts: [],
@@ -76,6 +78,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const active = stored && accounts.find((a) => a.id === stored) ? stored : accounts[0]?.id ?? null
       if (active) localStorage.setItem('activeAccountId', active)
       set({
+        initialLoading: false,
         isAuthenticated: true,
         user: data.user,
         gmailAccounts: accounts,
@@ -83,7 +86,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         storageUsedBytes: data.storageUsedBytes ?? 0,
       })
     } catch {
-      set({ isAuthenticated: false, user: null })
+      set({ initialLoading: false, isAuthenticated: false, user: null })
     }
   },
 

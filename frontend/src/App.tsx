@@ -20,7 +20,9 @@ const PrivacyPage = lazy(() => import("./pages/Privacy"));
 const AnalyticsPage = lazy(() => import("./pages/Analytics"));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const initialLoading = useAuthStore((s) => s.initialLoading);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  if (initialLoading) return <RouteFallback />;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
