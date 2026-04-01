@@ -10,29 +10,31 @@
       
       
       
-        <link rel="canonical" href="https://befa160.github.io/gmail-manager/">
+        <link rel="canonical" href="https://befa160.github.io/gmail-manager/guide/notifications/">
       
       
+        <link rel="prev" href="../saved-searches/">
       
-        <link rel="next" href="installation/">
+      
+        <link rel="next" href="../expiration/">
       
       
         
       
       
-      <link rel="icon" href="assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>Gmail Manager</title>
+        <title>Notifications & Webhooks - Gmail Manager</title>
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -51,7 +53,7 @@
       
     
     
-    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -76,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#gmail-manager" class="md-skip">
+        <a href="#notifications-et-webhooks" class="md-skip">
           Aller au contenu
         </a>
       
@@ -90,7 +92,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="En-tête">
-    <a href="." title="Gmail Manager" class="md-header__button md-logo" aria-label="Gmail Manager" data-md-component="logo">
+    <a href="../.." title="Gmail Manager" class="md-header__button md-logo" aria-label="Gmail Manager" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -110,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Accueil
+              Notifications & Webhooks
             
           </span>
         </div>
@@ -221,11 +223,9 @@
   
   
   
-    
   
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="." class="md-tabs__link">
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
         
   
   
@@ -246,7 +246,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="installation/" class="md-tabs__link">
+        <a href="../../installation/" class="md-tabs__link">
           
   
   
@@ -262,11 +262,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="guide/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
           
   
   
@@ -286,7 +288,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="technical/overview/" class="md-tabs__link">
+        <a href="../../technical/overview/" class="md-tabs__link">
           
   
   
@@ -306,7 +308,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="development/contributing/" class="md-tabs__link">
+        <a href="../../development/contributing/" class="md-tabs__link">
           
   
   
@@ -340,7 +342,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="." title="Gmail Manager" class="md-nav__button md-logo" aria-label="Gmail Manager" data-md-component="logo">
+    <a href="../.." title="Gmail Manager" class="md-nav__button md-logo" aria-label="Gmail Manager" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -367,37 +369,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Accueil
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="." class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -413,81 +388,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table des matières
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#fonctionnalites" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fonctionnalités
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#documentation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Documentation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#demarrage-rapide" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Démarrage rapide
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#stack-technique" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Stack technique
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pourquoi-self-hosted" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pourquoi self-hosted ?
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -553,7 +453,7 @@
   
   
     <li class="md-nav__item">
-      <a href="installation/" class="md-nav__link">
+      <a href="../../installation/" class="md-nav__link">
         
   
   
@@ -581,7 +481,7 @@
   
   
     <li class="md-nav__item">
-      <a href="installation/google-cloud/" class="md-nav__link">
+      <a href="../../installation/google-cloud/" class="md-nav__link">
         
   
   
@@ -609,7 +509,7 @@
   
   
     <li class="md-nav__item">
-      <a href="installation/configuration/" class="md-nav__link">
+      <a href="../../installation/configuration/" class="md-nav__link">
         
   
   
@@ -637,7 +537,7 @@
   
   
     <li class="md-nav__item">
-      <a href="installation/production/" class="md-nav__link">
+      <a href="../../installation/production/" class="md-nav__link">
         
   
   
@@ -665,7 +565,7 @@
   
   
     <li class="md-nav__item">
-      <a href="installation/development/" class="md-nav__link">
+      <a href="../../installation/development/" class="md-nav__link">
         
   
   
@@ -697,28 +597,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
-        
-          
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
             
   
   
@@ -736,7 +639,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -754,7 +657,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guide/" class="md-nav__link">
+      <a href="../" class="md-nav__link">
         
   
   
@@ -782,7 +685,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guide/first-steps/" class="md-nav__link">
+      <a href="../first-steps/" class="md-nav__link">
         
   
   
@@ -810,7 +713,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guide/dashboard/" class="md-nav__link">
+      <a href="../dashboard/" class="md-nav__link">
         
   
   
@@ -838,7 +741,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guide/mail-management/" class="md-nav__link">
+      <a href="../mail-management/" class="md-nav__link">
         
   
   
@@ -866,7 +769,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guide/archiving/" class="md-nav__link">
+      <a href="../archiving/" class="md-nav__link">
         
   
   
@@ -894,7 +797,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guide/rules/" class="md-nav__link">
+      <a href="../rules/" class="md-nav__link">
         
   
   
@@ -922,7 +825,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guide/jobs/" class="md-nav__link">
+      <a href="../jobs/" class="md-nav__link">
         
   
   
@@ -950,7 +853,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guide/newsletters/" class="md-nav__link">
+      <a href="../newsletters/" class="md-nav__link">
         
   
   
@@ -978,7 +881,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guide/attachments/" class="md-nav__link">
+      <a href="../attachments/" class="md-nav__link">
         
   
   
@@ -1006,7 +909,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guide/duplicates/" class="md-nav__link">
+      <a href="../duplicates/" class="md-nav__link">
         
   
   
@@ -1034,7 +937,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guide/analytics/" class="md-nav__link">
+      <a href="../analytics/" class="md-nav__link">
         
   
   
@@ -1062,7 +965,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guide/privacy/" class="md-nav__link">
+      <a href="../privacy/" class="md-nav__link">
         
   
   
@@ -1090,7 +993,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guide/unified-inbox/" class="md-nav__link">
+      <a href="../unified-inbox/" class="md-nav__link">
         
   
   
@@ -1118,7 +1021,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guide/saved-searches/" class="md-nav__link">
+      <a href="../saved-searches/" class="md-nav__link">
         
   
   
@@ -1143,10 +1046,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="guide/notifications/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Notifications & Webhooks
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1162,6 +1092,209 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table des matières
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#notifications-in-app" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notifications in-app
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Notifications in-app">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cloche-de-notifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cloche de notifications
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#actions-sur-les-notifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Actions sur les notifications
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#types-de-notifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Types de notifications
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#preferences-de-notifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Préférences de notifications
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#webhooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Webhooks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Webhooks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#types-supportes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Types supportés
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#evenements-disponibles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Événements disponibles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configurer-un-webhook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configurer un webhook
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tester-un-webhook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tester un webhook
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#activer-desactiver" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Activer / désactiver
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#securite-webhooks-generiques" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sécurité (webhooks génériques)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exemples-dutilisation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exemples d'utilisation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Exemples d&#39;utilisation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#discord" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Discord
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ntfy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ntfy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1174,7 +1307,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guide/expiration/" class="md-nav__link">
+      <a href="../expiration/" class="md-nav__link">
         
   
   
@@ -1202,7 +1335,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guide/sharing/" class="md-nav__link">
+      <a href="../sharing/" class="md-nav__link">
         
   
   
@@ -1230,7 +1363,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guide/ops-resilience/" class="md-nav__link">
+      <a href="../ops-resilience/" class="md-nav__link">
         
   
   
@@ -1258,7 +1391,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guide/settings/" class="md-nav__link">
+      <a href="../settings/" class="md-nav__link">
         
   
   
@@ -1286,7 +1419,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guide/admin/" class="md-nav__link">
+      <a href="../admin/" class="md-nav__link">
         
   
   
@@ -1314,7 +1447,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guide/mcp-server/" class="md-nav__link">
+      <a href="../mcp-server/" class="md-nav__link">
         
   
   
@@ -1403,7 +1536,7 @@
   
   
     <li class="md-nav__item">
-      <a href="technical/overview/" class="md-nav__link">
+      <a href="../../technical/overview/" class="md-nav__link">
         
   
   
@@ -1431,7 +1564,7 @@
   
   
     <li class="md-nav__item">
-      <a href="technical/backend/" class="md-nav__link">
+      <a href="../../technical/backend/" class="md-nav__link">
         
   
   
@@ -1459,7 +1592,7 @@
   
   
     <li class="md-nav__item">
-      <a href="technical/frontend/" class="md-nav__link">
+      <a href="../../technical/frontend/" class="md-nav__link">
         
   
   
@@ -1487,7 +1620,7 @@
   
   
     <li class="md-nav__item">
-      <a href="technical/database/" class="md-nav__link">
+      <a href="../../technical/database/" class="md-nav__link">
         
   
   
@@ -1515,7 +1648,7 @@
   
   
     <li class="md-nav__item">
-      <a href="technical/jobs/" class="md-nav__link">
+      <a href="../../technical/jobs/" class="md-nav__link">
         
   
   
@@ -1543,7 +1676,7 @@
   
   
     <li class="md-nav__item">
-      <a href="technical/security/" class="md-nav__link">
+      <a href="../../technical/security/" class="md-nav__link">
         
   
   
@@ -1625,7 +1758,7 @@
   
   
     <li class="md-nav__item">
-      <a href="technical/api/" class="md-nav__link">
+      <a href="../../technical/api/" class="md-nav__link">
         
   
   
@@ -1653,7 +1786,7 @@
   
   
     <li class="md-nav__item">
-      <a href="technical/api/auth/" class="md-nav__link">
+      <a href="../../technical/api/auth/" class="md-nav__link">
         
   
   
@@ -1681,7 +1814,7 @@
   
   
     <li class="md-nav__item">
-      <a href="technical/api/gmail/" class="md-nav__link">
+      <a href="../../technical/api/gmail/" class="md-nav__link">
         
   
   
@@ -1709,7 +1842,7 @@
   
   
     <li class="md-nav__item">
-      <a href="technical/api/archive/" class="md-nav__link">
+      <a href="../../technical/api/archive/" class="md-nav__link">
         
   
   
@@ -1737,7 +1870,7 @@
   
   
     <li class="md-nav__item">
-      <a href="technical/api/rules/" class="md-nav__link">
+      <a href="../../technical/api/rules/" class="md-nav__link">
         
   
   
@@ -1765,7 +1898,7 @@
   
   
     <li class="md-nav__item">
-      <a href="technical/api/dashboard/" class="md-nav__link">
+      <a href="../../technical/api/dashboard/" class="md-nav__link">
         
   
   
@@ -1793,7 +1926,7 @@
   
   
     <li class="md-nav__item">
-      <a href="technical/api/jobs/" class="md-nav__link">
+      <a href="../../technical/api/jobs/" class="md-nav__link">
         
   
   
@@ -1821,7 +1954,7 @@
   
   
     <li class="md-nav__item">
-      <a href="technical/api/admin/" class="md-nav__link">
+      <a href="../../technical/api/admin/" class="md-nav__link">
         
   
   
@@ -1849,7 +1982,7 @@
   
   
     <li class="md-nav__item">
-      <a href="technical/api/audit/" class="md-nav__link">
+      <a href="../../technical/api/audit/" class="md-nav__link">
         
   
   
@@ -1877,7 +2010,7 @@
   
   
     <li class="md-nav__item">
-      <a href="technical/api/duplicates/" class="md-nav__link">
+      <a href="../../technical/api/duplicates/" class="md-nav__link">
         
   
   
@@ -1905,7 +2038,7 @@
   
   
     <li class="md-nav__item">
-      <a href="technical/api/unsubscribe/" class="md-nav__link">
+      <a href="../../technical/api/unsubscribe/" class="md-nav__link">
         
   
   
@@ -1933,7 +2066,7 @@
   
   
     <li class="md-nav__item">
-      <a href="technical/api/attachments/" class="md-nav__link">
+      <a href="../../technical/api/attachments/" class="md-nav__link">
         
   
   
@@ -1961,7 +2094,7 @@
   
   
     <li class="md-nav__item">
-      <a href="technical/api/reports/" class="md-nav__link">
+      <a href="../../technical/api/reports/" class="md-nav__link">
         
   
   
@@ -1989,7 +2122,7 @@
   
   
     <li class="md-nav__item">
-      <a href="technical/api/notifications/" class="md-nav__link">
+      <a href="../../technical/api/notifications/" class="md-nav__link">
         
   
   
@@ -2017,7 +2150,7 @@
   
   
     <li class="md-nav__item">
-      <a href="technical/api/integrity/" class="md-nav__link">
+      <a href="../../technical/api/integrity/" class="md-nav__link">
         
   
   
@@ -2045,7 +2178,7 @@
   
   
     <li class="md-nav__item">
-      <a href="technical/api/webhooks/" class="md-nav__link">
+      <a href="../../technical/api/webhooks/" class="md-nav__link">
         
   
   
@@ -2073,7 +2206,7 @@
   
   
     <li class="md-nav__item">
-      <a href="technical/api/config/" class="md-nav__link">
+      <a href="../../technical/api/config/" class="md-nav__link">
         
   
   
@@ -2101,7 +2234,7 @@
   
   
     <li class="md-nav__item">
-      <a href="technical/api/privacy/" class="md-nav__link">
+      <a href="../../technical/api/privacy/" class="md-nav__link">
         
   
   
@@ -2129,7 +2262,7 @@
   
   
     <li class="md-nav__item">
-      <a href="technical/api/analytics/" class="md-nav__link">
+      <a href="../../technical/api/analytics/" class="md-nav__link">
         
   
   
@@ -2157,7 +2290,7 @@
   
   
     <li class="md-nav__item">
-      <a href="technical/api/saved-searches/" class="md-nav__link">
+      <a href="../../technical/api/saved-searches/" class="md-nav__link">
         
   
   
@@ -2185,7 +2318,7 @@
   
   
     <li class="md-nav__item">
-      <a href="technical/api/unified/" class="md-nav__link">
+      <a href="../../technical/api/unified/" class="md-nav__link">
         
   
   
@@ -2213,7 +2346,7 @@
   
   
     <li class="md-nav__item">
-      <a href="technical/api/ops/" class="md-nav__link">
+      <a href="../../technical/api/ops/" class="md-nav__link">
         
   
   
@@ -2310,7 +2443,7 @@
   
   
     <li class="md-nav__item">
-      <a href="development/contributing/" class="md-nav__link">
+      <a href="../../development/contributing/" class="md-nav__link">
         
   
   
@@ -2338,7 +2471,7 @@
   
   
     <li class="md-nav__item">
-      <a href="development/roadmap/" class="md-nav__link">
+      <a href="../../development/roadmap/" class="md-nav__link">
         
   
   
@@ -2393,10 +2526,60 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#fonctionnalites" class="md-nav__link">
+  <a href="#notifications-in-app" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Fonctionnalités
+        Notifications in-app
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Notifications in-app">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cloche-de-notifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cloche de notifications
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#actions-sur-les-notifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Actions sur les notifications
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#types-de-notifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Types de notifications
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#preferences-de-notifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Préférences de notifications
       
     </span>
   </a>
@@ -2404,46 +2587,124 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#documentation" class="md-nav__link">
+  <a href="#webhooks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Documentation
+        Webhooks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Webhooks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#types-supportes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Types supportés
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#demarrage-rapide" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#evenements-disponibles" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Démarrage rapide
+        Événements disponibles
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#stack-technique" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#configurer-un-webhook" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Stack technique
+        Configurer un webhook
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#pourquoi-self-hosted" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#tester-un-webhook" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pourquoi self-hosted ?
+        Tester un webhook
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#activer-desactiver" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Activer / désactiver
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#securite-webhooks-generiques" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sécurité (webhooks génériques)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exemples-dutilisation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exemples d'utilisation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Exemples d&#39;utilisation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#discord" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Discord
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ntfy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ntfy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2467,157 +2728,186 @@
   
 
 
-<h1 id="gmail-manager">Gmail Manager<a class="headerlink" href="#gmail-manager" title="Permanent link">&para;</a></h1>
-<p><strong>Gmail Manager</strong> est une application self-hosted de gestion et d'archivage de boîtes Gmail, déployée entièrement via Docker sur votre NAS.</p>
-<p>Elle remplace des outils comme Gmail Cleaner et OpenArchiver, sans envoyer vos données vers des serveurs tiers.</p>
+<h1 id="notifications-et-webhooks">Notifications et webhooks<a class="headerlink" href="#notifications-et-webhooks" title="Permanent link">&para;</a></h1>
+<p>Gmail Manager vous informe des événements importants via des notifications in-app et des webhooks vers vos services préférés.</p>
 <hr />
-<h2 id="fonctionnalites">Fonctionnalités<a class="headerlink" href="#fonctionnalites" title="Permanent link">&para;</a></h2>
+<h2 id="notifications-in-app">Notifications in-app<a class="headerlink" href="#notifications-in-app" title="Permanent link">&para;</a></h2>
+<h3 id="cloche-de-notifications">Cloche de notifications<a class="headerlink" href="#cloche-de-notifications" title="Permanent link">&para;</a></h3>
+<p>L'icône <strong>🔔</strong> dans la barre de navigation affiche vos notifications. Le badge rouge indique le nombre de notifications non lues.</p>
+<blockquote>
+<p>📸 <em>Capture d'écran suggérée : cloche de notifications avec badge et panneau déroulant montrant les notifications</em></p>
+</blockquote>
+<h3 id="actions-sur-les-notifications">Actions sur les notifications<a class="headerlink" href="#actions-sur-les-notifications" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Cliquez sur une notification pour la marquer comme lue</li>
+<li><strong>Tout marquer comme lu</strong> : marque toutes les notifications comme lues</li>
+<li><strong>Supprimer</strong> : supprime une notification individuellement</li>
+<li><strong>Supprimer les lues</strong> : supprime toutes les notifications déjà lues</li>
+</ul>
+<h3 id="types-de-notifications">Types de notifications<a class="headerlink" href="#types-de-notifications" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Module</th>
-<th>Fonctionnalités</th>
+<th>Notification</th>
+<th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>📊 <strong>Dashboard</strong></td>
-<td>Top expéditeurs, mails les plus gros, timeline, répartition labels</td>
+<td><strong>Rapport hebdomadaire</strong></td>
+<td>Résumé de votre activité email de la semaine</td>
 </tr>
 <tr>
-<td>📬 <strong>Gestion mails</strong></td>
-<td>Bulk delete/label/archive, lecture, pièces jointes, règles auto</td>
+<td><strong>Job terminé</strong></td>
+<td>Un job (archivage, suppression, etc.) s'est terminé avec succès</td>
 </tr>
 <tr>
-<td>📦 <strong>Archives</strong></td>
-<td>Stockage EML sur NAS, recherche full-text, différentiel</td>
+<td><strong>Job en échec</strong></td>
+<td>Un job a échoué après 3 tentatives</td>
 </tr>
 <tr>
-<td>⚙️ <strong>Jobs</strong></td>
-<td>Suivi en temps réel des opérations longues (BullMQ + SSE)</td>
+<td><strong>Règle exécutée</strong></td>
+<td>Une règle automatique a été exécutée</td>
 </tr>
 <tr>
-<td>🔐 <strong>Auth</strong></td>
-<td>JWT local + Google SSO + multi-providers, 2FA/TOTP, multi-utilisateurs</td>
+<td><strong>Alerte quota</strong></td>
+<td>Votre quota de stockage approche de la limite</td>
 </tr>
 <tr>
-<td>📧 <strong>Newsletters</strong></td>
-<td>Scan des headers List-Unsubscribe, nettoyage en masse</td>
-</tr>
-<tr>
-<td>📎 <strong>Pièces jointes</strong></td>
-<td>Gestionnaire dédié (live Gmail + archives), tri par taille</td>
-</tr>
-<tr>
-<td>🔁 <strong>Doublons</strong></td>
-<td>Détection et suppression des mails archivés en double</td>
-</tr>
-<tr>
-<td>📋 <strong>Templates</strong></td>
-<td>Bibliothèque de règles pré-configurées, activation en un clic</td>
-</tr>
-<tr>
-<td>📈 <strong>Analytics</strong></td>
-<td>Heatmap, scores d'encombrement, suggestions de nettoyage, Inbox Zero</td>
-</tr>
-<tr>
-<td>📝 <strong>Audit log</strong></td>
-<td>Journal d'activité traçant les actions sensibles</td>
-</tr>
-<tr>
-<td>🔗 <strong>Webhooks</strong></td>
-<td>Notifications Discord, Slack, Ntfy ou HTTP générique</td>
-</tr>
-<tr>
-<td>🛡️ <strong>Intégrité</strong></td>
-<td>Vérification de cohérence archives disque ↔ BDD</td>
-</tr>
-<tr>
-<td>🔒 <strong>Vie privée</strong></td>
-<td>Détection pixels espions, scanner PII, chiffrement AES-256 des archives</td>
-</tr>
-<tr>
-<td>⌨️ <strong>Raccourcis clavier</strong></td>
-<td>Navigation et actions rapides dans Mes mails</td>
-</tr>
-<tr>
-<td>💾 <strong>Export/Import</strong></td>
-<td>Sauvegarde et restauration de la configuration (règles, webhooks)</td>
-</tr>
-<tr>
-<td>🌐 <strong>i18n</strong></td>
-<td>Français / Anglais, sélecteur de langue, persistance du choix</td>
-</tr>
-<tr>
-<td>📬 <strong>Boîte unifiée</strong></td>
-<td>Tous vos comptes Gmail en une seule vue</td>
-</tr>
-<tr>
-<td>🔍 <strong>Recherches</strong></td>
-<td>Recherches sauvegardées avec icônes et couleurs</td>
-</tr>
-<tr>
-<td>⚙️ <strong>Ops &amp; Résilience</strong></td>
-<td>Stockage S3/MinIO, politiques de rétention, suivi quota Gmail API, import IMAP/mbox, export mbox</td>
+<td><strong>Alerte intégrité</strong></td>
+<td>La vérification d'intégrité des archives a détecté un problème</td>
 </tr>
 </tbody>
 </table>
 <hr />
-<h2 id="documentation">Documentation<a class="headerlink" href="#documentation" title="Permanent link">&para;</a></h2>
-<p>Cette documentation est organisée en trois parties :</p>
-<div class="grid cards" markdown>
-
--   📥 **[Installation](installation/index.md)**
-
-    ---
-
-    Démarrage rapide, configuration Google Cloud, variables d'environnement, déploiement production, environnement de développement.
-
--   📖 **[Guide utilisateur](guide/index.md)**
-
-    ---
-
-    Comment utiliser chaque fonctionnalité de l'application. Idéal pour les utilisateurs de tous niveaux.
-
--   🔧 **[Documentation technique](technical/overview.md)**
-
-    ---
-
-    Architecture, base de données, sécurité, référence API complète. Pour les développeurs et contributeurs.
-
-</div>
-
+<h2 id="preferences-de-notifications">Préférences de notifications<a class="headerlink" href="#preferences-de-notifications" title="Permanent link">&para;</a></h2>
+<p>Personnalisez les canaux de notification pour chaque type d'événement.</p>
+<ol>
+<li>Rendez-vous dans <strong>Paramètres</strong> → section <strong>Préférences de notifications</strong></li>
+<li>Pour chaque type de notification, activez ou désactivez les canaux :</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Canal</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>🔔 <strong>In-app</strong></td>
+<td>Crée une notification dans la cloche du header</td>
+</tr>
+<tr>
+<td>💬 <strong>Toast</strong></td>
+<td>Affiche une pop-up temporaire en bas de page</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>📸 <em>Capture d'écran suggérée : tableau des préférences de notifications avec les toggles in-app et toast pour chaque type</em></p>
+</blockquote>
+<p>Chaque toggle prend effet <strong>immédiatement</strong> — pas besoin de sauvegarder.</p>
 <hr />
-<h2 id="demarrage-rapide">Démarrage rapide<a class="headerlink" href="#demarrage-rapide" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/befa160/gmail-manager.git
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">cd</span><span class="w"> </span>gmail-manager
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>cp<span class="w"> </span>.env.example<span class="w"> </span>.env
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Éditer .env avec vos credentials Google et vos secrets</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d
-</code></pre></div>
-<p>L'application est accessible sur <a href="http://localhost:3000">http://localhost:3000</a>.</p>
-<div class="admonition tip">
-<p class="admonition-title">Première utilisation</p>
-<p>Consultez le <a href="guide/first-steps/">guide des premiers pas</a> pour créer votre compte et connecter Gmail.</p>
-</div>
-<hr />
-<h2 id="stack-technique">Stack technique<a class="headerlink" href="#stack-technique" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Frontend   →  React 19 + Ant Design + react-i18next
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Backend    →  Fastify + TypeScript
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Auth       →  JWT local + OAuth2 Gmail + SSO multi-providers
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Base de données  →  PostgreSQL 16 (Kysely)
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Queue      →  BullMQ + Redis
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>Archives   →  EML + index PostgreSQL
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>i18n       →  Français 🇫🇷 / Anglais 🇬🇧 (extensible)
-</code></pre></div>
-<hr />
-<h2 id="pourquoi-self-hosted">Pourquoi self-hosted ?<a class="headerlink" href="#pourquoi-self-hosted" title="Permanent link">&para;</a></h2>
-<ul>
-<li>✅ Vos mails restent sur votre NAS — aucune donnée ne sort de votre réseau</li>
-<li>✅ Gratuit, pas d'abonnement</li>
-<li>✅ Full control : archives au format EML standard, lisibles par n'importe quel client mail</li>
-<li>✅ Multi-compte Gmail depuis une seule interface</li>
+<h2 id="webhooks">Webhooks<a class="headerlink" href="#webhooks" title="Permanent link">&para;</a></h2>
+<p>Les webhooks permettent d'envoyer des notifications vers des services externes quand un événement se produit dans Gmail Manager.</p>
+<h3 id="types-supportes">Types supportés<a class="headerlink" href="#types-supportes" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Discord</strong></td>
+<td>Message dans un salon Discord via webhook URL</td>
+</tr>
+<tr>
+<td><strong>Slack</strong></td>
+<td>Message dans un channel Slack via Incoming Webhook</td>
+</tr>
+<tr>
+<td><strong>Ntfy</strong></td>
+<td>Notification push via <a href="https://ntfy.sh">ntfy.sh</a></td>
+</tr>
+<tr>
+<td><strong>Générique</strong></td>
+<td>Requête HTTP POST vers n'importe quelle URL</td>
+</tr>
+</tbody>
+</table>
+<h3 id="evenements-disponibles">Événements disponibles<a class="headerlink" href="#evenements-disponibles" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Événement</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>job.completed</code></td>
+<td>Un job s'est terminé avec succès</td>
+</tr>
+<tr>
+<td><code>job.failed</code></td>
+<td>Un job a échoué</td>
+</tr>
+<tr>
+<td><code>rule.executed</code></td>
+<td>Une règle automatique a été exécutée</td>
+</tr>
+<tr>
+<td><code>quota.warning</code></td>
+<td>Le quota de stockage est presque atteint</td>
+</tr>
+<tr>
+<td><code>integrity.failed</code></td>
+<td>La vérification d'intégrité a détecté un problème</td>
+</tr>
+</tbody>
+</table>
+<h3 id="configurer-un-webhook">Configurer un webhook<a class="headerlink" href="#configurer-un-webhook" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Dans <strong>Paramètres</strong> → section <strong>Webhooks</strong></li>
+<li>Cliquez sur <strong>Ajouter un webhook</strong></li>
+<li>Renseignez :<ul>
+<li><strong>Nom</strong> : un identifiant libre (ex. : "Notif Discord")</li>
+<li><strong>URL</strong> : l'URL du webhook de votre service</li>
+<li><strong>Type</strong> : Discord, Slack, Ntfy ou Générique</li>
+<li><strong>Événements</strong> : cochez les événements qui déclenchent le webhook</li>
 </ul>
+</li>
+</ol>
+<blockquote>
+<p>📸 <em>Capture d'écran suggérée : formulaire de création d'un webhook avec les champs nom, URL, type et événements</em></p>
+</blockquote>
+<h3 id="tester-un-webhook">Tester un webhook<a class="headerlink" href="#tester-un-webhook" title="Permanent link">&para;</a></h3>
+<p>Cliquez sur <strong>Tester</strong> à côté d'un webhook pour envoyer un message test et vérifier que la connexion fonctionne.</p>
+<h3 id="activer-desactiver">Activer / désactiver<a class="headerlink" href="#activer-desactiver" title="Permanent link">&para;</a></h3>
+<p>Le toggle à côté de chaque webhook permet de l'activer ou le désactiver sans le supprimer.</p>
+<h3 id="securite-webhooks-generiques">Sécurité (webhooks génériques)<a class="headerlink" href="#securite-webhooks-generiques" title="Permanent link">&para;</a></h3>
+<p>Les webhooks de type <strong>Générique</strong> incluent automatiquement un header <code>X-Webhook-Signature</code> contenant un HMAC-SHA256 du payload. Votre serveur peut vérifier cette signature pour s'assurer que la requête provient bien de Gmail Manager.</p>
+<blockquote>
+<p>📸 <em>Capture d'écran suggérée : liste des webhooks configurés avec les colonnes nom, type, événements, toggle actif/inactif et bouton tester</em></p>
+</blockquote>
+<hr />
+<h2 id="exemples-dutilisation">Exemples d'utilisation<a class="headerlink" href="#exemples-dutilisation" title="Permanent link">&para;</a></h2>
+<h3 id="discord">Discord<a class="headerlink" href="#discord" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Dans Discord, créez un webhook dans un salon : <strong>Paramètres du salon</strong> → <strong>Intégrations</strong> → <strong>Webhooks</strong> → <strong>Nouveau webhook</strong></li>
+<li>Copiez l'URL du webhook</li>
+<li>Dans Gmail Manager, créez un webhook de type <strong>Discord</strong> avec cette URL</li>
+<li>Sélectionnez les événements à notifier</li>
+</ol>
+<h3 id="ntfy">Ntfy<a class="headerlink" href="#ntfy" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Choisissez un topic sur <a href="https://ntfy.sh">ntfy.sh</a> (ex. : <code>gmail-manager-alerts</code>)</li>
+<li>Dans Gmail Manager, créez un webhook de type <strong>Ntfy</strong> avec l'URL <code>https://ntfy.sh/gmail-manager-alerts</code></li>
+<li>Installez l'app ntfy sur votre téléphone et abonnez-vous au même topic</li>
+</ol>
 
 
 
@@ -2689,10 +2979,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copi\u00e9 dans le presse-papier", "clipboard.copy": "Copier dans le presse-papier", "search.result.more.one": "1 de plus sur cette page", "search.result.more.other": "# de plus sur cette page", "search.result.none": "Aucun document trouv\u00e9", "search.result.one": "1 document trouv\u00e9", "search.result.other": "# documents trouv\u00e9s", "search.result.placeholder": "Taper pour d\u00e9marrer la recherche", "search.result.term.missing": "Non trouv\u00e9", "select.version": "S\u00e9lectionner la version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copi\u00e9 dans le presse-papier", "clipboard.copy": "Copier dans le presse-papier", "search.result.more.one": "1 de plus sur cette page", "search.result.more.other": "# de plus sur cette page", "search.result.none": "Aucun document trouv\u00e9", "search.result.one": "1 document trouv\u00e9", "search.result.other": "# documents trouv\u00e9s", "search.result.placeholder": "Taper pour d\u00e9marrer la recherche", "search.result.term.missing": "Non trouv\u00e9", "select.version": "S\u00e9lectionner la version"}, "version": null}</script>
     
     
-      <script src="assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

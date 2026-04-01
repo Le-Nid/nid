@@ -10,11 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://befa160.github.io/gmail-manager/development/roadmap/">
+        <link rel="canonical" href="https://befa160.github.io/gmail-manager/installation/configuration/">
       
       
-        <link rel="prev" href="../contributing/">
+        <link rel="prev" href="../google-cloud/">
       
+      
+        <link rel="next" href="../production/">
       
       
         
@@ -25,7 +27,7 @@
     
     
       
-        <title>Roadmap - Gmail Manager</title>
+        <title>Configuration détaillée - Gmail Manager</title>
       
     
     
@@ -76,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#roadmap" class="md-skip">
+        <a href="#configuration-detaillee" class="md-skip">
           Aller au contenu
         </a>
       
@@ -110,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Roadmap
+              Configuration détaillée
             
           </span>
         </div>
@@ -240,11 +242,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../installation/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
           
   
   
@@ -300,13 +304,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../contributing/" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../development/contributing/" class="md-tabs__link">
           
   
   
@@ -394,28 +396,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
-        
-          
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
             
   
   
@@ -433,7 +438,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -451,7 +456,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../installation/" class="md-nav__link">
+      <a href="../" class="md-nav__link">
         
   
   
@@ -479,7 +484,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../installation/google-cloud/" class="md-nav__link">
+      <a href="../google-cloud/" class="md-nav__link">
         
   
   
@@ -504,10 +509,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../installation/configuration/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration détaillée
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -523,6 +555,236 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table des matières
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#application" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Application
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jwt-authentification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JWT (authentification)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#google-oauth2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Google OAuth2
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#social-login-sso" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Social Login (SSO)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Social Login (SSO)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#microsoft" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Microsoft
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#discord" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Discord
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#facebook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Facebook
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#linkedin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LinkedIn
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keycloak" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keycloak
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#multi-utilisateurs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multi-utilisateurs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#postgresql" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PostgreSQL
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#redis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redis
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#throttling-gmail-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Throttling Gmail API
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stockage-distant-s3minio" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stockage distant (S3/MinIO)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#volumes-docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Volumes Docker
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Volumes Docker">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuration-par-defaut" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration par défaut
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pointer-vers-un-nas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pointer vers un NAS
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation-api-swagger" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation API (Swagger)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -535,7 +797,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../installation/production/" class="md-nav__link">
+      <a href="../production/" class="md-nav__link">
         
   
   
@@ -563,7 +825,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../installation/development/" class="md-nav__link">
+      <a href="../development/" class="md-nav__link">
         
   
   
@@ -2151,31 +2413,28 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
             
   
   
@@ -2193,7 +2452,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             
@@ -2211,7 +2470,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributing/" class="md-nav__link">
+      <a href="../../development/contributing/" class="md-nav__link">
         
   
   
@@ -2236,37 +2495,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Roadmap
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../development/roadmap/" class="md-nav__link">
         
   
   
@@ -2282,280 +2514,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table des matières
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#v10-mvp-complete" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v1.0 — MVP (✅ complété)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#v11-regles-automatiques-complete" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v1.1 — Règles automatiques (✅ complété)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#v12-archives-avancees-performance-complete" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v1.2 — Archives avancées + Performance (✅ complété)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#kysely-complete-retrofit-sur-v10-v12" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Kysely (✅ complété — rétrofit sur v1.0-v1.2)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#v13-ux-performance-complete" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v1.3 — UX &amp; Performance (✅ complété)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#v20-multi-utilisateurs-complete" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v2.0 — Multi-utilisateurs (✅ complété)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#v21-nettoyage-insights-robustesse" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v2.1 — Nettoyage, insights &amp; robustesse
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="v2.1 — Nettoyage, insights &amp; robustesse">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#haute-valeur-ajoutee" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Haute valeur ajoutée
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#qualite-de-vie" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Qualité de vie
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#nice-to-have" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Nice to have
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ops-deploiement" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Ops &amp; déploiement
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#v22-i18n-complete" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v2.2 — I18n (✅ complété)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#v23-evolution" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v2.3 — Evolution
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="v2.3 — Evolution">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#vie-privee-securite" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Vie privée &amp; Sécurité
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#intelligence-analytics-avancees" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Intelligence &amp; Analytics avancées
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#gestion-avancee" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Gestion avancée
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ops-resilience" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Ops &amp; Résilience
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#idees-originales" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Idées originales
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#open-core-dual-offering" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        open-core / dual offering
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#authentification" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        authentification
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ui-ux" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ui / ux
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#autre" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        autre
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -2595,10 +2553,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#v10-mvp-complete" class="md-nav__link">
+  <a href="#application" class="md-nav__link">
     <span class="md-ellipsis">
       
-        v1.0 — MVP (✅ complété)
+        Application
       
     </span>
   </a>
@@ -2606,10 +2564,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#v11-regles-automatiques-complete" class="md-nav__link">
+  <a href="#jwt-authentification" class="md-nav__link">
     <span class="md-ellipsis">
       
-        v1.1 — Règles automatiques (✅ complété)
+        JWT (authentification)
       
     </span>
   </a>
@@ -2617,10 +2575,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#v12-archives-avancees-performance-complete" class="md-nav__link">
+  <a href="#google-oauth2" class="md-nav__link">
     <span class="md-ellipsis">
       
-        v1.2 — Archives avancées + Performance (✅ complété)
+        Google OAuth2
       
     </span>
   </a>
@@ -2628,55 +2586,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#kysely-complete-retrofit-sur-v10-v12" class="md-nav__link">
+  <a href="#social-login-sso" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Kysely (✅ complété — rétrofit sur v1.0-v1.2)
+        Social Login (SSO)
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#v13-ux-performance-complete" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v1.3 — UX &amp; Performance (✅ complété)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#v20-multi-utilisateurs-complete" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v2.0 — Multi-utilisateurs (✅ complété)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#v21-nettoyage-insights-robustesse" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v2.1 — Nettoyage, insights &amp; robustesse
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="v2.1 — Nettoyage, insights &amp; robustesse">
+    <nav class="md-nav" aria-label="Social Login (SSO)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#haute-valeur-ajoutee" class="md-nav__link">
+  <a href="#microsoft" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Haute valeur ajoutée
+        Microsoft
       
     </span>
   </a>
@@ -2684,10 +2609,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#qualite-de-vie" class="md-nav__link">
+  <a href="#discord" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Qualité de vie
+        Discord
       
     </span>
   </a>
@@ -2695,10 +2620,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#nice-to-have" class="md-nav__link">
+  <a href="#facebook" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Nice to have
+        Facebook
       
     </span>
   </a>
@@ -2706,10 +2631,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#ops-deploiement" class="md-nav__link">
+  <a href="#linkedin" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Ops &amp; déploiement
+        LinkedIn
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keycloak" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keycloak
       
     </span>
   </a>
@@ -2722,10 +2658,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#v22-i18n-complete" class="md-nav__link">
+  <a href="#multi-utilisateurs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        v2.2 — I18n (✅ complété)
+        Multi-utilisateurs
       
     </span>
   </a>
@@ -2733,22 +2669,66 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#v23-evolution" class="md-nav__link">
+  <a href="#postgresql" class="md-nav__link">
     <span class="md-ellipsis">
       
-        v2.3 — Evolution
+        PostgreSQL
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="v2.3 — Evolution">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#redis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redis
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#throttling-gmail-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Throttling Gmail API
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stockage-distant-s3minio" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stockage distant (S3/MinIO)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#volumes-docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Volumes Docker
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Volumes Docker">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#vie-privee-securite" class="md-nav__link">
+  <a href="#configuration-par-defaut" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Vie privée &amp; Sécurité
+        Configuration par défaut
       
     </span>
   </a>
@@ -2756,87 +2736,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#intelligence-analytics-avancees" class="md-nav__link">
+  <a href="#pointer-vers-un-nas" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Intelligence &amp; Analytics avancées
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#gestion-avancee" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Gestion avancée
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ops-resilience" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Ops &amp; Résilience
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#idees-originales" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Idées originales
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#open-core-dual-offering" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        open-core / dual offering
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#authentification" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        authentification
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ui-ux" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ui / ux
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#autre" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        autre
+        Pointer vers un NAS
       
     </span>
   </a>
@@ -2845,6 +2748,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation-api-swagger" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation API (Swagger)
+      
+    </span>
+  </a>
   
 </li>
       
@@ -2868,177 +2782,441 @@
   
 
 
-<h1 id="roadmap">Roadmap<a class="headerlink" href="#roadmap" title="Permanent link">&para;</a></h1>
-<h2 id="v10-mvp-complete">v1.0 — MVP (✅ complété)<a class="headerlink" href="#v10-mvp-complete" title="Permanent link">&para;</a></h2>
-<ul>
-<li>[x] Auth locale JWT</li>
-<li>[x] OAuth2 Gmail multi-compte</li>
-<li>[x] Structure Docker complète</li>
-<li>[x] Schéma PostgreSQL</li>
-<li>[x] BullMQ queue + workers bulk + archive</li>
-<li>[x] Archive EML différentielle</li>
-<li>[x] API REST complète (auth, gmail, archive, dashboard, jobs)</li>
-<li>[x] Layout frontend + auth UI</li>
-<li>[x] Dashboard avec graphiques (Ant Design Charts)</li>
-<li>[x] Page gestion des mails (liste, filtres, bulk ops, lecture)</li>
-<li>[x] Page archives (liste, recherche, lecture EML, PJ)</li>
-<li>[x] Page jobs (suivi progression, annulation)</li>
-<li>[x] Page paramètres (connexion comptes Gmail)</li>
-</ul>
-<h2 id="v11-regles-automatiques-complete">v1.1 — Règles automatiques (✅ complété)<a class="headerlink" href="#v11-regles-automatiques-complete" title="Permanent link">&para;</a></h2>
-<ul>
-<li>[x] Types partagés <code>RuleCondition</code> / <code>RuleAction</code> (backend + frontend)</li>
-<li>[x] Service <code>rules.service.ts</code> — CRUD + conversion conditions → query Gmail native</li>
-<li>[x] Worker <code>rule.worker.ts</code> — exécution BullMQ</li>
-<li>[x] Scheduler cron — exécution planifiée (hourly/daily/weekly/monthly)</li>
-<li>[x] Routes API complètes (CRUD + toggle + run + preview)</li>
-<li>[x] UI — page Règles avec table, switch actif/inactif, exécution manuelle</li>
-<li>[x] UI — <code>RuleFormModal</code> avec builder de conditions, preview avant création</li>
-<li>[x] Documentation API <code>rules.md</code></li>
-</ul>
-<h2 id="v12-archives-avancees-performance-complete">v1.2 — Archives avancées + Performance (✅ complété)<a class="headerlink" href="#v12-archives-avancees-performance-complete" title="Permanent link">&para;</a></h2>
-<ul>
-<li>[x] Export ZIP sélectif des archives (EML + PJ, streaming chunked)</li>
-<li>[x] Preview HTML inline des mails archivés (extraction depuis EML, iframe sandboxée)</li>
-<li>[x] Toggle HTML / EML brut dans le viewer d'archives</li>
-<li>[x] Cache Redis des stats dashboard (10min) et archive-stats (5min) — <code>?refresh=1</code> pour forcer</li>
-<li>[x] SSE (Server-Sent Events) pour suivi temps réel des jobs — remplace le polling</li>
-<li>[x] <code>useJobSSE</code> hook React + <code>JobProgressModal</code> composant</li>
-<li>[x] QueueEvents BullMQ → broadcast SSE automatique (progress, completed, failed)</li>
-<li>[x] Invalidation cache après archivage</li>
-</ul>
-<h2 id="kysely-complete-retrofit-sur-v10-v12">Kysely (✅ complété — rétrofit sur v1.0-v1.2)<a class="headerlink" href="#kysely-complete-retrofit-sur-v10-v12" title="Permanent link">&para;</a></h2>
-<ul>
-<li>[x] <code>db/types.ts</code> — interface <code>Database</code> entièrement typée (Generated, Selectable, Insertable)</li>
-<li>[x] <code>db/migrations/001_initial.ts</code> — schéma complet (extensions, tables, index, triggers tsvector)</li>
-<li>[x] <code>db/migrations/002_example_add_column.ts</code> — template pour futures migrations</li>
-<li>[x] <code>db/index.ts</code> — <code>InCodeMigrationProvider</code> + <code>runMigrations()</code> au démarrage</li>
-<li>[x] <code>plugins/db.ts</code> — migrations avant décoration Fastify</li>
-<li>[x] Tous services/routes/workers réécrits avec Kysely query builder</li>
-<li>[x] <code>postgres/init.sql</code> supprimé — migrations font foi</li>
-<li>[x] <code>vite.config.ts</code> backend — <code>kysely</code> externalisé</li>
-</ul>
-<h2 id="v13-ux-performance-complete">v1.3 — UX &amp; Performance (✅ complété)<a class="headerlink" href="#v13-ux-performance-complete" title="Permanent link">&para;</a></h2>
-<ul>
-<li>[x] <strong>Pagination infinie</strong> dans MailManager (IntersectionObserver, <code>useInfiniteScroll</code>)</li>
-<li>[x] <strong>Autocomplete opérateurs Gmail</strong> — <code>GmailSearchInput</code> avec 25 opérateurs natifs</li>
-<li>[x] <strong>Dark mode</strong> — <code>useThemeStore</code> Zustand persisté localStorage, <code>ConfigProvider</code> réactif</li>
-<li>[x] <strong>Notifications globales jobs</strong> — <code>useGlobalJobNotifier</code> poll 5s + toast completed/failed</li>
-<li>[x] <strong>Preview images PJ</strong> dans Archive drawer (lazy loading, <code>mime_type.startsWith('image/')</code>)</li>
-<li>[x] <code>AntApp</code> wrapper pour accès global aux hooks notification/message Ant Design</li>
-</ul>
-<h2 id="v20-multi-utilisateurs-complete">v2.0 — Multi-utilisateurs (✅ complété)<a class="headerlink" href="#v20-multi-utilisateurs-complete" title="Permanent link">&para;</a></h2>
-<ul>
-<li>[x] Isolation stricte des données par utilisateur (<code>requireAccountOwnership</code> middleware)</li>
-<li>[x] Gestion des rôles (admin / user) — <code>role</code> dans JWT, middleware <code>requireAdmin</code></li>
-<li>[x] Page admin : vue globale des comptes, jobs, statistiques, modification utilisateurs</li>
-<li>[x] Quota et limites par utilisateur (<code>max_gmail_accounts</code>, <code>storage_quota_bytes</code>)</li>
-<li>[x] Authentification / inscription via Google SSO (OAuth2 <code>openid profile email</code>)</li>
-<li>[x] Migration DB <code>003_multiuser</code> — colonnes <code>role</code>, <code>google_id</code>, <code>is_active</code>, quotas, <code>user_id</code> sur jobs</li>
-<li>[x] Profil utilisateur dans les paramètres (avatar, quota, stockage)</li>
-<li>[x] Sécurisation de toutes les routes avec vérification d'ownership des comptes Gmail</li>
-</ul>
-<h2 id="v21-nettoyage-insights-robustesse">v2.1 — Nettoyage, insights &amp; robustesse<a class="headerlink" href="#v21-nettoyage-insights-robustesse" title="Permanent link">&para;</a></h2>
-<h3 id="haute-valeur-ajoutee">Haute valeur ajoutée<a class="headerlink" href="#haute-valeur-ajoutee" title="Permanent link">&para;</a></h3>
-<ul>
-<li>[x] <strong>Unsubscribe Manager</strong> — Scanner les headers <code>List-Unsubscribe</code>, page dédiée listant newsletters/listes avec volume et taille, désabonnement en un clic + suppression en masse</li>
-<li>[x] <strong>Archivage automatique planifié</strong> — Rule action <code>archive_nas</code> planifiable (ex : archiver tout &gt; 6 mois, chaque dimanche). Conditions <code>older_than</code> / <code>newer_than</code> ajoutées aux règles</li>
-<li>[x] <strong>Gestionnaire de pièces jointes</strong> — Page dédiée listant toutes les PJ (live Gmail + archives) triées par taille, avec recherche et tri</li>
-<li>[x] <strong>Rapport hebdo / insights</strong> — Page Insights avec rapport hebdomadaire + système de notifications in-app (cloche dans le header, scheduler lundi)</li>
-</ul>
-<h3 id="qualite-de-vie">Qualité de vie<a class="headerlink" href="#qualite-de-vie" title="Permanent link">&para;</a></h3>
-<ul>
-<li>[x] <strong>Templates de règles</strong> — Bibliothèque de règles pré-configurées (ex : "Nettoyer notifs GitHub", "Archiver factures &gt; 3 mois", "Supprimer newsletters non lues &gt; 30j"). Un clic pour activer</li>
-<li>[x] <strong>Détection de doublons</strong> — Identifier les mails en double (même subject + sender + date), proposer suppression groupée</li>
-<li>[x] <strong>Audit log</strong> — Table <code>audit_logs(user_id, action, target, details, created_at)</code> traçant les actions sensibles (suppression, archivage, modification de règles)</li>
-<li>[x] <strong>2FA / TOTP</strong> — Authentification à deux facteurs pour comptes locaux (via <code>otplib</code>). Pertinent pour app self-hosted avec accès aux boîtes Gmail</li>
-</ul>
-<h3 id="nice-to-have">Nice to have<a class="headerlink" href="#nice-to-have" title="Permanent link">&para;</a></h3>
-<ul>
-<li>[x] <strong>Vérification d'intégrité des archives</strong> — Job planifié comparant EMLs archivés ↔ index PostgreSQL, détection fichiers manquants ou corrompus</li>
-<li>[x] <strong>Webhooks / notifications externes</strong> — Webhook configurable (Discord, Slack, Ntfy) sur événements : job échoué, règle exécutée, quota atteint. Dispatcher unifié <code>notify()</code> reliant in-app + toast + webhooks</li>
-<li>[x] <strong>Raccourcis clavier</strong> — Dans MailManager : <code>j/k</code> (navigation), <code>e</code> (archiver), <code>#</code> (supprimer), <code>/</code> (recherche)</li>
-<li>[x] <strong>Export/import de configuration</strong> — Exporter règles + paramètres en JSON, réimporter sur une autre instance</li>
-<li>[x] <strong>Préférences de notifications</strong> — Tableau 3 canaux (🔔 in-app, 💬 toast, 🔗 webhook) par type d'événement, sauvegarde instantanée</li>
-</ul>
-<h3 id="ops-deploiement">Ops &amp; déploiement<a class="headerlink" href="#ops-deploiement" title="Permanent link">&para;</a></h3>
-<ul>
-<li>[x] Via une variable d'environnement, choisir d'accepter ou non les inscriptions</li>
-<li>[x] Faire tous les tests unitaires</li>
-<li>[x] Mettre au propre les dockerfiles pour un déploiement simple</li>
-<li>[x] Faire un docker-compose simple pour le déploiement et en faire la doc</li>
-<li>[x] Faire en sorte que les variables d'environnements soient injectées dans les applis soit par fichier .env pour le dev local soit par variable d'environnement docker pour la prod</li>
-<li>[x] Implémenter le RGAA</li>
-<li>[x] Il faut packagé l'appli pour la mettre en open source ensuite</li>
-</ul>
-<h2 id="v22-i18n-complete">v2.2 — I18n (✅ complété)<a class="headerlink" href="#v22-i18n-complete" title="Permanent link">&para;</a></h2>
-<ul>
-<li>[x] Ajouter l'internationalisation. Faire français / anglais pour le moment</li>
-<li>[x] Infrastructure i18n (react-i18next + i18next + LanguageDetector)</li>
-<li>[x] Fichiers de traduction FR et EN (~350+ clés)</li>
-<li>[x] Sélecteur de langue dans le header (drapeau FR/EN)</li>
-<li>[x] Ant Design locale dynamique (frFR / enUS)</li>
-<li>[x] dayjs locale dynamique</li>
-<li>[x] <code>&lt;html lang&gt;</code> dynamique</li>
-<li>[x] Toutes les pages i18n : Login, Dashboard, MailManager, Jobs, Archive, Rules, Settings, Admin, Unsubscribe, Attachments, Insights, Duplicates</li>
-<li>[x] Tous les composants i18n : AppLayout, BulkActionBar, NotificationBell, MailViewer, GmailSearchInput, RuleFormModal, JobProgressModal</li>
-<li>[x] Persistance de la langue (localStorage)</li>
-</ul>
-<h2 id="v23-evolution">v2.3 — Evolution<a class="headerlink" href="#v23-evolution" title="Permanent link">&para;</a></h2>
-<ul>
-<li>[x] Si on se connecte avec son compte Google, on enregistre automatiquement son compte Gmail</li>
-<li>[x] Ajouter un bouton pour forcer l'archivage</li>
-</ul>
-<h3 id="vie-privee-securite">Vie privée &amp; Sécurité<a class="headerlink" href="#vie-privee-securite" title="Permanent link">&para;</a></h3>
-<ul>
-<li>[x] <strong>Détecteur de pixels-espions</strong> — Scanner les emails pour détecter les tracking pixels (images 1x1, paramètres UTM, domaines connus type Mailchimp/SendGrid). Badge "tracké" dans la liste, rapport mensuel</li>
-<li>[x] <strong>Scanner PII dans les archives</strong> — Détecter les données sensibles dans les mails archivés (numéros de CB, IBAN, mots de passe en clair, numéros de sécu). Alerter et proposer le chiffrement ou la suppression</li>
-<li>[x] <strong>Chiffrement des archives au repos</strong> — Chiffrer les EML sur le NAS avec une clé dérivée du mot de passe utilisateur (AES-256-GCM). Déchiffrement à la volée pour la consultation</li>
-</ul>
-<h3 id="intelligence-analytics-avancees">Intelligence &amp; Analytics avancées<a class="headerlink" href="#intelligence-analytics-avancees" title="Permanent link">&para;</a></h3>
-<ul>
-<li>[x] <strong>Heatmap d'activité email</strong> — Visualiser quand vous recevez le plus de mails (grille jour × heure, style contributions GitHub). Identifier les créneaux calmes</li>
-<li>[x] <strong>Score d'encombrement par expéditeur</strong> — Score combinant volume, taille, taux de lecture, et présence de <code>List-Unsubscribe</code>. Classement des expéditeurs "pollueurs" avec suggestion de nettoyage</li>
-<li>[x] <strong>Suggestions de nettoyage intelligent</strong> — Heuristiques basées sur expéditeur + pattern sujet + non lu + ancien. Ex : "Vous avez 847 notifications GitHub non lues (1.2 Go). Supprimer ?"</li>
-<li>[x] <strong>Tracker Inbox Zero</strong> — Compteur temps réel + historique de la progression vers inbox zero. Streak, graphique d'évolution, gamification légère</li>
-</ul>
-<h3 id="gestion-avancee">Gestion avancée<a class="headerlink" href="#gestion-avancee" title="Permanent link">&para;</a></h3>
-<ul>
-<li>[x] <strong>Recherches sauvegardées / dossiers intelligents</strong> — Sauvegarder des requêtes Gmail complexes comme "vues" réutilisables. Ex : "Factures de ce mois", "Mails avec PJ &gt; 5Mo non archivés"</li>
-<li>[x] <strong>Vue boîte unifiée</strong> — Afficher les mails de tous les comptes Gmail dans une seule timeline, avec filtre par compte</li>
-<li>[x] <strong>Reconstruction de threads dans les archives</strong> — Regrouper les mails archivés par conversation (via <code>In-Reply-To</code> / <code>References</code> headers) au lieu d'une liste plate. Laisser le choix à l'utilisateur s'il veux liste ou conversations</li>
-</ul>
-<h3 id="ops-resilience">Ops &amp; Résilience<a class="headerlink" href="#ops-resilience" title="Permanent link">&para;</a></h3>
-<ul>
-<li>[x] <strong>Stockage distant (S3/MinIO)</strong> — Alternative au NAS local : archiver vers un bucket S3-compatible. Permet de géo-répliquer les archives</li>
-<li>[x] <strong>Politiques de rétention</strong> — Supprimer automatiquement les archives de plus de X mois/années. Configurable par compte ou par label</li>
-<li>[x] <strong>Dashboard quota Gmail API</strong> — Visualiser la consommation du quota Gmail API en temps réel (250 unités/user/sec). Historique et alertes si proche du plafond</li>
-<li>[x] <strong>Import IMAP</strong> — Importer des mails depuis d'autres providers (Outlook, ProtonMail export) dans le système d'archives</li>
-<li>[x] <strong>Import mbox</strong> — Importer un fichier mbox (Google Takeout, Thunderbird, Apple Mail) → parser et convertir en EML individuels dans les archives. Upload via l'UI avec barre de progression</li>
-<li>[x] Export archive au format mbox</li>
-</ul>
-<h3 id="idees-originales">Idées originales<a class="headerlink" href="#idees-originales" title="Permanent link">&para;</a></h3>
-<ul>
-<li>[x] <strong>Email "expiration"</strong> — Marquer des emails comme temporaires (codes OTP, confirmations de livraison, promos). Auto-suppression après N jours. Détection heuristique possible</li>
-<li>[x] <strong>Partage d'archive temporaire</strong> — Générer un lien temporaire (token + expiration) pour partager un mail archivé avec quelqu'un sans compte</li>
-</ul>
-<h3 id="open-core-dual-offering">open-core / dual offering<a class="headerlink" href="#open-core-dual-offering" title="Permanent link">&para;</a></h3>
-<ul>
-<li>[ ] <strong>application modèle saas + self hosted gratuit</strong> création d'un business model du genre self hosted gratuit + saas via stripe + vercel</li>
-</ul>
-<h3 id="authentification">authentification<a class="headerlink" href="#authentification" title="Permanent link">&para;</a></h3>
-<ul>
-<li>[x] Ajout de l'authentification multi-provider via Arctic (OAuth2). Providers supportés : Google, Microsoft, Discord, Facebook (Meta), LinkedIn, Keycloak. Activation par simple configuration des <code>CLIENT_ID</code>/<code>CLIENT_SECRET</code>. Sans conteneur supplémentaire</li>
-</ul>
-<h3 id="ui-ux">ui / ux<a class="headerlink" href="#ui-ux" title="Permanent link">&para;</a></h3>
-<ul>
-<li>[x] mettre des catégories sur le menu latérale (Email, Outils, Analyse, Système). Meilleure UX avec groupes visuels dans le sidebar</li>
-</ul>
-<h3 id="autre">autre<a class="headerlink" href="#autre" title="Permanent link">&para;</a></h3>
-<ul>
-<li>[x] dédupliquer les pièces jointes par hash de contenu</li>
-<li>[x] serveur mcp pour manipuler l'appli ?</li>
-</ul>
+<h1 id="configuration-detaillee">Configuration détaillée<a class="headerlink" href="#configuration-detaillee" title="Permanent link">&para;</a></h1>
+<p>Toutes les variables d'environnement de Gmail Manager, définies dans le fichier <code>.env</code> à la racine du projet.</p>
+<hr />
+<h2 id="application">Application<a class="headerlink" href="#application" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Défaut</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FRONTEND_URL</code></td>
+<td><code>http://localhost:3000</code></td>
+<td>URL publique de l'application. Utilisée pour les redirections OAuth2 et la génération des URIs de callback</td>
+</tr>
+<tr>
+<td><code>APP_PORT</code></td>
+<td><code>3000</code></td>
+<td>Port exposé de l'application (production unifiée)</td>
+</tr>
+<tr>
+<td><code>ARCHIVE_PATH</code></td>
+<td><code>/archives</code></td>
+<td>Chemin interne Docker de stockage des archives EML</td>
+</tr>
+<tr>
+<td><code>NODE_ENV</code></td>
+<td><code>development</code></td>
+<td>Environnement d'exécution (<code>development</code> / <code>production</code>)</td>
+</tr>
+<tr>
+<td><code>LOG_LEVEL</code></td>
+<td><code>info</code></td>
+<td>Niveau de log (<code>debug</code>, <code>info</code>, <code>warn</code>, <code>error</code>)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="jwt-authentification">JWT (authentification)<a class="headerlink" href="#jwt-authentification" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Défaut</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>JWT_SECRET</code></td>
+<td>—</td>
+<td><strong>Requis.</strong> Secret de signature des access tokens. Générez avec <code>openssl rand -hex 64</code></td>
+</tr>
+<tr>
+<td><code>JWT_REFRESH_SECRET</code></td>
+<td>—</td>
+<td><strong>Requis.</strong> Secret de signature des refresh tokens</td>
+</tr>
+<tr>
+<td><code>JWT_EXPIRY</code></td>
+<td><code>15m</code></td>
+<td>Durée de validité de l'access token</td>
+</tr>
+<tr>
+<td><code>JWT_REFRESH_EXPIRY</code></td>
+<td><code>30d</code></td>
+<td>Durée de validité du refresh token</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="admonition-title">Sécurité</p>
+<p>Utilisez des secrets aléatoires longs (au moins 64 caractères hexadécimaux). Ne réutilisez jamais le même secret pour les access et refresh tokens.</p>
+</div>
+<hr />
+<h2 id="google-oauth2">Google OAuth2<a class="headerlink" href="#google-oauth2" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Défaut</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GOOGLE_CLIENT_ID</code></td>
+<td>—</td>
+<td><strong>Requis.</strong> Client ID de votre projet Google Cloud</td>
+</tr>
+<tr>
+<td><code>GOOGLE_CLIENT_SECRET</code></td>
+<td>—</td>
+<td><strong>Requis.</strong> Client Secret de votre projet Google Cloud</td>
+</tr>
+<tr>
+<td><code>GOOGLE_REDIRECT_URI</code></td>
+<td><em>(dérivé de FRONTEND_URL)</em></td>
+<td>URI de callback pour la connexion des comptes Gmail</td>
+</tr>
+<tr>
+<td><code>GOOGLE_SSO_REDIRECT_URI</code></td>
+<td><em>(dérivé de FRONTEND_URL)</em></td>
+<td>URI de callback pour la connexion Google SSO</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition info">
+<p class="admonition-title">Dérivation automatique en Docker prod</p>
+<p>En production, <code>docker-compose.yml</code> dérive automatiquement les URIs de callback à partir de <code>FRONTEND_URL</code> (ex. <code>${FRONTEND_URL}/api/auth/gmail/callback</code>). Il suffit de définir <code>FRONTEND_URL</code>.</p>
+<p>En développement local (hors Docker), définissez explicitement <code>GOOGLE_REDIRECT_URI</code> et <code>GOOGLE_SSO_REDIRECT_URI</code> pointant vers le port du backend (4000).</p>
+</div>
+<hr />
+<h2 id="social-login-sso">Social Login (SSO)<a class="headerlink" href="#social-login-sso" title="Permanent link">&para;</a></h2>
+<p>En plus de Google SSO, vous pouvez activer d'autres fournisseurs d'authentification. Chaque provider est <strong>activé automatiquement</strong> dès que ses variables <code>CLIENT_ID</code> et <code>CLIENT_SECRET</code> sont définies.</p>
+<h3 id="microsoft">Microsoft<a class="headerlink" href="#microsoft" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MICROSOFT_CLIENT_ID</code></td>
+<td>Client ID de votre app Microsoft Entra. <a href="https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps">Créer sur portal.azure.com</a></td>
+</tr>
+<tr>
+<td><code>MICROSOFT_CLIENT_SECRET</code></td>
+<td>Client Secret de votre app Microsoft Entra</td>
+</tr>
+</tbody>
+</table>
+<h3 id="discord">Discord<a class="headerlink" href="#discord" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DISCORD_CLIENT_ID</code></td>
+<td>Client ID de votre app Discord. <a href="https://discord.com/developers/applications">Créer sur discord.com/developers</a></td>
+</tr>
+<tr>
+<td><code>DISCORD_CLIENT_SECRET</code></td>
+<td>Client Secret de votre app Discord</td>
+</tr>
+</tbody>
+</table>
+<h3 id="facebook">Facebook<a class="headerlink" href="#facebook" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FACEBOOK_CLIENT_ID</code></td>
+<td>App ID Meta. <a href="https://developers.facebook.com/apps">Créer sur developers.facebook.com</a></td>
+</tr>
+<tr>
+<td><code>FACEBOOK_CLIENT_SECRET</code></td>
+<td>App Secret Meta</td>
+</tr>
+</tbody>
+</table>
+<h3 id="linkedin">LinkedIn<a class="headerlink" href="#linkedin" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>LINKEDIN_CLIENT_ID</code></td>
+<td>Client ID LinkedIn. <a href="https://www.linkedin.com/developers/apps">Créer sur linkedin.com/developers</a></td>
+</tr>
+<tr>
+<td><code>LINKEDIN_CLIENT_SECRET</code></td>
+<td>Client Secret LinkedIn</td>
+</tr>
+</tbody>
+</table>
+<h3 id="keycloak">Keycloak<a class="headerlink" href="#keycloak" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>KEYCLOAK_REALM_URL</code></td>
+<td>URL du realm Keycloak (ex. <code>https://auth.example.com/realms/myrealm</code>)</td>
+</tr>
+<tr>
+<td><code>KEYCLOAK_CLIENT_ID</code></td>
+<td>Client ID du client Keycloak</td>
+</tr>
+<tr>
+<td><code>KEYCLOAK_CLIENT_SECRET</code></td>
+<td>Client Secret du client Keycloak</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition tip">
+<p class="admonition-title">URI de callback</p>
+<p>Pour chaque provider, l'URI de callback à enregistrer dans la console du fournisseur est :
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>{FRONTEND_URL}/api/auth/social/{provider}/callback
+</code></pre></div>
+Exemple : <code>http://localhost:3000/api/auth/social/microsoft/callback</code></p>
+</div>
+<hr />
+<h2 id="multi-utilisateurs">Multi-utilisateurs<a class="headerlink" href="#multi-utilisateurs" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Défaut</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ADMIN_EMAIL</code></td>
+<td><em>(vide)</em></td>
+<td>L'utilisateur qui s'inscrit avec cet email obtient automatiquement le rôle <code>admin</code></td>
+</tr>
+<tr>
+<td><code>ALLOW_REGISTRATION</code></td>
+<td><code>true</code></td>
+<td><code>false</code> pour fermer les inscriptions (formulaire et SSO). Les tentatives retourneront une erreur 403</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="postgresql">PostgreSQL<a class="headerlink" href="#postgresql" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POSTGRES_USER</code></td>
+<td>Utilisateur de la base de données</td>
+</tr>
+<tr>
+<td><code>POSTGRES_PASSWORD</code></td>
+<td>Mot de passe de la base de données</td>
+</tr>
+<tr>
+<td><code>POSTGRES_DB</code></td>
+<td>Nom de la base de données</td>
+</tr>
+<tr>
+<td><code>DATABASE_URL</code></td>
+<td><em>(dérivé automatiquement en Docker)</em> URL de connexion complète</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="redis">Redis<a class="headerlink" href="#redis" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Défaut</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>REDIS_URL</code></td>
+<td><code>redis://redis:6379</code></td>
+<td>URL de connexion Redis</td>
+</tr>
+<tr>
+<td><code>REDIS_PASSWORD</code></td>
+<td><em>(vide)</em></td>
+<td>Mot de passe Redis (recommandé en production)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="throttling-gmail-api">Throttling Gmail API<a class="headerlink" href="#throttling-gmail-api" title="Permanent link">&para;</a></h2>
+<p>Gmail API impose des quotas (250 unités/user/seconde). Ces variables permettent de contrôler le débit :</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Défaut</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GMAIL_BATCH_SIZE</code></td>
+<td><code>25</code></td>
+<td>Nombre de requêtes parallèles par batch</td>
+</tr>
+<tr>
+<td><code>GMAIL_THROTTLE_MS</code></td>
+<td><code>1000</code></td>
+<td>Pause en millisecondes entre chaque batch</td>
+</tr>
+<tr>
+<td><code>GMAIL_CONCURRENCY</code></td>
+<td><code>10</code></td>
+<td>Nombre max de requêtes concurrentes vers Gmail API</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition info">
+<p class="admonition-title">Ajustement</p>
+<p>Avec plusieurs utilisateurs actifs simultanément, augmentez <code>GMAIL_THROTTLE_MS</code> ou diminuez <code>GMAIL_BATCH_SIZE</code> pour éviter les erreurs 429 (rate limit).</p>
+</div>
+<hr />
+<h2 id="stockage-distant-s3minio">Stockage distant (S3/MinIO)<a class="headerlink" href="#stockage-distant-s3minio" title="Permanent link">&para;</a></h2>
+<p>En plus du stockage local, Gmail Manager peut archiver vers un bucket S3-compatible. Ces variables définissent la configuration <strong>globale</strong> (tous les utilisateurs). Chaque utilisateur peut aussi configurer son propre stockage S3 via l'interface.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Défaut</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>S3_ENDPOINT</code></td>
+<td><em>(vide)</em></td>
+<td>URL du serveur S3 (ex. <code>https://s3.amazonaws.com</code> ou <code>https://minio.local:9000</code>). Si vide, le stockage S3 global est désactivé</td>
+</tr>
+<tr>
+<td><code>S3_REGION</code></td>
+<td><code>us-east-1</code></td>
+<td>Région du bucket S3</td>
+</tr>
+<tr>
+<td><code>S3_BUCKET</code></td>
+<td><code>gmail-manager-archives</code></td>
+<td>Nom du bucket de stockage</td>
+</tr>
+<tr>
+<td><code>S3_ACCESS_KEY_ID</code></td>
+<td><em>(vide)</em></td>
+<td>Access Key ID pour l'authentification S3</td>
+</tr>
+<tr>
+<td><code>S3_SECRET_ACCESS_KEY</code></td>
+<td><em>(vide)</em></td>
+<td>Secret Access Key pour l'authentification S3</td>
+</tr>
+<tr>
+<td><code>S3_FORCE_PATH_STYLE</code></td>
+<td><code>true</code></td>
+<td>Utiliser le path-style pour les requêtes S3. Requis pour MinIO, désactiver pour AWS S3</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition tip">
+<p class="admonition-title">MinIO en Docker</p>
+<p>Pour utiliser MinIO auto-hébergé, ajoutez un service <code>minio</code> à votre <code>docker-compose.yml</code> :</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">minio</span><span class="p">:</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">minio/minio</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">server /data --console-address &quot;:9001&quot;</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="nt">environment</span><span class="p">:</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="nt">MINIO_ROOT_USER</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">minioadmin</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="nt">MINIO_ROOT_PASSWORD</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">minioadmin</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span><span class="nt">volumes</span><span class="p">:</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">minio_data:/data</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">  </span><span class="nt">ports</span><span class="p">:</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;9000:9000&quot;</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;9001:9001&quot;</span>
+</code></pre></div>
+<p>Puis configurez :
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nv">S3_ENDPOINT</span><span class="o">=</span>http://minio:9000
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nv">S3_ACCESS_KEY_ID</span><span class="o">=</span>minioadmin
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nv">S3_SECRET_ACCESS_KEY</span><span class="o">=</span>minioadmin
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="nv">S3_BUCKET</span><span class="o">=</span>gmail-manager-archives
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="nv">S3_FORCE_PATH_STYLE</span><span class="o">=</span><span class="nb">true</span>
+</code></pre></div></p>
+</div>
+<hr />
+<h2 id="volumes-docker">Volumes Docker<a class="headerlink" href="#volumes-docker" title="Permanent link">&para;</a></h2>
+<h3 id="configuration-par-defaut">Configuration par défaut<a class="headerlink" href="#configuration-par-defaut" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">volumes</span><span class="p">:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./volumes/archives:/archives</span><span class="w">    </span><span class="c1"># Archives EML</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">postgres_data:/var/lib/postgresql/data</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">redis_data:/data</span>
+</code></pre></div>
+<h3 id="pointer-vers-un-nas">Pointer vers un NAS<a class="headerlink" href="#pointer-vers-un-nas" title="Permanent link">&para;</a></h3>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Synology</label><label for="__tabbed_1_2">TrueNAS</label><label for="__tabbed_1_3">Chemin personnalisé</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">volumes</span><span class="p">:</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/volume1/gmail-archives:/archives</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">volumes</span><span class="p">:</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/mnt/pool/gmail-archives:/archives</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">volumes</span><span class="p">:</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/chemin/vers/vos/archives:/archives</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<hr />
+<h2 id="documentation-api-swagger">Documentation API (Swagger)<a class="headerlink" href="#documentation-api-swagger" title="Permanent link">&para;</a></h2>
+<p>La documentation Swagger est disponible en développement à :</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>http://localhost:4000/docs
+</code></pre></div>
+<p>En production (image unifiée) :</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>http://localhost:3000/api/docs
+</code></pre></div>
+<p>Elle est générée automatiquement par <code>@fastify/swagger</code> et liste tous les endpoints avec leurs schémas.</p>
 
 
 
