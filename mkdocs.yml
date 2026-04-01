@@ -84,6 +84,7 @@ nav:
     - Ops & Résilience: guide/ops-resilience.md
     - Paramètres: guide/settings.md
     - Administration: guide/admin.md
+    - Serveur MCP: guide/mcp-server.md
   - 🔧 Documentation technique:
     - Vue d'ensemble: technical/overview.md
     - Backend: technical/backend.md

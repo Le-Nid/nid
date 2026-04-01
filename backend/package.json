@@ -11,7 +11,9 @@
   "scripts": {
     "dev": "NODE_OPTIONS='--dns-result-order=ipv4first' vite-node --watch src/index.ts",
     "build": "vite build",
+    "build:mcp": "vite build --config vite.config.mcp.ts",
     "start": "NODE_OPTIONS='--dns-result-order=ipv4first' node dist/index.js",
+    "start:mcp": "NODE_OPTIONS='--dns-result-order=ipv4first' node dist/mcp-server.js",
     "typecheck": "tsc --noEmit",
     "check": "npm ci && npm run typecheck",
     "test": "vitest run",
@@ -29,6 +31,7 @@
     "@fastify/rate-limit": "^10.3.0",
     "@fastify/swagger": "^9.7.0",
     "@fastify/swagger-ui": "^5.2.5",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "archiver": "^7.0.1",
     "arctic": "^3.7.0",
     "bcrypt": "^6.0.0",

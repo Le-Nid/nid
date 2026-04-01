@@ -143,6 +143,12 @@ export const attachmentsApi = {
 
   listLive: (accountId: string, params: Record<string, any> = {}) =>
     api.get(`/api/attachments/${accountId}/live`, { params }).then((r) => r.data),
+
+  getDedupStats: () =>
+    api.get('/api/attachments/dedup-stats').then((r) => r.data),
+
+  runDedupBackfill: () =>
+    api.post('/api/attachments/dedup-backfill').then((r) => r.data),
 }
 
 // ─── Reports ──────────────────────────────────────────────

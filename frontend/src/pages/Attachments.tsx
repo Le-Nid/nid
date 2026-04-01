@@ -1,16 +1,17 @@
 import { useState } from 'react'
 import {
   Table, Button, Typography, Space, Tag, Card, Empty,
-  Statistic, Row, Col, message, Input, Segmented,
+  Statistic, Row, Col, message, Input, Segmented, Tooltip,
 } from 'antd'
 import {
   PaperClipOutlined, CloudOutlined, DatabaseOutlined, ReloadOutlined,
   FileImageOutlined, FilePdfOutlined, FileOutlined, FileZipOutlined,
+  CopyOutlined, SyncOutlined,
 } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import { useAccount } from '../hooks/useAccount'
 import { formatBytes } from '../utils/format'
-import { useArchivedAttachments, useLiveAttachments } from '../hooks/queries'
+import { useArchivedAttachments, useLiveAttachments, useDedupStats, useDedupBackfill } from '../hooks/queries'
 
 const { Title, Text } = Typography
 
@@ -56,6 +57,8 @@ export default function AttachmentsPage() {
   const archivedParams = { page, limit: 50, sort: 'size', order: 'desc', ...(search ? { q: search } : {}) }
   const archivedQuery = useArchivedAttachments(mode === 'archived' ? accountId : null, archivedParams)
   const liveQuery = useLiveAttachments(mode === 'live' ? accountId : null, { maxResults: 200 })
+  const dedupStats = useDedupStats()
+  const dedupBackfill = useDedupBackfill()
 
   const archivedAtts = archivedQuery.data?.attachments ?? []
   const liveAtts = liveQuery.data?.attachments ?? []
@@ -187,22 +190,49 @@ export default function AttachmentsPage() {
       ) : (
         <>
           <Row gutter={16} style={{ marginBottom: 16 }}>
-            <Col span={8}>
+            <Col span={6}>
               <Card size="small">
                 <Statistic title={t('attachments.totalAttachments')} value={total} prefix={<PaperClipOutlined />} />
               </Card>
             </Col>
-            <Col span={8}>
+            <Col span={6}>
               <Card size="small">
                 <Statistic title={t('attachments.totalSize')} value={formatBytes(totalSize)} />
               </Card>
             </Col>
-            <Col span={8}>
+            <Col span={6}>
               <Card size="small">
                 <Statistic
                   title={t('attachments.source')}
                   value={mode === 'archived' ? t('attachments.sourceArchived') : t('attachments.sourceLive')}
                 />
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card size="small">
+                <Tooltip title={dedupStats.data ? t('attachments.dedupDetails', {
+                  duplicates: dedupStats.data.duplicateFiles,
+                  saved: formatBytes(dedupStats.data.savedBytes),
+                }) : ''}>
+                  <Statistic
+                    title={t('attachments.dedupSaved')}
+                    value={formatBytes(dedupStats.data?.savedBytes ?? 0)}
+                    prefix={<CopyOutlined />}
+                    suffix={
+                      dedupStats.data && dedupStats.data.hashCoverage < 1 ? (
+                        <Button
+                          size="small"
+                          type="link"
+                          icon={<SyncOutlined spin={dedupBackfill.isPending} />}
+                          onClick={() => dedupBackfill.mutate()}
+                          loading={dedupBackfill.isPending}
+                        >
+                          {t('attachments.dedupBackfill')}
+                        </Button>
+                      ) : null
+                    }
+                  />
+                </Tooltip>
               </Card>
             </Col>
           </Row>

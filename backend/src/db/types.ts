@@ -69,6 +69,7 @@ export interface ArchivedAttachmentsTable {
   mime_type:        string | null
   size_bytes:       Generated<bigint>
   file_path:        string
+  content_hash:     string | null
   created_at:       Generated<Date>
 }
 

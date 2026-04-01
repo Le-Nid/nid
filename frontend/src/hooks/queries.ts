@@ -40,6 +40,7 @@ export const queryKeys = {
       ['attachments', accountId, 'archived', params] as const,
     live: (accountId: string, params?: Record<string, any>) =>
       ['attachments', accountId, 'live', params] as const,
+    dedupStats: () => ['attachments', 'dedup-stats'] as const,
   },
   insights: () => ['insights'] as const,
   duplicates: (accountId: string) => ['duplicates', accountId] as const,
@@ -232,6 +233,21 @@ export function useLiveAttachments(accountId: string | null, params: Record<stri
     queryKey: queryKeys.attachments.live(accountId!, params),
     queryFn: () => attachmentsApi.listLive(accountId!, params),
     enabled: !!accountId,
+  })
+}
+
+export function useDedupStats() {
+  return useQuery({
+    queryKey: queryKeys.attachments.dedupStats(),
+    queryFn: () => attachmentsApi.getDedupStats(),
+  })
+}
+
+export function useDedupBackfill() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => attachmentsApi.runDedupBackfill(),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.attachments.dedupStats() }),
   })
 }
 

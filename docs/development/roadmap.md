@@ -164,5 +164,5 @@
 
 
 ### autre
-- [ ] dédupliquer les pièces jointes par hash de contenu
-- [ ] serveur mcp pour manipuler l'appli ?
+- [x] dédupliquer les pièces jointes par hash de contenu
+- [x] serveur mcp pour manipuler l'appli ?

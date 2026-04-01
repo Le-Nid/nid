@@ -272,6 +272,18 @@ describe('API modules', () => {
       await attachmentsApi.listLive('acc-1', {})
       expect(api.get).toHaveBeenCalledWith('/api/attachments/acc-1/live', { params: {} })
     })
+
+    it('getDedupStats', async () => {
+      mockGet({ savedBytes: 0 })
+      await attachmentsApi.getDedupStats()
+      expect(api.get).toHaveBeenCalledWith('/api/attachments/dedup-stats')
+    })
+
+    it('runDedupBackfill', async () => {
+      mockPost({ processed: 0 })
+      await attachmentsApi.runDedupBackfill()
+      expect(api.post).toHaveBeenCalledWith('/api/attachments/dedup-backfill')
+    })
   })
 
   describe('reportsApi', () => {

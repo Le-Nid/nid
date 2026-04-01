@@ -7,6 +7,9 @@ import * as migration004 from './migrations/004_analytics'
 import * as migration005 from './migrations/005_social_accounts'
 import * as migration006 from './migrations/006_attachment_search'
 import * as migration007 from './migrations/007_saved_searches'
+import * as migration008 from './migrations/008_ops_resilience'
+import * as migration009 from './migrations/009_expiration_sharing'
+import * as migration010 from './migrations/010_attachment_dedup'
 
 // ─── Kysely instance ──────────────────────────────────────
 
@@ -33,6 +36,9 @@ const migrations: Record<string, Migration> = {
   '005_social_accounts': migration005,
   '006_attachment_search': migration006,
   '007_saved_searches': migration007,
+  '008_ops_resilience': migration008,
+  '009_expiration_sharing': migration009,
+  '010_attachment_dedup': migration010,
 }
 
 class InCodeMigrationProvider implements MigrationProvider {

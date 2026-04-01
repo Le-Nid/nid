@@ -50,3 +50,28 @@ Cliquez sur le bouton **Télécharger** à côté d'une pièce jointe pour la t�
 - **Libérer de l'espace Gmail** : identifiez les pièces jointes les plus volumineuses, archivez les mails correspondants sur le NAS, puis supprimez-les de Gmail
 - **Retrouver un fichier** : recherchez un nom de fichier dans les archives
 - **Audit de stockage** : visualisez la répartition des types de pièces jointes
+
+---
+
+## Déduplication par hash de contenu
+
+Gmail Manager déduplique automatiquement les pièces jointes identiques lors de l'archivage. Chaque fichier est identifié par son hash SHA-256 : si deux mails contiennent exactement la même pièce jointe, le fichier n'est stocké qu'une seule fois sur le disque.
+
+### Statistiques
+
+La carte **Espace économisé** affiche :
+
+- Le volume d'espace disque économisé grâce à la déduplication
+- Le nombre de fichiers dupliqués détectés
+- La couverture du hash (pourcentage de pièces jointes analysées)
+
+### Backfill
+
+Si vous avez archivé des mails avant l'activation de la déduplication, cliquez sur le bouton **Analyser** pour calculer les hash des pièces jointes existantes. Cette opération :
+
+1. Lit chaque fichier sur le stockage (local ou S3)
+2. Calcule le hash SHA-256
+3. Identifie les doublons et supprime les copies redondantes
+4. Met à jour la base de données pour pointer vers le fichier unique
+
+> ⚠️ Le backfill peut prendre du temps si vous avez beaucoup de pièces jointes archivées.

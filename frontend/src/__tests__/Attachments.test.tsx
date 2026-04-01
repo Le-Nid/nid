@@ -11,10 +11,14 @@ vi.mock('../hooks/useAccount', () => ({
 
 const mockArchivedAttachments = vi.fn()
 const mockLiveAttachments = vi.fn()
+const mockDedupStats = vi.fn()
+const mockDedupBackfill = vi.fn()
 
 vi.mock('../hooks/queries', () => ({
   useArchivedAttachments: (...args: any[]) => mockArchivedAttachments(...args),
   useLiveAttachments: (...args: any[]) => mockLiveAttachments(...args),
+  useDedupStats: () => mockDedupStats(),
+  useDedupBackfill: () => mockDedupBackfill(),
 }))
 
 import AttachmentsPage from '../pages/Attachments'
@@ -75,6 +79,8 @@ describe('AttachmentsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockLiveAttachments.mockReturnValue({ data: null, isLoading: false, refetch: vi.fn() })
+    mockDedupStats.mockReturnValue({ data: { savedBytes: 0, duplicateFiles: 0, hashCoverage: 1 } })
+    mockDedupBackfill.mockReturnValue({ mutate: vi.fn(), isPending: false })
   })
 
   it('shows title', () => {

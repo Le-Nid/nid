@@ -6,9 +6,9 @@ export default defineConfig({
     target:            'node24',
     outDir:            'dist',
     lib: {
-      entry:   'src/index.ts',
+      entry:   'src/mcp-server.ts',
       formats: ['es'],
-      fileName: () => 'index.js',
+      fileName: () => 'mcp-server.js',
     },
     rolldownOptions: {
       external: [
@@ -28,33 +28,18 @@ export default defineConfig({
         'pino',
         'pino-pretty',
         'zod',
+        /^zod\//,
         /^dotenv(\/.*)?$/,
         /^@aws-sdk\//,
         /^@modelcontextprotocol\//,
-        /^zod\//,
         'imapflow',
       ],
     },
-    // Pas de minification pour un serveur Node (debug plus facile + pas de gain réel)
     minify:       false,
     sourcemap:    true,
-    emptyOutDir:  true,
+    emptyOutDir:  false,
   },
   resolve: {
     extensions: ['.ts', '.js'],
-  },
-
-  // Vitest configuration
-  test: {
-    globals:     true,
-    environment: 'node',
-    setupFiles:  ['./src/__tests__/setup.ts'],
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'lcov', 'html'],
-      exclude: ['dist/**', 'src/__tests__/**', 'src/db/types.ts', 'src/db/migrations/**'],
-    },
-    include:  ['src/__tests__/**/*.test.ts'],
-    testTimeout: 10_000,
   },
 }) as any

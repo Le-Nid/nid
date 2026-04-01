@@ -5,9 +5,10 @@ import { config } from '../config'
 import { escapeIlike } from '../utils/db'
 import { extractPagination } from '../utils/pagination'
 import { authPresets } from '../utils/auth'
+import { backfillAttachmentHashes, getDeduplicationStats } from '../archive/dedup.service'
 
 export async function attachmentsRoutes(app: FastifyInstance) {
-  const { accountAuth } = authPresets(app)
+  const { accountAuth, auth } = authPresets(app)
 
   // ─── List archived attachments (from DB) ──────────────
   app.get('/:accountId/archived', accountAuth, async (request) => {
@@ -155,6 +156,19 @@ export async function attachmentsRoutes(app: FastifyInstance) {
     const totalSizeBytes = results.reduce((s, a) => s + a.sizeBytes, 0)
 
     return { attachments: results, totalSizeBytes }
+  })
+
+  // ─── Deduplication stats ──────────────────────────────
+  app.get('/dedup-stats', auth, async (request) => {
+    const user = (request as any).user
+    return getDeduplicationStats(user.id)
+  })
+
+  // ─── Backfill hashes for existing attachments ─────────
+  app.post('/dedup-backfill', auth, async (request) => {
+    const user = (request as any).user
+    const result = await backfillAttachmentHashes(user.id)
+    return result
   })
 }
 

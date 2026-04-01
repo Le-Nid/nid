@@ -488,7 +488,10 @@
     "sourceLive": "Gmail (>100 KB)",
     "reload": "Reload",
     "searchPlaceholder": "Search by name, subject or sender...",
-    "noAttachment": "No attachment found"
+    "noAttachment": "No attachment found",
+    "dedupSaved": "Space saved",
+    "dedupDetails": "{{duplicates}} duplicate file(s), {{saved}} saved",
+    "dedupBackfill": "Analyze"
   },
 
   "insights": {

@@ -488,7 +488,10 @@
     "sourceLive": "Gmail (>100 Ko)",
     "reload": "Recharger",
     "searchPlaceholder": "Rechercher par nom, sujet ou expéditeur...",
-    "noAttachment": "Aucune pièce jointe trouvée"
+    "noAttachment": "Aucune pièce jointe trouvée",
+    "dedupSaved": "Espace économisé",
+    "dedupDetails": "{{duplicates}} fichier(s) dupliqué(s), {{saved}} économisés",
+    "dedupBackfill": "Analyser"
   },
 
   "insights": {

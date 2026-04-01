@@ -1,5 +1,6 @@
 import fs from 'fs/promises'
 import path from 'path'
+import { createHash } from 'crypto'
 import { simpleParser } from 'mailparser'
 import { getDb } from '../db'
 import { getGmailClient } from '../gmail/gmail.service'
@@ -116,6 +117,7 @@ export async function archiveMail(accountId: string, messageId: string): Promise
           mime_type:        a.mimeType,
           size_bytes:       BigInt(a.size),
           file_path:        a.filePath,
+          content_hash:     a.contentHash,
         }))
       )
       .execute()
@@ -125,8 +127,9 @@ export async function archiveMail(accountId: string, messageId: string): Promise
 async function extractAttachments(
   rawEml: string,
   attachDir: string
-): Promise<{ filename: string; mimeType: string; size: number; filePath: string }[]> {
-  const results: { filename: string; mimeType: string; size: number; filePath: string }[] = []
+): Promise<{ filename: string; mimeType: string; size: number; filePath: string; contentHash: string }[]> {
+  const results: { filename: string; mimeType: string; size: number; filePath: string; contentHash: string }[] = []
+  const db = getDb()
 
   const parsed = await simpleParser(rawEml)
   const attachments = parsed.attachments ?? []
@@ -134,16 +137,32 @@ async function extractAttachments(
   for (const att of attachments) {
     if (!att.filename) continue
 
-    await fs.mkdir(attachDir, { recursive: true })
-    const safeName = att.filename.replace(/[^a-zA-Z0-9._-]/g, '_')
-    const filePath = path.join(attachDir, safeName)
-    await fs.writeFile(filePath, att.content)
+    const contentHash = createHash('sha256').update(att.content).digest('hex')
+
+    // Chercher un fichier existant avec le même hash pour déduplication
+    const existing = await db
+      .selectFrom('archived_attachments')
+      .select('file_path')
+      .where('content_hash', '=', contentHash)
+      .executeTakeFirst()
+
+    let filePath: string
+    if (existing) {
+      // Réutiliser le fichier existant — pas d'écriture disque
+      filePath = existing.file_path
+    } else {
+      await fs.mkdir(attachDir, { recursive: true })
+      const safeName = att.filename.replace(/[^a-zA-Z0-9._-]/g, '_')
+      filePath = path.join(attachDir, safeName)
+      await fs.writeFile(filePath, att.content)
+    }
 
     results.push({
       filename: att.filename,
       mimeType: att.contentType ?? 'application/octet-stream',
       size:     att.size,
       filePath,
+      contentHash,
     })
   }
   return results
