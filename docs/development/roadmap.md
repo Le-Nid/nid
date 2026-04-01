@@ -161,3 +161,8 @@
 
 ### ui / ux
 - [x] mettre des catégories sur le menu latérale (Email, Outils, Analyse, Système). Meilleure UX avec groupes visuels dans le sidebar
+
+
+### autre
+- [ ] dédupliquer les pièces jointes par hash de contenu
+- [ ] serveur mcp pour manipuler l'appli ?
