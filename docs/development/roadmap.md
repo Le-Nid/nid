@@ -135,10 +135,9 @@
 
 ### Gestion avancée
 
-- [ ] **Snooze d'emails** — Cacher un email et le faire réapparaître à une date/heure choisie (via un label temporaire + job BullMQ planifié)
 - [ ] **Recherches sauvegardées / dossiers intelligents** — Sauvegarder des requêtes Gmail complexes comme "vues" réutilisables. Ex : "Factures de ce mois", "Mails avec PJ > 5Mo non archivés"
 - [ ] **Vue boîte unifiée** — Afficher les mails de tous les comptes Gmail dans une seule timeline, avec filtre par compte
-- [ ] **Reconstruction de threads dans les archives** — Regrouper les mails archivés par conversation (via `In-Reply-To` / `References` headers) au lieu d'une liste plate
+- [ ] **Reconstruction de threads dans les archives** — Regrouper les mails archivés par conversation (via `In-Reply-To` / `References` headers) au lieu d'une liste plate. Laisser le choix à l'utilisateur s'il veux liste ou conversations
 
 ### Ops & Résilience
 
@@ -161,7 +160,3 @@
 
 ### ui / ux
 - [x] mettre des catégories sur le menu latérale (Email, Outils, Analyse, Système). Meilleure UX avec groupes visuels dans le sidebar
-
-
-
-Dans les archives, il y a bien les mails mais il n'y a pas les pièces jointes. On ne peut pas non plus chercher par nom de pièce jointe. 
