@@ -16,7 +16,7 @@ interface PrivacyPayload {
 
 export function startPrivacyWorker() {
   const worker = new Worker<PrivacyPayload>(
-    'gmail-manager',
+    'nid',
     async (job: Job<PrivacyPayload>) => {
       if (
         job.name !== 'scan_tracking' &&

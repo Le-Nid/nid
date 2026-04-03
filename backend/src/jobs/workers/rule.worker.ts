@@ -12,7 +12,7 @@ interface RunRulePayload {
 
 export function startRuleWorker() {
   const worker = new Worker<RunRulePayload>(
-    "gmail-manager",
+    "nid",
     async (job: Job<RunRulePayload>) => {
       if (job.name !== "run_rule") return;
       const { accountId, ruleId } = job.data;

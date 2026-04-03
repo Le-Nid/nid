@@ -1,12 +1,12 @@
 # Guide utilisateur
 
-Bienvenue dans le guide utilisateur de Gmail Manager. Cette section explique comment utiliser chaque fonctionnalité de l'application.
+Bienvenue dans le guide utilisateur de Nid. Cette section explique comment utiliser chaque fonctionnalité de l'application.
 
 ---
 
 ## Vue d'ensemble
 
-Gmail Manager est une application de gestion et d'archivage de boîtes Gmail, installée chez vous (NAS, serveur). Vos mails restent sur votre réseau — aucune donnée n'est envoyée vers des serveurs tiers.
+Nid est une application de gestion et d'archivage de boîtes Gmail, installée chez vous (NAS, serveur). Vos mails restent sur votre réseau — aucune donnée n'est envoyée vers des serveurs tiers.
 
 ### Ce que vous pouvez faire
 
@@ -44,7 +44,7 @@ L'interface se compose de :
 
 ## Premiers pas
 
-Si vous venez d'installer Gmail Manager, commencez par le guide [**Premiers pas**](first-steps.md) qui vous accompagne dans :
+Si vous venez d'installer Nid, commencez par le guide [**Premiers pas**](first-steps.md) qui vous accompagne dans :
 
 1. La création de votre compte
 2. La connexion de votre premier compte Gmail

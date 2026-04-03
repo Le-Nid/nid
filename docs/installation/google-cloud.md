@@ -1,6 +1,6 @@
 # Configuration Google Cloud
 
-Guide pas à pas pour configurer les credentials OAuth2 nécessaires à Gmail Manager.
+Guide pas à pas pour configurer les credentials OAuth2 nécessaires à Nid.
 
 ---
 
@@ -8,7 +8,7 @@ Guide pas à pas pour configurer les credentials OAuth2 nécessaires à Gmail Ma
 
 1. Rendez-vous sur [console.cloud.google.com](https://console.cloud.google.com)
 2. Cliquez sur le sélecteur de projet en haut → **Nouveau projet**
-3. Nommez-le (ex. `gmail-manager`) et cliquez sur **Créer**
+3. Nommez-le (ex. `nid`) et cliquez sur **Créer**
 
 ---
 
@@ -27,7 +27,7 @@ Guide pas à pas pour configurer les credentials OAuth2 nécessaires à Gmail Ma
     - **Interne** : si vous avez un compte Google Workspace (pas d'écran d'avertissement)
     - **Externe** : pour les comptes Gmail personnels (nécessite des utilisateurs de test)
 3. Renseignez :
-    - Nom de l'application : `Gmail Manager`
+    - Nom de l'application : `Nid`
     - Email d'assistance : votre email
     - Domaine autorisé : votre domaine (ou laissez vide pour localhost)
 4. Ajoutez les **scopes** :
@@ -38,7 +38,7 @@ Guide pas à pas pour configurer les credentials OAuth2 nécessaires à Gmail Ma
 5. Si **Externe** : ajoutez votre email en tant qu'**utilisateur de test**
 
 !!! warning "Application en mode Test"
-    Tant que l'application est en mode "Test", Google affichera un écran d'avertissement lors de la connexion. C'est normal pour un usage personnel. Cliquez sur **Paramètres avancés** → **Accéder à gmail-manager (non sécurisé)** pour continuer.
+    Tant que l'application est en mode "Test", Google affichera un écran d'avertissement lors de la connexion. C'est normal pour un usage personnel. Cliquez sur **Paramètres avancés** → **Accéder à nid (non sécurisé)** pour continuer.
 
 ---
 
@@ -46,7 +46,7 @@ Guide pas à pas pour configurer les credentials OAuth2 nécessaires à Gmail Ma
 
 1. **APIs & Services** → **Identifiants** → **Créer des identifiants** → **ID client OAuth 2.0**
 2. Type d'application : **Application Web**
-3. Nom : `Gmail Manager`
+3. Nom : `Nid`
 4. Ajoutez **deux** URIs de redirection autorisées :
 
 ```
@@ -106,5 +106,5 @@ C'est normal si l'application est en mode "Test". Pour un usage personnel self-h
 Google ne retourne le `refresh_token` qu'au **premier** consentement. Si vous reconnectez un compte Gmail déjà autorisé :
 
 1. Allez sur [myaccount.google.com/permissions](https://myaccount.google.com/permissions)
-2. Révoquez l'accès de Gmail Manager
+2. Révoquez l'accès de Nid
 3. Reconnectez le compte — le refresh token sera émis à nouveau

@@ -1,6 +1,6 @@
 # Dashboard
 
-Le Dashboard est la page d'accueil de Gmail Manager. Il offre une vue d'ensemble de votre boîte Gmail avec des graphiques interactifs.
+Le Dashboard est la page d'accueil de Nid. Il offre une vue d'ensemble de votre boîte Gmail avec des graphiques interactifs.
 
 ---
 

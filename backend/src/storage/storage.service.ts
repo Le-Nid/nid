@@ -230,7 +230,7 @@ export async function getStorageForUser(userId: string): Promise<StorageBackend>
     return new S3Storage({
       endpoint: cfg.s3_endpoint,
       region: cfg.s3_region ?? 'us-east-1',
-      bucket: cfg.s3_bucket ?? 'gmail-manager-archives',
+      bucket: cfg.s3_bucket ?? 'nid-archives',
       accessKeyId: cfg.s3_access_key_id,
       secretAccessKey: cfg.s3_secret_access_key,
       forcePathStyle: cfg.s3_force_path_style,

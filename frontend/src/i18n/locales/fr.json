@@ -54,7 +54,7 @@
   },
 
   "layout": {
-    "appName": "Gmail Manager",
+    "appName": "Nid",
     "gmailAccount": "Compte Gmail",
     "lightMode": "Passer en mode clair",
     "darkMode": "Passer en mode sombre",
@@ -66,8 +66,8 @@
   },
 
   "login": {
-    "title": "Gmail Manager",
-    "subtitle": "Gérez vos mails, archivez sur votre NAS",
+    "title": "Nid",
+    "subtitle": "Vos mails. Votre serveur. Votre nid.",
     "tabLogin": "Connexion",
     "tabRegister": "Créer un compte",
     "email": "Email",
@@ -860,7 +860,7 @@
     "to": "À",
     "emailContent": "Contenu de l'email",
     "noContent": "Aucun contenu disponible",
-    "poweredBy": "Gmail Manager — Partage temporaire d'archive",
+    "poweredBy": "Nid — Partage temporaire d'archive",
     "shareButton": "Partager",
     "shareTooltip": "Générer un lien de partage temporaire"
   }

@@ -1,6 +1,6 @@
 # Analytics et Insights
 
-Gmail Manager offre des outils d'analyse pour mieux comprendre vos habitudes email et identifier les opportunités de nettoyage.
+Nid offre des outils d'analyse pour mieux comprendre vos habitudes email et identifier les opportunités de nettoyage.
 
 ---
 
@@ -35,7 +35,7 @@ Plus le score est élevé, plus l'expéditeur "encombre" votre boîte.
 
 ## Suggestions de nettoyage
 
-Gmail Manager génère automatiquement des **suggestions de nettoyage** basées sur l'analyse de vos mails :
+Nid génère automatiquement des **suggestions de nettoyage** basées sur l'analyse de vos mails :
 
 | Type de suggestion | Description |
 |---|---|

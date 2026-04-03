@@ -29,7 +29,7 @@ let _queue: Queue | null = null
 
 export function getQueue(): Queue {
   if (!_queue) {
-    _queue = new Queue('gmail-manager', {
+    _queue = new Queue('nid', {
       connection: getRedis(),
       defaultJobOptions: {
         attempts: 3,

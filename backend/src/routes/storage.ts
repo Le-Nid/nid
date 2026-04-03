@@ -50,7 +50,7 @@ export async function storageRoutes(app: FastifyInstance) {
       type: body.type,
       s3_endpoint: body.s3Endpoint ?? null,
       s3_region: body.s3Region ?? 'us-east-1',
-      s3_bucket: body.s3Bucket ?? 'gmail-manager-archives',
+      s3_bucket: body.s3Bucket ?? 'nid-archives',
       s3_access_key_id: body.s3AccessKeyId ?? null,
       s3_secret_access_key: body.s3SecretAccessKey ?? null,
       s3_force_path_style: body.s3ForcePathStyle ?? true,
@@ -87,7 +87,7 @@ export async function storageRoutes(app: FastifyInstance) {
     return testS3Connection({
       endpoint: body.endpoint,
       region: body.region ?? 'us-east-1',
-      bucket: body.bucket ?? 'gmail-manager-archives',
+      bucket: body.bucket ?? 'nid-archives',
       accessKeyId: body.accessKeyId,
       secretAccessKey: body.secretAccessKey,
       forcePathStyle: body.forcePathStyle ?? true,

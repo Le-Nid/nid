@@ -1,6 +1,6 @@
 # Newsletters et désabonnement
 
-Gmail Manager vous aide à identifier les newsletters et listes de diffusion auxquelles vous êtes abonné, puis à les nettoyer en masse.
+Nid vous aide à identifier les newsletters et listes de diffusion auxquelles vous êtes abonné, puis à les nettoyer en masse.
 
 ---
 
@@ -16,7 +16,7 @@ Gmail Manager vous aide à identifier les newsletters et listes de diffusion aux
 
 ## Liste des newsletters détectées
 
-Après le scan, Gmail Manager affiche la liste de toutes les newsletters détectées, avec pour chacune :
+Après le scan, Nid affiche la liste de toutes les newsletters détectées, avec pour chacune :
 
 - **Expéditeur** : l'adresse d'envoi de la newsletter
 - **Nombre de mails** : combien de mails vous avez reçus de cet expéditeur
@@ -49,7 +49,7 @@ Supprime définitivement tous les mails de cet expéditeur. Cette action est **i
 > 📸 *Capture d'écran suggérée : boutons d'action sur une newsletter (Corbeille / Supprimer définitivement)*
 
 !!! tip "Se désabonner aussi chez l'expéditeur"
-    Gmail Manager détecte les newsletters mais ne gère pas le désabonnement auprès de l'expéditeur lui-même. Ouvrez le dernier mail de la newsletter et cliquez sur le lien de désabonnement en bas du mail pour ne plus recevoir de nouveaux mails.
+    Nid détecte les newsletters mais ne gère pas le désabonnement auprès de l'expéditeur lui-même. Ouvrez le dernier mail de la newsletter et cliquez sur le lien de désabonnement en bas du mail pour ne plus recevoir de nouveaux mails.
 
 ---
 

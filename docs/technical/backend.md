@@ -95,7 +95,7 @@ Avec le throttling, on reste à ~1 000 unités/sec ce qui dépasse le quota si p
 
 ## Démarrage du worker unifié
 
-Un **worker unifié** (`unified.worker.ts`) écoute la queue `gmail-manager` et dispatche chaque job par `job.name` via un `switch`. Cela évite que plusieurs workers écoutant la même queue se volent mutuellement les jobs.
+Un **worker unifié** (`unified.worker.ts`) écoute la queue `nid` et dispatche chaque job par `job.name` via un `switch`. Cela évite que plusieurs workers écoutant la même queue se volent mutuellement les jobs.
 
 Chaque worker injecte le `user_id` dans la table `jobs` pour assurer l'isolation des données par utilisateur.
 

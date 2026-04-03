@@ -1,8 +1,8 @@
 {
-  "name": "gmail-manager-backend",
+  "name": "nid-backend",
   "version": "1.0.0",
   "type": "module",
-  "description": "Gmail Manager backend API — Fastify + TypeScript + Kysely",
+  "description": "Nid backend API — Fastify + TypeScript + Kysely",
   "main": "dist/index.js",
   "engines": {
     "node": ">=24.0.0",

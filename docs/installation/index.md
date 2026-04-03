@@ -1,6 +1,6 @@
 # Démarrage rapide
 
-Installez Gmail Manager en 5 minutes avec Docker.
+Installez Nid en 5 minutes avec Docker.
 
 ---
 
@@ -15,8 +15,8 @@ Installez Gmail Manager en 5 minutes avec Docker.
 ## 1. Cloner le dépôt
 
 ```bash
-git clone https://github.com/befa160/gmail-manager.git
-cd gmail-manager
+git clone https://github.com/le-nid/nid.git
+cd nid
 ```
 
 ---

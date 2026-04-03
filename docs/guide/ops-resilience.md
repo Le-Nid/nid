@@ -1,6 +1,6 @@
 # Ops & Résilience
 
-Gmail Manager offre des outils d'opérations et de résilience pour gérer le stockage, la rétention des archives, le suivi des quotas Gmail API, et l'import/export de mails.
+Nid offre des outils d'opérations et de résilience pour gérer le stockage, la rétention des archives, le suivi des quotas Gmail API, et l'import/export de mails.
 
 ---
 
@@ -21,7 +21,7 @@ La page est organisée en 4 onglets :
 
 ## Stockage distant (S3 / MinIO)
 
-Par défaut, Gmail Manager stocke les archives EML sur le système de fichiers local (NAS). Vous pouvez configurer un stockage S3-compatible pour :
+Par défaut, Nid stocke les archives EML sur le système de fichiers local (NAS). Vous pouvez configurer un stockage S3-compatible pour :
 
 - **Géo-répliquer** vos archives sur un cloud distant
 - Utiliser des services comme **AWS S3**, **MinIO**, **Backblaze B2**, **Wasabi**, etc.
@@ -146,7 +146,7 @@ L'onglet **Quota API** affiche :
 
 ## Import de mails
 
-Gmail Manager permet d'importer des mails depuis des sources externes dans vos archives.
+Nid permet d'importer des mails depuis des sources externes dans vos archives.
 
 ### Import Mbox
 
@@ -172,7 +172,7 @@ Le processus :
     1. Allez sur [takeout.google.com](https://takeout.google.com)
     2. Sélectionnez uniquement **Gmail**
     3. Choisissez le format **mbox**
-    4. Téléchargez l'archive et importez le fichier `.mbox` dans Gmail Manager
+    4. Téléchargez l'archive et importez le fichier `.mbox` dans Nid
 
 ### Import IMAP
 

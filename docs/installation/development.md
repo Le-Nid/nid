@@ -1,6 +1,6 @@
 # Environnement de développement
 
-Guide pour contribuer au développement de Gmail Manager.
+Guide pour contribuer au développement de Nid.
 
 ---
 
@@ -53,7 +53,7 @@ Le proxy Vite redirige `/api` vers `http://localhost:4000` automatiquement.
 ## Structure du projet
 
 ```
-gmail-manager/
+nid/
 ├── backend/
 │   └── src/
 │       ├── index.ts          # Point d'entrée Fastify

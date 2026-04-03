@@ -125,7 +125,7 @@ export async function webhookRoutes(app: FastifyInstance) {
     const { triggerWebhooks } = await import('../webhooks/webhook.service')
     await triggerWebhooks(userId, 'job.completed', {
       test: true,
-      message: 'Test webhook from Gmail Manager',
+      message: 'Test webhook from Nid',
     })
 
     return { success: true }

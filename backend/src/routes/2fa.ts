@@ -33,7 +33,7 @@ export async function twoFactorRoutes(app: FastifyInstance) {
       .where('id', '=', userId)
       .execute()
 
-    const otpauth = generateURI({ label: user.email, issuer: 'Gmail Manager', secret })
+    const otpauth = generateURI({ label: user.email, issuer: 'Nid', secret })
     const qrDataUrl = await QRCode.toDataURL(otpauth)
 
     return { secret, qrDataUrl }

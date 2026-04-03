@@ -1,12 +1,118 @@
-# 📬 Gmail Manager
+# 📬 Nid
 
-Application self-hosted de gestion et d'archivage Gmail — Docker, React 19, Fastify, PostgreSQL.
+**[English](#-english)** · **[Français](#-français)**
 
-> Vos données restent sur votre NAS. Aucun service tiers, aucune télémétrie.
+---
+
+<a id="-english"></a>
+
+## English
+
+> Your emails. Your server. Your nid.
+
+A **nid** (nest in french) is an intimate space, built with your own hands, sheltered from prying eyes. That's exactly what Nid is: a self-hosted application that brings your Gmail management back to your own infrastructure — your NAS, your server, your rules.
+
+No third-party cloud. No telemetry. No SaaS account.
+Your data stays where it always should have been: **at home**.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-## Fonctionnalités
+### Features
+
+- 📊 **Dashboard** — top senders, largest emails, timeline, labels
+- 📬 **Bulk ops** — delete, label, archive thousands of emails in a few clicks
+- 📦 **NAS Archive** — differential EML storage on your NAS, full-text search, attachment preview
+- 🤖 **Automatic rules** — rule engine (Gmail conditions + actions), schedulable (hourly/daily/weekly/monthly)
+- 📰 **Newsletters** — scan `List-Unsubscribe` headers, one-click unsubscribe, bulk delete
+- 📎 **Attachments** — dedicated view of all attachments (live + archived), sort by size
+- 🔍 **Duplicates** — grouped detection and deletion of duplicate emails
+- 📈 **Insights** — automatic weekly report with statistics + notifications
+- ⚙️ **Jobs** — real-time tracking via SSE (Server-Sent Events) + BullMQ
+- 🔐 **Multi-user** — admin/user roles, quotas, data isolation
+- 🔑 **Secure auth** — JWT + Google SSO + 2FA/TOTP
+- 🔔 **Notifications** — in-app, toast, webhooks (Discord, Slack, Ntfy), per-channel preferences
+- 📝 **Audit log** — full traceability of sensitive actions
+- 🌙 **Dark mode** — persisted light/dark theme
+- ♿ **Accessibility** — RGAA (skip link, keyboard navigation, aria-labels, semantic HTML)
+
+### Quick start
+
+```bash
+git clone https://github.com/le-nid/nid.git
+cd nid
+cp .env.example .env
+# Edit .env with your Google credentials + JWT secrets
+docker compose up -d
+```
+
+→ [http://localhost:3000](http://localhost:3000)
+
+#### Prerequisites
+
+- **Docker** ≥ 24 and **Docker Compose** ≥ 2.20
+- A **Google Cloud project** with the Gmail API enabled and OAuth2 credentials
+- A NAS or server with at least 1 GB of RAM
+
+#### Development
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+```
+
+Hot reload enabled on frontend and backend. Debug ports: Node (9229), PostgreSQL (5432) and Redis (6379) exposed.
+
+### Documentation
+
+📖 [docs.le-nid.github.io/nid](https://le-nid.github.io/nid)
+
+### Stack
+
+| | |
+|---|---|
+| Frontend | React 19, Ant Design 6, Zustand, React Router 7 |
+| Backend | Fastify, TypeScript, Kysely ORM, Zod |
+| Database | PostgreSQL 16 |
+| Queue | BullMQ + Redis 7 |
+| Archives | EML + PostgreSQL index + NAS |
+| Auth | JWT, Google OAuth2, TOTP (otplib) |
+| Infra | Docker multi-stage, nginx reverse proxy |
+
+### Configuration
+
+All environment variables are documented in `.env.example` and in the [configuration docs](https://le-nid.github.io/nid/getting-started/configuration/).
+
+| Variable | Description |
+|---|---|
+| `JWT_SECRET` / `JWT_REFRESH_SECRET` | JWT secrets (generate with `openssl rand -hex 64`) |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | OAuth2 credentials |
+| `POSTGRES_USER` / `POSTGRES_PASSWORD` | Database access |
+| `ALLOW_REGISTRATION` | `true` (default) or `false` to close registrations |
+| `ADMIN_EMAIL` | First admin's email |
+
+### Contributing
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+### License
+
+[MIT](LICENSE)
+
+---
+
+<a id="-français"></a>
+
+## Français
+
+> Vos mails. Votre serveur. Votre nid.
+
+Un **nid**, c'est un espace intime, construit de ses propres mains, à l'abri des regards. C'est exactement ce qu'est Nid : une application self-hosted qui rapatrie la gestion de vos emails Gmail sur votre propre infrastructure — votre NAS, votre serveur, vos règles.
+
+Pas de cloud tiers. Pas de télémétrie. Pas de compte SaaS.
+Vos données restent là où elles ont toujours dû être : **chez vous**.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+### Fonctionnalités
 
 - 📊 **Dashboard** — top expéditeurs, mails les plus gros, timeline, labels
 - 📬 **Bulk ops** — supprimer, labelliser, archiver des milliers de mails en quelques clics
@@ -24,11 +130,11 @@ Application self-hosted de gestion et d'archivage Gmail — Docker, React 19, Fa
 - 🌙 **Dark mode** — thème clair/sombre persisté
 - ♿ **Accessibilité** — RGAA (skip link, navigation clavier, aria-labels, HTML sémantique)
 
-## Démarrage rapide
+### Démarrage rapide
 
 ```bash
-git clone https://github.com/befa160/gmail-manager.git
-cd gmail-manager
+git clone https://github.com/le-nid/nid.git
+cd nid
 cp .env.example .env
 # Éditez .env avec vos credentials Google + secrets JWT
 docker compose up -d
@@ -36,13 +142,13 @@ docker compose up -d
 
 → [http://localhost:3000](http://localhost:3000)
 
-### Prérequis
+#### Prérequis
 
 - **Docker** ≥ 24 et **Docker Compose** ≥ 2.20
 - Un **projet Google Cloud** avec l'API Gmail activée et des credentials OAuth2
 - Un NAS ou serveur avec au minimum 1 Go de RAM
 
-### Développement
+#### Développement
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up
@@ -50,11 +156,11 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up
 
 Hot reload activé sur frontend et backend. Ports debug Node (9229), PostgreSQL (5432) et Redis (6379) exposés.
 
-## Documentation
+### Documentation
 
-📖 [docs.befa160.github.io/gmail-manager](https://befa160.github.io/gmail-manager)
+📖 [docs.le-nid.github.io/nid](https://le-nid.github.io/nid)
 
-## Stack
+### Stack
 
 | | |
 |---|---|
@@ -66,9 +172,9 @@ Hot reload activé sur frontend et backend. Ports debug Node (9229), PostgreSQL 
 | Auth | JWT, Google OAuth2, TOTP (otplib) |
 | Infra | Docker multi-stage, nginx reverse proxy |
 
-## Configuration
+### Configuration
 
-Toutes les variables d'environnement sont documentées dans `.env.example` et dans la [doc de configuration](https://befa160.github.io/gmail-manager/getting-started/configuration/).
+Toutes les variables d'environnement sont documentées dans `.env.example` et dans la [doc de configuration](https://le-nid.github.io/nid/getting-started/configuration/).
 
 | Variable | Description |
 |---|---|
@@ -78,10 +184,10 @@ Toutes les variables d'environnement sont documentées dans `.env.example` et da
 | `ALLOW_REGISTRATION` | `true` (défaut) ou `false` pour fermer les inscriptions |
 | `ADMIN_EMAIL` | Email du premier admin |
 
-## Contribuer
+### Contribuer
 
 Les contributions sont les bienvenues. Voir [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## Licence
+### Licence
 
 [MIT](LICENSE)

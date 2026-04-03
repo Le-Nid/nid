@@ -80,7 +80,7 @@ async function sendWebhook(
     }
     case 'ntfy': {
       body = JSON.stringify(payload.data)
-      headers['Title'] = `Gmail Manager: ${payload.event}`
+      headers['Title'] = `Nid: ${payload.event}`
       headers['Priority'] = payload.event.includes('failed') ? '4' : '3'
       headers['Tags'] = payload.event.includes('failed') ? 'warning' : 'white_check_mark'
       break

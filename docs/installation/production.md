@@ -1,12 +1,12 @@
 # Déploiement en production
 
-Guide pour déployer Gmail Manager sur un serveur ou un NAS.
+Guide pour déployer Nid sur un serveur ou un NAS.
 
 ---
 
 ## Architecture de production
 
-En production, Gmail Manager utilise une **image Docker unifiée** qui contient :
+En production, Nid utilise une **image Docker unifiée** qui contient :
 
 - Le **backend** Node.js (Fastify)
 - Le **frontend** React (servi par Nginx)
@@ -69,7 +69,7 @@ Assurez-vous que le répertoire est accessible en écriture par l'utilisateur Do
 
 ## Reverse proxy (optionnel)
 
-Si vous souhaitez exposer Gmail Manager sur Internet ou avec un certificat HTTPS, utilisez un reverse proxy.
+Si vous souhaitez exposer Nid sur Internet ou avec un certificat HTTPS, utilisez un reverse proxy.
 
 ### Caddy (recommandé)
 
@@ -131,7 +131,7 @@ services:
 ## Mises à jour
 
 ```bash
-cd gmail-manager
+cd nid
 git pull
 docker compose up -d --build
 ```

@@ -36,7 +36,7 @@ Tous les types de jobs sont traités par un **worker unifié** (`unified.worker.
 ## Configuration de la queue
 
 ```typescript
-// Queue partagée "gmail-manager"
+// Queue partagée "nid"
 defaultJobOptions: {
   attempts: 3,                              // 3 tentatives en cas d'échec
   backoff: { type: 'exponential', delay: 2000 }, // 2s, 4s, 8s

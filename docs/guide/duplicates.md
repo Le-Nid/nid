@@ -1,6 +1,6 @@
 # Doublons
 
-Gmail Manager détecte automatiquement les mails en double dans vos archives et vous permet de les supprimer pour économiser de l'espace.
+Nid détecte automatiquement les mails en double dans vos archives et vous permet de les supprimer pour économiser de l'espace.
 
 ---
 
@@ -30,7 +30,7 @@ Deux mails sont considérés comme doublons s'ils partagent exactement ces trois
 
 Pour chaque groupe de doublons :
 
-1. Gmail Manager conserve le mail le plus récent
+1. Nid conserve le mail le plus récent
 2. Cliquez sur **Supprimer N doublons** pour supprimer les copies excédentaires
 3. Les fichiers EML et les entrées en base de données sont supprimés
 
@@ -43,4 +43,4 @@ Pour chaque groupe de doublons :
 
 ## Doublons Gmail (Live)
 
-En plus des archives, Gmail Manager peut aussi détecter les doublons parmi les mails encore présents dans votre boîte Gmail.
+En plus des archives, Nid peut aussi détecter les doublons parmi les mails encore présents dans votre boîte Gmail.

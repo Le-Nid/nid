@@ -1,6 +1,6 @@
-# Contribuer à Gmail Manager
+# Contribuer à Nid
 
-Merci de votre intérêt pour Gmail Manager ! Voici comment contribuer.
+Merci de votre intérêt pour Nid ! Voici comment contribuer.
 
 ## Pré-requis
 
@@ -11,8 +11,8 @@ Merci de votre intérêt pour Gmail Manager ! Voici comment contribuer.
 ## Lancer en mode développement
 
 ```bash
-git clone https://github.com/befa160/gmail-manager.git
-cd gmail-manager
+git clone https://github.com/le-nid/nid.git
+cd nid
 cp .env.example .env
 # Éditez .env avec vos credentials
 
@@ -71,7 +71,7 @@ docs/             Documentation MkDocs
 
 ## Signaler un bug
 
-Ouvrez une [issue](https://github.com/befa160/gmail-manager/issues) avec :
+Ouvrez une [issue](https://github.com/le-nid/nid/issues) avec :
 - Description du comportement attendu vs observé
 - Étapes pour reproduire
 - Version de Docker et de l'app

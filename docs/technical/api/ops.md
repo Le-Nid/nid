@@ -19,7 +19,7 @@ Récupère la configuration de stockage de l'utilisateur.
   "type": "s3",
   "s3_endpoint": "https://minio.local:9000",
   "s3_region": "us-east-1",
-  "s3_bucket": "gmail-manager-archives",
+  "s3_bucket": "nid-archives",
   "s3_force_path_style": true,
   "created_at": "2026-03-01T10:00:00Z",
   "updated_at": "2026-03-15T14:30:00Z"
@@ -43,7 +43,7 @@ Sauvegarde la configuration de stockage.
   "type": "s3",
   "s3Endpoint": "https://minio.local:9000",
   "s3Region": "us-east-1",
-  "s3Bucket": "gmail-manager-archives",
+  "s3Bucket": "nid-archives",
   "s3AccessKeyId": "myaccesskey",
   "s3SecretAccessKey": "mysecretkey",
   "s3ForcePathStyle": true
@@ -55,7 +55,7 @@ Sauvegarde la configuration de stockage.
 | `type` | `"local"` \| `"s3"` | Oui | Type de stockage |
 | `s3Endpoint` | string | Si S3 | URL du serveur S3 |
 | `s3Region` | string | Non | Région (défaut : `us-east-1`) |
-| `s3Bucket` | string | Non | Nom du bucket (défaut : `gmail-manager-archives`) |
+| `s3Bucket` | string | Non | Nom du bucket (défaut : `nid-archives`) |
 | `s3AccessKeyId` | string | Si S3 | Access Key ID |
 | `s3SecretAccessKey` | string | Si S3 | Secret Access Key |
 | `s3ForcePathStyle` | boolean | Non | Path-style (défaut : `true`) |
@@ -76,7 +76,7 @@ Teste la connexion S3 avec les identifiants fournis (écrit puis supprime un fic
 {
   "endpoint": "https://minio.local:9000",
   "region": "us-east-1",
-  "bucket": "gmail-manager-archives",
+  "bucket": "nid-archives",
   "accessKeyId": "myaccesskey",
   "secretAccessKey": "mysecretkey",
   "forcePathStyle": true

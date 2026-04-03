@@ -33,7 +33,7 @@ async function bootstrap() {
     server.log.info("✅ BullMQ workers started");
 
     await server.listen({ port: config.PORT, host: "0.0.0.0" });
-    server.log.info(`🚀 Gmail Manager API running on port ${config.PORT}`);
+    server.log.info(`🚀 Nid API running on port ${config.PORT}`);
   } catch (err) {
     server.log.error(err);
     process.exit(1);

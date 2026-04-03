@@ -3,8 +3,8 @@
 ## Setup développement
 
 ```bash
-git clone https://github.com/befa160/gmail-manager.git
-cd gmail-manager
+git clone https://github.com/le-nid/nid.git
+cd nid
 cp .env.example .env
 # Remplir .env avec des credentials de dev
 
@@ -25,7 +25,7 @@ Le mode dev expose :
 ## Structure du projet
 
 ```
-gmail-manager/
+nid/
 ├── backend/
 │   └── src/
 │       ├── auth/           # OAuth2 service

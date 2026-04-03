@@ -1,6 +1,6 @@
-# Gmail Manager
+# Nid
 
-**Gmail Manager** est une application self-hosted de gestion et d'archivage de boîtes Gmail, déployée entièrement via Docker sur votre NAS.
+**Nid** est une application self-hosted de gestion et d'archivage de boîtes Gmail, déployée entièrement via Docker sur votre NAS.
 
 Elle remplace des outils comme Gmail Cleaner et OpenArchiver, sans envoyer vos données vers des serveurs tiers.
 
@@ -64,8 +64,8 @@ Cette documentation est organisée en trois parties :
 ## Démarrage rapide
 
 ```bash
-git clone https://github.com/befa160/gmail-manager.git
-cd gmail-manager
+git clone https://github.com/le-nid/nid.git
+cd nid
 cp .env.example .env
 # Éditer .env avec vos credentials Google et vos secrets
 docker compose up -d

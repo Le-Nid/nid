@@ -25,7 +25,7 @@ interface BulkPayload {
 
 export function startBulkWorker() {
   const worker = new Worker<BulkPayload>(
-    "gmail-manager",
+    "nid",
     async (job: Job<BulkPayload>) => {
       if (job.name !== "bulk_operation") return;
       const { accountId, action, messageIds, labelId } = job.data;
