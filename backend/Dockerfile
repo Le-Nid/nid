@@ -7,8 +7,8 @@ COPY src ./src
 RUN npm run build
 
 FROM node:24-alpine AS runner
-LABEL org.opencontainers.image.source="https://github.com/befa160/gmail-manager"
-LABEL org.opencontainers.image.description="Gmail Manager — Backend API"
+LABEL org.opencontainers.image.source="https://github.com/le-nid/nid"
+LABEL org.opencontainers.image.description="Nid — Backend API"
 WORKDIR /app
 ENV NODE_ENV=production
 COPY package*.json ./

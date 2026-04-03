@@ -34,7 +34,7 @@ services:
       start_period: 20s
     restart: unless-stopped
     networks:
-      - gmail-manager-net
+      - nid-net
 
   postgres:
     image: postgres:16-alpine
@@ -52,7 +52,7 @@ services:
       retries: 5
     restart: unless-stopped
     networks:
-      - gmail-manager-net
+      - nid-net
     ports:
       - "5432:5432"  # Expose for local dev tools (DBeaver, etc.)
 
@@ -68,12 +68,12 @@ services:
       retries: 5
     restart: unless-stopped
     networks:
-      - gmail-manager-net
+      - nid-net
     ports: # a supprimer si on ne veut pas exposer Redis à l'extérieur du réseau Docker
       - "6379:6379"
 
 networks:
-  gmail-manager-net:
+  nid-net:
     driver: bridge
 
 volumes:

@@ -1,4 +1,4 @@
-# AGENTS.md — Gmail Manager
+# AGENTS.md — Nid
 
 ## Architecture
 

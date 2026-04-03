@@ -7,11 +7,11 @@ import { config } from './config'
 
 const server = new McpServer(
   {
-    name: 'gmail-manager',
+    name: 'nid',
     version: '1.0.0',
   },
   {
-    instructions: `Serveur MCP pour Gmail Manager — une application de gestion d'emails Gmail.
+    instructions: `Serveur MCP pour Nid — une application de gestion d'emails Gmail.
 Permet de consulter les mails archivés, gérer les règles, voir les statistiques,
 lancer des jobs d'archivage, gérer les pièces jointes et la déduplication.
 Toutes les opérations nécessitent un userId valide (UUID).`,
@@ -398,7 +398,7 @@ server.registerResource(
   'config://app',
   {
     title: 'Configuration de l\'application',
-    description: 'Paramètres de configuration de Gmail Manager (sans secrets)',
+    description: 'Paramètres de configuration de Nid (sans secrets)',
     mimeType: 'application/json',
   },
   async (uri) => ({

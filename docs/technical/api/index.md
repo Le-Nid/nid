@@ -1,6 +1,6 @@
 # Référence API
 
-Gmail Manager expose une API REST via Fastify. Toutes les routes sont préfixées par `/api`.
+Nid expose une API REST via Fastify. Toutes les routes sont préfixées par `/api`.
 
 La documentation Swagger interactive est disponible en développement à `http://localhost:4000/docs`.
 

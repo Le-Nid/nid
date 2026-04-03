@@ -1,8 +1,8 @@
 {
-  "name": "gmail-manager-backend",
+  "name": "nid-backend",
   "version": "1.0.0",
   "type": "module",
-  "description": "Gmail Manager backend API — Fastify + TypeScript + Kysely",
+  "description": "Nid backend API — Fastify + TypeScript + Kysely",
   "main": "dist/index.js",
   "engines": {
     "node": ">=24.0.0",
@@ -52,16 +52,16 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@types/archiver": "^6.0.2",
-    "@types/bcrypt": "^5.0.2",
+    "@types/archiver": "^7.0.0",
+    "@types/bcrypt": "^6.0.0",
     "@types/imapflow": "^1.0.23",
     "@types/mailparser": "^3.4.4",
-    "@types/node": "^24.0.0",
+    "@types/node": "^25.5.0",
     "@types/pg": "^8.11.6",
     "@types/qrcode": "^1.5.6",
     "@vitest/coverage-v8": "^4.1.2",
     "@vitest/ui": "^4.1.2",
-    "eslint": "^9.5.0",
+    "eslint": "^10.1.0",
     "typescript": "^6.0.2",
     "vite": "^8.0.3",
     "vite-node": "^6.0.0",

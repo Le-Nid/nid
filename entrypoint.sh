@@ -20,7 +20,7 @@ done
 nginx -g 'daemon off;' &
 NGINX_PID=$!
 
-echo "Gmail Manager is running on port 3000"
+echo "Nid is running on port 3000"
 
 # Trap signals and forward to both processes
 trap "kill $BACKEND_PID $NGINX_PID; wait $BACKEND_PID $NGINX_PID" SIGTERM SIGINT

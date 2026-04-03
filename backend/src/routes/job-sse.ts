@@ -121,7 +121,7 @@ async function fetchJobState(bullmqId: string) {
 // ─── Intégration QueueEvents BullMQ ───────────────────────
 // Écoute les events de la queue et broadcast aux clients SSE
 export function startQueueEventBroadcaster() {
-  const queueEvents = new QueueEvents("gmail-manager", {
+  const queueEvents = new QueueEvents("nid", {
     connection: getRedis(),
   });
 

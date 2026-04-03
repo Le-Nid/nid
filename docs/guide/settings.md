@@ -17,7 +17,7 @@ La section profil affiche vos informations :
 
 ## Comptes Gmail connectés
 
-Liste de tous vos comptes Gmail liés à Gmail Manager :
+Liste de tous vos comptes Gmail liés à Nid :
 
 - Email de chaque compte
 - Statut de la connexion (actif / inactif)
@@ -72,7 +72,7 @@ Sauvegardez et restaurez votre configuration (règles et webhooks) au format JSO
 ### Exporter
 
 1. Cliquez sur **Exporter**
-2. Un fichier `gmail-manager-config.json` est téléchargé
+2. Un fichier `nid-config.json` est téléchargé
 
 Le fichier contient vos règles (associées par email de compte Gmail) et vos webhooks. Les données sensibles (tokens, secrets) ne sont **pas** incluses.
 

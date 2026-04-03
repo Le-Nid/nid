@@ -6,8 +6,8 @@ COPY . .
 RUN npm run build
 
 FROM nginx:alpine AS runner
-LABEL org.opencontainers.image.source="https://github.com/befa160/gmail-manager"
-LABEL org.opencontainers.image.description="Gmail Manager — Frontend SPA"
+LABEL org.opencontainers.image.source="https://github.com/le-nid/nid"
+LABEL org.opencontainers.image.description="Nid — Frontend SPA"
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80

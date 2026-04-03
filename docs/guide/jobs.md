@@ -1,6 +1,6 @@
 # Suivi des jobs
 
-Toutes les opérations longues dans Gmail Manager (suppression en masse, archivage, scan de newsletters, etc.) sont exécutées en arrière-plan via des **jobs**. La page Jobs vous permet de suivre leur progression.
+Toutes les opérations longues dans Nid (suppression en masse, archivage, scan de newsletters, etc.) sont exécutées en arrière-plan via des **jobs**. La page Jobs vous permet de suivre leur progression.
 
 ---
 

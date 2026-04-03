@@ -1,4 +1,4 @@
-# Gmail Manager — Spécification du projet
+# Nid — Spécification du projet
 
 ## Contexte
 
@@ -60,7 +60,7 @@ Déployée sur NAS personnel avec stack Docker complète.
 ## Structure du projet
 
 ```
-gmail-manager/
+nid/
   docker-compose.yml
   backend/
     src/

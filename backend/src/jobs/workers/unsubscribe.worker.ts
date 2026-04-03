@@ -10,7 +10,7 @@ interface ScanUnsubscribePayload {
 
 export function startUnsubscribeWorker() {
   const worker = new Worker<ScanUnsubscribePayload>(
-    'gmail-manager',
+    'nid',
     async (job: Job<ScanUnsubscribePayload>) => {
       if (job.name !== 'scan_unsubscribe') return
       const { accountId } = job.data

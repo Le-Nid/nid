@@ -1,6 +1,6 @@
 # Configuration détaillée
 
-Toutes les variables d'environnement de Gmail Manager, définies dans le fichier `.env` à la racine du projet.
+Toutes les variables d'environnement de Nid, définies dans le fichier `.env` à la racine du projet.
 
 ---
 
@@ -141,13 +141,13 @@ Gmail API impose des quotas (250 unités/user/seconde). Ces variables permettent
 
 ## Stockage distant (S3/MinIO)
 
-En plus du stockage local, Gmail Manager peut archiver vers un bucket S3-compatible. Ces variables définissent la configuration **globale** (tous les utilisateurs). Chaque utilisateur peut aussi configurer son propre stockage S3 via l'interface.
+En plus du stockage local, Nid peut archiver vers un bucket S3-compatible. Ces variables définissent la configuration **globale** (tous les utilisateurs). Chaque utilisateur peut aussi configurer son propre stockage S3 via l'interface.
 
 | Variable | Défaut | Description |
 |---|---|---|
 | `S3_ENDPOINT` | *(vide)* | URL du serveur S3 (ex. `https://s3.amazonaws.com` ou `https://minio.local:9000`). Si vide, le stockage S3 global est désactivé |
 | `S3_REGION` | `us-east-1` | Région du bucket S3 |
-| `S3_BUCKET` | `gmail-manager-archives` | Nom du bucket de stockage |
+| `S3_BUCKET` | `nid-archives` | Nom du bucket de stockage |
 | `S3_ACCESS_KEY_ID` | *(vide)* | Access Key ID pour l'authentification S3 |
 | `S3_SECRET_ACCESS_KEY` | *(vide)* | Secret Access Key pour l'authentification S3 |
 | `S3_FORCE_PATH_STYLE` | `true` | Utiliser le path-style pour les requêtes S3. Requis pour MinIO, désactiver pour AWS S3 |
@@ -174,7 +174,7 @@ En plus du stockage local, Gmail Manager peut archiver vers un bucket S3-compati
     S3_ENDPOINT=http://minio:9000
     S3_ACCESS_KEY_ID=minioadmin
     S3_SECRET_ACCESS_KEY=minioadmin
-    S3_BUCKET=gmail-manager-archives
+    S3_BUCKET=nid-archives
     S3_FORCE_PATH_STYLE=true
     ```
 

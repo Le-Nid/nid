@@ -130,7 +130,7 @@ function StorageTab() {
         form={form}
         layout="vertical"
         onFinish={handleSave}
-        initialValues={{ type: 'local', s3ForcePathStyle: true, s3Region: 'us-east-1', s3Bucket: 'gmail-manager-archives' }}
+        initialValues={{ type: 'local', s3ForcePathStyle: true, s3Region: 'us-east-1', s3Bucket: 'nid-archives' }}
       >
         <Form.Item name="type" label={t('ops.storage.type')}>
           <Select onChange={(v) => setStorageType(v)}>
@@ -156,7 +156,7 @@ function StorageTab() {
               </Col>
               <Col span={12}>
                 <Form.Item name="s3Bucket" label={t('ops.storage.bucket')}>
-                  <Input placeholder="gmail-manager-archives" />
+                  <Input placeholder="nid-archives" />
                 </Form.Item>
               </Col>
             </Row>

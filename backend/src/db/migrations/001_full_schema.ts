@@ -66,26 +66,29 @@ export async function up(db: Kysely<any>): Promise<void> {
   `.execute(db)
 
   // ═══════════════════════════════════════════════════════════
-  // ARCHIVED MAILS
+  // ARCHIVED MAILS (includes attachment_names, in_reply_to, references_header)
   // ═══════════════════════════════════════════════════════════
   await db.schema
     .createTable('archived_mails')
-    .addColumn('id',               'uuid',         (col) => col.primaryKey().defaultTo(sql`uuid_generate_v4()`))
-    .addColumn('gmail_account_id', 'uuid',         (col) => col.notNull().references('gmail_accounts.id').onDelete('cascade'))
-    .addColumn('gmail_message_id', 'varchar(255)', (col) => col.notNull())
-    .addColumn('thread_id',        'varchar(255)')
-    .addColumn('subject',          'text')
-    .addColumn('sender',           'varchar(500)')
-    .addColumn('recipient',        'text')
-    .addColumn('date',             'timestamptz')
-    .addColumn('size_bytes',       'bigint',       (col) => col.defaultTo(0).notNull())
-    .addColumn('has_attachments',  'boolean',      (col) => col.defaultTo(false).notNull())
-    .addColumn('label_ids',        sql`text[]`,    (col) => col.defaultTo(sql`'{}'`).notNull())
-    .addColumn('eml_path',         'text',         (col) => col.notNull())
-    .addColumn('snippet',          'text')
-    .addColumn('is_encrypted',     'boolean',      (col) => col.defaultTo(false).notNull())
-    .addColumn('search_vector',    sql`tsvector`)
-    .addColumn('archived_at',      'timestamptz',  (col) => col.defaultTo(sql`NOW()`).notNull())
+    .addColumn('id',                'uuid',         (col) => col.primaryKey().defaultTo(sql`uuid_generate_v4()`))
+    .addColumn('gmail_account_id',  'uuid',         (col) => col.notNull().references('gmail_accounts.id').onDelete('cascade'))
+    .addColumn('gmail_message_id',  'varchar(255)', (col) => col.notNull())
+    .addColumn('thread_id',         'varchar(255)')
+    .addColumn('in_reply_to',       'text')
+    .addColumn('references_header', 'text')
+    .addColumn('subject',           'text')
+    .addColumn('sender',            'varchar(500)')
+    .addColumn('recipient',         'text')
+    .addColumn('date',              'timestamptz')
+    .addColumn('size_bytes',        'bigint',       (col) => col.defaultTo(0).notNull())
+    .addColumn('has_attachments',   'boolean',      (col) => col.defaultTo(false).notNull())
+    .addColumn('label_ids',         sql`text[]`,    (col) => col.defaultTo(sql`'{}'`).notNull())
+    .addColumn('eml_path',          'text',         (col) => col.notNull())
+    .addColumn('snippet',           'text')
+    .addColumn('attachment_names',  'text')
+    .addColumn('is_encrypted',      'boolean',      (col) => col.defaultTo(false).notNull())
+    .addColumn('search_vector',     sql`tsvector`)
+    .addColumn('archived_at',       'timestamptz',  (col) => col.defaultTo(sql`NOW()`).notNull())
     .addUniqueConstraint('archived_mails_account_message_unique', ['gmail_account_id', 'gmail_message_id'])
     .execute()
 
@@ -94,16 +97,22 @@ export async function up(db: Kysely<any>): Promise<void> {
   await sql`CREATE INDEX archived_mails_sender_idx  ON archived_mails(sender)`.execute(db)
   await sql`CREATE INDEX archived_mails_date_idx    ON archived_mails(date DESC)`.execute(db)
   await sql`CREATE INDEX archived_mails_size_idx    ON archived_mails(size_bytes DESC)`.execute(db)
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_archived_mails_thread_id
+    ON archived_mails (gmail_account_id, thread_id)
+    WHERE thread_id IS NOT NULL
+  `.execute(db)
 
-  // Full-text search trigger
+  // Full-text search trigger (includes attachment_names)
   await sql`
     CREATE OR REPLACE FUNCTION update_mail_search_vector()
     RETURNS TRIGGER AS $$
     BEGIN
       NEW.search_vector :=
-        setweight(to_tsvector('french', COALESCE(NEW.subject,  '')), 'A') ||
-        setweight(to_tsvector('french', COALESCE(NEW.sender,   '')), 'B') ||
-        setweight(to_tsvector('french', COALESCE(NEW.snippet,  '')), 'C');
+        setweight(to_tsvector('french', COALESCE(NEW.subject,          '')), 'A') ||
+        setweight(to_tsvector('french', COALESCE(NEW.sender,           '')), 'B') ||
+        setweight(to_tsvector('french', COALESCE(NEW.snippet,          '')), 'C') ||
+        setweight(to_tsvector('french', COALESCE(NEW.attachment_names, '')), 'B');
       RETURN NEW;
     END;
     $$ LANGUAGE plpgsql
@@ -116,7 +125,7 @@ export async function up(db: Kysely<any>): Promise<void> {
   `.execute(db)
 
   // ═══════════════════════════════════════════════════════════
-  // ARCHIVED ATTACHMENTS
+  // ARCHIVED ATTACHMENTS (includes content_hash)
   // ═══════════════════════════════════════════════════════════
   await db.schema
     .createTable('archived_attachments')
@@ -126,10 +135,12 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn('mime_type',        'varchar(255)')
     .addColumn('size_bytes',       'bigint',       (col) => col.defaultTo(0).notNull())
     .addColumn('file_path',        'text',         (col) => col.notNull())
+    .addColumn('content_hash',     'varchar(64)')
     .addColumn('created_at',       'timestamptz',  (col) => col.defaultTo(sql`NOW()`).notNull())
     .execute()
 
   await sql`CREATE INDEX archived_attachments_mail_idx ON archived_attachments(archived_mail_id)`.execute(db)
+  await sql`CREATE INDEX idx_archived_attachments_content_hash ON archived_attachments(content_hash)`.execute(db)
 
   // ═══════════════════════════════════════════════════════════
   // RULES
@@ -291,9 +302,253 @@ export async function up(db: Kysely<any>): Promise<void> {
 
   await sql`CREATE INDEX idx_pii_findings_account ON pii_findings(gmail_account_id)`.execute(db)
   await sql`CREATE INDEX idx_pii_findings_mail    ON pii_findings(archived_mail_id)`.execute(db)
+
+  // ═══════════════════════════════════════════════════════════
+  // ANALYTICS — Heatmap, Sender Scores, Cleanup, Inbox Zero
+  // ═══════════════════════════════════════════════════════════
+  await db.schema
+    .createTable('email_activity_heatmap')
+    .addColumn('id', 'uuid', (col) => col.primaryKey().defaultTo(sql`uuid_generate_v4()`))
+    .addColumn('gmail_account_id', 'uuid', (col) => col.notNull().references('gmail_accounts.id').onDelete('cascade'))
+    .addColumn('day_of_week', 'integer', (col) => col.notNull())
+    .addColumn('hour_of_day', 'integer', (col) => col.notNull())
+    .addColumn('email_count', 'integer', (col) => col.defaultTo(0).notNull())
+    .addColumn('computed_at', 'timestamptz', (col) => col.defaultTo(sql`NOW()`).notNull())
+    .execute()
+
+  await sql`CREATE UNIQUE INDEX email_activity_heatmap_unique
+    ON email_activity_heatmap(gmail_account_id, day_of_week, hour_of_day)`.execute(db)
+
+  await db.schema
+    .createTable('sender_scores')
+    .addColumn('id', 'uuid', (col) => col.primaryKey().defaultTo(sql`uuid_generate_v4()`))
+    .addColumn('gmail_account_id', 'uuid', (col) => col.notNull().references('gmail_accounts.id').onDelete('cascade'))
+    .addColumn('sender', 'text', (col) => col.notNull())
+    .addColumn('email_count', 'integer', (col) => col.defaultTo(0).notNull())
+    .addColumn('total_size_bytes', 'bigint', (col) => col.defaultTo(0).notNull())
+    .addColumn('unread_count', 'integer', (col) => col.defaultTo(0).notNull())
+    .addColumn('has_unsubscribe', 'boolean', (col) => col.defaultTo(false).notNull())
+    .addColumn('read_rate', 'real', (col) => col.defaultTo(0).notNull())
+    .addColumn('clutter_score', 'real', (col) => col.defaultTo(0).notNull())
+    .addColumn('computed_at', 'timestamptz', (col) => col.defaultTo(sql`NOW()`).notNull())
+    .execute()
+
+  await sql`CREATE UNIQUE INDEX sender_scores_unique
+    ON sender_scores(gmail_account_id, sender)`.execute(db)
+
+  await db.schema
+    .createTable('cleanup_suggestions')
+    .addColumn('id', 'uuid', (col) => col.primaryKey().defaultTo(sql`uuid_generate_v4()`))
+    .addColumn('gmail_account_id', 'uuid', (col) => col.notNull().references('gmail_accounts.id').onDelete('cascade'))
+    .addColumn('type', 'varchar(50)', (col) => col.notNull())
+    .addColumn('title', 'text', (col) => col.notNull())
+    .addColumn('description', 'text')
+    .addColumn('sender', 'text')
+    .addColumn('email_count', 'integer', (col) => col.defaultTo(0).notNull())
+    .addColumn('total_size_bytes', 'bigint', (col) => col.defaultTo(0).notNull())
+    .addColumn('query', 'text')
+    .addColumn('is_dismissed', 'boolean', (col) => col.defaultTo(false).notNull())
+    .addColumn('computed_at', 'timestamptz', (col) => col.defaultTo(sql`NOW()`).notNull())
+    .execute()
+
+  await db.schema
+    .createTable('inbox_zero_snapshots')
+    .addColumn('id', 'uuid', (col) => col.primaryKey().defaultTo(sql`uuid_generate_v4()`))
+    .addColumn('gmail_account_id', 'uuid', (col) => col.notNull().references('gmail_accounts.id').onDelete('cascade'))
+    .addColumn('inbox_count', 'integer', (col) => col.notNull())
+    .addColumn('unread_count', 'integer', (col) => col.notNull())
+    .addColumn('recorded_at', 'timestamptz', (col) => col.defaultTo(sql`NOW()`).notNull())
+    .execute()
+
+  await sql`CREATE INDEX inbox_zero_snapshots_account_date
+    ON inbox_zero_snapshots(gmail_account_id, recorded_at DESC)`.execute(db)
+
+  // ═══════════════════════════════════════════════════════════
+  // SOCIAL ACCOUNTS
+  // ═══════════════════════════════════════════════════════════
+  await db.schema
+    .createTable('user_social_accounts')
+    .addColumn('id', 'uuid', (col) => col.primaryKey().defaultTo(sql`uuid_generate_v4()`))
+    .addColumn('user_id', 'uuid', (col) => col.notNull().references('users.id').onDelete('cascade'))
+    .addColumn('provider', 'varchar(50)', (col) => col.notNull())
+    .addColumn('provider_id', 'varchar(255)', (col) => col.notNull())
+    .addColumn('email', 'varchar(255)')
+    .addColumn('display_name', 'varchar(255)')
+    .addColumn('avatar_url', 'text')
+    .addColumn('created_at', 'timestamptz', (col) => col.defaultTo(sql`NOW()`).notNull())
+    .execute()
+
+  await sql`CREATE UNIQUE INDEX user_social_accounts_provider_unique
+    ON user_social_accounts(provider, provider_id)`.execute(db)
+
+  await sql`CREATE INDEX user_social_accounts_user_id
+    ON user_social_accounts(user_id)`.execute(db)
+
+  // ═══════════════════════════════════════════════════════════
+  // SAVED SEARCHES
+  // ═══════════════════════════════════════════════════════════
+  await db.schema
+    .createTable('saved_searches')
+    .addColumn('id', 'uuid', (col) => col.primaryKey().defaultTo(sql`gen_random_uuid()`))
+    .addColumn('user_id', 'uuid', (col) => col.notNull().references('users.id').onDelete('cascade'))
+    .addColumn('name', 'varchar(255)', (col) => col.notNull())
+    .addColumn('query', 'text', (col) => col.notNull())
+    .addColumn('icon', 'varchar(64)')
+    .addColumn('color', 'varchar(32)')
+    .addColumn('sort_order', 'integer', (col) => col.notNull().defaultTo(0))
+    .addColumn('created_at', 'timestamptz', (col) => col.notNull().defaultTo(sql`now()`))
+    .addColumn('updated_at', 'timestamptz', (col) => col.notNull().defaultTo(sql`now()`))
+    .execute()
+
+  await db.schema
+    .createIndex('idx_saved_searches_user_id')
+    .on('saved_searches')
+    .column('user_id')
+    .execute()
+
+  // ═══════════════════════════════════════════════════════════
+  // OPS & RÉSILIENCE — Retention, API Usage, Storage
+  // ═══════════════════════════════════════════════════════════
+  await db.schema
+    .createTable('retention_policies')
+    .addColumn('id', 'uuid', (col) => col.primaryKey().defaultTo(sql`gen_random_uuid()`))
+    .addColumn('user_id', 'uuid', (col) => col.notNull().references('users.id').onDelete('cascade'))
+    .addColumn('gmail_account_id', 'uuid', (col) => col.references('gmail_accounts.id').onDelete('cascade'))
+    .addColumn('name', 'varchar(255)', (col) => col.notNull())
+    .addColumn('label', 'varchar(255)')
+    .addColumn('max_age_days', 'integer', (col) => col.notNull())
+    .addColumn('is_active', 'boolean', (col) => col.notNull().defaultTo(true))
+    .addColumn('last_run_at', 'timestamptz')
+    .addColumn('deleted_count', 'integer', (col) => col.notNull().defaultTo(0))
+    .addColumn('created_at', 'timestamptz', (col) => col.notNull().defaultTo(sql`now()`))
+    .addColumn('updated_at', 'timestamptz', (col) => col.notNull().defaultTo(sql`now()`))
+    .execute()
+
+  await db.schema
+    .createIndex('idx_retention_policies_user_id')
+    .on('retention_policies')
+    .column('user_id')
+    .execute()
+
+  await db.schema
+    .createTable('gmail_api_usage')
+    .addColumn('id', 'uuid', (col) => col.primaryKey().defaultTo(sql`gen_random_uuid()`))
+    .addColumn('gmail_account_id', 'uuid', (col) => col.notNull().references('gmail_accounts.id').onDelete('cascade'))
+    .addColumn('endpoint', 'varchar(255)', (col) => col.notNull())
+    .addColumn('quota_units', 'integer', (col) => col.notNull().defaultTo(5))
+    .addColumn('recorded_at', 'timestamptz', (col) => col.notNull().defaultTo(sql`now()`))
+    .execute()
+
+  await db.schema
+    .createIndex('idx_gmail_api_usage_account_time')
+    .on('gmail_api_usage')
+    .columns(['gmail_account_id', 'recorded_at'])
+    .execute()
+
+  await sql`
+    CREATE INDEX idx_gmail_api_usage_recorded_at ON gmail_api_usage (recorded_at)
+  `.execute(db)
+
+  await db.schema
+    .createTable('storage_configs')
+    .addColumn('id', 'uuid', (col) => col.primaryKey().defaultTo(sql`gen_random_uuid()`))
+    .addColumn('user_id', 'uuid', (col) => col.notNull().references('users.id').onDelete('cascade'))
+    .addColumn('type', 'varchar(20)', (col) => col.notNull().defaultTo(sql`'local'`))
+    .addColumn('s3_endpoint', 'varchar(512)')
+    .addColumn('s3_region', 'varchar(64)')
+    .addColumn('s3_bucket', 'varchar(255)')
+    .addColumn('s3_access_key_id', 'varchar(255)')
+    .addColumn('s3_secret_access_key', 'varchar(512)')
+    .addColumn('s3_force_path_style', 'boolean', (col) => col.notNull().defaultTo(true))
+    .addColumn('created_at', 'timestamptz', (col) => col.notNull().defaultTo(sql`now()`))
+    .addColumn('updated_at', 'timestamptz', (col) => col.notNull().defaultTo(sql`now()`))
+    .execute()
+
+  await db.schema
+    .createIndex('idx_storage_configs_user_id')
+    .on('storage_configs')
+    .column('user_id')
+    .unique()
+    .execute()
+
+  // ═══════════════════════════════════════════════════════════
+  // EXPIRATION & SHARING
+  // ═══════════════════════════════════════════════════════════
+  await db.schema
+    .createTable('email_expirations')
+    .addColumn('id', 'uuid', (col) => col.primaryKey().defaultTo(sql`gen_random_uuid()`))
+    .addColumn('gmail_account_id', 'uuid', (col) => col.notNull().references('gmail_accounts.id').onDelete('cascade'))
+    .addColumn('gmail_message_id', 'varchar(255)', (col) => col.notNull())
+    .addColumn('subject', 'text')
+    .addColumn('sender', 'text')
+    .addColumn('expires_at', 'timestamptz', (col) => col.notNull())
+    .addColumn('category', 'varchar(50)', (col) => col.notNull().defaultTo('manual'))
+    .addColumn('is_deleted', 'boolean', (col) => col.notNull().defaultTo(false))
+    .addColumn('deleted_at', 'timestamptz')
+    .addColumn('created_at', 'timestamptz', (col) => col.notNull().defaultTo(sql`now()`))
+    .execute()
+
+  await db.schema
+    .createIndex('idx_email_expirations_account')
+    .on('email_expirations')
+    .column('gmail_account_id')
+    .execute()
+
+  await db.schema
+    .createIndex('idx_email_expirations_expires_at')
+    .on('email_expirations')
+    .column('expires_at')
+    .execute()
+
+  await sql`
+    CREATE UNIQUE INDEX idx_email_expirations_unique
+    ON email_expirations (gmail_account_id, gmail_message_id)
+    WHERE is_deleted = false
+  `.execute(db)
+
+  await db.schema
+    .createTable('archive_shares')
+    .addColumn('id', 'uuid', (col) => col.primaryKey().defaultTo(sql`gen_random_uuid()`))
+    .addColumn('archived_mail_id', 'uuid', (col) => col.notNull().references('archived_mails.id').onDelete('cascade'))
+    .addColumn('user_id', 'uuid', (col) => col.notNull().references('users.id').onDelete('cascade'))
+    .addColumn('token', 'varchar(64)', (col) => col.notNull().unique())
+    .addColumn('expires_at', 'timestamptz', (col) => col.notNull())
+    .addColumn('access_count', 'integer', (col) => col.notNull().defaultTo(0))
+    .addColumn('max_access', 'integer')
+    .addColumn('created_at', 'timestamptz', (col) => col.notNull().defaultTo(sql`now()`))
+    .execute()
+
+  await db.schema
+    .createIndex('idx_archive_shares_token')
+    .on('archive_shares')
+    .column('token')
+    .execute()
+
+  await db.schema
+    .createIndex('idx_archive_shares_mail')
+    .on('archive_shares')
+    .column('archived_mail_id')
+    .execute()
+
+  await db.schema
+    .createIndex('idx_archive_shares_expires_at')
+    .on('archive_shares')
+    .column('expires_at')
+    .execute()
 }
 
 export async function down(db: Kysely<any>): Promise<void> {
+  await db.schema.dropTable('archive_shares').ifExists().execute()
+  await db.schema.dropTable('email_expirations').ifExists().execute()
+  await db.schema.dropTable('storage_configs').ifExists().execute()
+  await db.schema.dropTable('gmail_api_usage').ifExists().execute()
+  await db.schema.dropTable('retention_policies').ifExists().execute()
+  await db.schema.dropTable('saved_searches').ifExists().execute()
+  await db.schema.dropTable('user_social_accounts').ifExists().execute()
+  await db.schema.dropTable('inbox_zero_snapshots').ifExists().execute()
+  await db.schema.dropTable('cleanup_suggestions').ifExists().execute()
+  await db.schema.dropTable('sender_scores').ifExists().execute()
+  await db.schema.dropTable('email_activity_heatmap').ifExists().execute()
   await db.schema.dropTable('pii_findings').ifExists().execute()
   await db.schema.dropTable('tracking_pixels').ifExists().execute()
   await db.schema.dropTable('notification_preferences').ifExists().execute()

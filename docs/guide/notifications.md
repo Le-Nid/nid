@@ -1,6 +1,6 @@
 # Notifications et webhooks
 
-Gmail Manager vous informe des événements importants via des notifications in-app et des webhooks vers vos services préférés.
+Nid vous informe des événements importants via des notifications in-app et des webhooks vers vos services préférés.
 
 ---
 
@@ -52,7 +52,7 @@ Chaque toggle prend effet **immédiatement** — pas besoin de sauvegarder.
 
 ## Webhooks
 
-Les webhooks permettent d'envoyer des notifications vers des services externes quand un événement se produit dans Gmail Manager.
+Les webhooks permettent d'envoyer des notifications vers des services externes quand un événement se produit dans Nid.
 
 ### Types supportés
 
@@ -95,7 +95,7 @@ Le toggle à côté de chaque webhook permet de l'activer ou le désactiver sans
 
 ### Sécurité (webhooks génériques)
 
-Les webhooks de type **Générique** incluent automatiquement un header `X-Webhook-Signature` contenant un HMAC-SHA256 du payload. Votre serveur peut vérifier cette signature pour s'assurer que la requête provient bien de Gmail Manager.
+Les webhooks de type **Générique** incluent automatiquement un header `X-Webhook-Signature` contenant un HMAC-SHA256 du payload. Votre serveur peut vérifier cette signature pour s'assurer que la requête provient bien de Nid.
 
 > 📸 *Capture d'écran suggérée : liste des webhooks configurés avec les colonnes nom, type, événements, toggle actif/inactif et bouton tester*
 
@@ -107,11 +107,11 @@ Les webhooks de type **Générique** incluent automatiquement un header `X-Webho
 
 1. Dans Discord, créez un webhook dans un salon : **Paramètres du salon** → **Intégrations** → **Webhooks** → **Nouveau webhook**
 2. Copiez l'URL du webhook
-3. Dans Gmail Manager, créez un webhook de type **Discord** avec cette URL
+3. Dans Nid, créez un webhook de type **Discord** avec cette URL
 4. Sélectionnez les événements à notifier
 
 ### Ntfy
 
-1. Choisissez un topic sur [ntfy.sh](https://ntfy.sh) (ex. : `gmail-manager-alerts`)
-2. Dans Gmail Manager, créez un webhook de type **Ntfy** avec l'URL `https://ntfy.sh/gmail-manager-alerts`
+1. Choisissez un topic sur [ntfy.sh](https://ntfy.sh) (ex. : `nid-alerts`)
+2. Dans Nid, créez un webhook de type **Ntfy** avec l'URL `https://ntfy.sh/nid-alerts`
 3. Installez l'app ntfy sur votre téléphone et abonnez-vous au même topic

@@ -14,7 +14,7 @@ import { applyRetentionPolicies } from '../../archive/retention.service'
 
 export function startUnifiedWorker() {
   const worker = new Worker(
-    'gmail-manager',
+    'nid',
     async (job: Job) => {
       switch (job.name) {
         case 'archive_mails':

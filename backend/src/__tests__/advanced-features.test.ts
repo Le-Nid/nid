@@ -74,8 +74,8 @@ vi.mock('../jobs/queue', () => ({
 // ─── Tests ──────────────────────────────────────────────────
 
 describe('Saved Searches', () => {
-  it('la migration 007 exporte up et down', async () => {
-    const migration = await import('../db/migrations/007_saved_searches')
+  it('la migration full_schema exporte up et down', async () => {
+    const migration = await import('../db/migrations/001_full_schema')
     expect(migration.up).toBeDefined()
     expect(migration.down).toBeDefined()
     expect(typeof migration.up).toBe('function')

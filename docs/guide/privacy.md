@@ -1,6 +1,6 @@
 # Vie privée
 
-Gmail Manager intègre des outils pour protéger votre vie privée : détection de pixels espions, scanner de données sensibles et chiffrement de vos archives.
+Nid intègre des outils pour protéger votre vie privée : détection de pixels espions, scanner de données sensibles et chiffrement de vos archives.
 
 ---
 

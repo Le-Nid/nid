@@ -1,6 +1,6 @@
 # Archivage
 
-Gmail Manager vous permet de sauvegarder vos mails sur votre NAS au format **EML** (un fichier par mail). Les archives sont indexées dans PostgreSQL pour une recherche rapide.
+Nid vous permet de sauvegarder vos mails sur votre NAS au format **EML** (un fichier par mail). Les archives sont indexées dans PostgreSQL pour une recherche rapide.
 
 ---
 

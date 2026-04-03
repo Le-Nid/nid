@@ -1,6 +1,6 @@
 # Règles automatiques
 
-Les règles vous permettent d'automatiser le nettoyage et l'organisation de votre boîte Gmail. Définissez des conditions et des actions — Gmail Manager les exécute pour vous.
+Les règles vous permettent d'automatiser le nettoyage et l'organisation de votre boîte Gmail. Définissez des conditions et des actions — Nid les exécute pour vous.
 
 ---
 
@@ -67,7 +67,7 @@ Opérateurs disponibles : `contains` (contient), `equals` (exact), `not_contains
 
 ## Templates de règles
 
-Pour démarrer rapidement, Gmail Manager propose une **bibliothèque de templates** pré-configurés.
+Pour démarrer rapidement, Nid propose une **bibliothèque de templates** pré-configurés.
 
 1. Cliquez sur **Templates** en haut de la page Règles
 2. Parcourez les modèles par catégorie :
@@ -92,7 +92,7 @@ Exemples de templates :
 Avant d'exécuter une règle, vous pouvez la **prévisualiser** :
 
 1. Cliquez sur **Prévisualiser** sur une règle existante
-2. Gmail Manager affiche la liste des mails qui correspondent aux conditions
+2. Nid affiche la liste des mails qui correspondent aux conditions
 3. Vérifiez que les mails ciblés sont bien ceux que vous attendez
 4. Cliquez sur **Exécuter** pour lancer la règle
 

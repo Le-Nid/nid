@@ -4,16 +4,18 @@ import { Card, Form, Input, Button, Tabs, Typography, Alert, Space, Divider } fr
 import { MailOutlined, LockOutlined, GoogleOutlined, SafetyOutlined, WindowsOutlined, LinkedinOutlined, FacebookOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/auth.store'
+import { useThemeStore } from '../store/theme.store'
 import { authApi } from '../api'
 import api from '../api/client'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 export default function LoginPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { login, register, loginWithSsoCode } = useAuthStore()
+  const { mode } = useThemeStore()
   const [loading, setLoading] = useState(false)
   const [socialLoading, setSocialLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -188,8 +190,7 @@ export default function LoginPage() {
     }} aria-label={t('login.tabLogin')}>
       <Card style={{ width: 400 }}>
         <Space orientation="vertical" align="center" style={{ width: '100%', marginBottom: 24 }}>
-          <Text style={{ fontSize: 32 }} aria-hidden="true">📬</Text>
-          <Title level={1} style={{ margin: 0, fontSize: 24 }}>{t('login.title')}</Title>
+          <img src={mode === 'dark' ? '/nid-logo-full-dark.svg' : '/nid-logo-full-light.svg'} alt="Nid" style={{ height: 56 }} />
           <Text type="secondary">{t('login.subtitle')}</Text>
         </Space>
 

@@ -1,12 +1,12 @@
 # Serveur MCP
 
-Gmail Manager inclut un serveur [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) qui permet aux assistants IA (Claude, GitHub Copilot, etc.) d'interagir avec l'application.
+Nid inclut un serveur [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) qui permet aux assistants IA (Claude, GitHub Copilot, etc.) d'interagir avec l'application.
 
 ---
 
 ## Qu'est-ce que MCP ?
 
-Le Model Context Protocol est un standard ouvert qui permet aux LLM d'accéder à des outils et des données depuis des applications externes. Le serveur MCP de Gmail Manager expose des outils en lecture et en écriture pour manipuler vos mails, règles, jobs et archives.
+Le Model Context Protocol est un standard ouvert qui permet aux LLM d'accéder à des outils et des données depuis des applications externes. Le serveur MCP de Nid expose des outils en lecture et en écriture pour manipuler vos mails, règles, jobs et archives.
 
 ---
 
@@ -36,11 +36,11 @@ Ajoutez cette configuration dans `claude_desktop_config.json` :
 ```json
 {
   "mcpServers": {
-    "gmail-manager": {
+    "nid": {
       "command": "node",
-      "args": ["/chemin/vers/gmail-manager/backend/dist/mcp-server.js"],
+      "args": ["/chemin/vers/nid/backend/dist/mcp-server.js"],
       "env": {
-        "DATABASE_URL": "postgres://user:pass@localhost:5432/gmail_manager",
+        "DATABASE_URL": "postgres://user:pass@localhost:5432/nid",
         "JWT_SECRET": "votre-secret",
         "JWT_REFRESH_SECRET": "votre-refresh-secret",
         "GOOGLE_CLIENT_ID": "votre-client-id",
@@ -59,12 +59,12 @@ Dans `.vscode/mcp.json` :
 ```json
 {
   "servers": {
-    "gmail-manager": {
+    "nid": {
       "type": "stdio",
       "command": "node",
       "args": ["backend/dist/mcp-server.js"],
       "env": {
-        "DATABASE_URL": "postgres://user:pass@localhost:5432/gmail_manager",
+        "DATABASE_URL": "postgres://user:pass@localhost:5432/nid",
         "JWT_SECRET": "votre-secret",
         "JWT_REFRESH_SECRET": "votre-refresh-secret",
         "GOOGLE_CLIENT_ID": "votre-client-id",

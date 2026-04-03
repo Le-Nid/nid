@@ -17,8 +17,8 @@ RUN npm run build
 
 # ── Stage 3: Production image ────────────────────────────
 FROM node:24-alpine AS runner
-LABEL org.opencontainers.image.source="https://github.com/befa160/gmail-manager"
-LABEL org.opencontainers.image.description="Gmail Manager — All-in-one (Frontend + Backend)"
+LABEL org.opencontainers.image.source="https://github.com/le-nid/nid"
+LABEL org.opencontainers.image.description="Nid — All-in-one (Frontend + Backend)"
 
 RUN apk add --no-cache nginx
 

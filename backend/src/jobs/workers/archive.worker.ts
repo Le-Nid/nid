@@ -15,7 +15,7 @@ interface ArchivePayload {
 
 export function startArchiveWorker() {
   const worker = new Worker<ArchivePayload>(
-    "gmail-manager",
+    "nid",
     async (job: Job<ArchivePayload>) => {
       if (job.name !== "archive_mails") return;
       const { accountId, messageIds, query, differential = true } = job.data;

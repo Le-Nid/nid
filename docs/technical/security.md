@@ -1,6 +1,6 @@
 # Sécurité
 
-Vue d'ensemble des mesures de sécurité implémentées dans Gmail Manager.
+Vue d'ensemble des mesures de sécurité implémentées dans Nid.
 
 ---
 

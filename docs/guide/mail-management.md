@@ -1,6 +1,6 @@
 # Gestion des mails
 
-La page **Mes mails** est le cœur de Gmail Manager. Elle vous permet de consulter, filtrer et agir en masse sur les mails de votre boîte Gmail.
+La page **Mes mails** est le cœur de Nid. Elle vous permet de consulter, filtrer et agir en masse sur les mails de votre boîte Gmail.
 
 ---
 

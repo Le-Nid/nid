@@ -39,7 +39,7 @@ export async function registerPlugins(app: FastifyInstance) {
   // Swagger (API docs — available at /docs)
   await app.register(swagger, {
     openapi: {
-      info: { title: 'Gmail Manager API', version: '1.0.0' },
+      info: { title: 'Nid API', version: '1.0.0' },
       components: {
         securitySchemes: {
           bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },

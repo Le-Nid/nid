@@ -55,7 +55,7 @@ Cliquez sur le bouton **Télécharger** à côté d'une pièce jointe pour la t�
 
 ## Déduplication par hash de contenu
 
-Gmail Manager déduplique automatiquement les pièces jointes identiques lors de l'archivage. Chaque fichier est identifié par son hash SHA-256 : si deux mails contiennent exactement la même pièce jointe, le fichier n'est stocké qu'une seule fois sur le disque.
+Nid déduplique automatiquement les pièces jointes identiques lors de l'archivage. Chaque fichier est identifié par son hash SHA-256 : si deux mails contiennent exactement la même pièce jointe, le fichier n'est stocké qu'une seule fois sur le disque.
 
 ### Statistiques
 

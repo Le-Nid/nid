@@ -1,6 +1,6 @@
 # API — Webhooks
 
-Permet de recevoir des notifications sur des services externes (Discord, Slack, Ntfy, ou endpoint HTTP générique) lorsque des événements surviennent dans Gmail Manager.
+Permet de recevoir des notifications sur des services externes (Discord, Slack, Ntfy, ou endpoint HTTP générique) lorsque des événements surviennent dans Nid.
 
 ---
 

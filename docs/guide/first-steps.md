@@ -1,6 +1,6 @@
 # Premiers pas
 
-Ce guide vous accompagne dans vos premières minutes avec Gmail Manager.
+Ce guide vous accompagne dans vos premières minutes avec Nid.
 
 ---
 
@@ -82,7 +82,7 @@ Une fois connecté, vous devez lier votre boîte Gmail pour que l'application pu
 > 📸 *Capture d'écran suggérée : page Paramètres avec le bouton "Connecter un compte Gmail" et la liste des comptes connectés*
 
 !!! warning "Écran d'avertissement Google"
-    Si votre projet Google Cloud est en mode "Test", un écran d'avertissement apparaîtra. Cliquez sur **Paramètres avancés** → **Accéder à gmail-manager (non sécurisé)**. C'est normal pour un usage personnel self-hosted.
+    Si votre projet Google Cloud est en mode "Test", un écran d'avertissement apparaîtra. Cliquez sur **Paramètres avancés** → **Accéder à nid (non sécurisé)**. C'est normal pour un usage personnel self-hosted.
 
 ### Ajouter d'autres comptes Gmail
 
