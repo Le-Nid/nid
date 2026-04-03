@@ -1,6 +1,10 @@
-# 📬 Nid
+<p align="center">
+  <img src="docs/assets/nid-logo-full-light.svg" alt="Nid" height="80" />
+</p>
 
-**[English](#-english)** · **[Français](#-français)**
+<p align="center">
+  <strong><a href="#-english">English</a></strong> · <strong><a href="#-français">Français</a></strong>
+</p>
 
 ---
 

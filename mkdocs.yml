@@ -8,6 +8,8 @@ edit_uri: edit/main/docs/
 theme:
   name: material
   language: fr
+  logo: assets/nid-logomark-dark.svg
+  favicon: assets/nid-favicon-light.svg
   palette:
     - scheme: default
       primary: blue

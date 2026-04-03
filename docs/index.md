@@ -1,4 +1,6 @@
-# Nid
+<p align="center">
+  <img src="assets/nid-logo-full-light.svg" alt="Nid" height="80" />
+</p>
 
 **Nid** est une application self-hosted de gestion et d'archivage de boîtes Gmail, déployée entièrement via Docker sur votre NAS.
 

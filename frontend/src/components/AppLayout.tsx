@@ -119,8 +119,8 @@ export default function AppLayout() {
           justifyContent: collapsed ? 'center' : 'space-between',
         }} aria-label={t('layout.appName')}>
           {collapsed
-            ? <span style={{ fontSize: 18 }} aria-hidden="true">📬</span>
-            : <Text strong style={{ fontSize: 15 }}><span aria-hidden="true">📬</span> {t('layout.appName')}</Text>
+            ? <img src={isDark ? '/nid-logomark-dark.svg' : '/nid-logomark-light.svg'} alt="Nid" style={{ width: 32, height: 32 }} />
+            : <img src={isDark ? '/nid-logo-full-dark.svg' : '/nid-logo-full-light.svg'} alt="Nid" style={{ height: 32 }} />
           }
           <button
             type="button"
@@ -183,7 +183,7 @@ export default function AppLayout() {
           mode="inline"
           theme={isDark ? 'dark' : 'light'}
           selectedKeys={[location.pathname]}
-          defaultOpenKeys={['grp-email', 'grp-tools', 'grp-analytics', 'grp-system']}
+          defaultOpenKeys={['grp-email']}
           inlineCollapsed={collapsed}
           items={menuItems}
           style={{ border: 'none', paddingTop: 8 }}
