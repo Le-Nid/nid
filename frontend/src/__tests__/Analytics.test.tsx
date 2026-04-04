@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { App } from 'antd'
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -32,6 +33,8 @@ vi.mock('@tanstack/react-query', () => ({
 
 import AnalyticsPage from '../pages/Analytics'
 
+const renderPage = () => render(<App><AnalyticsPage /></App>)
+
 const makeAnalytics = (overrides: any = {}) => ({
   heatmap: { data: [], isLoading: false, error: null, ...overrides.heatmap },
   senderScores: { data: [], isLoading: false, ...overrides.senderScores },
@@ -52,7 +55,7 @@ describe('AnalyticsPage', () => {
       senderScores: { data: null, isLoading: true },
     }))
 
-    render(<AnalyticsPage />)
+    renderPage()
     expect(screen.getByText('analytics.title')).toBeInTheDocument()
   })
 
@@ -69,7 +72,7 @@ describe('AnalyticsPage', () => {
       },
     }))
 
-    render(<AnalyticsPage />)
+    renderPage()
     expect(screen.getByText('5')).toBeInTheDocument()
     expect(screen.getByText('2')).toBeInTheDocument()
     expect(screen.getByText('3')).toBeInTheDocument()
@@ -92,14 +95,14 @@ describe('AnalyticsPage', () => {
       },
     }))
 
-    render(<AnalyticsPage />)
+    renderPage()
     expect(screen.getByTestId('line-chart')).toBeInTheDocument()
   })
 
   it('shows heatmap empty state when no data', () => {
     mockAnalytics.mockReturnValue(makeAnalytics())
 
-    render(<AnalyticsPage />)
+    renderPage()
     expect(screen.getByText('common.noData')).toBeInTheDocument()
   })
 
@@ -116,7 +119,7 @@ describe('AnalyticsPage', () => {
       },
     }))
 
-    render(<AnalyticsPage />)
+    renderPage()
     // Should show day labels (fr)
     expect(screen.getByText('Lun')).toBeInTheDocument()
     expect(screen.getByText('Mar')).toBeInTheDocument()
@@ -150,7 +153,7 @@ describe('AnalyticsPage', () => {
       },
     }))
 
-    render(<AnalyticsPage />)
+    renderPage()
     expect(screen.getByText('analytics.senderScoresTitle')).toBeInTheDocument()
     expect(screen.getByText('150')).toBeInTheDocument()
     expect(screen.getByText('30')).toBeInTheDocument()
@@ -173,7 +176,7 @@ describe('AnalyticsPage', () => {
       },
     }))
 
-    render(<AnalyticsPage />)
+    renderPage()
     expect(screen.getByText('Too many unread mails')).toBeInTheDocument()
     expect(screen.getByText('You have 500 unread mails from this sender')).toBeInTheDocument()
 
@@ -189,14 +192,14 @@ describe('AnalyticsPage', () => {
       heatmap: { data: null, isLoading: false, error: { response: { data: { error: 'API Error' } } } },
     }))
 
-    render(<AnalyticsPage />)
+    renderPage()
     expect(screen.getByText('API Error')).toBeInTheDocument()
   })
 
   it('calls invalidateQueries on refresh', () => {
     mockAnalytics.mockReturnValue(makeAnalytics())
 
-    render(<AnalyticsPage />)
+    renderPage()
     fireEvent.click(screen.getByText('common.refresh'))
 
     expect(mockInvalidateQueries).toHaveBeenCalled()
@@ -224,7 +227,7 @@ describe('AnalyticsPage', () => {
       },
     }))
 
-    render(<AnalyticsPage />)
+    renderPage()
     expect(screen.getByText('analytics.title')).toBeInTheDocument()
   })
 
@@ -241,7 +244,7 @@ describe('AnalyticsPage', () => {
       },
     }))
 
-    render(<AnalyticsPage />)
+    renderPage()
     expect(screen.getByText('analytics.inboxCount')).toBeInTheDocument()
     // streak and bestStreak both show 5
     expect(screen.getAllByText('5').length).toBeGreaterThanOrEqual(1)

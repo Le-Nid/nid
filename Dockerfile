@@ -20,12 +20,14 @@ FROM node:24-alpine AS runner
 LABEL org.opencontainers.image.source="https://github.com/le-nid/nid"
 LABEL org.opencontainers.image.description="Nid — All-in-one (Frontend + Backend)"
 
-RUN apk add --no-cache nginx
+RUN apk add --no-cache nginx && apk upgrade --no-cache
 
 # Backend
 WORKDIR /app/backend
 COPY backend/package*.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm ci --omit=dev \
+    && npm cache clean --force \
+    && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 COPY --from=backend-builder /app/backend/dist ./dist
 
 # Frontend (served by nginx)
@@ -50,6 +52,6 @@ ENV NODE_ENV=production
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-  CMD wget -qO- http://localhost:3000/ || exit 1
+  CMD node -e "const http = require('http'); http.get('http://localhost:3000/', r => { process.exit(r.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1));"
 
 CMD ["/entrypoint.sh"]

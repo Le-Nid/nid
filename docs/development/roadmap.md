@@ -174,7 +174,7 @@
 - [x] rependre les icones avec react icone lucide et dans i18n, remplacer les emoticone par les icoes lucide pour que ça fasse plus pro. n'oublie pas le darkmode aussi
 - [x] On ne peux ni voir, ni telecharger les pièce jointes dans le menu pièce jointe
 - [x] L'ecran ops / résilience ne fonctionne pas.
-- [ ] Sur le serveur mcp faire des outils pour la création d'alerte, de regles et de recherche
+- [x] Sur le serveur mcp faire des outils pour la création d'alerte, de regles et de recherche
 - [ ] commencer a utiliser un numéro de version de l'application. commencons par la version 0.1.0. ensuite ce numéro de version doit être repris lors du docker publish (en plus du latest)
 - [ ] vérifier les failles de sécu dockerfile. Refaire le dockerfile dans les bonnes pratique de developpement.
 - [ ] Ajouter des logs dans le projet pour identifier les bugs

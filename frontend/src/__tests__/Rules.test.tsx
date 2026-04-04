@@ -264,9 +264,9 @@ describe('RulesPage', () => {
 
     render(<RulesPage />)
     // Run, edit, delete buttons are tooltips, not text
-    expect(document.querySelector('.anticon-play-circle')).toBeInTheDocument()
-    expect(document.querySelector('.anticon-edit')).toBeInTheDocument()
-    expect(document.querySelector('.anticon-delete')).toBeInTheDocument()
+    expect(document.querySelector('.lucide-play')).toBeInTheDocument()
+    expect(document.querySelector('.lucide-pencil')).toBeInTheDocument()
+    expect(document.querySelector('.lucide-trash-2')).toBeInTheDocument()
   })
 
   it('disables run button for inactive rules', () => {
@@ -278,7 +278,7 @@ describe('RulesPage', () => {
 
     render(<RulesPage />)
     // The run button should be disabled for inactive rules
-    const playButtons = document.querySelectorAll('.anticon-play-circle')
+    const playButtons = document.querySelectorAll('.lucide-play')
     expect(playButtons.length).toBeGreaterThanOrEqual(1)
   })
 
@@ -298,7 +298,7 @@ describe('RulesPage', () => {
     })
 
     render(<RulesPage />)
-    const editBtn = document.querySelector('.anticon-edit')!.closest('button')!
+    const editBtn = document.querySelector('.lucide-pencil')!.closest('button')!
     fireEvent.click(editBtn)
     // Exercises openEdit(rule) → setEditingRule, setModalOpen
   })
@@ -311,7 +311,7 @@ describe('RulesPage', () => {
     })
 
     render(<RulesPage />)
-    const playBtn = document.querySelector('.anticon-play-circle')!.closest('button')!
+    const playBtn = document.querySelector('.lucide-play')!.closest('button')!
     fireEvent.click(playBtn)
 
     await waitFor(() => {
@@ -328,7 +328,7 @@ describe('RulesPage', () => {
     })
 
     render(<RulesPage />)
-    const playBtn = document.querySelector('.anticon-play-circle')!.closest('button')!
+    const playBtn = document.querySelector('.lucide-play')!.closest('button')!
     fireEvent.click(playBtn)
 
     await waitFor(() => {
