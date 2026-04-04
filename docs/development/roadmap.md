@@ -176,5 +176,5 @@
 - [x] L'ecran ops / résilience ne fonctionne pas.
 - [x] Sur le serveur mcp faire des outils pour la création d'alerte, de regles et de recherche
 - [ ] commencer a utiliser un numéro de version de l'application. commencons par la version 0.1.0. ensuite ce numéro de version doit être repris lors du docker publish (en plus du latest)
-- [ ] vérifier les failles de sécu dockerfile. Refaire le dockerfile dans les bonnes pratique de developpement.
+- [x] vérifier les failles de sécu dockerfile. Refaire le dockerfile dans les bonnes pratique de developpement.
 - [ ] Ajouter des logs dans le projet pour identifier les bugs
