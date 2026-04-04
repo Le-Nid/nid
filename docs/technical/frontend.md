@@ -8,6 +8,7 @@
 | `react-router v7` | Routing client-side |
 | `antd v6` | Composants UI (Table, Form, Chart, Layout, etc.) |
 | `@ant-design/charts` | Graphiques dashboard (basé sur G2) |
+| `lucide-react` | Icônes SVG cohérentes (remplace les emojis et icônes Ant Design) |
 | `zustand` | State management global (stores légers) |
 | `axios` | Client HTTP avec intercepteurs JWT |
 | `dayjs` | Manipulation de dates (requis par Ant Design) |
@@ -92,6 +93,27 @@ Toutes les pages font leurs appels via ce client, jamais via `fetch` directement
 | `VITE_API_URL` | `` (vide) | URL de l'API backend. En dev, le proxy Vite redirige `/api` vers `localhost:4000` |
 
 En production (Dockerfile multi-stage), le build Vite est servi par Nginx qui proxy `/api` vers le backend.
+
+---
+
+## Icônes (Lucide React)
+
+Toutes les icônes de l'application utilisent [Lucide React](https://lucide.dev/), une bibliothèque d'icônes SVG open source. Les emojis et les icônes Ant Design ont été remplacés pour un rendu professionnel uniforme.
+
+### Utilisation
+
+```tsx
+import { Mail, Archive, Trash2, Settings } from 'lucide-react'
+
+<Mail size={16} />
+<Archive className="icon-muted" />
+```
+
+### Conventions
+
+- **Taille** : `16` dans les menus et boutons, `20-24` dans les titres et cartes
+- **Dark mode** : les icônes héritent de `currentColor` et s'adaptent automatiquement au thème
+- **i18n** : les clés de traduction référencent des icônes Lucide (pas d'emojis) pour un rendu identique sur toutes les plateformes
 
 ---
 

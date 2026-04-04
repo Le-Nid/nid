@@ -126,6 +126,40 @@ admin.users           → Onglet utilisateurs admin
 
 ---
 
+## Qualité de code
+
+### Vérification des types
+
+Avant chaque commit, exécutez le typecheck dans les packages modifiés :
+
+```bash
+cd backend && npm run typecheck
+cd frontend && npm run typecheck
+```
+
+### Audit de sécurité
+
+Exécutez régulièrement un audit des dépendances pour identifier les vulnérabilités connues :
+
+```bash
+cd backend && npm audit
+cd frontend && npm audit
+```
+
+Corrigez les vulnérabilités critiques et hautes immédiatement. Utilisez `npm audit fix` pour les corrections automatiques.
+
+### APIs dépréciées
+
+- **Ne jamais utiliser d'APIs dépréciées** — si ESLint ou TypeScript signale un appel déprécié, remplacez-le par l'alternative recommandée
+- Vérifiez les avertissements de dépréciation dans la sortie console lors du `npm install`
+
+### Icônes
+
+- Utiliser **Lucide React** (`lucide-react`) pour toutes les icônes — pas d'emojis ni d'icônes Ant Design
+- Les icônes doivent être compatibles dark mode (utiliser `currentColor`)
+
+---
+
 ## Documentation
 
 La documentation est générée avec MkDocs Material.

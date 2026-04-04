@@ -168,16 +168,26 @@
 - [x] serveur mcp pour manipuler l'appli ?
 
 
-- [x] corrections de bugs et de lint DANS TOUS LES FICHIERS. Je ne veux pas d'appel a des des fonctions dépréciée.
-- [x] Checker les failles de sécu. faire un npm audit sur le front et le back
-- [x] regarder le pwa + navigation mobile (app mobile ou app responsive ?)
-- [x] rependre les icones avec react icone lucide et dans i18n, remplacer les emoticone par les icoes lucide pour que ça fasse plus pro. n'oublie pas le darkmode aussi
-- [x] On ne peux ni voir, ni telecharger les pièce jointes dans le menu pièce jointe
-- [x] L'ecran ops / résilience ne fonctionne pas.
-- [x] Sur le serveur mcp faire des outils pour la création d'alerte, de regles et de recherche
-- [x] commencer a utiliser un numéro de version de l'application. commencons par la version 0.1.0. ensuite ce numéro de version doit être repris lors du docker publish (en plus du latest)
-- [x] vérifier les failles de sécu dockerfile. Refaire le dockerfile dans les bonnes pratique de developpement.
-- [x] Ajouter des logs dans le projet pour identifier les bugs
+## v2.4 — Qualité, industrialisation & polish (✅ complété)
 
+### Qualité de code
 
-Refaire la doc sur tous les derniers points
+- [x] **Corrections de bugs et de lint** — Audit complet de tous les fichiers, suppression des appels à des fonctions dépréciées, corrections ESLint
+- [x] **Audit de sécurité npm** — `npm audit` exécuté sur le frontend et le backend, correction des vulnérabilités identifiées
+- [x] **Logging structuré** — Ajout de logs Pino dans tous les modules backend (40+ modules instrumentés) et logger frontend pour faciliter le diagnostic des bugs. Voir [Logging](../technical/logging.md)
+
+### UI / UX
+
+- [x] **Icônes Lucide React** — Remplacement de toutes les icônes (emojis, Ant Design icons) par [Lucide React](https://lucide.dev/) pour un rendu professionnel et cohérent. Compatible dark mode. Icônes également utilisées dans les clés i18n
+- [x] **PWA & navigation mobile** — Application installable (manifest + service worker), approche responsive avec sidebar en drawer sur mobile, breakpoints Ant Design. Voir [Frontend — PWA](../technical/frontend.md#pwa-progressive-web-app)
+- [x] **Correction des pièces jointes** — Les pièces jointes sont désormais consultables et téléchargeables depuis la page Pièces jointes (onglets Archives et Gmail)
+- [x] **Correction Ops & Résilience** — Page Ops & Résilience fonctionnelle (stockage S3, rétention, quota API, import/export)
+
+### Outils MCP
+
+- [x] **Outils MCP étendus** — Ajout de la création d'alertes (`create-notification`), de règles (`create-rule`, `update-rule`, `delete-rule`, `run-rule`), et de recherches sauvegardées (`create-saved-search`, `update-saved-search`, `delete-saved-search`) dans le serveur MCP. Voir [Serveur MCP](../guide/mcp-server.md)
+
+### Ops & Déploiement
+
+- [x] **Versioning** — Numéro de version (`0.1.0`) dans le fichier `VERSION` à la racine. Repris comme `ARG` dans le Dockerfile multi-stage et comme tag Docker lors du publish (`latest` + `0.1.0`). Voir [Versioning](../installation/production.md#versioning)
+- [x] **Sécurité Dockerfile** — Refonte des Dockerfiles selon les bonnes pratiques : images Alpine, build multi-stage, utilisateur non-root (UID 1001), suppression des outils de build, `.dockerignore`, `--ignore-scripts`. Voir [Sécurité des conteneurs](../technical/security.md#sécurité-des-conteneurs-docker)
