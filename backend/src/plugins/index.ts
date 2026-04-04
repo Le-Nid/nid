@@ -23,7 +23,8 @@ export async function registerPlugins(app: FastifyInstance) {
   // JWT — tokens read from httpOnly cookie or Authorization header
   await app.register(jwt, {
     secret: config.JWT_SECRET,
-    sign: { expiresIn: config.JWT_EXPIRY },
+    sign: { expiresIn: config.JWT_EXPIRY, algorithm: 'HS256' },
+    verify: { algorithms: ['HS256'] },
     cookie: {
       cookieName: 'token',
       signed: false,

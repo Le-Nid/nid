@@ -169,7 +169,7 @@
 
 
 - [x] corrections de bugs et de lint DANS TOUS LES FICHIERS. Je ne veux pas d'appel a des des fonctions dépréciée.
-- [ ] Checker les failles de sécu. faire un npm audit sur le front et le back
+- [x] Checker les failles de sécu. faire un npm audit sur le front et le back
 - [ ] regarder le pwa + navigation mobile (app mobile ou app responsive ?)
 - [ ] rependre les icones avec react icone lucide et dans i18n, remplacer les emoticone par les icoes lucide pour que ça fasse plus pro. n'oublie pas le darkmode aussi
 - [ ] On ne peux ni voir, ni telecharger les pièce jointes dans le menu pièce jointe
