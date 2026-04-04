@@ -138,6 +138,14 @@ export default function SharingPage() {
         </Title>
         <Text type="secondary">{t('sharing.description')}</Text>
 
+        <Button
+          type="primary"
+          icon={<Share2 size={14} />}
+          onClick={() => setCreateModalOpen(true)}
+        >
+          {t('sharing.createShare')}
+        </Button>
+
         {lastCreatedLink && (
           <Card size="small" style={{ background: '#f6ffed', borderColor: '#b7eb8f' }}>
             <Space>
