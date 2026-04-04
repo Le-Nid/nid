@@ -35,7 +35,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
-    "@emnapi/core": "^1.9.1",
+    "@emnapi/core": "^1.9.2",
     "@emnapi/runtime": "^1.9.1",
     "@testing-library/jest-dom": "^6.4.6",
     "@testing-library/react": "^16.0.0",
