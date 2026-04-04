@@ -16,7 +16,7 @@
         <link rel="prev" href="../jobs/">
       
       
-        <link rel="next" href="../api/">
+        <link rel="next" href="../logging/">
       
       
         
@@ -1725,10 +1725,121 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#securite-des-conteneurs-docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sécurité des conteneurs Docker
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sécurité des conteneurs Docker">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#images-de-base" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Images de base
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#build-multi-stage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build multi-stage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#utilisateur-non-root" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Utilisateur non-root
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dockerignore" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        .dockerignore
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reseau-interne" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Réseau interne
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-ignore-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --ignore-scripts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../logging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Logging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1759,10 +1870,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_7" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_8" >
         
           
-          <label class="md-nav__link" for="__nav_4_7" id="__nav_4_7_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4_8" id="__nav_4_8_label" tabindex="">
             
   
   
@@ -1780,8 +1891,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4_7">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_8">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -2787,6 +2898,89 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#securite-des-conteneurs-docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sécurité des conteneurs Docker
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sécurité des conteneurs Docker">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#images-de-base" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Images de base
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#build-multi-stage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build multi-stage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#utilisateur-non-root" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Utilisateur non-root
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dockerignore" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        .dockerignore
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reseau-interne" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Réseau interne
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-ignore-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --ignore-scripts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2990,6 +3184,34 @@
 </tbody>
 </table>
 <p>Chaque entrée inclut l'adresse IP de la requête pour la traçabilité.</p>
+<hr />
+<h2 id="securite-des-conteneurs-docker">Sécurité des conteneurs Docker<a class="headerlink" href="#securite-des-conteneurs-docker" title="Permanent link">&para;</a></h2>
+<h3 id="images-de-base">Images de base<a class="headerlink" href="#images-de-base" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Images Alpine</strong> — Utilisation systématique de variantes Alpine pour réduire la surface d'attaque (moins de binaires, moins de CVE potentielles)</li>
+<li><strong>Mises à jour</strong> — <code>apk upgrade --no-cache</code> en production pour appliquer les correctifs de sécurité</li>
+</ul>
+<h3 id="build-multi-stage">Build multi-stage<a class="headerlink" href="#build-multi-stage" title="Permanent link">&para;</a></h3>
+<p>Les Dockerfiles utilisent un <strong>build multi-stage</strong> (builder → deps → runner) pour que l'image finale ne contienne :</p>
+<ul>
+<li>Ni le code source</li>
+<li>Ni les devDependencies</li>
+<li>Ni les outils de build (npm, corepack, yarn)</li>
+</ul>
+<h3 id="utilisateur-non-root">Utilisateur non-root<a class="headerlink" href="#utilisateur-non-root" title="Permanent link">&para;</a></h3>
+<p>Toutes les images de production tournent avec un <strong>utilisateur non-root</strong> (<code>appuser:appgroup</code>, UID/GID 1001). Cela limite l'impact d'une éventuelle compromission du processus Node.js.</p>
+<h3 id="dockerignore"><code>.dockerignore</code><a class="headerlink" href="#dockerignore" title="Permanent link">&para;</a></h3>
+<p>Des fichiers <code>.dockerignore</code> empêchent la copie de fichiers sensibles dans le contexte de build :</p>
+<ul>
+<li><code>.env</code>, <code>.env.*</code>, <code>*.pem</code>, <code>*.key</code> — Variables d'environnement et secrets</li>
+<li><code>.git</code> — Historique Git</li>
+<li><code>node_modules</code>, <code>coverage</code>, <code>dist</code> — Artefacts de build</li>
+<li><code>volumes/</code> — Données utilisateur</li>
+</ul>
+<h3 id="reseau-interne">Réseau interne<a class="headerlink" href="#reseau-interne" title="Permanent link">&para;</a></h3>
+<p>En production, PostgreSQL et Redis ne sont <strong>pas exposés</strong> sur l'hôte — ils communiquent uniquement via le réseau Docker interne. Seul le port 3000 (Nginx) est accessible.</p>
+<h3 id="-ignore-scripts"><code>--ignore-scripts</code><a class="headerlink" href="#-ignore-scripts" title="Permanent link">&para;</a></h3>
+<p>Les commandes <code>npm ci</code> de production utilisent <code>--ignore-scripts</code> pour empêcher l'exécution de scripts <code>postinstall</code> potentiellement malveillants dans les dépendances.</p>
 
 
 

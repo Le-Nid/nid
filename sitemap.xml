@@ -2,230 +2,234 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://le-nid.github.io/nid/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/development/contributing/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/development/roadmap/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/guide/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/guide/admin/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/guide/analytics/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/guide/archiving/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/guide/attachments/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/guide/dashboard/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/guide/duplicates/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/guide/expiration/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/guide/first-steps/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/guide/jobs/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/guide/mail-management/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/guide/mcp-server/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/guide/newsletters/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/guide/notifications/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/guide/ops-resilience/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/guide/privacy/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/guide/rules/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/guide/saved-searches/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/guide/settings/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/guide/sharing/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/guide/unified-inbox/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/installation/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/installation/configuration/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/installation/development/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/installation/google-cloud/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/installation/production/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/technical/backend/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/technical/database/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/technical/frontend/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/technical/jobs/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
+    </url>
+    <url>
+         <loc>https://le-nid.github.io/nid/technical/logging/</loc>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/technical/overview/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/technical/security/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/technical/api/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/technical/api/admin/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/technical/api/analytics/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/technical/api/archive/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/technical/api/attachments/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/technical/api/audit/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/technical/api/auth/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/technical/api/config/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/technical/api/dashboard/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/technical/api/duplicates/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/technical/api/gmail/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/technical/api/integrity/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/technical/api/jobs/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/technical/api/notifications/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/technical/api/ops/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/technical/api/privacy/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/technical/api/reports/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/technical/api/rules/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/technical/api/saved-searches/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/technical/api/unified/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/technical/api/unsubscribe/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
     <url>
          <loc>https://le-nid.github.io/nid/technical/api/webhooks/</loc>
-         <lastmod>2026-04-03</lastmod>
+         <lastmod>2026-04-04</lastmod>
     </url>
 </urlset>
