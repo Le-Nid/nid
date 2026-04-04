@@ -166,3 +166,13 @@
 ### autre
 - [x] dédupliquer les pièces jointes par hash de contenu
 - [x] serveur mcp pour manipuler l'appli ?
+
+
+- [ ] corrections de bugs
+- [ ] Checker les failles de sécu. faire un npm audit sur le front et le back
+- [ ] regarder le pwa + navigation mobile (app mobile ou app responsive ?)
+- [ ] rependre les icones avec react icone
+- [ ] On ne peux ni voir, ni telecharger les pièce jointes dans le menu pièce jointe
+- [ ] L'ecran ops / résilience ne fonctionne pas.
+- [ ] Sur le derveur mcp faire des outils pour la création d'alerte, de regles et de recherche
+- [ ] commencer a utiliser un numéro de version de l'application. commencons par la version 0.1.0. ensuite ce numéro de version doit être repris lors du docker publish (en plus du latest)

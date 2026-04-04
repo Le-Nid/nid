@@ -1,8 +1,9 @@
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    image: ghcr.io/le-nid/nid:main
     ports:
       - "${APP_PORT:-3000}:3000"
     depends_on:
