@@ -159,8 +159,9 @@ export default function RuleFormModal({
         await rulesApi.create(accountId, dto);
       }
       onSaved();
-    } catch (e: any) {
-      setError(e.response?.data?.error ?? t('common.error'));
+    } catch (e: unknown) {
+      const axiosErr = e as { response?: { data?: { error?: string } } }
+      setError(axiosErr.response?.data?.error ?? t('common.error'));
     } finally {
       setSaving(false);
     }

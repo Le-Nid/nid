@@ -8,7 +8,7 @@ import {
   Switch,
   Popconfirm,
   Tooltip,
-  notification,
+  App,
   message,
   Card,
   Empty,
@@ -54,6 +54,7 @@ export default function RulesPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<Rule | null>(null);
   const [messageApi, contextHolder] = message.useMessage();
+  const { notification } = App.useApp();
   const [templateDrawer, setTemplateDrawer] = useState(false);
   const { data: templates = [], isLoading: templateLoading } = useRuleTemplates(templateDrawer);
   const toggleMutation = useToggleRule(accountId!);
@@ -73,7 +74,7 @@ export default function RulesPage() {
     try {
       const { jobId } = await runMutation.mutateAsync(rule.id);
       notification.success({
-        title: t('rules.runSuccess', { name: rule.name }),
+        message: t('rules.runSuccess', { name: rule.name }),
         description: t('rules.runJobCreated', { jobId }),
         duration: 5,
       });

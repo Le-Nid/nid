@@ -146,7 +146,7 @@ export default function DashboardPage() {
                   title={kpi.title}
                   value={kpi.value}
                   prefix={kpi.icon}
-                  valueStyle={kpi.color ? { color: kpi.color } : undefined}
+                  styles={kpi.color ? { content: { color: kpi.color } } : undefined}
                   formatter={kpi.format ? (v) => Number(v).toLocaleString('fr-FR') : undefined}
                 />
               </Card>

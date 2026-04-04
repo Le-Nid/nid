@@ -1,5 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+// Mock pino logger
+const { mockLoggerError } = vi.hoisted(() => {
+  const mockLoggerError = vi.fn()
+  return { mockLoggerError }
+})
+vi.mock('pino', () => ({
+  default: () => ({
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: mockLoggerError,
+    debug: vi.fn(),
+    fatal: vi.fn(),
+  }),
+}))
+
 // Mock DB
 const mockExecute = vi.fn()
 const mockExecuteTakeFirst = vi.fn()
@@ -49,10 +64,8 @@ describe('logAudit', () => {
 
   it('does not throw on DB error', async () => {
     mockExecute.mockRejectedValue(new Error('DB connection error'))
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
     await logAudit('user-1', 'user.login')
-    expect(consoleSpy).toHaveBeenCalled()
-    consoleSpy.mockRestore()
+    expect(mockLoggerError).toHaveBeenCalled()
   })
 
   it('handles all audit action types', async () => {

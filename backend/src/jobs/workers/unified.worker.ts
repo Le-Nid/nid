@@ -11,6 +11,9 @@ import { scanArchivePii } from '../../privacy/pii.service'
 import { encryptArchives } from '../../privacy/encryption.service'
 import { importMbox, importImap } from '../../archive/import.service'
 import { applyRetentionPolicies } from '../../archive/retention.service'
+import pino from 'pino'
+
+const logger = pino({ name: 'worker' })
 
 export function startUnifiedWorker() {
   const worker = new Worker(
@@ -36,14 +39,14 @@ export function startUnifiedWorker() {
         case 'apply_retention':
           return handleRetention(job)
         default:
-          console.warn(`Unknown job type: ${job.name}`)
+          logger.warn(`Unknown job type: ${job.name}`)
       }
     },
     { connection: getRedis(), concurrency: 3 },
   )
 
   worker.on('failed', (job, err) =>
-    console.error(`Job ${job?.name}/${job?.id} failed:`, err.message),
+    logger.error({ jobName: job?.name, jobId: job?.id, err: err.message }, 'Job failed'),
   )
 
   return worker
@@ -87,7 +90,7 @@ async function handleArchive(job: Job) {
     try {
       await archiveMail(accountId, messageId)
     } catch (err) {
-      console.error(`Failed to archive ${messageId}:`, err)
+      logger.error({ messageId, err }, 'Failed to archive message')
     }
     processed++
     const progress = Math.round((processed / total) * 100)

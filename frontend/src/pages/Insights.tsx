@@ -59,7 +59,7 @@ export default function InsightsPage() {
               title={t('insights.jobsFailed')}
               value={stats.jobsFailed}
               prefix={<CloseCircleOutlined style={{ color: stats.jobsFailed > 0 ? '#ff4d4f' : '#d9d9d9' }} />}
-              valueStyle={stats.jobsFailed > 0 ? { color: '#ff4d4f' } : undefined}
+              styles={stats.jobsFailed > 0 ? { content: { color: '#ff4d4f' } } : undefined}
             />
           </Card>
         </Col>

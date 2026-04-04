@@ -168,7 +168,10 @@
     "archiveAllDesc": "Only new emails will be archived (differential).",
     "shortcuts": "Shortcuts: j/k navigate · Enter open · e archive · # delete · / search",
     "saveSearch": "Save this search",
-    "searchSaved": "Search saved"
+    "searchSaved": "Search saved",
+    "bulkStarted": "Operation started",
+    "bulkStartedDesc": "{{count}} email(s) — track in Jobs.",
+    "bulkError": "Operation failed"
   },
 
   "archive": {
@@ -408,7 +411,9 @@
     "webhookEvents": "Events",
     "webhookSelectEvents": "Select events",
     "exportHint": "Export your rules and webhooks as JSON, or import an existing configuration.",
-    "testSent": "Test sent"
+    "testSent": "Test sent",
+    "gmailLimitReached": "Gmail accounts limit reached",
+    "deleteWebhookConfirm": "Delete this webhook?"
   },
 
   "admin": {
@@ -863,5 +868,16 @@
     "poweredBy": "Nid — Temporary archive sharing",
     "shareButton": "Share",
     "shareTooltip": "Generate a temporary share link"
+  },
+
+  "notifier": {
+    "typeBulk": "Bulk operation",
+    "typeArchive": "NAS archiving",
+    "typeRule": "Automatic rule",
+    "typeSync": "Dashboard sync",
+    "completed": "{{type}} completed",
+    "failed": "{{type}} failed",
+    "processedCount": "{{count}} items processed successfully.",
+    "genericError": "An error occurred."
   }
 }

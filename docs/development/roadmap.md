@@ -168,11 +168,13 @@
 - [x] serveur mcp pour manipuler l'appli ?
 
 
-- [ ] corrections de bugs
+- [x] corrections de bugs et de lint DANS TOUS LES FICHIERS. Je ne veux pas d'appel a des des fonctions dépréciée.
 - [ ] Checker les failles de sécu. faire un npm audit sur le front et le back
 - [ ] regarder le pwa + navigation mobile (app mobile ou app responsive ?)
-- [ ] rependre les icones avec react icone
+- [ ] rependre les icones avec react icone lucide et dans i18n, remplacer les emoticone par les icoes lucide pour que ça fasse plus pro. n'oublie pas le darkmode aussi
 - [ ] On ne peux ni voir, ni telecharger les pièce jointes dans le menu pièce jointe
 - [ ] L'ecran ops / résilience ne fonctionne pas.
 - [ ] Sur le derveur mcp faire des outils pour la création d'alerte, de regles et de recherche
 - [ ] commencer a utiliser un numéro de version de l'application. commencons par la version 0.1.0. ensuite ce numéro de version doit être repris lors du docker publish (en plus du latest)
+- [ ] vérifier les failles de sécu dockerfile. Refaire le dockerfile dans les bonnes pratique de developpement.
+- [ ] Ajouter des logs dans le projet pour identifier les bugs

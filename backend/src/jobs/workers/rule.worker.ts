@@ -3,6 +3,9 @@ import { getRedis } from "../../plugins/redis";
 import { getDb } from "../../db";
 import { notify } from "../../notifications/notify";
 import { getRule, runRule } from "../../rules/rules.service";
+import pino from 'pino'
+
+const ruleLogger = pino({ name: 'rule-worker' })
 
 interface RunRulePayload {
   accountId: string;
@@ -75,7 +78,7 @@ export function startRuleWorker() {
     { connection: getRedis(), concurrency: 2 },
   );
   worker.on("failed", (job, err) =>
-    console.error(`Rule job ${job?.id} failed:`, err.message),
+    ruleLogger.error({ jobId: job?.id, err: err.message }, 'Rule job failed'),
   );
   return worker;
 }

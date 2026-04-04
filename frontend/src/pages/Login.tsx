@@ -54,13 +54,14 @@ export default function LoginPage() {
     try {
       await login(values.email, values.password, totpRequired ? totpCode : undefined)
       navigate('/dashboard')
-    } catch (e: any) {
-      if (e.response?.data?.error === 'TOTP_REQUIRED') {
+    } catch (e: unknown) {
+      const axiosErr = e as { response?: { data?: { error?: string } } }
+      if (axiosErr.response?.data?.error === 'TOTP_REQUIRED') {
         setTotpRequired(true)
         setSavedCredentials(values)
         setError(null)
       } else {
-        setError(e.response?.data?.error ?? t('login.errorConnection'))
+        setError(axiosErr.response?.data?.error ?? t('login.errorConnection'))
       }
     } finally { setLoading(false) }
   }
@@ -71,8 +72,9 @@ export default function LoginPage() {
     try {
       await login(savedCredentials.email, savedCredentials.password, totpCode)
       navigate('/dashboard')
-    } catch (e: any) {
-      setError(e.response?.data?.error ?? t('login.errorTotpInvalid'))
+    } catch (e: unknown) {
+      const axiosErr = e as { response?: { data?: { error?: string } } }
+      setError(axiosErr.response?.data?.error ?? t('login.errorTotpInvalid'))
     } finally { setLoading(false) }
   }
 
@@ -81,8 +83,9 @@ export default function LoginPage() {
     try {
       await register(values.email, values.password)
       navigate('/settings')
-    } catch (e: any) {
-      setError(e.response?.data?.error ?? t('login.errorRegister'))
+    } catch (e: unknown) {
+      const axiosErr = e as { response?: { data?: { error?: string } } }
+      setError(axiosErr.response?.data?.error ?? t('login.errorRegister'))
     } finally { setLoading(false) }
   }
 

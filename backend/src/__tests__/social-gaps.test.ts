@@ -41,6 +41,20 @@ vi.mock('../config', () => ({
   },
 }))
 
+const { mockLoggerError } = vi.hoisted(() => {
+  const mockLoggerError = vi.fn()
+  return { mockLoggerError }
+})
+vi.mock('pino', () => ({
+  default: () => ({
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: mockLoggerError,
+    debug: vi.fn(),
+    fatal: vi.fn(),
+  }),
+}))
+
 const mockValidateAuthorizationCode = vi.fn()
 vi.mock('arctic', () => ({
   Google: class {
@@ -93,14 +107,13 @@ describe('social.service - gap coverage', () => {
     mockExecute
       .mockRejectedValueOnce(new Error('DB constraint error'))
 
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
     const result = await exchangeSocialCode('google', 'code', 'verifier')
     expect(result.id).toBe('u1')
     // autoRegisterGmailAccount error was caught (non-blocking)
-    expect(consoleSpy).toHaveBeenCalledWith('Auto-register Gmail account failed:', expect.any(Error))
-
-    consoleSpy.mockRestore()
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      expect.objectContaining({ err: expect.any(Error) }),
+      'Auto-register Gmail account failed',
+    )
   })
 
   it('linkOrCreateSocialUser with existing user updates display_name and avatar', async () => {

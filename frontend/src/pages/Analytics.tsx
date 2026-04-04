@@ -1,7 +1,7 @@
 import React from 'react'
 import {
   Typography, Card, Row, Col, Table, Tag, Spin, Alert, Space, Button,
-  Tooltip, Progress, Statistic, Empty, message,
+  Tooltip, Progress, Statistic, Empty, App,
 } from 'antd'
 import {
   ReloadOutlined, FireOutlined, TrophyOutlined, DeleteOutlined,
@@ -109,6 +109,7 @@ function ScoreTag({ score }: Readonly<{ score: number }>) {
 
 export default function AnalyticsPage() {
   const { t, i18n } = useTranslation()
+  const { message } = App.useApp()
   const { accountId } = useAccount()
   const queryClient = useQueryClient()
 
@@ -120,7 +121,7 @@ export default function AnalyticsPage() {
   const suggestions = suggestionsQuery.data ?? []
   const inboxZero = inboxZeroQuery.data ?? null
   const loading = heatmapQuery.isLoading || senderScoresQuery.isLoading
-  const error = heatmapQuery.error ? (heatmapQuery.error as any).response?.data?.error ?? t('analytics.loadError') : null
+  const error = heatmapQuery.error ? ((heatmapQuery.error as unknown as { response?: { data?: { error?: string } } })?.response?.data?.error) ?? t('analytics.loadError') : null
 
   const load = (refresh = false) => {
     if (refresh && accountId) {
@@ -232,7 +233,7 @@ export default function AnalyticsPage() {
                 title={t('analytics.inboxCount')}
                 value={inboxZero?.current.inboxCount ?? 0}
                 prefix={<InboxOutlined />}
-                valueStyle={inboxZero?.current.inboxCount === 0 ? { color: '#52c41a' } : undefined}
+                styles={inboxZero?.current.inboxCount === 0 ? { content: { color: '#52c41a' } } : undefined}
               />
             </Card>
           </Col>

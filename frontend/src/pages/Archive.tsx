@@ -11,7 +11,7 @@ import {
   Divider,
   Empty,
   message,
-  notification,
+  App,
   DatePicker,
   Tooltip,
   Select,
@@ -195,6 +195,7 @@ export default function ArchivePage() {
   const [threadLoading, setThreadLoading] = useState(false);
 
   const [messageApi, contextHolder] = message.useMessage();
+  const { notification } = App.useApp();
 
   // Build params for the query
   const archiveParams: Record<string, any> = { page, limit: 50 };
@@ -273,7 +274,7 @@ export default function ArchivePage() {
       a.click();
       URL.revokeObjectURL(url);
       notification.success({
-        title: t('archive.exportDone'),
+        message: t('archive.exportDone'),
         description: t('archive.exportCount', { count: ids.length }),
       });
     } catch {

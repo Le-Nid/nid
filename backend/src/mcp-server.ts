@@ -4,6 +4,9 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod/v4'
 import { getDb, runMigrations, closeDb } from './db'
 import { config } from './config'
+import pino from 'pino'
+
+const logger = pino({ name: 'mcp' })
 
 const server = new McpServer(
   {
@@ -424,7 +427,7 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error('MCP server error:', err)
+  logger.error({ err }, 'MCP server error')
   process.exit(1)
 })
 

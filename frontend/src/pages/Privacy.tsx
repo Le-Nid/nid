@@ -163,7 +163,7 @@ function TrackingTab({ accountId, lang, messageApi, setActiveJobId }: Readonly<{
             <Statistic
               title={t('privacy.tracking.topDomain')}
               value={stats?.topDomains?.[0]?.domain ?? '—'}
-              valueStyle={{ fontSize: 16 }}
+              styles={{ content: { fontSize: 16 } }}
             />
           </Card>
         </Col>
@@ -310,7 +310,7 @@ function PiiTab({ accountId, lang, messageApi, setActiveJobId }: Readonly<{
               title={t('privacy.pii.totalFindings')}
               value={stats?.totalFindings ?? 0}
               prefix={<WarningOutlined style={{ color: '#ff4d4f' }} />}
-              valueStyle={stats?.totalFindings ? { color: '#ff4d4f' } : undefined}
+              styles={stats?.totalFindings ? { content: { color: '#ff4d4f' } } : undefined}
             />
           </Card>
         </Col>
@@ -445,7 +445,7 @@ function EncryptionTab({ accountId, messageApi, setActiveJobId }: Readonly<{
               title={t('privacy.encryption.encrypted')}
               value={status?.encrypted ?? 0}
               prefix={<LockOutlined style={{ color: '#52c41a' }} />}
-              valueStyle={{ color: '#52c41a' }}
+              styles={{ content: { color: '#52c41a' } }}
             />
           </Card>
         </Col>
@@ -455,7 +455,7 @@ function EncryptionTab({ accountId, messageApi, setActiveJobId }: Readonly<{
               title={t('privacy.encryption.unencrypted')}
               value={status?.unencrypted ?? 0}
               prefix={status?.unencrypted ? <WarningOutlined style={{ color: '#fa8c16' }} /> : <CheckCircleOutlined style={{ color: '#52c41a' }} />}
-              valueStyle={status?.unencrypted ? { color: '#fa8c16' } : { color: '#52c41a' }}
+              styles={status?.unencrypted ? { content: { color: '#fa8c16' } } : { content: { color: '#52c41a' } }}
             />
           </Card>
         </Col>

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   Table, Button, Typography, Space, Tag, Popconfirm, Tooltip, Card,
-  Empty, Statistic, Row, Col, notification, message, Input,
+  Empty, Statistic, Row, Col, App, message, Input,
 } from 'antd'
 import {
   DeleteOutlined, LinkOutlined, MailOutlined,
@@ -36,6 +36,7 @@ export default function UnsubscribePage() {
   const [deletingEmail, setDeletingEmail] = useState<string | null>(null)
   const [activeJobId, setActiveJobId] = useState<string | null>(null)
   const [messageApi, contextHolder] = message.useMessage()
+  const { notification } = App.useApp()
 
   const handleDelete = async (sender: NewsletterSender, permanent = false) => {
     setDeletingEmail(sender.email)
@@ -43,7 +44,7 @@ export default function UnsubscribePage() {
       const { jobId, count } = await deleteSenderMutation.mutateAsync({ email: sender.email, permanent })
       setActiveJobId(jobId)
       notification.success({
-        title: t('unsubscribe.deleteStarted'),
+        message: t('unsubscribe.deleteStarted'),
         description: t('unsubscribe.deleteDesc', { count, sender: sender.sender }),
       })
     } catch {

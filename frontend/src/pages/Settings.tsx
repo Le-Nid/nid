@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Card, Button, Avatar, Tag, Popconfirm, Typography, Alert, Space, Divider, Progress, Descriptions, Table, Input, message, Modal, Form, Select, Switch, notification } from 'antd'
+import { Card, Button, Avatar, Tag, Popconfirm, Typography, Alert, Space, Divider, Progress, Descriptions, Table, Input, App, Modal, Form, Select, Switch } from 'antd'
 import { GoogleOutlined, DeleteOutlined, PlusOutlined, CheckCircleOutlined, UserOutlined, HistoryOutlined, LockOutlined, SafetyOutlined, ApiOutlined, DownloadOutlined, UploadOutlined, BellOutlined, CloudSyncOutlined } from '@ant-design/icons'
 import { useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
@@ -15,6 +15,7 @@ const { Title, Text } = Typography
 
 export default function SettingsPage() {
   const { t } = useTranslation()
+  const { message, notification } = App.useApp()
   const { user, gmailAccounts, fetchMe, storageUsedBytes } = useAuthStore()
   const [searchParams] = useSearchParams()
   const [connecting, setConnecting] = useState(false)
@@ -89,8 +90,8 @@ export default function SettingsPage() {
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = '.json'
-    input.onchange = async (e: any) => {
-      const file = e.target.files?.[0]
+    input.onchange = async (e: Event) => {
+      const file = (e.target as HTMLInputElement).files?.[0]
       if (!file) return
       const text = await file.text()
       try {
@@ -108,9 +109,12 @@ export default function SettingsPage() {
     try {
       const { data } = await api.get('/api/auth/gmail/connect')
       globalThis.location.href = data.url
-    } catch (e: any) {
-      if (e.response?.status === 403) {
-        alert(e.response?.data?.error ?? 'Limite de comptes Gmail atteinte')
+    } catch (e: unknown) {
+      if (e instanceof Error && 'response' in e) {
+        const axiosErr = e as { response?: { status?: number; data?: { error?: string } } }
+        if (axiosErr.response?.status === 403) {
+          alert(axiosErr.response?.data?.error ?? t('settings.gmailLimitReached'))
+        }
       }
     } finally {
       setConnecting(false)
@@ -128,7 +132,7 @@ export default function SettingsPage() {
       const { jobId } = await archiveApi.triggerArchive(accountId, { differential: true })
       setActiveJobId(jobId)
       notification.success({
-        title: t('settings.archiveStarted'),
+        message: t('settings.archiveStarted'),
         description: t('settings.archiveStartedDesc'),
       })
     } catch {
@@ -169,7 +173,7 @@ export default function SettingsPage() {
       <Card title={t('settings.profile')} style={{ marginBottom: 24 }}>
         <Space size="large" align="start">
           {user?.avatar_url
-            ? <Avatar src={user.avatar_url} size={64} />
+            ? <Avatar src={user.avatar_url} size={64} crossOrigin="anonymous" />
             : <Avatar icon={<UserOutlined />} size={64} />
           }
           <Descriptions column={1} size="small">
@@ -284,8 +288,9 @@ export default function SettingsPage() {
                     setTotpCode('')
                     setTotpSetup(null)
                     fetchMe()
-                  } catch (e: any) {
-                    message.error(e.response?.data?.error || 'Erreur')
+                  } catch (e: unknown) {
+                    const msg = e instanceof Error && 'response' in e ? (e as any).response?.data?.error : undefined
+                    message.error(msg || t('common.error'))
                   } finally {
                     setTotpLoading(false)
                   }
@@ -331,8 +336,9 @@ export default function SettingsPage() {
                     setTotpSetup(null)
                     setTotpCode('')
                     fetchMe()
-                  } catch (e: any) {
-                    message.error(e.response?.data?.error || t('settings.invalidCode'))
+                  } catch (e: unknown) {
+                    const msg = e instanceof Error && 'response' in e ? (e as any).response?.data?.error : undefined
+                    message.error(msg || t('settings.invalidCode'))
                   } finally {
                     setTotpLoading(false)
                   }
@@ -356,8 +362,9 @@ export default function SettingsPage() {
                   try {
                     const data = await twoFactorApi.setup()
                     setTotpSetup(data)
-                  } catch (e: any) {
-                    message.error(e.response?.data?.error || 'Erreur')
+                  } catch (e: unknown) {
+                    const msg = e instanceof Error && 'response' in e ? (e as any).response?.data?.error : undefined
+                    message.error(msg || t('common.error'))
                   } finally {
                     setTotpLoading(false)
                   }
@@ -457,7 +464,7 @@ export default function SettingsPage() {
               <Space>
                 <Switch size="small" checked={wh.is_active} onChange={() => webhooksApi.toggle(wh.id).then(fetchWebhooks)} />
                 <Button size="small" onClick={async () => { await webhooksApi.test(wh.id); message.success(t('settings.testSent')) }}>{t('common.test')}</Button>
-                <Popconfirm title="Supprimer ce webhook ?" onConfirm={() => webhooksApi.remove(wh.id).then(fetchWebhooks)}>
+                <Popconfirm title={t('settings.deleteWebhookConfirm')} onConfirm={() => webhooksApi.remove(wh.id).then(fetchWebhooks)}>
                   <Button danger size="small" icon={<DeleteOutlined />} />
                 </Popconfirm>
               </Space>

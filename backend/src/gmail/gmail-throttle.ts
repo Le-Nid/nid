@@ -12,6 +12,10 @@
  *   3. `accountSemaphore`  – global per-account concurrency limiter (shared across all routes)
  */
 
+import pino from 'pino'
+
+const logger = pino({ name: 'gmail-throttle' })
+
 const MAX_RETRIES = 5
 const BASE_DELAY_MS = 1_000
 const MAX_DELAY_MS = 60_000
@@ -25,8 +29,9 @@ export async function gmailRetry<T>(fn: () => Promise<T>, retries = MAX_RETRIES)
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       return await fn()
-    } catch (err: any) {
-      const status = err?.code ?? err?.response?.status ?? err?.status
+    } catch (err: unknown) {
+      const errObj = err as Record<string, any>
+      const status = errObj?.code ?? errObj?.response?.status ?? errObj?.status
       const isRetryable = status === 429 || status === 503 || status === 500
 
       if (isRetryable && attempt < retries) {
@@ -34,8 +39,8 @@ export async function gmailRetry<T>(fn: () => Promise<T>, retries = MAX_RETRIES)
         const expDelay = Math.min(BASE_DELAY_MS * Math.pow(2, attempt), MAX_DELAY_MS)
         const jitter = Math.random() * 1_000
         const delay = retryAfterMs ?? (expDelay + jitter)
-        console.warn(
-          `[gmail-throttle] ${status} on attempt ${attempt + 1}/${retries + 1}, retrying in ${Math.round(delay)}ms`
+        logger.warn(
+          `${status} on attempt ${attempt + 1}/${retries + 1}, retrying in ${Math.round(delay)}ms`
         )
         await sleep(delay)
         continue
@@ -69,10 +74,11 @@ export async function limitConcurrency<T>(
   return results
 }
 
-function parseRetryAfter(err: any): number | null {
+function parseRetryAfter(err: unknown): number | null {
+  const errObj = err as Record<string, any>
   const raw =
-    err?.response?.headers?.['retry-after'] ??
-    err?.response?.headers?.get?.('retry-after')
+    errObj?.response?.headers?.['retry-after'] ??
+    errObj?.response?.headers?.get?.('retry-after')
   if (!raw) return null
   const seconds = Number.parseInt(String(raw), 10)
   return Number.isNaN(seconds) ? null : seconds * 1_000

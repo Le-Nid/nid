@@ -8,7 +8,7 @@ import {
   message,
   Card,
   Dropdown,
-  notification,
+  App,
   Spin,
   Tooltip,
   Select,
@@ -89,6 +89,7 @@ export default function MailManagerPage() {
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const [archiveAllLoading, setArchiveAllLoading] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
+  const { notification } = App.useApp();
   const loadIdRef = useRef(0);
 
   const PROGRESSIVE_BATCH = 5;
@@ -253,7 +254,7 @@ export default function MailManagerPage() {
       });
       setActiveJobId(jobId);
       notification.success({
-        title: t('mailManager.archiveAllStarted'),
+        message: t('mailManager.archiveAllStarted'),
         description: t('mailManager.archiveAllDesc'),
       });
     } catch {
@@ -288,8 +289,8 @@ export default function MailManagerPage() {
         });
         setActiveJobId(jobId);
         notification.success({
-          title: "Archivage lancé",
-          description: `Job créé — suivi temps réel disponible.`,
+          message: t('mailManager.archiveAllStarted'),
+          description: t('mailManager.archiveAllDesc'),
         });
         setSelected([]);
       } finally {
@@ -308,13 +309,13 @@ export default function MailManagerPage() {
       );
       setActiveJobId(jobId);
       notification.success({
-        title: "Opération lancée",
-        description: `${selected.length} mail(s) — suivi dans Jobs.`,
+        message: t('mailManager.bulkStarted'),
+        description: t('mailManager.bulkStartedDesc', { count: selected.length }),
       });
       setSelected([]);
       setTimeout(loadFresh, 3000);
     } catch {
-      messageApi.error("Erreur lors de l'opération");
+      messageApi.error(t('mailManager.bulkError'));
     } finally {
       setBulkLoading(false);
     }

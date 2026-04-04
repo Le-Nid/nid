@@ -72,7 +72,7 @@ export default function AdminPage() {
       title: 'Email', dataIndex: 'email', key: 'email',
       render: (email: string, record: AdminUser) => (
         <Space>
-          {record.avatar_url && <img src={record.avatar_url} alt="" style={{ width: 20, height: 20, borderRadius: '50%' }} />}
+          {record.avatar_url && <img src={record.avatar_url} referrerPolicy="no-referrer" alt="" style={{ width: 20, height: 20, borderRadius: '50%' }} />}
           <Text>{email}</Text>
         </Space>
       ),

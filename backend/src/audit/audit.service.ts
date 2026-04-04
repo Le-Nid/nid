@@ -1,4 +1,7 @@
 import { getDb } from '../db'
+import pino from 'pino'
+
+const logger = pino({ name: 'audit' })
 
 export type AuditAction =
   | 'user.login'
@@ -49,6 +52,6 @@ export async function logAudit(
       .execute()
   } catch (err) {
     // Audit logging should never break the main flow
-    console.error('[AuditLog] Failed to write:', err)
+    logger.error({ err }, 'Failed to write audit log')
   }
 }

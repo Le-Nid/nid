@@ -232,7 +232,7 @@ export default function AppLayout() {
           <Dropdown menu={userMenu} trigger={['click']}>
             <button type="button" aria-label={t('layout.userMenu')} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
               {user?.avatar_url
-                ? <Avatar src={user.avatar_url} size="small" alt={user.display_name || user.email} />
+                ? <Avatar src={user.avatar_url} size="small" alt={user.display_name || user.email} crossOrigin="anonymous" />
                 : <Avatar icon={<UserOutlined />} size="small" aria-hidden="true" />
               }
               <Text style={{ fontSize: 13 }}>{user?.display_name || user?.email}</Text>

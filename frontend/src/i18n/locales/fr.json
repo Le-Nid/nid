@@ -168,7 +168,10 @@
     "archiveAllDesc": "Seuls les nouveaux mails seront archivés (différentiel).",
     "shortcuts": "Raccourcis : j/k naviguer · Enter ouvrir · e archiver · # supprimer · / rechercher",
     "saveSearch": "Sauvegarder cette recherche",
-    "searchSaved": "Recherche sauvegardée"
+    "searchSaved": "Recherche sauvegardée",
+    "bulkStarted": "Opération lancée",
+    "bulkStartedDesc": "{{count}} mail(s) — suivi dans Jobs.",
+    "bulkError": "Erreur lors de l'opération"
   },
 
   "archive": {
@@ -408,7 +411,9 @@
     "webhookEvents": "Événements",
     "webhookSelectEvents": "Sélectionner les événements",
     "exportHint": "Exportez vos règles et webhooks en JSON, ou importez une configuration existante.",
-    "testSent": "Test envoyé"
+    "testSent": "Test envoyé",
+    "gmailLimitReached": "Limite de comptes Gmail atteinte",
+    "deleteWebhookConfirm": "Supprimer ce webhook ?"
   },
 
   "admin": {
@@ -863,5 +868,16 @@
     "poweredBy": "Nid — Partage temporaire d'archive",
     "shareButton": "Partager",
     "shareTooltip": "Générer un lien de partage temporaire"
+  },
+
+  "notifier": {
+    "typeBulk": "Opération bulk",
+    "typeArchive": "Archivage NAS",
+    "typeRule": "Règle automatique",
+    "typeSync": "Sync dashboard",
+    "completed": "{{type}} terminé",
+    "failed": "{{type}} échoué",
+    "processedCount": "{{count}} éléments traités avec succès.",
+    "genericError": "Une erreur est survenue."
   }
 }
