@@ -144,6 +144,12 @@ export const attachmentsApi = {
   listLive: (accountId: string, params: Record<string, any> = {}) =>
     api.get(`/api/attachments/${accountId}/live`, { params }).then((r) => r.data),
 
+  downloadArchivedUrl: (accountId: string, attachmentId: string, inline = false) =>
+    `/api/attachments/${accountId}/archived/${attachmentId}/download${inline ? '?inline=1' : ''}`,
+
+  downloadLiveUrl: (accountId: string, messageId: string, filename: string, inline = false) =>
+    `/api/attachments/${accountId}/live/${messageId}/download?filename=${encodeURIComponent(filename)}${inline ? '&inline=1' : ''}`,
+
   getDedupStats: () =>
     api.get('/api/attachments/dedup-stats').then((r) => r.data),
 

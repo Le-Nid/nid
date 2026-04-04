@@ -3,15 +3,12 @@ import {
   Table, Button, Typography, Space, Tag, Card, Empty,
   Statistic, Row, Col, message, Input, Segmented, Tooltip,
 } from 'antd'
-import {
-  PaperClipOutlined, CloudOutlined, DatabaseOutlined, ReloadOutlined,
-  FileImageOutlined, FilePdfOutlined, FileOutlined, FileZipOutlined,
-  CopyOutlined, SyncOutlined,
-} from '@ant-design/icons'
+import { Paperclip, Cloud, Database, RefreshCw, FileImage, FileText, File, FileArchive, Copy, RefreshCcw, Download, Eye } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAccount } from '../hooks/useAccount'
 import { formatBytes } from '../utils/format'
 import { useArchivedAttachments, useLiveAttachments, useDedupStats, useDedupBackfill } from '../hooks/queries'
+import { attachmentsApi } from '../api'
 
 const { Title, Text } = Typography
 
@@ -39,11 +36,16 @@ interface LiveAttachment {
 }
 
 function getFileIcon(mimeType: string | null) {
-  if (!mimeType) return <FileOutlined />
-  if (mimeType.startsWith('image/')) return <FileImageOutlined style={{ color: '#1677ff' }} />
-  if (mimeType === 'application/pdf') return <FilePdfOutlined style={{ color: '#cf1322' }} />
-  if (mimeType.includes('zip') || mimeType.includes('compressed')) return <FileZipOutlined style={{ color: '#faad14' }} />
-  return <FileOutlined />
+  if (!mimeType) return <File size={14} />
+  if (mimeType.startsWith('image/')) return <FileImage size={14} style={{ color: '#1677ff' }} />
+  if (mimeType === 'application/pdf') return <FileText size={14} style={{ color: '#cf1322' }} />
+  if (mimeType.includes('zip') || mimeType.includes('compressed')) return <FileArchive size={14} style={{ color: '#faad14' }} />
+  return <File size={14} />
+}
+
+function isPreviewable(mimeType: string | null): boolean {
+  if (!mimeType) return false
+  return mimeType.startsWith('image/') || mimeType === 'application/pdf'
 }
 
 export default function AttachmentsPage() {
@@ -115,6 +117,33 @@ export default function AttachmentsPage() {
         <Tag style={{ fontSize: 10 }}>{row.mime_type || t('common.noData')}</Tag>
       ),
     },
+    {
+      title: t('attachments.actions'),
+      key: 'actions',
+      width: 100,
+      render: (_: any, row: ArchivedAttachment) => (
+        <Space size={4}>
+          {isPreviewable(row.mime_type) && (
+            <Tooltip title={t('attachments.view')}>
+              <Button
+                type="text"
+                size="small"
+                icon={<Eye size={14} />}
+                onClick={() => window.open(attachmentsApi.downloadArchivedUrl(accountId!, row.id, true), '_blank')}
+              />
+            </Tooltip>
+          )}
+          <Tooltip title={t('attachments.download')}>
+            <Button
+              type="text"
+              size="small"
+              icon={<Download size={14} />}
+              onClick={() => window.open(attachmentsApi.downloadArchivedUrl(accountId!, row.id), '_blank')}
+            />
+          </Tooltip>
+        </Space>
+      ),
+    },
   ]
 
   const liveColumns = [
@@ -160,6 +189,33 @@ export default function AttachmentsPage() {
       width: 140,
       render: (_: any, row: LiveAttachment) => <Tag style={{ fontSize: 10 }}>{row.mimeType}</Tag>,
     },
+    {
+      title: t('attachments.actions'),
+      key: 'actions',
+      width: 100,
+      render: (_: any, row: LiveAttachment) => (
+        <Space size={4}>
+          {isPreviewable(row.mimeType) && (
+            <Tooltip title={t('attachments.view')}>
+              <Button
+                type="text"
+                size="small"
+                icon={<Eye size={14} />}
+                onClick={() => window.open(attachmentsApi.downloadLiveUrl(accountId!, row.messageId, row.filename, true), '_blank')}
+              />
+            </Tooltip>
+          )}
+          <Tooltip title={t('attachments.download')}>
+            <Button
+              type="text"
+              size="small"
+              icon={<Download size={14} />}
+              onClick={() => window.open(attachmentsApi.downloadLiveUrl(accountId!, row.messageId, row.filename), '_blank')}
+            />
+          </Tooltip>
+        </Space>
+      ),
+    },
   ]
 
   return (
@@ -167,17 +223,18 @@ export default function AttachmentsPage() {
       {contextHolder}
 
       <Space style={{ marginBottom: 16 }} align="center">
+        <Paperclip size={20} />
         <Title level={3} style={{ margin: 0 }}>{t('attachments.title')}</Title>
         <Segmented
           value={mode}
           onChange={(v) => setMode(v as ViewMode)}
           options={[
-            { label: <><DatabaseOutlined /> {t('attachments.archived')}</>, value: 'archived' },
-            { label: <><CloudOutlined /> {t('attachments.live')}</>, value: 'live' },
+            { label: <><Database size={14} /> {t('attachments.archived')}</>, value: 'archived' },
+            { label: <><Cloud size={14} /> {t('attachments.live')}</>, value: 'live' },
           ]}
         />
         <Button
-          icon={<ReloadOutlined />}
+          icon={<RefreshCw size={14} />}
           onClick={() => mode === 'archived' ? archivedQuery.refetch() : liveQuery.refetch()}
           loading={loading}
         >
@@ -192,7 +249,7 @@ export default function AttachmentsPage() {
           <Row gutter={16} style={{ marginBottom: 16 }}>
             <Col span={6}>
               <Card size="small">
-                <Statistic title={t('attachments.totalAttachments')} value={total} prefix={<PaperClipOutlined />} />
+                <Statistic title={t('attachments.totalAttachments')} value={total} prefix={<Paperclip size={14} />} />
               </Card>
             </Col>
             <Col span={6}>
@@ -217,13 +274,13 @@ export default function AttachmentsPage() {
                   <Statistic
                     title={t('attachments.dedupSaved')}
                     value={formatBytes(dedupStats.data?.savedBytes ?? 0)}
-                    prefix={<CopyOutlined />}
+                    prefix={<Copy size={14} />}
                     suffix={
                       dedupStats.data && dedupStats.data.hashCoverage < 1 ? (
                         <Button
                           size="small"
                           type="link"
-                          icon={<SyncOutlined spin={dedupBackfill.isPending} />}
+                          icon={<RefreshCcw size={14} className="lucide-spin" />}
                           onClick={() => dedupBackfill.mutate()}
                           loading={dedupBackfill.isPending}
                         >

@@ -13,14 +13,7 @@ import {
   Tooltip,
   Select,
 } from "antd";
-import {
-  ReloadOutlined,
-  FilterOutlined,
-  PaperClipOutlined,
-  MoreOutlined,
-  SaveOutlined,
-  StarOutlined,
-} from "@ant-design/icons";
+import { RefreshCw, Filter, Paperclip, MoreHorizontal, Save, Star, Mail } from 'lucide-react'
 import { useSearchParams } from "react-router";
 import { gmailApi, archiveApi, savedSearchesApi } from "../api";
 import { useAccount } from "../hooks/useAccount";
@@ -36,7 +29,7 @@ import { useMailCache, cacheKey } from '../store/mail.store';
 import { useGmailLabels } from '../hooks/queries';
 import dayjs from "dayjs";
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 const QUICK_FILTERS_KEYS = [
   { labelKey: 'all', value: '' },
@@ -346,7 +339,7 @@ export default function MailManagerPage() {
         <Space orientation="vertical" size={0}>
           <Space size={4}>
             {row.hasAttachments && (
-              <PaperClipOutlined style={{ color: "#8c8c8c", fontSize: 12 }} />
+              <Paperclip size={14} style={{ color: "#8c8c8c", fontSize: 12 }} />
             )}
             <Text
               strong={row.labelIds.includes("UNREAD")}
@@ -417,7 +410,7 @@ export default function MailManagerPage() {
             ],
           }}
         >
-          <Button type="text" icon={<MoreOutlined />} size="small" />
+          <Button type="text" icon={<MoreHorizontal size={14} />} size="small" />
         </Dropdown>
       ),
     },
@@ -426,6 +419,11 @@ export default function MailManagerPage() {
   return (
     <div>
       {contextHolder}
+
+      <Space style={{ marginBottom: 16 }} align="center">
+        <Mail size={20} />
+        <Title level={3} style={{ margin: 0 }}>{t('mailManager.title')}</Title>
+      </Space>
 
       {/* Filtres */}
       <Card size="small" style={{ marginBottom: 12 }}>
@@ -437,7 +435,7 @@ export default function MailManagerPage() {
               setQuickFilter(v);
             }}
             options={QUICK_FILTERS_KEYS.map(f => ({ label: f.labelKey === 'all' ? t('mailManager.inbox') : t(`mailManager.${f.labelKey}`), value: f.value }))}
-            prefix={<FilterOutlined />}
+            prefix={<Filter size={14} />}
           />
           <GmailSearchInput
             value={query}
@@ -446,12 +444,12 @@ export default function MailManagerPage() {
             style={{ width: 400 }}
           />
           <Button
-            icon={<ReloadOutlined />}
+            icon={<RefreshCw size={14} />}
             onClick={() => loadFresh(true)}
             loading={loading}
           />
           <Button
-            icon={<SaveOutlined />}
+            icon={<Save size={14} />}
             type="primary"
             onClick={handleArchiveAll}
             loading={archiveAllLoading}
@@ -461,7 +459,7 @@ export default function MailManagerPage() {
           {(query || quickFilter) && (
             <Tooltip title={t('mailManager.saveSearch')}>
               <Button
-                icon={<StarOutlined />}
+                icon={<Star size={14} />}
                 onClick={handleSaveSearch}
               />
             </Tooltip>

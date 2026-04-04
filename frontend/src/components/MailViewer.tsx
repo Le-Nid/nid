@@ -11,7 +11,7 @@ import {
   Tooltip,
   Image,
 } from "antd";
-import { DownloadOutlined, PaperClipOutlined } from "@ant-design/icons";
+import { Download, Paperclip } from 'lucide-react';
 import { useTranslation } from "react-i18next";
 import { gmailApi } from "../api";
 import { formatBytes } from "../utils/format";
@@ -217,7 +217,7 @@ export default function MailViewer({ accountId, messageId, onClose }: Props) {
             {attachments.length > 0 && (
               <>
                 <Text strong>
-                  <PaperClipOutlined /> {t('viewer.attachments', { count: attachments.length })}
+                  <Paperclip size={14} /> {t('viewer.attachments', { count: attachments.length })}
                 </Text>
 
                 {/* Preview images inline */}
@@ -264,7 +264,7 @@ export default function MailViewer({ accountId, messageId, onClose }: Props) {
                       <Tooltip title={t('common.download')}>
                         <Button
                           size="small"
-                          icon={<DownloadOutlined />}
+                          icon={<Download size={14} />}
                           onClick={() =>
                             downloadAttachment(att.attachmentId, att.filename)
                           }

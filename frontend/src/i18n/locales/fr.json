@@ -100,7 +100,7 @@
   },
 
   "dashboard": {
-    "title": "📊 Dashboard",
+    "title": "Dashboard",
     "noAccount": "Aucun compte Gmail connecté.",
     "connectAccount": "Connecter un compte",
     "loadError": "Erreur lors du chargement",
@@ -109,11 +109,11 @@
     "unread": "Non lus",
     "estimatedSize": "Taille estimée",
     "archivedNas": "Archivés (NAS)",
-    "timelineTitle": "📅 Volume de mails par mois",
-    "topSendersCount": "👤 Top expéditeurs (nombre)",
-    "topSendersSize": "⚖️ Top expéditeurs (taille)",
-    "biggestMails": "🐘 Mails les plus gros",
-    "labelDistribution": "🏷️ Répartition par label",
+    "timelineTitle": "Volume de mails par mois",
+    "topSendersCount": "Top expéditeurs (nombre)",
+    "topSendersSize": "Top expéditeurs (taille)",
+    "biggestMails": "Mails les plus gros",
+    "labelDistribution": "Répartition par label",
     "readRate": "Taux de lecture",
     "sender": "Expéditeur",
     "subject": "Sujet",
@@ -139,7 +139,7 @@
   },
 
   "mailManager": {
-    "title": "📬 Mes mails",
+    "title": "Mes mails",
     "searchPlaceholder": "from:, has:attachment, larger:5m…",
     "inbox": "Boîte de réception",
     "unread": "Non lus",
@@ -175,7 +175,7 @@
   },
 
   "archive": {
-    "title": "📦 Archives",
+    "title": "Archives",
     "searchPlaceholder": "Recherche full-text (sujet, expéditeur…)",
     "filterSender": "Filtrer par expéditeur",
     "filterAttachments": "Pièces jointes",
@@ -214,7 +214,7 @@
   },
 
   "rules": {
-    "title": "🤖 Règles automatiques",
+    "title": "Règles automatiques",
     "newRule": "Nouvelle règle",
     "templates": "Templates",
     "description": "Les règles analysent votre boîte Gmail et appliquent des actions automatiquement. Utilisez <strong>Prévisualiser</strong> pour voir combien de mails seront affectés avant de sauvegarder. Les actions bulk sont toujours exécutées via des <strong>jobs asynchrones</strong>.",
@@ -237,13 +237,13 @@
     "runError": "Erreur lors de l'exécution de la règle",
     "deleteSuccess": "Règle supprimée",
     "deleteError": "Erreur lors de la suppression",
-    "templateDrawerTitle": "📋 Templates de règles",
+    "templateDrawerTitle": "Templates de règles",
     "templateHint": "Cliquez sur un template pour créer une règle pré-configurée. Vous pourrez la modifier ensuite.",
     "templateLoadError": "Erreur lors du chargement des templates",
     "templateApplied": "Règle créée depuis le template",
-    "categoryCleanup": "🧹 Nettoyage",
-    "categoryArchive": "📦 Archivage",
-    "categoryOrganize": "📁 Organisation"
+    "categoryCleanup": "Nettoyage",
+    "categoryArchive": "Archivage",
+    "categoryOrganize": "Organisation"
   },
 
   "ruleForm": {
@@ -303,7 +303,7 @@
   },
 
   "jobs": {
-    "title": "⚙️ Jobs",
+    "title": "Jobs",
     "filterStatus": "Filtrer par statut",
     "autoRefresh": "Actualisation auto toutes les 5s",
     "noJobs": "Aucun job",
@@ -339,7 +339,7 @@
   },
 
   "settings": {
-    "title": "⚙️ Paramètres",
+    "title": "Paramètres",
     "profile": "Profil",
     "email": "Email",
     "name": "Nom",
@@ -377,9 +377,9 @@
     "notificationPrefs": "Préférences de notifications",
     "notificationPrefsHint": "Choisissez les notifications que vous souhaitez recevoir et par quel canal.",
     "notification": "Notification",
-    "inApp": "🔔 In-app",
-    "toast": "💬 Toast",
-    "webhook": "🔗 Webhook",
+    "inApp": "In-app",
+    "toast": "Toast",
+    "webhook": "Webhook",
     "weeklyReport": "Rapport hebdomadaire",
     "weeklyReportDesc": "Résumé d'activité chaque lundi",
     "jobCompleted": "Job terminé",
@@ -392,7 +392,7 @@
     "quotaWarningDesc": "Quand le stockage approche la limite",
     "integrityAlert": "Alerte intégrité",
     "integrityAlertDesc": "Problème détecté dans les archives",
-    "channelHint": "🔔 In-app = cloche dans le header · 💬 Toast = pop-up temporaire · 🔗 Webhook = push vers Discord, Slack, Ntfy, etc. (configurer ci-dessous)",
+    "channelHint": "In-app = cloche dans le header · Toast = pop-up temporaire · Webhook = push vers Discord, Slack, Ntfy, etc. (configurer ci-dessous)",
     "webhooks": "Webhooks",
     "noWebhook": "Aucun webhook configuré",
     "exportConfig": "Export / Import configuration",
@@ -417,7 +417,7 @@
   },
 
   "admin": {
-    "title": "🛡️ Administration",
+    "title": "Administration",
     "users": "Utilisateurs",
     "gmailAccounts": "Comptes Gmail",
     "totalJobs": "Jobs (total)",
@@ -448,7 +448,7 @@
   },
 
   "unsubscribe": {
-    "title": "📧 Newsletters & Listes",
+    "title": "Newsletters & Listes",
     "scan": "Scanner",
     "detected": "Newsletters détectées",
     "newsletterMails": "Mails newsletter",
@@ -475,7 +475,7 @@
   },
 
   "attachments": {
-    "title": "📎 Pièces jointes",
+    "title": "Pièces jointes",
     "archived": "Archives",
     "live": "Live",
     "filename": "Fichier",
@@ -494,13 +494,16 @@
     "reload": "Recharger",
     "searchPlaceholder": "Rechercher par nom, sujet ou expéditeur...",
     "noAttachment": "Aucune pièce jointe trouvée",
+    "actions": "Actions",
+    "download": "Télécharger",
+    "view": "Voir",
     "dedupSaved": "Espace économisé",
     "dedupDetails": "{{duplicates}} fichier(s) dupliqué(s), {{saved}} économisés",
     "dedupBackfill": "Analyser"
   },
 
   "insights": {
-    "title": "📊 Rapport hebdomadaire",
+    "title": "Rapport hebdomadaire",
     "jobsCompleted": "Jobs terminés",
     "jobsFailed": "Jobs en erreur",
     "mailsArchived": "Mails archivés",
@@ -513,7 +516,7 @@
   },
 
   "duplicates": {
-    "title": "🔁 Doublons (archives)",
+    "title": "Doublons (archives)",
     "analyze": "Analyser",
     "groups": "Groupes de doublons",
     "duplicateMails": "Mails en double",
@@ -646,7 +649,7 @@
       "invalidPassphrase": "Phrase secrète invalide",
       "passphrasePlaceholder": "Phrase secrète (min. 8 caractères)",
       "minLength": "La phrase secrète doit faire au moins 8 caractères",
-      "allEncrypted": "Toutes les archives sont chiffrées ✓"
+      "allEncrypted": "Toutes les archives sont chiffrées"
     }
   },
 
@@ -674,7 +677,7 @@
   },
 
   "savedSearches": {
-    "title": "🔍 Recherches sauvegardées",
+    "title": "Recherches sauvegardées",
     "newSearch": "Nouvelle recherche",
     "hint": "Sauvegardez vos requêtes Gmail complexes comme des vues réutilisables. Ex : « Factures de ce mois », « Mails avec PJ > 5 Mo non archivés ».",
     "noSearches": "Aucune recherche sauvegardée",
@@ -698,7 +701,7 @@
   },
 
   "unified": {
-    "title": "📬 Boîte unifiée",
+    "title": "Boîte unifiée",
     "allAccounts": "Tous les comptes",
     "account": "Compte",
     "sender": "Expéditeur",
@@ -711,7 +714,7 @@
   },
 
   "ops": {
-    "title": "⚙️ Ops & Résilience",
+    "title": "Ops & Résilience",
     "description": "Stockage distant, politiques de rétention, suivi quota Gmail API, import/export de mails.",
     "selectAccount": "Sélectionnez un compte Gmail pour accéder à cette fonctionnalité.",
     "tabs": {

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { App } from "antd";
-import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
+import { CheckCircle, XCircle } from 'lucide-react';
 import { jobsApi, notificationsApi } from "../api";
 import { useAccount } from "./useAccount";
 import { useTranslation } from "react-i18next";
@@ -49,7 +49,7 @@ export function useGlobalJobNotifier() {
               key: `job-${job.id}`,
               message: t('notifier.completed', { type: typeLabel }),
               description: t('notifier.processedCount', { count: job.processed ?? 0 }),
-              icon: <CheckCircleOutlined style={{ color: "#52c41a" }} />,
+              icon: <CheckCircle size={16} style={{ color: "#52c41a" }} />,
               duration: 6,
             });
           }
@@ -59,7 +59,7 @@ export function useGlobalJobNotifier() {
               key: `job-${job.id}`,
               message: t('notifier.failed', { type: typeLabel }),
               description: job.error ?? t('notifier.genericError'),
-              icon: <CloseCircleOutlined style={{ color: "#ff4d4f" }} />,
+              icon: <XCircle size={16} style={{ color: "#ff4d4f" }} />,
               duration: 10,
             });
           }

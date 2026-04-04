@@ -100,7 +100,7 @@
   },
 
   "dashboard": {
-    "title": "📊 Dashboard",
+    "title": "Dashboard",
     "noAccount": "No Gmail account connected.",
     "connectAccount": "Connect an account",
     "loadError": "Error loading data",
@@ -109,11 +109,11 @@
     "unread": "Unread",
     "estimatedSize": "Estimated size",
     "archivedNas": "Archived (NAS)",
-    "timelineTitle": "📅 Email volume per month",
-    "topSendersCount": "👤 Top senders (count)",
-    "topSendersSize": "⚖️ Top senders (size)",
-    "biggestMails": "🐘 Biggest emails",
-    "labelDistribution": "🏷️ Label distribution",
+    "timelineTitle": "Email volume per month",
+    "topSendersCount": "Top senders (count)",
+    "topSendersSize": "Top senders (size)",
+    "biggestMails": "Biggest emails",
+    "labelDistribution": "Label distribution",
     "readRate": "Read rate",
     "sender": "Sender",
     "subject": "Subject",
@@ -139,7 +139,7 @@
   },
 
   "mailManager": {
-    "title": "📬 My Emails",
+    "title": "My Emails",
     "searchPlaceholder": "from:, has:attachment, larger:5m…",
     "inbox": "Inbox",
     "unread": "Unread",
@@ -175,7 +175,7 @@
   },
 
   "archive": {
-    "title": "📦 Archives",
+    "title": "Archives",
     "searchPlaceholder": "Full-text search (subject, sender…)",
     "filterSender": "Filter by sender",
     "filterAttachments": "Attachments",
@@ -214,7 +214,7 @@
   },
 
   "rules": {
-    "title": "🤖 Auto Rules",
+    "title": "Auto Rules",
     "newRule": "New rule",
     "templates": "Templates",
     "description": "Rules analyze your Gmail inbox and apply actions automatically. Use <strong>Preview</strong> to see how many emails will be affected before saving. Bulk actions are always executed via <strong>async jobs</strong>.",
@@ -237,13 +237,13 @@
     "runError": "Error running rule",
     "deleteSuccess": "Rule deleted",
     "deleteError": "Error deleting rule",
-    "templateDrawerTitle": "📋 Rule Templates",
+    "templateDrawerTitle": "Rule Templates",
     "templateHint": "Click a template to create a pre-configured rule. You can edit it afterwards.",
     "templateLoadError": "Error loading templates",
     "templateApplied": "Rule created from template",
-    "categoryCleanup": "🧹 Cleanup",
-    "categoryArchive": "📦 Archive",
-    "categoryOrganize": "📁 Organize"
+    "categoryCleanup": "Cleanup",
+    "categoryArchive": "Archive",
+    "categoryOrganize": "Organize"
   },
 
   "ruleForm": {
@@ -303,7 +303,7 @@
   },
 
   "jobs": {
-    "title": "⚙️ Jobs",
+    "title": "Jobs",
     "filterStatus": "Filter by status",
     "autoRefresh": "Auto-refresh every 5s",
     "noJobs": "No jobs",
@@ -339,7 +339,7 @@
   },
 
   "settings": {
-    "title": "⚙️ Settings",
+    "title": "Settings",
     "profile": "Profile",
     "email": "Email",
     "name": "Name",
@@ -377,9 +377,9 @@
     "notificationPrefs": "Notification Preferences",
     "notificationPrefsHint": "Choose which notifications you want to receive and through which channel.",
     "notification": "Notification",
-    "inApp": "🔔 In-app",
-    "toast": "💬 Toast",
-    "webhook": "🔗 Webhook",
+    "inApp": "In-app",
+    "toast": "Toast",
+    "webhook": "Webhook",
     "weeklyReport": "Weekly report",
     "weeklyReportDesc": "Activity summary every Monday",
     "jobCompleted": "Job completed",
@@ -392,7 +392,7 @@
     "quotaWarningDesc": "When storage is near the limit",
     "integrityAlert": "Integrity alert",
     "integrityAlertDesc": "Problem detected in archives",
-    "channelHint": "🔔 In-app = bell in header · 💬 Toast = temporary pop-up · 🔗 Webhook = push to Discord, Slack, Ntfy, etc. (configure below)",
+    "channelHint": "In-app = bell in header · Toast = temporary pop-up · Webhook = push to Discord, Slack, Ntfy, etc. (configure below)",
     "webhooks": "Webhooks",
     "noWebhook": "No webhook configured",
     "exportConfig": "Export / Import configuration",
@@ -417,7 +417,7 @@
   },
 
   "admin": {
-    "title": "🛡️ Administration",
+    "title": "Administration",
     "users": "Users",
     "gmailAccounts": "Gmail Accounts",
     "totalJobs": "Jobs (total)",
@@ -448,7 +448,7 @@
   },
 
   "unsubscribe": {
-    "title": "📧 Newsletters & Lists",
+    "title": "Newsletters & Lists",
     "scan": "Scan",
     "detected": "Newsletters detected",
     "newsletterMails": "Newsletter emails",
@@ -475,7 +475,7 @@
   },
 
   "attachments": {
-    "title": "📎 Attachments",
+    "title": "Attachments",
     "archived": "Archives",
     "live": "Live",
     "filename": "File",
@@ -494,13 +494,16 @@
     "reload": "Reload",
     "searchPlaceholder": "Search by name, subject or sender...",
     "noAttachment": "No attachment found",
+    "actions": "Actions",
+    "download": "Download",
+    "view": "View",
     "dedupSaved": "Space saved",
     "dedupDetails": "{{duplicates}} duplicate file(s), {{saved}} saved",
     "dedupBackfill": "Analyze"
   },
 
   "insights": {
-    "title": "📊 Weekly Report",
+    "title": "Weekly Report",
     "jobsCompleted": "Jobs completed",
     "jobsFailed": "Jobs failed",
     "mailsArchived": "Emails archived",
@@ -513,7 +516,7 @@
   },
 
   "duplicates": {
-    "title": "🔁 Duplicates (archives)",
+    "title": "Duplicates (archives)",
     "analyze": "Analyze",
     "groups": "Duplicate groups",
     "duplicateMails": "Duplicate emails",
@@ -646,7 +649,7 @@
       "invalidPassphrase": "Invalid passphrase",
       "passphrasePlaceholder": "Passphrase (min. 8 characters)",
       "minLength": "Passphrase must be at least 8 characters",
-      "allEncrypted": "All archives are encrypted ✓"
+      "allEncrypted": "All archives are encrypted"
     }
   },
 
@@ -674,7 +677,7 @@
   },
 
   "savedSearches": {
-    "title": "🔍 Saved Searches",
+    "title": "Saved Searches",
     "newSearch": "New search",
     "hint": "Save your complex Gmail queries as reusable views. E.g., \"Invoices this month\", \"Emails with attachments > 5 MB not archived\".",
     "noSearches": "No saved searches",
@@ -698,7 +701,7 @@
   },
 
   "unified": {
-    "title": "📬 Unified Inbox",
+    "title": "Unified Inbox",
     "allAccounts": "All accounts",
     "account": "Account",
     "sender": "Sender",
@@ -711,7 +714,7 @@
   },
 
   "ops": {
-    "title": "⚙️ Ops & Resilience",
+    "title": "Ops & Resilience",
     "description": "Remote storage, retention policies, Gmail API quota monitoring, mail import/export.",
     "selectAccount": "Select a Gmail account to access this feature.",
     "tabs": {

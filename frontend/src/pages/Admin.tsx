@@ -3,10 +3,7 @@ import {
   Card, Table, Tag, Typography, Tabs, Statistic, Row, Col, Input,
   Select, Switch, Button, Modal, Descriptions, Space, Badge, InputNumber,
 } from 'antd'
-import {
-  UserOutlined, TeamOutlined, CloudOutlined, ScheduleOutlined,
-  DatabaseOutlined, SearchOutlined,
-} from '@ant-design/icons'
+import { User, Users, Cloud, CalendarClock, Database, Search, Crown } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { formatBytes } from '../utils/format'
 import { STATUS_COLORS } from '../utils/constants'
@@ -129,23 +126,23 @@ export default function AdminPage() {
 
   return (
     <div>
-      <Title level={3}>{t('admin.title')}</Title>
+      <Title level={3}><Crown size={20} style={{ marginRight: 8 }} />{t('admin.title')}</Title>
 
       {/* Stats globales */}
       {stats && (
         <Row gutter={16} style={{ marginBottom: 24 }}>
           <Col span={6}>
-            <Card><Statistic title={t('admin.users')} value={stats.users} prefix={<TeamOutlined />} /></Card>
+            <Card><Statistic title={t('admin.users')} value={stats.users} prefix={<Users size={14} />} /></Card>
           </Col>
           <Col span={6}>
-            <Card><Statistic title={t('admin.gmailAccounts')} value={stats.gmailAccounts} prefix={<CloudOutlined />} /></Card>
+            <Card><Statistic title={t('admin.gmailAccounts')} value={stats.gmailAccounts} prefix={<Cloud size={14} />} /></Card>
           </Col>
           <Col span={6}>
-            <Card><Statistic title={t('admin.totalJobs')} value={stats.jobs.total} prefix={<ScheduleOutlined />}
+            <Card><Statistic title={t('admin.totalJobs')} value={stats.jobs.total} prefix={<CalendarClock size={14} />}
               suffix={<Text type="secondary" style={{ fontSize: 12 }}> ({t('admin.activeJobs', { count: stats.jobs.active })})</Text>} /></Card>
           </Col>
           <Col span={6}>
-            <Card><Statistic title={t('admin.archives')} value={stats.archives.totalMails} prefix={<DatabaseOutlined />}
+            <Card><Statistic title={t('admin.archives')} value={stats.archives.totalMails} prefix={<Database size={14} />}
               suffix={<Text type="secondary" style={{ fontSize: 12 }}> ({formatBytes(stats.archives.totalSizeBytes)})</Text>} /></Card>
           </Col>
         </Row>
@@ -154,7 +151,7 @@ export default function AdminPage() {
       <Tabs items={[
         {
           key: 'users',
-          label: <span><UserOutlined /> {t('admin.users')}</span>,
+          label: <span><User size={14} /> {t('admin.users')}</span>,
           children: (
             <>
               <Input.Search
@@ -162,7 +159,7 @@ export default function AdminPage() {
                 allowClear
                 onSearch={(v) => { setUsersSearch(v); setUsersPage(1) }}
                 style={{ width: 300, marginBottom: 16 }}
-                prefix={<SearchOutlined />}
+                prefix={<Search size={14} />}
               />
               <Table
                 dataSource={users}
@@ -178,7 +175,7 @@ export default function AdminPage() {
         },
         {
           key: 'jobs',
-          label: <span><ScheduleOutlined /> Jobs</span>,
+          label: <span><CalendarClock size={14} /> Jobs</span>,
           children: (
             <>
               <Select

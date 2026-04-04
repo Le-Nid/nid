@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Badge, Dropdown, Typography, Button, Space, Empty, Popconfirm } from 'antd'
-import { BellOutlined, CheckOutlined, DeleteOutlined, ClearOutlined } from '@ant-design/icons'
+import { Bell, Check, Trash2, ListX } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { notificationsApi } from '../api'
 import dayjs from 'dayjs'
@@ -87,7 +87,7 @@ export default function NotificationBell() {
         <Text strong>{t('notifications.title')}</Text>
         <Space size={4}>
           {unreadCount > 0 && (
-            <Button size="small" type="link" icon={<CheckOutlined />} onClick={handleMarkAllRead}>
+            <Button size="small" type="link" icon={<Check size={14} />} onClick={handleMarkAllRead}>
               {t('notifications.markAllRead')}
             </Button>
           )}
@@ -98,7 +98,7 @@ export default function NotificationBell() {
               okText={t('common.confirm')}
               cancelText={t('common.cancel')}
             >
-              <Button size="small" type="link" danger icon={<ClearOutlined />}>
+              <Button size="small" type="link" danger icon={<ListX size={14} />}>
                 {t('notifications.clearRead')}
               </Button>
             </Popconfirm>
@@ -139,7 +139,7 @@ export default function NotificationBell() {
                 size="small"
                 type="text"
                 danger
-                icon={<DeleteOutlined />}
+                icon={<Trash2 size={14} />}
                 onClick={(e) => { e.stopPropagation(); handleDelete(item.id, !item.is_read) }}
                 aria-label={t('common.delete')}
                 style={{ marginLeft: 8, flexShrink: 0 }}
@@ -160,7 +160,7 @@ export default function NotificationBell() {
       placement="bottomRight"
     >
       <Badge count={unreadCount} size="small" offset={[-2, 2]}>
-        <BellOutlined style={{ fontSize: 18, cursor: 'pointer' }} />
+        <Bell size={18} style={{ cursor: 'pointer' }} />
       </Badge>
     </Dropdown>
   )

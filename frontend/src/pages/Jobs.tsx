@@ -11,7 +11,7 @@ import {
   Select,
   Empty,
 } from "antd";
-import { DeleteOutlined, ReloadOutlined, EyeOutlined } from "@ant-design/icons";
+import { Trash2, RefreshCw, Eye, CalendarClock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAccount } from "../hooks/useAccount";
 import { useJobs, useCancelJob } from "../hooks/queries";
@@ -155,7 +155,7 @@ export default function JobsPage() {
             <Button
               size="small"
               type="text"
-              icon={<EyeOutlined />}
+              icon={<Eye size={14} />}
               onClick={() => setWatchingJobId(record.id)}
             />
           </Tooltip>
@@ -167,7 +167,7 @@ export default function JobsPage() {
                 danger
                 size="small"
                 type="text"
-                icon={<DeleteOutlined />}
+                icon={<Trash2 size={14} />}
                 onClick={() => cancelJob(record.id)}
               />
             </Tooltip>
@@ -181,7 +181,7 @@ export default function JobsPage() {
     <div>
       <Space style={{ marginBottom: 16 }} align="center" wrap>
         <Title level={3} style={{ margin: 0 }}>
-          {t('jobs.title')}
+          <CalendarClock size={20} style={{ marginRight: 8 }} />{t('jobs.title')}
         </Title>
 
         <Select
@@ -199,7 +199,7 @@ export default function JobsPage() {
           ]}
         />
 
-        <Button icon={<ReloadOutlined />} onClick={() => refetch()} loading={loading}>
+        <Button icon={<RefreshCw size={14} />} onClick={() => refetch()} loading={loading}>
           {t('common.refresh')}
         </Button>
 

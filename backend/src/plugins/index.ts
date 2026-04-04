@@ -5,6 +5,7 @@ import cookie from '@fastify/cookie'
 import rateLimit from '@fastify/rate-limit'
 import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
+import multipart from '@fastify/multipart'
 import { ZodError } from 'zod'
 import { config } from '../config'
 import { connectDb } from './db'
@@ -35,6 +36,11 @@ export async function registerPlugins(app: FastifyInstance) {
   await app.register(rateLimit, {
     max: 100,
     timeWindow: '1 minute',
+  })
+
+  // Multipart (file uploads — used by mbox import)
+  await app.register(multipart, {
+    limits: { fileSize: 500 * 1024 * 1024 }, // 500 MB max
   })
 
   // Swagger (API docs — available at /docs)

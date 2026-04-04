@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Card, Button, Avatar, Tag, Popconfirm, Typography, Alert, Space, Divider, Progress, Descriptions, Table, Input, App, Modal, Form, Select, Switch } from 'antd'
-import { GoogleOutlined, DeleteOutlined, PlusOutlined, CheckCircleOutlined, UserOutlined, HistoryOutlined, LockOutlined, SafetyOutlined, ApiOutlined, DownloadOutlined, UploadOutlined, BellOutlined, CloudSyncOutlined } from '@ant-design/icons'
+import { Globe, Trash2, Plus, CheckCircle, User, History, Lock, ShieldCheck, Webhook, Download, Upload, Bell, CloudCog, Settings as SettingsIcon } from 'lucide-react'
 import { useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import api from '../api/client'
@@ -147,13 +147,13 @@ export default function SettingsPage() {
 
   return (
     <div style={{ maxWidth: 720 }}>
-      <Title level={3}>{t('settings.title')}</Title>
+      <Title level={3}><SettingsIcon size={20} style={{ marginRight: 8 }} />{t('settings.title')}</Title>
 
       {gmailStatus === 'connected' && (
         <Alert
           type="success"
           message={t('settings.gmailConnected', { email: connectedEmail })}
-          icon={<CheckCircleOutlined />}
+          icon={<CheckCircle size={14} />}
           showIcon
           closable
           style={{ marginBottom: 24 }}
@@ -174,7 +174,7 @@ export default function SettingsPage() {
         <Space size="large" align="start">
           {user?.avatar_url
             ? <Avatar src={user.avatar_url} size={64} crossOrigin="anonymous" />
-            : <Avatar icon={<UserOutlined />} size={64} />
+            : <Avatar icon={<User size={14} />} size={64} />
           }
           <Descriptions column={1} size="small">
             <Descriptions.Item label={t('settings.email')}>{user?.email}</Descriptions.Item>
@@ -215,13 +215,13 @@ export default function SettingsPage() {
           gmailAccounts.map((account) => (
             <div key={account.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--ant-color-split, #f0f0f0)' }}>
               <Space>
-                <Avatar icon={<GoogleOutlined />} style={{ backgroundColor: '#4285F4' }} />
+                <Avatar icon={<Globe size={14} />} style={{ backgroundColor: '#4285F4' }} />
                 <span>{account.email}</span>
                 {account.is_active && <Tag color="success">{t('common.active')}</Tag>}
               </Space>
               <Space>
                 <Button
-                  icon={<CloudSyncOutlined />}
+                  icon={<CloudCog size={14} />}
                   size="small"
                   loading={archivingAccount === account.id}
                   onClick={() => forceArchive(account.id)}
@@ -236,7 +236,7 @@ export default function SettingsPage() {
                   cancelText={t('common.cancel')}
                   okButtonProps={{ danger: true }}
                 >
-                  <Button danger icon={<DeleteOutlined />} size="small">
+                  <Button danger icon={<Trash2 size={14} />} size="small">
                     {t('settings.disconnect')}
                   </Button>
                 </Popconfirm>
@@ -249,7 +249,7 @@ export default function SettingsPage() {
 
         <Button
           type="primary"
-          icon={<PlusOutlined />}
+          icon={<Plus size={14} />}
           onClick={connectGmail}
           loading={connecting}
         >
@@ -264,7 +264,7 @@ export default function SettingsPage() {
       </Card>
 
       {/* 2FA / TOTP */}
-      <Card title={<><SafetyOutlined /> {t('settings.twoFactor')}</>} style={{ marginTop: 24 }}>
+      <Card title={<><ShieldCheck size={14} /> {t('settings.twoFactor')}</>} style={{ marginTop: 24 }}>
         {(user as any)?.totp_enabled ? (
           <>
             <Alert type="success" title={t('settings.twoFactorEnabled')} showIcon style={{ marginBottom: 16 }} />
@@ -299,7 +299,7 @@ export default function SettingsPage() {
                 cancelText={t('common.cancel')}
                 okButtonProps={{ danger: true }}
               >
-                <Button danger icon={<LockOutlined />} loading={totpLoading}>
+                <Button danger icon={<Lock size={14} />} loading={totpLoading}>
                   {t('settings.disableTwoFactor')}
                 </Button>
               </Popconfirm>
@@ -325,7 +325,7 @@ export default function SettingsPage() {
               />
               <Button
                 type="primary"
-                icon={<LockOutlined />}
+                icon={<Lock size={14} />}
                 loading={totpLoading}
                 disabled={totpCode.length !== 6}
                 onClick={async () => {
@@ -355,7 +355,7 @@ export default function SettingsPage() {
             <div style={{ marginTop: 16 }}>
               <Button
                 type="primary"
-                icon={<SafetyOutlined />}
+                icon={<ShieldCheck size={14} />}
                 loading={totpLoading}
                 onClick={async () => {
                   setTotpLoading(true)
@@ -378,7 +378,7 @@ export default function SettingsPage() {
       </Card>
 
       {/* Notification Preferences */}
-      <Card title={<><BellOutlined /> {t('settings.notificationPrefs')}</>} style={{ marginTop: 24 }}>
+      <Card title={<><Bell size={14} /> {t('settings.notificationPrefs')}</>} style={{ marginTop: 24 }}>
         <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
           {t('settings.notificationPrefsHint')}
         </Text>
@@ -451,7 +451,7 @@ export default function SettingsPage() {
       </Card>
 
       {/* Webhooks */}
-      <Card title={<><ApiOutlined /> {t('settings.webhooks')}</>} style={{ marginTop: 24 }}>
+      <Card title={<><Webhook size={14} /> {t('settings.webhooks')}</>} style={{ marginTop: 24 }}>
         {webhooks.length === 0 ? (
           <Typography.Text type="secondary">{t('settings.noWebhook')}</Typography.Text>
         ) : (
@@ -465,14 +465,14 @@ export default function SettingsPage() {
                 <Switch size="small" checked={wh.is_active} onChange={() => webhooksApi.toggle(wh.id).then(fetchWebhooks)} />
                 <Button size="small" onClick={async () => { await webhooksApi.test(wh.id); message.success(t('settings.testSent')) }}>{t('common.test')}</Button>
                 <Popconfirm title={t('settings.deleteWebhookConfirm')} onConfirm={() => webhooksApi.remove(wh.id).then(fetchWebhooks)}>
-                  <Button danger size="small" icon={<DeleteOutlined />} />
+                  <Button danger size="small" icon={<Trash2 size={14} />} />
                 </Popconfirm>
               </Space>
             </div>
           ))
         )}
         <Divider />
-        <Button icon={<PlusOutlined />} onClick={() => { webhookForm.resetFields(); setWebhookModal(true) }}>
+        <Button icon={<Plus size={14} />} onClick={() => { webhookForm.resetFields(); setWebhookModal(true) }}>
           {t('settings.newWebhook')}
         </Button>
         <Modal
@@ -520,14 +520,14 @@ export default function SettingsPage() {
         <Text>{t('settings.exportHint')}</Text>
         <div style={{ marginTop: 16 }}>
           <Space>
-            <Button icon={<DownloadOutlined />} onClick={handleExport}>{t('settings.exportBtn')}</Button>
-            <Button icon={<UploadOutlined />} onClick={handleImport}>{t('settings.importBtn')}</Button>
+            <Button icon={<Download size={14} />} onClick={handleExport}>{t('settings.exportBtn')}</Button>
+            <Button icon={<Upload size={14} />} onClick={handleImport}>{t('settings.importBtn')}</Button>
           </Space>
         </div>
       </Card>
 
       {/* Audit log */}
-      <Card title={<><HistoryOutlined /> {t('settings.auditLog')}</>} style={{ marginTop: 24 }}>
+      <Card title={<><History size={14} /> {t('settings.auditLog')}</>} style={{ marginTop: 24 }}>
         <Table
           dataSource={auditLogs}
           rowKey="id"

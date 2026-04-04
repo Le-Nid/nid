@@ -3,10 +3,7 @@ import {
   Typography, Card, Row, Col, Table, Tag, Spin, Alert, Space, Button,
   Tooltip, Progress, Statistic, Empty, App,
 } from 'antd'
-import {
-  ReloadOutlined, FireOutlined, TrophyOutlined, DeleteOutlined,
-  WarningOutlined, InboxOutlined, CloseOutlined, RiseOutlined,
-} from '@ant-design/icons'
+import { RefreshCw, Flame, Trophy, Trash2, AlertTriangle, Inbox, X, TrendingUp, Activity } from 'lucide-react'
 import { Line } from '@ant-design/charts'
 import { useTranslation } from 'react-i18next'
 import { useAccount } from '../hooks/useAccount'
@@ -202,18 +199,19 @@ export default function AnalyticsPage() {
   }
 
   const suggestionTypeIcons: Record<string, React.ReactNode> = {
-    bulk_unread: <WarningOutlined style={{ color: '#faad14' }} />,
-    large_sender: <FireOutlined style={{ color: '#ff4d4f' }} />,
-    old_newsletters: <DeleteOutlined style={{ color: '#8c8c8c' }} />,
-    duplicate_pattern: <WarningOutlined style={{ color: '#faad14' }} />,
+    bulk_unread: <AlertTriangle size={14} style={{ color: '#faad14' }} />,
+    large_sender: <Flame size={14} style={{ color: '#ff4d4f' }} />,
+    old_newsletters: <Trash2 size={14} style={{ color: '#8c8c8c' }} />,
+    duplicate_pattern: <AlertTriangle size={14} style={{ color: '#faad14' }} />,
   }
 
   return (
     <div>
       <Space style={{ marginBottom: 20 }}>
+        <Activity size={20} />
         <Title level={3} style={{ margin: 0 }}>{t('analytics.title')}</Title>
         <Button
-          icon={<ReloadOutlined />}
+          icon={<RefreshCw size={14} />}
           onClick={() => load(true)}
           loading={loading}
           size="small"
@@ -232,7 +230,7 @@ export default function AnalyticsPage() {
               <Statistic
                 title={t('analytics.inboxCount')}
                 value={inboxZero?.current.inboxCount ?? 0}
-                prefix={<InboxOutlined />}
+                prefix={<Inbox size={14} />}
                 styles={inboxZero?.current.inboxCount === 0 ? { content: { color: '#52c41a' } } : undefined}
               />
             </Card>
@@ -242,7 +240,7 @@ export default function AnalyticsPage() {
               <Statistic
                 title={t('analytics.unreadCount')}
                 value={inboxZero?.current.unreadCount ?? 0}
-                prefix={<WarningOutlined />}
+                prefix={<AlertTriangle size={14} />}
               />
             </Card>
           </Col>
@@ -251,7 +249,7 @@ export default function AnalyticsPage() {
               <Statistic
                 title={t('analytics.streak')}
                 value={inboxZero?.streak ?? 0}
-                prefix={<FireOutlined style={{ color: '#ff4d4f' }} />}
+                prefix={<Flame size={14} style={{ color: '#ff4d4f' }} />}
                 suffix={t('analytics.days')}
               />
             </Card>
@@ -261,7 +259,7 @@ export default function AnalyticsPage() {
               <Statistic
                 title={t('analytics.bestStreak')}
                 value={inboxZero?.bestStreak ?? 0}
-                prefix={<TrophyOutlined style={{ color: '#faad14' }} />}
+                prefix={<Trophy size={14} style={{ color: '#faad14' }} />}
                 suffix={t('analytics.days')}
               />
             </Card>
@@ -272,7 +270,7 @@ export default function AnalyticsPage() {
         {inboxZero && inboxZero.history.length > 1 && (
           <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
             <Col xs={24}>
-              <Card title={<><RiseOutlined /> {t('analytics.inboxZeroHistory')}</>} size="small">
+              <Card title={<><TrendingUp size={14} /> {t('analytics.inboxZeroHistory')}</>} size="small">
                 <Line {...inboxZeroChartConfig} />
               </Card>
             </Col>
@@ -296,7 +294,7 @@ export default function AnalyticsPage() {
         {suggestions.length > 0 && (
           <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
             <Col xs={24}>
-              <Card title={<><WarningOutlined style={{ color: '#faad14' }} /> {t('analytics.suggestionsTitle')}</>} size="small">
+              <Card title={<><AlertTriangle size={14} style={{ color: '#faad14' }} /> {t('analytics.suggestionsTitle')}</>} size="small">
                 {suggestions.map((s: { id: string; type: string; title: string; description: string | null; emailCount: number; totalSizeBytes: number }) => (
                   <Card
                     key={s.id}
@@ -305,7 +303,7 @@ export default function AnalyticsPage() {
                     extra={
                       <Button
                         size="small"
-                        icon={<CloseOutlined />}
+                        icon={<X size={14} />}
                         onClick={() => handleDismiss(s.id)}
                         type="text"
                         aria-label={t('analytics.dismiss')}
@@ -313,7 +311,7 @@ export default function AnalyticsPage() {
                     }
                   >
                     <Space>
-                      {suggestionTypeIcons[s.type] ?? <WarningOutlined />}
+                      {suggestionTypeIcons[s.type] ?? <AlertTriangle size={14} />}
                       <div>
                         <Text strong>{s.title}</Text>
                         {s.description && (
@@ -335,7 +333,7 @@ export default function AnalyticsPage() {
         {/* ─── Score d'encombrement par expéditeur ─────────── */}
         <Row gutter={[16, 16]}>
           <Col xs={24}>
-            <Card title={<><FireOutlined style={{ color: '#ff4d4f' }} /> {t('analytics.senderScoresTitle')}</>} size="small">
+            <Card title={<><Flame size={14} style={{ color: '#ff4d4f' }} /> {t('analytics.senderScoresTitle')}</>} size="small">
               <Table
                 dataSource={senderScores}
                 columns={senderColumns}

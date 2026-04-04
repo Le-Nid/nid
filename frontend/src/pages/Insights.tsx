@@ -1,10 +1,7 @@
 import {
   Typography, Card, Row, Col, Statistic, Table, Empty, Space, Tag, Spin,
 } from 'antd'
-import {
-  CheckCircleOutlined, CloseCircleOutlined, DatabaseOutlined,
-  RobotOutlined, MailOutlined,
-} from '@ant-design/icons'
+import { CheckCircle, XCircle, Database, Bot, Mail, LineChart } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { formatBytes } from '../utils/format'
 import { useWeeklyReport } from '../hooks/queries'
@@ -39,6 +36,7 @@ export default function InsightsPage() {
   return (
     <div>
       <Space style={{ marginBottom: 16 }} align="center">
+        <LineChart size={20} />
         <Title level={3} style={{ margin: 0 }}>{t('insights.title')}</Title>
         <Tag color="blue">{from} — {to}</Tag>
       </Space>
@@ -49,7 +47,7 @@ export default function InsightsPage() {
             <Statistic
               title={t('insights.jobsCompleted')}
               value={stats.jobsCompleted}
-              prefix={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
+              prefix={<CheckCircle size={14} style={{ color: '#52c41a' }} />}
             />
           </Card>
         </Col>
@@ -58,7 +56,7 @@ export default function InsightsPage() {
             <Statistic
               title={t('insights.jobsFailed')}
               value={stats.jobsFailed}
-              prefix={<CloseCircleOutlined style={{ color: stats.jobsFailed > 0 ? '#ff4d4f' : '#d9d9d9' }} />}
+              prefix={<XCircle size={14} style={{ color: stats.jobsFailed > 0 ? '#ff4d4f' : '#d9d9d9' }} />}
               styles={stats.jobsFailed > 0 ? { content: { color: '#ff4d4f' } } : undefined}
             />
           </Card>
@@ -68,7 +66,7 @@ export default function InsightsPage() {
             <Statistic
               title={t('insights.mailsArchived')}
               value={stats.mailsArchived}
-              prefix={<DatabaseOutlined />}
+              prefix={<Database size={14} />}
               suffix={<Text type="secondary" style={{ fontSize: 12 }}>{formatBytes(stats.archiveSizeBytes)}</Text>}
             />
           </Card>
@@ -78,14 +76,14 @@ export default function InsightsPage() {
             <Statistic
               title={t('insights.rulesExecuted')}
               value={stats.rulesExecuted}
-              prefix={<RobotOutlined />}
+              prefix={<Bot size={14} />}
             />
           </Card>
         </Col>
       </Row>
 
       {stats.topSenders.length > 0 && (
-        <Card title={<><MailOutlined /> {t('insights.topSenders')}</>} size="small">
+        <Card title={<><Mail size={14} /> {t('insights.topSenders')}</>} size="small">
           <Table
             dataSource={stats.topSenders}
             columns={senderColumns}

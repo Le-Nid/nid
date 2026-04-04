@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AutoComplete, Input } from "antd";
-import { SearchOutlined } from "@ant-design/icons";
+import { Search } from 'lucide-react';
 import { useTranslation } from "react-i18next";
 
 // Operator keys mapped to translation keys and values
@@ -100,7 +100,7 @@ export default function GmailSearchInput({
       popupMatchSelectWidth={420}
     >
       <Input
-        prefix={<SearchOutlined />}
+        prefix={<Search size={14} />}
         placeholder={placeholder ?? "from:, has:attachment, larger:5m…"}
         onPressEnter={() => onSearch(value)}
         allowClear

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router'
 import { Card, Typography, Spin, Result, Tag, Space } from 'antd'
-import { MailOutlined, UserOutlined, CalendarOutlined } from '@ant-design/icons'
+import { Mail, User, Calendar } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import dayjs from 'dayjs'
 import { sharingApi } from '../api'
@@ -49,15 +49,15 @@ export default function SharedMailPage() {
       <Card>
         <Space orientation="vertical" style={{ width: '100%' }} size="middle">
           <Title level={3}>
-            <MailOutlined style={{ marginRight: 8 }} />
+            <Mail size={16} style={{ marginRight: 8 }} />
             {mail.subject || t('common.noSubject')}
           </Title>
 
           <Space wrap>
-            <Tag icon={<UserOutlined />}>{mail.sender}</Tag>
+            <Tag icon={<User size={14} />}>{mail.sender}</Tag>
             {mail.recipient && <Tag>{t('sharing.to')}: {mail.recipient}</Tag>}
             {mail.date && (
-              <Tag icon={<CalendarOutlined />}>
+              <Tag icon={<Calendar size={14} />}>
                 {dayjs(mail.date).format('DD/MM/YYYY HH:mm')}
               </Tag>
             )}

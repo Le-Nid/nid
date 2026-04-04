@@ -3,9 +3,7 @@ import {
   Table, Button, Typography, Space, Tag, Card, Empty,
   Statistic, Row, Col, message, Popconfirm,
 } from 'antd'
-import {
-  CopyOutlined, DeleteOutlined, ReloadOutlined,
-} from '@ant-design/icons'
+import { Copy, Trash2, RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAccount } from '../hooks/useAccount'
 import { formatBytes } from '../utils/format'
@@ -100,7 +98,7 @@ export default function DuplicatesPage() {
             <Button
               size="small"
               danger
-              icon={<DeleteOutlined />}
+              icon={<Trash2 size={14} />}
               loading={deletingGroup === key}
             >
               {t('duplicates.deleteCount', { count: row.count - 1 })}
@@ -116,8 +114,9 @@ export default function DuplicatesPage() {
       {contextHolder}
 
       <Space style={{ marginBottom: 16 }} align="center">
+        <Copy size={20} />
         <Title level={3} style={{ margin: 0 }}>{t('duplicates.title')}</Title>
-        <Button icon={<ReloadOutlined />} onClick={load} loading={loading}>
+        <Button icon={<RefreshCw size={14} />} onClick={load} loading={loading}>
           {t('duplicates.analyze')}
         </Button>
       </Space>
@@ -129,7 +128,7 @@ export default function DuplicatesPage() {
           <Row gutter={16} style={{ marginBottom: 16 }}>
             <Col span={8}>
               <Card size="small">
-                <Statistic title={t('duplicates.groups')} value={groups.length} prefix={<CopyOutlined />} />
+                <Statistic title={t('duplicates.groups')} value={groups.length} prefix={<Copy size={14} />} />
               </Card>
             </Col>
             <Col span={8}>

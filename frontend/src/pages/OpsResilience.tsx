@@ -1,15 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Card, Tabs, Typography, Form, Input, InputNumber, Select, Switch,
   Button, Table, Space, Popconfirm, Progress, Statistic, Row, Col,
   Upload, Divider, Tag, Alert, App,
 } from 'antd'
-import {
-  CloudServerOutlined, DeleteOutlined, PlusOutlined,
-  DashboardOutlined, ImportOutlined, ExportOutlined,
-  UploadOutlined, PlayCircleOutlined,
-  ApiOutlined, SafetyOutlined, DatabaseOutlined,
-} from '@ant-design/icons'
+import { Server, Trash2, Plus, LayoutDashboard, FileInput, FileOutput, Upload as UploadIcon, Play, Webhook, ShieldCheck, Database } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/auth.store'
 import {
@@ -29,7 +24,7 @@ export default function OpsResilience() {
 
   return (
     <div>
-      <Title level={3}>{t('ops.title')}</Title>
+      <Title level={3}><Server size={20} style={{ marginRight: 8 }} />{t('ops.title')}</Title>
       <Paragraph type="secondary">{t('ops.description')}</Paragraph>
 
       <Tabs
@@ -37,22 +32,22 @@ export default function OpsResilience() {
         items={[
           {
             key: 'storage',
-            label: <span><CloudServerOutlined /> {t('ops.tabs.storage')}</span>,
+            label: <span><Server size={14} /> {t('ops.tabs.storage')}</span>,
             children: <StorageTab />,
           },
           {
             key: 'retention',
-            label: <span><DeleteOutlined /> {t('ops.tabs.retention')}</span>,
+            label: <span><Trash2 size={14} /> {t('ops.tabs.retention')}</span>,
             children: <RetentionTab />,
           },
           {
             key: 'quota',
-            label: <span><DashboardOutlined /> {t('ops.tabs.quota')}</span>,
+            label: <span><LayoutDashboard size={14} /> {t('ops.tabs.quota')}</span>,
             children: activeAccountId ? <QuotaTab accountId={activeAccountId} /> : <Alert message={t('ops.selectAccount')} type="info" />,
           },
           {
             key: 'import',
-            label: <span><ImportOutlined /> {t('ops.tabs.import')}</span>,
+            label: <span><FileInput size={14} /> {t('ops.tabs.import')}</span>,
             children: activeAccountId ? <ImportExportTab accountId={activeAccountId} /> : <Alert message={t('ops.selectAccount')} type="info" />,
           },
         ]}
@@ -72,7 +67,7 @@ function StorageTab() {
   const testS3 = useTestS3()
   const [storageType, setStorageType] = useState<'local' | 's3'>('local')
 
-  const onLoad = () => {
+  useEffect(() => {
     if (cfg) {
       setStorageType(cfg.type ?? 'local')
       form.setFieldsValue({
@@ -83,9 +78,7 @@ function StorageTab() {
         s3ForcePathStyle: cfg.s3_force_path_style ?? true,
       })
     }
-  }
-
-  if (cfg && !form.isFieldsTouched()) onLoad()
+  }, [cfg, form])
 
   const handleSave = async (values: any) => {
     try {
@@ -135,10 +128,10 @@ function StorageTab() {
         <Form.Item name="type" label={t('ops.storage.type')}>
           <Select onChange={(v) => setStorageType(v)}>
             <Select.Option value="local">
-              <DatabaseOutlined /> {t('ops.storage.local')}
+              <Database size={14} /> {t('ops.storage.local')}
             </Select.Option>
             <Select.Option value="s3">
-              <CloudServerOutlined /> {t('ops.storage.s3')}
+              <Server size={14} /> {t('ops.storage.s3')}
             </Select.Option>
           </Select>
         </Form.Item>
@@ -177,7 +170,7 @@ function StorageTab() {
             </Form.Item>
 
             <Button
-              icon={<SafetyOutlined />}
+              icon={<ShieldCheck size={14} />}
               onClick={handleTest}
               loading={testS3.isPending}
               style={{ marginBottom: 16 }}
@@ -291,7 +284,7 @@ function RetentionTab() {
       key: 'actions',
       render: (_: any, rec: any) => (
         <Popconfirm title={t('ops.retention.deleteConfirm')} onConfirm={() => deletePolicy.mutate(rec.id)}>
-          <Button danger size="small" icon={<DeleteOutlined />} />
+          <Button danger size="small" icon={<Trash2 size={14} />} />
         </Popconfirm>
       ),
     },
@@ -307,10 +300,10 @@ function RetentionTab() {
       />
 
       <Space style={{ marginBottom: 16 }}>
-        <Button icon={<PlusOutlined />} type="primary" onClick={() => setShowForm(!showForm)}>
+        <Button icon={<Plus size={14} />} type="primary" onClick={() => setShowForm(!showForm)}>
           {t('ops.retention.add')}
         </Button>
-        <Button icon={<PlayCircleOutlined />} onClick={handleRun} loading={runRetention.isPending}>
+        <Button icon={<Play size={14} />} onClick={handleRun} loading={runRetention.isPending}>
           {t('ops.retention.runNow')}
         </Button>
       </Space>
@@ -502,7 +495,7 @@ function ImportExportTab({ accountId }: { accountId: string }) {
   return (
     <Row gutter={[24, 24]}>
       <Col xs={24} lg={12}>
-        <Card title={<><UploadOutlined /> {t('ops.import.mboxTitle')}</>} size="small">
+        <Card title={<><UploadIcon size={14} /> {t('ops.import.mboxTitle')}</>} size="small">
           <Alert
             message={t('ops.import.mboxInfo')}
             type="info"
@@ -518,7 +511,7 @@ function ImportExportTab({ accountId }: { accountId: string }) {
             }}
             showUploadList={false}
           >
-            <p><UploadOutlined style={{ fontSize: 32 }} /></p>
+            <p><UploadIcon size={14} style={{ fontSize: 32 }} /></p>
             <p>{t('ops.import.dropMbox')}</p>
           </Upload.Dragger>
           {importMbox.isPending && <Progress percent={50} status="active" style={{ marginTop: 8 }} />}
@@ -526,7 +519,7 @@ function ImportExportTab({ accountId }: { accountId: string }) {
       </Col>
 
       <Col xs={24} lg={12}>
-        <Card title={<><ApiOutlined /> {t('ops.import.imapTitle')}</>} size="small">
+        <Card title={<><Webhook size={14} /> {t('ops.import.imapTitle')}</>} size="small">
           <Alert
             message={t('ops.import.imapInfo')}
             type="info"
@@ -573,7 +566,7 @@ function ImportExportTab({ accountId }: { accountId: string }) {
             <Form.Item name="secure" label={t('ops.import.imapSecure')} valuePropName="checked" initialValue={true}>
               <Switch />
             </Form.Item>
-            <Button type="primary" htmlType="submit" loading={importImap.isPending} icon={<ImportOutlined />}>
+            <Button type="primary" htmlType="submit" loading={importImap.isPending} icon={<FileInput size={14} />}>
               {t('ops.import.startImport')}
             </Button>
           </Form>
@@ -581,10 +574,10 @@ function ImportExportTab({ accountId }: { accountId: string }) {
       </Col>
 
       <Col xs={24}>
-        <Card title={<><ExportOutlined /> {t('ops.import.exportTitle')}</>} size="small">
+        <Card title={<><FileOutput size={14} /> {t('ops.import.exportTitle')}</>} size="small">
           <Paragraph type="secondary">{t('ops.import.exportInfo')}</Paragraph>
           <Button
-            icon={<ExportOutlined />}
+            icon={<FileOutput size={14} />}
             onClick={handleExportMbox}
             loading={exportMbox.isPending}
           >

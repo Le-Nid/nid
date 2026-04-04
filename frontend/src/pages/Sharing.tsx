@@ -3,10 +3,7 @@ import {
   Typography, Table, Button, Space, message, Popconfirm,
   Tooltip, Modal, InputNumber, Select, Card,
 } from 'antd'
-import {
-  ShareAltOutlined, DeleteOutlined, CopyOutlined,
-  LinkOutlined,
-} from '@ant-design/icons'
+import { Share2, Trash2, Copy, Link } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -115,7 +112,7 @@ export default function SharingPage() {
           <Tooltip title={t('sharing.copyLink')}>
             <Button
               type="text"
-              icon={<CopyOutlined />}
+              icon={<Copy size={14} />}
               size="small"
               onClick={() => copyLink(record.token)}
             />
@@ -124,7 +121,7 @@ export default function SharingPage() {
             title={t('sharing.confirmRevoke')}
             onConfirm={() => handleRevoke(record.id)}
           >
-            <Button type="text" danger icon={<DeleteOutlined />} size="small" />
+            <Button type="text" danger icon={<Trash2 size={14} />} size="small" />
           </Popconfirm>
         </Space>
       ),
@@ -136,7 +133,7 @@ export default function SharingPage() {
       {contextHolder}
       <Space orientation="vertical" style={{ width: '100%' }} size="large">
         <Title level={2}>
-          <ShareAltOutlined style={{ marginRight: 8 }} />
+          <Share2 size={22} style={{ marginRight: 8 }} />
           {t('sharing.title')}
         </Title>
         <Text type="secondary">{t('sharing.description')}</Text>
@@ -144,7 +141,7 @@ export default function SharingPage() {
         {lastCreatedLink && (
           <Card size="small" style={{ background: '#f6ffed', borderColor: '#b7eb8f' }}>
             <Space>
-              <LinkOutlined />
+              <Link size={14} />
               <Text copyable>{lastCreatedLink}</Text>
             </Space>
           </Card>

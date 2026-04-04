@@ -1,16 +1,11 @@
 import { Outlet, useNavigate, useLocation } from 'react-router'
 import { Layout, Menu, Select, Avatar, Dropdown, Typography, Switch, Tooltip, Tag } from 'antd'
 import {
-  DashboardOutlined, MailOutlined, DatabaseOutlined, SettingOutlined,
-  LogoutOutlined, UserOutlined, ScheduleOutlined, RobotOutlined,
-  CrownOutlined,
-  StopOutlined, PaperClipOutlined, LineChartOutlined, CopyOutlined,
-  GlobalOutlined, SafetyOutlined, HeatMapOutlined,
-  MenuFoldOutlined, MenuUnfoldOutlined,
-  InboxOutlined, AppstoreOutlined, FundOutlined, ControlOutlined,
-  FolderOpenOutlined, MergeCellsOutlined,
-  CloudServerOutlined, ClockCircleOutlined, ShareAltOutlined,
-} from '@ant-design/icons'
+  LayoutDashboard, Mail, Database, Settings, LogOut, User, CalendarClock, Bot,
+  Crown, Ban, Paperclip, LineChart, Copy, Globe, ShieldCheck, Activity,
+  PanelLeftClose, PanelLeftOpen, Inbox, LayoutGrid, TrendingUp, SlidersHorizontal,
+  FolderOpen, Merge, Server, Clock, Share2, Moon, Sun,
+} from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/auth.store'
@@ -35,49 +30,49 @@ export default function AppLayout() {
   const menuItems = [
     {
       key: 'grp-email',
-      icon: <InboxOutlined />,
+      icon: <Inbox size={16} />,
       label: t('nav.group_email'),
       children: [
-        { key: '/dashboard', icon: <DashboardOutlined />, label: t('nav.dashboard') },
-        { key: '/mails',     icon: <MailOutlined />,      label: t('nav.mails') },
-        { key: '/unified',   icon: <MergeCellsOutlined />, label: t('nav.unified') },
-        { key: '/archive',   icon: <DatabaseOutlined />,  label: t('nav.archives') },
-        { key: '/saved-searches', icon: <FolderOpenOutlined />, label: t('nav.savedSearches') },
+        { key: '/dashboard', icon: <LayoutDashboard size={16} />, label: t('nav.dashboard') },
+        { key: '/mails',     icon: <Mail size={16} />,      label: t('nav.mails') },
+        { key: '/unified',   icon: <Merge size={16} />, label: t('nav.unified') },
+        { key: '/archive',   icon: <Database size={16} />,  label: t('nav.archives') },
+        { key: '/saved-searches', icon: <FolderOpen size={16} />, label: t('nav.savedSearches') },
       ],
     },
     {
       key: 'grp-tools',
-      icon: <AppstoreOutlined />,
+      icon: <LayoutGrid size={16} />,
       label: t('nav.group_tools'),
       children: [
-        { key: '/rules',        icon: <RobotOutlined />,       label: t('nav.rules') },
-        { key: '/unsubscribe',  icon: <StopOutlined />,        label: t('nav.newsletters') },
-        { key: '/attachments',  icon: <PaperClipOutlined />,   label: t('nav.attachments') },
-        { key: '/duplicates',   icon: <CopyOutlined />,        label: t('nav.duplicates') },
-        { key: '/expiration',   icon: <ClockCircleOutlined />, label: t('nav.expiration') },
-        { key: '/sharing',      icon: <ShareAltOutlined />,    label: t('nav.sharing') },
+        { key: '/rules',        icon: <Bot size={16} />,       label: t('nav.rules') },
+        { key: '/unsubscribe',  icon: <Ban size={16} />,        label: t('nav.newsletters') },
+        { key: '/attachments',  icon: <Paperclip size={16} />,   label: t('nav.attachments') },
+        { key: '/duplicates',   icon: <Copy size={16} />,        label: t('nav.duplicates') },
+        { key: '/expiration',   icon: <Clock size={16} />, label: t('nav.expiration') },
+        { key: '/sharing',      icon: <Share2 size={16} />,    label: t('nav.sharing') },
       ],
     },
     {
       key: 'grp-analytics',
-      icon: <FundOutlined />,
+      icon: <TrendingUp size={16} />,
       label: t('nav.group_analytics'),
       children: [
-        { key: '/insights',      icon: <LineChartOutlined />,   label: t('nav.insights') },
-        { key: '/analytics',     icon: <HeatMapOutlined />,     label: t('nav.analytics') },
-        { key: '/privacy',       icon: <SafetyOutlined />,      label: t('nav.privacy') },
+        { key: '/insights',      icon: <LineChart size={16} />,   label: t('nav.insights') },
+        { key: '/analytics',     icon: <Activity size={16} />,     label: t('nav.analytics') },
+        { key: '/privacy',       icon: <ShieldCheck size={16} />,      label: t('nav.privacy') },
       ],
     },
     {
       key: 'grp-system',
-      icon: <ControlOutlined />,
+      icon: <SlidersHorizontal size={16} />,
       label: t('nav.group_system'),
       children: [
-        { key: '/jobs',          icon: <ScheduleOutlined />,    label: t('nav.jobs') },
-        { key: '/ops',           icon: <CloudServerOutlined />, label: t('nav.ops') },
-        { key: '/settings',      icon: <SettingOutlined />,     label: t('nav.settings') },
+        { key: '/jobs',          icon: <CalendarClock size={16} />,    label: t('nav.jobs') },
+        { key: '/ops',           icon: <Server size={16} />, label: t('nav.ops') },
+        { key: '/settings',      icon: <Settings size={16} />,     label: t('nav.settings') },
         ...(user?.role === 'admin' ? [
-          { key: '/admin', icon: <CrownOutlined />, label: t('nav.admin') },
+          { key: '/admin', icon: <Crown size={16} />, label: t('nav.admin') },
         ] : []),
       ],
     },
@@ -87,7 +82,7 @@ export default function AppLayout() {
     items: [
       { key: 'email', label: <Text type="secondary">{user?.email}</Text>, disabled: true },
       { type: 'divider' as const },
-      { key: 'logout', icon: <LogoutOutlined />, label: t('layout.logout'), danger: true },
+      { key: 'logout', icon: <LogOut size={16} />, label: t('layout.logout'), danger: true },
     ],
     onClick: ({ key }: { key: string }) => {
       if (key === 'logout') { logout().then(() => navigate('/login')) }
@@ -106,7 +101,10 @@ export default function AppLayout() {
         onCollapse={setCollapsed}
         trigger={null}
         theme={isDark ? 'dark' : 'light'}
-        style={{ borderRight: isDark ? '1px solid #303030' : '1px solid #f0f0f0' }}
+        className="app-sider"
+        style={{
+          borderRight: isDark ? '1px solid #303030' : '1px solid #f0f0f0',
+        }}
         role="navigation"
         aria-label={t('layout.mainMenu')}
       >
@@ -133,7 +131,7 @@ export default function AppLayout() {
               display: collapsed ? 'none' : 'inline-flex',
             }}
           >
-            <MenuFoldOutlined />
+            <PanelLeftClose size={16} />
           </button>
         </div>
 
@@ -154,7 +152,7 @@ export default function AppLayout() {
                 fontSize: 16,
               }}
             >
-              <MenuUnfoldOutlined />
+              <PanelLeftOpen size={16} />
             </button>
           </div>
         )}
@@ -179,16 +177,18 @@ export default function AppLayout() {
           </div>
         )}
 
-        <Menu
-          mode="inline"
-          theme={isDark ? 'dark' : 'light'}
-          selectedKeys={[location.pathname]}
-          defaultOpenKeys={['grp-email']}
-          inlineCollapsed={collapsed}
-          items={menuItems}
-          style={{ border: 'none', paddingTop: 8 }}
-          onClick={({ key }) => navigate(key)}
-        />
+        <div className="sider-menu-scroll">
+          <Menu
+            mode="inline"
+            theme={isDark ? 'dark' : 'light'}
+            selectedKeys={[location.pathname]}
+            defaultOpenKeys={['grp-email']}
+            inlineCollapsed={collapsed}
+            items={menuItems}
+            style={{ border: 'none', paddingTop: 8 }}
+            onClick={({ key }) => navigate(key)}
+          />
+        </div>
       </Sider>
 
       <Layout>
@@ -210,7 +210,7 @@ export default function AppLayout() {
             value={i18n.language?.startsWith('en') ? 'en' : 'fr'}
             onChange={(lng) => i18n.changeLanguage(lng)}
             style={{ width: 90 }}
-            suffixIcon={<GlobalOutlined />}
+            suffixIcon={<Globe size={14} />}
             options={[
               { value: 'fr', label: '🇫🇷 FR' },
               { value: 'en', label: '🇬🇧 EN' },
@@ -222,8 +222,8 @@ export default function AppLayout() {
             <Switch
               checked={isDark}
               onChange={toggle}
-              checkedChildren="🌙"
-              unCheckedChildren="☀️"
+              checkedChildren={<Moon size={12} />}
+              unCheckedChildren={<Sun size={12} />}
               aria-label={isDark ? t('layout.lightMode') : t('layout.darkMode')}
             />
           </Tooltip>
@@ -233,7 +233,7 @@ export default function AppLayout() {
             <button type="button" aria-label={t('layout.userMenu')} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
               {user?.avatar_url
                 ? <Avatar src={user.avatar_url} size="small" alt={user.display_name || user.email} crossOrigin="anonymous" />
-                : <Avatar icon={<UserOutlined />} size="small" aria-hidden="true" />
+                : <Avatar icon={<User size={14} />} size="small" aria-hidden="true" />
               }
               <Text style={{ fontSize: 13 }}>{user?.display_name || user?.email}</Text>
               {user?.role === 'admin' && <Tag color="red" style={{ marginLeft: 4, fontSize: 10 }}>admin</Tag>}
