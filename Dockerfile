@@ -1,3 +1,6 @@
+# ── Version ──────────────────────────────────────────────
+ARG APP_VERSION=0.1.0
+
 # ── Stage 1: Build frontend ──────────────────────────────
 FROM node:24-alpine AS frontend-builder
 WORKDIR /app/frontend
@@ -30,9 +33,11 @@ RUN npm ci --omit=dev --ignore-scripts \
 
 # ── Stage 4: Production image ───────────────────────────
 FROM node:24-alpine AS runner
+ARG APP_VERSION=0.1.0
 LABEL org.opencontainers.image.source="https://github.com/le-nid/nid"
 LABEL org.opencontainers.image.description="Nid — All-in-one (Frontend + Backend)"
 LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.version="${APP_VERSION}"
 
 # Install nginx, upgrade packages, remove unnecessary tools
 RUN apk add --no-cache nginx \
@@ -66,6 +71,7 @@ RUN chmod +x /entrypoint.sh
 USER appuser
 
 ENV NODE_ENV=production
+ENV APP_VERSION=${APP_VERSION}
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \

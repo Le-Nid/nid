@@ -175,6 +175,9 @@
 - [x] On ne peux ni voir, ni telecharger les pièce jointes dans le menu pièce jointe
 - [x] L'ecran ops / résilience ne fonctionne pas.
 - [x] Sur le serveur mcp faire des outils pour la création d'alerte, de regles et de recherche
-- [ ] commencer a utiliser un numéro de version de l'application. commencons par la version 0.1.0. ensuite ce numéro de version doit être repris lors du docker publish (en plus du latest)
+- [x] commencer a utiliser un numéro de version de l'application. commencons par la version 0.1.0. ensuite ce numéro de version doit être repris lors du docker publish (en plus du latest)
 - [x] vérifier les failles de sécu dockerfile. Refaire le dockerfile dans les bonnes pratique de developpement.
 - [x] Ajouter des logs dans le projet pour identifier les bugs
+
+
+Refaire la doc sur tous les derniers points
