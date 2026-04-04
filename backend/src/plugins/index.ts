@@ -5,6 +5,7 @@ import cookie from '@fastify/cookie'
 import rateLimit from '@fastify/rate-limit'
 import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
+import multipart from '@fastify/multipart'
 import { ZodError } from 'zod'
 import { config } from '../config'
 import { connectDb } from './db'
@@ -23,7 +24,8 @@ export async function registerPlugins(app: FastifyInstance) {
   // JWT — tokens read from httpOnly cookie or Authorization header
   await app.register(jwt, {
     secret: config.JWT_SECRET,
-    sign: { expiresIn: config.JWT_EXPIRY },
+    sign: { expiresIn: config.JWT_EXPIRY, algorithm: 'HS256' },
+    verify: { algorithms: ['HS256'] },
     cookie: {
       cookieName: 'token',
       signed: false,
@@ -34,6 +36,11 @@ export async function registerPlugins(app: FastifyInstance) {
   await app.register(rateLimit, {
     max: 100,
     timeWindow: '1 minute',
+  })
+
+  // Multipart (file uploads — used by mbox import)
+  await app.register(multipart, {
+    limits: { fileSize: 500 * 1024 * 1024 }, // 500 MB max
   })
 
   // Swagger (API docs — available at /docs)
@@ -56,13 +63,15 @@ export async function registerPlugins(app: FastifyInstance) {
   // ─── Global error handler (Point 16) ──────────────────────
   app.setErrorHandler((error: any, request, reply) => {
     if (error instanceof ZodError) {
+      request.log.warn({ validationErrors: error.issues, url: request.url, method: request.method }, 'validation failed')
       return reply.code(400).send({ error: 'Validation failed', details: error.issues })
     }
-    if (error.statusCode) {
+    if (error.statusCode && error.statusCode < 500) {
+      request.log.warn({ statusCode: error.statusCode, url: request.url, method: request.method }, error.message)
       return reply.code(error.statusCode).send({ error: error.message })
     }
-    request.log.error(error)
-    reply.code(500).send({ error: 'Internal server error' })
+    request.log.error({ err: error, url: request.url, method: request.method, userId: (request.user as any)?.sub }, 'unhandled error')
+    reply.code(error.statusCode ?? 500).send({ error: 'Internal server error' })
   })
 
   // ─── Auth helper: verify JWT + check blacklist + check user is still active (Point 6, 13) ──

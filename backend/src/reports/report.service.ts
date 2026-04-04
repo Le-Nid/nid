@@ -1,5 +1,8 @@
 import { getDb } from '../db'
 import { sql } from 'kysely'
+import { createLogger } from '../logger'
+
+const logger = createLogger('reports')
 
 export interface WeeklyReport {
   userId: string
@@ -16,6 +19,7 @@ export interface WeeklyReport {
 }
 
 export async function generateWeeklyReport(userId: string): Promise<WeeklyReport | null> {
+  logger.info({ userId }, 'generating weekly report')
   const db = getDb()
   const now = new Date()
   const weekAgo = new Date(now.getTime() - 7 * 24 * 3600 * 1000)

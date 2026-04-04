@@ -8,9 +8,38 @@ import frFR from 'antd/locale/fr_FR'
 import enUS from 'antd/locale/en_US'
 import { useTranslation } from 'react-i18next'
 import { useThemeStore } from './store/theme.store'
+import { ErrorBoundary } from './components/ErrorBoundary'
+import { createLogger } from './utils/logger'
 import AppRouter from './App'
 import './i18n'
 import './index.css'
+
+const logger = createLogger('app')
+
+// Global unhandled error / rejection logging
+window.addEventListener('error', (event) => {
+  logger.error('Unhandled error', {
+    message: event.message,
+    filename: event.filename,
+    lineno: event.lineno,
+    colno: event.colno,
+  })
+})
+
+window.addEventListener('unhandledrejection', (event) => {
+  logger.error('Unhandled promise rejection', {
+    reason: String(event.reason),
+  })
+})
+
+// Service Worker registration (PWA)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      // SW registration failed — app works fine without it
+    })
+  })
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -64,7 +93,9 @@ function ThemedApp() {
       {/* AntApp injecte les méthodes message/notification/modal dans le contexte */}
       <AntApp>
         <QueryClientProvider client={queryClient}>
-          <AppRouter />
+          <ErrorBoundary>
+            <AppRouter />
+          </ErrorBoundary>
         </QueryClientProvider>
       </AntApp>
     </ConfigProvider>

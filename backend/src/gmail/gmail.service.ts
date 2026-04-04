@@ -2,6 +2,9 @@ import { google, gmail_v1 } from 'googleapis'
 import { getAuthenticatedClient } from '../auth/oauth.service'
 import { config } from '../config'
 import { gmailRetry, limitConcurrency, withAccountLimit } from './gmail-throttle'
+import { createLogger } from '../logger'
+
+const logger = createLogger('gmail')
 
 export interface MailMeta {
   id: string
@@ -93,7 +96,7 @@ export async function batchGetMessages(
     )
   )
   onProgress?.(messageIds.length, messageIds.length)
-  console.log(`[batchGet] ${messageIds.length} msgs in ${Date.now() - t0}ms`)
+  logger.debug(`[batchGet] ${messageIds.length} msgs in ${Date.now() - t0}ms`)
   return results
 }
 

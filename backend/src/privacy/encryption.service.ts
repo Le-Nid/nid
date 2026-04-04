@@ -1,9 +1,9 @@
 import crypto from 'crypto'
 import fs from 'fs/promises'
 import { getDb } from '../db'
-import pino from 'pino'
+import { createLogger } from '../logger'
 
-const logger = pino({ name: 'encryption' })
+const logger = createLogger('encryption')
 
 const ALGORITHM = 'aes-256-gcm'
 const KEY_LENGTH = 32

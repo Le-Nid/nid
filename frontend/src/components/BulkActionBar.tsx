@@ -7,15 +7,7 @@ import {
   Popconfirm,
   Divider,
 } from "antd";
-import {
-  DeleteOutlined,
-  TagOutlined,
-  InboxOutlined,
-  EyeOutlined,
-  EyeInvisibleOutlined,
-  ExclamationCircleOutlined,
-  CloudDownloadOutlined,
-} from "@ant-design/icons";
+import { Trash2, Tag, Inbox, Eye, EyeOff, AlertCircle, CloudDownload } from 'lucide-react'
 import { useTranslation } from 'react-i18next';
 
 const { Text } = Typography;
@@ -69,7 +61,7 @@ export default function BulkActionBar({
       <Space wrap size="small">
         <Tooltip title={t('bulk.trashTooltip')}>
           <Button
-            icon={<DeleteOutlined />}
+            icon={<Trash2 size={14} />}
             size="small"
             onClick={() => onBulkAction("trash")}
             loading={loading}
@@ -85,11 +77,11 @@ export default function BulkActionBar({
           okText={t('common.delete')}
           okButtonProps={{ danger: true }}
           cancelText={t('common.cancel')}
-          icon={<ExclamationCircleOutlined style={{ color: "red" }} />}
+          icon={<AlertCircle size={14} style={{ color: "red" }} />}
         >
           <Tooltip title={t('bulk.permanentDeleteTooltip')}>
             <Button
-              icon={<DeleteOutlined />}
+              icon={<Trash2 size={14} />}
               size="small"
               danger
               loading={loading}
@@ -101,7 +93,7 @@ export default function BulkActionBar({
 
         <Tooltip title={t('bulk.archiveGmailTooltip')}>
           <Button
-            icon={<InboxOutlined />}
+            icon={<Inbox size={14} />}
             size="small"
             onClick={() => onBulkAction("archive")}
             loading={loading}
@@ -112,7 +104,7 @@ export default function BulkActionBar({
 
         <Tooltip title={t('bulk.archiveNasTooltip')}>
           <Button
-            icon={<CloudDownloadOutlined />}
+            icon={<CloudDownload size={14} />}
             size="small"
             onClick={() => onBulkAction("archive_nas")}
             loading={loading}
@@ -122,7 +114,7 @@ export default function BulkActionBar({
         </Tooltip>
 
         <Button
-          icon={<EyeOutlined />}
+          icon={<Eye size={14} />}
           size="small"
           onClick={() => onBulkAction("mark_read")}
           loading={loading}
@@ -131,7 +123,7 @@ export default function BulkActionBar({
         </Button>
 
         <Button
-          icon={<EyeInvisibleOutlined />}
+          icon={<EyeOff size={14} />}
           size="small"
           onClick={() => onBulkAction("mark_unread")}
           loading={loading}
@@ -143,7 +135,7 @@ export default function BulkActionBar({
           <Select
             placeholder={
               <>
-                <TagOutlined /> {t('bulk.addLabel')}
+                <Tag size={14} /> {t('bulk.addLabel')}
               </>
             }
             size="small"

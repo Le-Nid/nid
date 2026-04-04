@@ -2,6 +2,9 @@ import { google, gmail_v1 } from 'googleapis'
 import { getGmailClient } from '../gmail/gmail.service'
 import { gmailRetry, limitConcurrency } from '../gmail/gmail-throttle'
 import { config } from '../config'
+import { createLogger } from '../logger'
+
+const logger = createLogger('unsubscribe')
 
 export interface NewsletterSender {
   sender: string
@@ -19,6 +22,7 @@ export async function scanNewsletters(
   accountId: string,
   onProgress?: (done: number, total: number) => void
 ): Promise<NewsletterSender[]> {
+  logger.info({ accountId }, 'scanning newsletters')
   const gmail = await getGmailClient(accountId)
   const senderMap = new Map<string, NewsletterSender>()
 

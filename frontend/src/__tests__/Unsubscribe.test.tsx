@@ -213,7 +213,7 @@ describe('UnsubscribePage', () => {
     })
 
     render(<UnsubscribePage />)
-    const deleteBtns = document.querySelectorAll('.anticon-delete')
+    const deleteBtns = document.querySelectorAll('.lucide-trash-2')
     expect(deleteBtns.length).toBe(3)
   })
 
@@ -271,7 +271,7 @@ describe('UnsubscribePage', () => {
 
     render(<UnsubscribePage />)
     // Click delete button to open Popconfirm
-    const deleteBtn = document.querySelector('.anticon-delete')!.closest('button')!
+    const deleteBtn = document.querySelector('.lucide-trash-2')!.closest('button')!
     fireEvent.click(deleteBtn)
 
     // Click confirm button in Popconfirm
@@ -295,7 +295,7 @@ describe('UnsubscribePage', () => {
     })
 
     render(<UnsubscribePage />)
-    const deleteBtn = document.querySelector('.anticon-delete')!.closest('button')!
+    const deleteBtn = document.querySelector('.lucide-trash-2')!.closest('button')!
     fireEvent.click(deleteBtn)
 
     await waitFor(() => {

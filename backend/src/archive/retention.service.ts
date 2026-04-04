@@ -1,8 +1,8 @@
 import { getDb } from '../db'
 import { getStorageForUser } from '../storage/storage.service'
-import pino from 'pino'
+import { createLogger } from '../logger'
 
-const logger = pino({ name: 'retention' })
+const logger = createLogger('retention')
 
 export async function applyRetentionPolicies(): Promise<{
   policiesRun: number

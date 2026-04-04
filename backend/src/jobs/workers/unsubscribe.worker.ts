@@ -2,6 +2,9 @@ import { Worker, Job } from 'bullmq'
 import { getRedis } from '../../plugins/redis'
 import { getDb } from '../../db'
 import { scanNewsletters } from '../../unsubscribe/unsubscribe.service'
+import { createLogger } from '../../logger'
+
+const unsubLogger = createLogger('unsubscribe-worker')
 
 interface ScanUnsubscribePayload {
   accountId: string
@@ -64,7 +67,7 @@ export function startUnsubscribeWorker() {
     { connection: getRedis(), concurrency: 1 }
   )
   worker.on('failed', (job, err) =>
-    console.error(`Unsubscribe scan job ${job?.id} failed:`, err.message)
+    unsubLogger.error({ jobId: job?.id, err: err.message }, 'Unsubscribe scan job failed')
   )
   return worker
 }

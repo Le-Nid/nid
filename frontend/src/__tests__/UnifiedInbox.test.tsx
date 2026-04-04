@@ -176,7 +176,7 @@ describe('UnifiedInboxPage', () => {
     })
 
     render(<UnifiedInboxPage />)
-    expect(document.querySelector('.anticon-paper-clip')).toBeInTheDocument()
+    expect(document.querySelector('.lucide-paperclip')).toBeInTheDocument()
   })
 
   it('calls refetch on reload click', () => {
@@ -188,7 +188,7 @@ describe('UnifiedInboxPage', () => {
     })
 
     render(<UnifiedInboxPage />)
-    const reloadBtn = document.querySelector('.anticon-reload')?.closest('button')
+    const reloadBtn = document.querySelector('.lucide-refresh-cw')?.closest('button')
     if (reloadBtn) fireEvent.click(reloadBtn)
 
     expect(refetch).toHaveBeenCalled()

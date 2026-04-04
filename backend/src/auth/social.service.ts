@@ -1,6 +1,9 @@
 import * as arctic from 'arctic'
 import { config } from '../config'
 import { getDb } from '../db'
+import { createLogger } from '../logger'
+
+const logger = createLogger('social-auth')
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -249,7 +252,7 @@ async function autoRegisterGmailAccount(userId: string, email: string, tokens: a
       .execute()
   } catch (err) {
     // Non-blocking: login succeeds even if Gmail registration fails
-    console.error('Auto-register Gmail account failed:', err)
+    logger.error({ err }, 'Auto-register Gmail account failed')
   }
 }
 

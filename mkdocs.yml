@@ -94,6 +94,7 @@ nav:
     - Base de données: technical/database.md
     - Jobs & Queue: technical/jobs.md
     - Sécurité: technical/security.md
+    - Logging: technical/logging.md
     - Référence API:
       - Index: technical/api/index.md
       - Authentification: technical/api/auth.md

@@ -11,7 +11,7 @@ import {
   Divider,
   Empty,
   message,
-  notification,
+  App,
   DatePicker,
   Tooltip,
   Select,
@@ -19,17 +19,7 @@ import {
   Badge,
   List,
 } from "antd";
-import {
-  SearchOutlined,
-  DownloadOutlined,
-  PaperClipOutlined,
-  ReloadOutlined,
-  FileZipOutlined,
-  FileOutlined,
-  EyeOutlined,
-  UnorderedListOutlined,
-  MessageOutlined,
-} from "@ant-design/icons";
+import { Search as SearchIcon, Download, Paperclip, RefreshCw, FileArchive, File, Eye, List as ListIcon, MessageSquare, Database } from 'lucide-react'
 import { useTranslation } from "react-i18next";
 import { archiveApi, archiveThreadsApi } from "../api";
 import { useAccount } from "../hooks/useAccount";
@@ -87,7 +77,7 @@ function ThreadsView({ threads, threadsLoading, threadsTotal, page, expandedThre
               <Badge count={thread.message_count} style={{ backgroundColor: '#1677ff' }} />
               <div>
                 <Space size={4}>
-                  {thread.has_attachments && <PaperClipOutlined style={{ color: '#8c8c8c', fontSize: 12 }} />}
+                  {thread.has_attachments && <Paperclip size={14} style={{ color: '#8c8c8c', fontSize: 12 }} />}
                   <Text strong style={{ fontSize: 13 }}>
                     {thread.subject || t('common.noSubject')}
                   </Text>
@@ -127,14 +117,14 @@ function ThreadsView({ threads, threadsLoading, threadsTotal, page, expandedThre
                       onClick={() => onOpenMail(mail)}
                       actions={[
                         <Tooltip key="view" title={t('mailManager.read')}>
-                          <Button size="small" type="text" icon={<EyeOutlined />} onClick={(e) => { e.stopPropagation(); onOpenMail(mail); }} />
+                          <Button size="small" type="text" icon={<Eye size={14} />} onClick={(e) => { e.stopPropagation(); onOpenMail(mail); }} />
                         </Tooltip>,
                       ]}
                     >
                       <List.Item.Meta
                         title={
                           <Space size={4}>
-                            {mail.has_attachments && <PaperClipOutlined style={{ color: '#8c8c8c', fontSize: 11 }} />}
+                            {mail.has_attachments && <Paperclip size={14} style={{ color: '#8c8c8c', fontSize: 11 }} />}
                             <Text style={{ fontSize: 12 }}>{mail.subject || t('common.noSubject')}</Text>
                           </Space>
                         }
@@ -195,6 +185,7 @@ export default function ArchivePage() {
   const [threadLoading, setThreadLoading] = useState(false);
 
   const [messageApi, contextHolder] = message.useMessage();
+  const { notification } = App.useApp();
 
   // Build params for the query
   const archiveParams: Record<string, any> = { page, limit: 50 };
@@ -273,7 +264,7 @@ export default function ArchivePage() {
       a.click();
       URL.revokeObjectURL(url);
       notification.success({
-        title: t('archive.exportDone'),
+        message: t('archive.exportDone'),
         description: t('archive.exportCount', { count: ids.length }),
       });
     } catch {
@@ -410,7 +401,7 @@ export default function ArchivePage() {
         <Space orientation="vertical" size={0}>
           <Space size={4}>
             {row.has_attachments && (
-              <PaperClipOutlined style={{ color: "#8c8c8c", fontSize: 12 }} />
+              <Paperclip size={14} style={{ color: "#8c8c8c", fontSize: 12 }} />
             )}
             <Text style={{ fontSize: 13 }}>{v || t('common.noSubject')}</Text>
           </Space>
@@ -456,7 +447,7 @@ export default function ArchivePage() {
           <Button
             size="small"
             type="text"
-            icon={<EyeOutlined />}
+            icon={<Eye size={14} />}
             onClick={(e) => {
               e.stopPropagation();
               openMail(row);
@@ -477,14 +468,14 @@ export default function ArchivePage() {
 
       <Space style={{ marginBottom: 16, justifyContent: 'space-between', width: '100%' }}>
         <Title level={3} style={{ margin: 0 }}>
-          {t('archive.title')}
+          <Database size={20} style={{ marginRight: 8 }} />{t('archive.title')}
         </Title>
         <Segmented
           value={listMode}
           onChange={(v) => setListMode(v as 'list' | 'threads')}
           options={[
-            { value: 'list', icon: <UnorderedListOutlined />, label: t('archive.listView') },
-            { value: 'threads', icon: <MessageOutlined />, label: t('archive.threadView') },
+            { value: 'list', icon: <ListIcon size={14} />, label: t('archive.listView') },
+            { value: 'threads', icon: <MessageSquare size={14} />, label: t('archive.threadView') },
           ]}
         />
       </Space>
@@ -499,7 +490,7 @@ export default function ArchivePage() {
             onSearch={() => load(1)}
             style={{ width: 300 }}
             allowClear
-            enterButton={<SearchOutlined />}
+            enterButton={<SearchIcon size={14} />}
           />
           <Input
             placeholder={t('archive.filterSender')}
@@ -508,7 +499,7 @@ export default function ArchivePage() {
             onPressEnter={() => load(1)}
             style={{ width: 200 }}
             allowClear
-            prefix={<FileOutlined />}
+            prefix={<File size={14} />}
           />
           <Select
             placeholder={t('archive.filterAttachments')}
@@ -527,9 +518,9 @@ export default function ArchivePage() {
             placeholder={[t('archive.dateStart'), t('archive.dateEnd')]}
           />
           <Button type="primary" onClick={() => load(1)} loading={loading}>
-            <SearchOutlined /> {t('common.search')}
+            <SearchIcon size={14} /> {t('common.search')}
           </Button>
-          <Button icon={<ReloadOutlined />} onClick={() => load(1)} />
+          <Button icon={<RefreshCw size={14} />} onClick={() => load(1)} />
           {listMode === 'list' && total > 0 && (
             <Text type="secondary">
               {t('archive.totalArchived', { total: total.toLocaleString() })}
@@ -558,7 +549,7 @@ export default function ArchivePage() {
               {t('archive.selectedCount', { count: selected.length, size: formatBytes(selectedSizeBytes) })}
             </Text>
             <Button
-              icon={<FileZipOutlined />}
+              icon={<FileArchive size={14} />}
               loading={exporting}
               onClick={() => exportZip(selected)}
             >
@@ -627,7 +618,7 @@ export default function ArchivePage() {
             <Button
               size="small"
               onClick={() => exportZip([viewing?.id])}
-              icon={<FileZipOutlined />}
+              icon={<FileArchive size={14} />}
             >
               ZIP
             </Button>
@@ -671,7 +662,7 @@ export default function ArchivePage() {
             {viewing.attachments?.length > 0 && (
               <div style={{ marginBottom: 12 }}>
                 <Text strong>
-                  <PaperClipOutlined /> {t('archive.attachments', { count: viewing.attachments.length })}
+                  <Paperclip size={14} /> {t('archive.attachments', { count: viewing.attachments.length })}
                 </Text>
                 <div>
                   {viewing.attachments.map((att: Attachment) => (
@@ -705,7 +696,7 @@ export default function ArchivePage() {
                       </Space>
                       <Button
                         size="small"
-                        icon={<DownloadOutlined />}
+                        icon={<Download size={14} />}
                         href={downloadUrl(att.id)}
                         download={att.filename}
                         style={{ flexShrink: 0, marginLeft: 8 }}

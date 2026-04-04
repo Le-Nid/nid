@@ -2,6 +2,9 @@ import { createHash } from 'crypto'
 import { getDb } from '../db'
 import { getStorageForUser } from '../storage/storage.service'
 import { sql } from 'kysely'
+import { createLogger } from '../logger'
+
+const logger = createLogger('dedup')
 
 /**
  * Statistiques de déduplication des pièces jointes pour un utilisateur.
@@ -94,6 +97,7 @@ export async function getDeduplicationStats(userId: string) {
  * qui n'ont pas encore de content_hash.
  */
 export async function backfillAttachmentHashes(userId: string) {
+  logger.info({ userId }, 'backfilling attachment hashes')
   const db = getDb()
   const storage = await getStorageForUser(userId)
 

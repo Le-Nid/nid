@@ -3,10 +3,7 @@ import {
   Typography, Table, Button, Space, Tag, Statistic, Row, Col, Card,
   Modal, InputNumber, Select, message, Popconfirm, Tooltip,
 } from 'antd'
-import {
-  ClockCircleOutlined, DeleteOutlined, PlusOutlined,
-  ScanOutlined, ExclamationCircleOutlined,
-} from '@ant-design/icons'
+import { Clock, Trash2, Plus, Scan, AlertCircle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -211,7 +208,7 @@ export default function ExpirationPage() {
             title={t('expiration.confirmDelete')}
             onConfirm={() => handleDelete(record.id)}
           >
-            <Button type="text" danger icon={<DeleteOutlined />} size="small" />
+            <Button type="text" danger icon={<Trash2 size={14} />} size="small" />
           </Popconfirm>
         ),
     },
@@ -222,7 +219,7 @@ export default function ExpirationPage() {
       {contextHolder}
       <Space orientation="vertical" style={{ width: '100%' }} size="large">
         <Title level={2}>
-          <ClockCircleOutlined style={{ marginRight: 8 }} />
+          <Clock size={22} style={{ marginRight: 8 }} />
           {t('expiration.title')}
         </Title>
         <Text type="secondary">{t('expiration.description')}</Text>
@@ -240,7 +237,7 @@ export default function ExpirationPage() {
                   title={t('expiration.statExpiringSoon')}
                   value={stats.expiringSoon}
                   styles={stats.expiringSoon > 0 ? { content: { color: '#faad14' } } : undefined}
-                  prefix={stats.expiringSoon > 0 ? <ExclamationCircleOutlined /> : undefined}
+                  prefix={stats.expiringSoon > 0 ? <AlertCircle size={14} /> : undefined}
                 />
               </Card>
             </Col>
@@ -260,14 +257,14 @@ export default function ExpirationPage() {
         <Space>
           <Button
             type="primary"
-            icon={<ScanOutlined />}
+            icon={<Scan size={14} />}
             onClick={handleDetect}
             loading={detecting}
           >
             {t('expiration.detect')}
           </Button>
           <Button
-            icon={<PlusOutlined />}
+            icon={<Plus size={14} />}
             onClick={() => setAddModalOpen(true)}
           >
             {t('expiration.addManual')}

@@ -1,5 +1,8 @@
 import { generateAllReports, WeeklyReport } from './report.service'
 import { notify } from '../notifications/notify'
+import { createLogger } from '../logger'
+
+const logger = createLogger('report-scheduler')
 
 // Report scheduler — runs once per day, generates weekly reports on Mondays
 // Stores reports as in-app notifications
@@ -18,7 +21,7 @@ export function startReportScheduler() {
     if (dayOfWeek !== 1 || lastRunDate === today) return
 
     try {
-      console.info('[ReportScheduler] Generating weekly reports...')
+      logger.info('Generating weekly reports...')
       const reports = await generateAllReports()
 
       for (const report of reports) {
@@ -32,14 +35,14 @@ export function startReportScheduler() {
       }
 
       lastRunDate = today
-      console.info(`[ReportScheduler] ${reports.length} reports generated`)
+      logger.info(`${reports.length} reports generated`)
     } catch (err) {
-      console.error('[ReportScheduler] Error:', err)
+      logger.error({ err }, 'Report generation error')
     }
   }
 
   setInterval(tick, INTERVAL_MS)
-  console.info('✅ Report scheduler started (hourly check, runs Mondays)')
+  logger.info('Report scheduler started (hourly check, runs Mondays)')
 }
 
 function formatReportBody(report: WeeklyReport): string {

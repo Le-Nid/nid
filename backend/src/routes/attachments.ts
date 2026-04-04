@@ -6,6 +6,24 @@ import { escapeIlike } from '../utils/db'
 import { extractPagination } from '../utils/pagination'
 import { authPresets } from '../utils/auth'
 import { backfillAttachmentHashes, getDeduplicationStats } from '../archive/dedup.service'
+import fs from 'node:fs'
+
+/** Sanitize filename for Content-Disposition header */
+function sanitizeFilename(name: string): string {
+  return name.replaceAll(/["\r\n]/g, '_')
+}
+
+/** Recursively find a part by filename in a Gmail message payload */
+function findPartByFilename(parts: any[], filename: string): any | null {
+  for (const part of parts) {
+    if (part.filename === filename) return part
+    if (part.parts) {
+      const found = findPartByFilename(part.parts, filename)
+      if (found) return found
+    }
+  }
+  return null
+}
 
 export async function attachmentsRoutes(app: FastifyInstance) {
   const { accountAuth, auth } = authPresets(app)
@@ -162,6 +180,76 @@ export async function attachmentsRoutes(app: FastifyInstance) {
   app.get('/dedup-stats', auth, async (request) => {
     const user = (request as any).user
     return getDeduplicationStats(user.id)
+  })
+
+  // ─── Download archived attachment ─────────────────────
+  app.get('/:accountId/archived/:attachmentId/download', accountAuth, async (request, reply) => {
+    const { attachmentId } = request.params as { attachmentId: string }
+    const { inline: inlineParam } = request.query as { inline?: string }
+
+    const db = getDb()
+    const att = await db
+      .selectFrom('archived_attachments')
+      .selectAll()
+      .where('id', '=', attachmentId)
+      .executeTakeFirst()
+
+    if (!att) return reply.code(404).send({ error: 'Attachment not found' })
+
+    if (!fs.existsSync(att.file_path)) {
+      return reply.code(404).send({ error: 'File not found on disk' })
+    }
+
+    const disposition = inlineParam === '1' ? 'inline' : 'attachment'
+
+    return reply
+      .header('Content-Disposition', `${disposition}; filename="${sanitizeFilename(att.filename)}"`)
+      .header('Content-Type', att.mime_type ?? 'application/octet-stream')
+      .send(fs.createReadStream(att.file_path))
+  })
+
+  // ─── Download live Gmail attachment ───────────────────
+  app.get('/:accountId/live/:messageId/download', accountAuth, async (request, reply) => {
+    const { accountId, messageId } = request.params as { accountId: string; messageId: string }
+    const { filename, inline: inlineParam } = request.query as { filename?: string; inline?: string }
+
+    if (!filename) return reply.code(400).send({ error: 'filename query parameter required' })
+
+    const gmail = await getGmailClient(accountId)
+
+    const msg = await gmail.users.messages.get({
+      userId: 'me',
+      id: messageId,
+      format: 'full',
+    })
+
+    const parts = msg.data.payload?.parts ?? []
+    const part = findPartByFilename(parts, filename)
+
+    if (!part) return reply.code(404).send({ error: 'Attachment not found in message' })
+
+    let data: Buffer
+
+    if (part.body?.data) {
+      data = Buffer.from(part.body.data, 'base64url')
+    } else if (part.body?.attachmentId) {
+      const attRes = await gmail.users.messages.attachments.get({
+        userId: 'me',
+        messageId,
+        id: part.body.attachmentId,
+      })
+      data = Buffer.from(attRes.data.data!, 'base64url')
+    } else {
+      return reply.code(404).send({ error: 'No attachment data available' })
+    }
+
+    const mimeType = part.mimeType ?? 'application/octet-stream'
+    const disposition = inlineParam === '1' ? 'inline' : 'attachment'
+
+    return reply
+      .header('Content-Disposition', `${disposition}; filename="${sanitizeFilename(filename)}"`)
+      .header('Content-Type', mimeType)
+      .send(data)
   })
 
   // ─── Backfill hashes for existing attachments ─────────

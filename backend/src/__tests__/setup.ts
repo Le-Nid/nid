@@ -42,6 +42,24 @@ vi.mock('../db', () => ({
   })),
 }))
 
+// Mock logger to avoid pino initialization issues (config.LOG_LEVEL undefined, child() missing)
+vi.mock('../logger', () => {
+  const noop = vi.fn()
+  const mockLogger: any = {
+    info: noop,
+    warn: noop,
+    error: noop,
+    debug: noop,
+    fatal: noop,
+    trace: noop,
+    child: vi.fn(() => mockLogger),
+  }
+  return {
+    logger: mockLogger,
+    createLogger: vi.fn(() => mockLogger),
+  }
+})
+
 vi.mock('../gmail/gmail.service', () => ({
   listMessages: vi.fn(),
   getProfile: vi.fn(),

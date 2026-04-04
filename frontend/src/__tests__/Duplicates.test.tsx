@@ -297,7 +297,7 @@ describe('DuplicatesPage', () => {
 
     render(<DuplicatesPage />)
     // Click the delete button to open Popconfirm
-    const deleteBtn = document.querySelector('.anticon-delete')!.closest('button')!
+    const deleteBtn = document.querySelector('.lucide-trash-2')!.closest('button')!
     fireEvent.click(deleteBtn)
 
     // Popconfirm shows, click the OK button
@@ -334,7 +334,7 @@ describe('DuplicatesPage', () => {
     })
 
     render(<DuplicatesPage />)
-    const deleteBtn = document.querySelector('.anticon-delete')!.closest('button')!
+    const deleteBtn = document.querySelector('.lucide-trash-2')!.closest('button')!
     fireEvent.click(deleteBtn)
 
     await waitFor(() => {

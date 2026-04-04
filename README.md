@@ -19,7 +19,7 @@ A **nid** (nest in french) is an intimate space, built with your own hands, shel
 No third-party cloud. No telemetry. No SaaS account.
 Your data stays where it always should have been: **at home**.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 ### Features
 
@@ -99,7 +99,7 @@ Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ### License
 
-[MIT](LICENSE)
+[Apache 2.0](LICENSE)
 
 ---
 
@@ -114,7 +114,7 @@ Un **nid**, c'est un espace intime, construit de ses propres mains, à l'abri de
 Pas de cloud tiers. Pas de télémétrie. Pas de compte SaaS.
 Vos données restent là où elles ont toujours dû être : **chez vous**.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 ### Fonctionnalités
 
@@ -194,4 +194,4 @@ Les contributions sont les bienvenues. Voir [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ### Licence
 
-[MIT](LICENSE)
+[Apache 2.0](LICENSE)

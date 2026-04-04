@@ -4,6 +4,9 @@ import { getDb } from "../../db";
 import { notify } from "../../notifications/notify";
 import { archiveMail, getArchivedIds } from "../../archive/archive.service";
 import { listMessages } from "../../gmail/gmail.service";
+import { createLogger } from '../../logger'
+
+const logger = createLogger('archive-worker')
 
 interface ArchivePayload {
   accountId: string;
@@ -55,7 +58,7 @@ export function startArchiveWorker() {
         try {
           await archiveMail(accountId, messageId);
         } catch (err) {
-          console.error(`Failed to archive ${messageId}:`, err);
+          logger.error({ messageId, err }, 'Failed to archive message');
         }
         processed++;
         const progress = Math.round((processed / total) * 100);

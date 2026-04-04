@@ -143,3 +143,41 @@ Toutes les actions sensibles sont tracées dans le journal d'audit :
 | Administration | Modification d'utilisateur, changement de rôle |
 
 Chaque entrée inclut l'adresse IP de la requête pour la traçabilité.
+
+---
+
+## Sécurité des conteneurs Docker
+
+### Images de base
+
+- **Images Alpine** — Utilisation systématique de variantes Alpine pour réduire la surface d'attaque (moins de binaires, moins de CVE potentielles)
+- **Mises à jour** — `apk upgrade --no-cache` en production pour appliquer les correctifs de sécurité
+
+### Build multi-stage
+
+Les Dockerfiles utilisent un **build multi-stage** (builder → deps → runner) pour que l'image finale ne contienne :
+
+- Ni le code source
+- Ni les devDependencies
+- Ni les outils de build (npm, corepack, yarn)
+
+### Utilisateur non-root
+
+Toutes les images de production tournent avec un **utilisateur non-root** (`appuser:appgroup`, UID/GID 1001). Cela limite l'impact d'une éventuelle compromission du processus Node.js.
+
+### `.dockerignore`
+
+Des fichiers `.dockerignore` empêchent la copie de fichiers sensibles dans le contexte de build :
+
+- `.env`, `.env.*`, `*.pem`, `*.key` — Variables d'environnement et secrets
+- `.git` — Historique Git
+- `node_modules`, `coverage`, `dist` — Artefacts de build
+- `volumes/` — Données utilisateur
+
+### Réseau interne
+
+En production, PostgreSQL et Redis ne sont **pas exposés** sur l'hôte — ils communiquent uniquement via le réseau Docker interne. Seul le port 3000 (Nginx) est accessible.
+
+### `--ignore-scripts`
+
+Les commandes `npm ci` de production utilisent `--ignore-scripts` pour empêcher l'exécution de scripts `postinstall` potentiellement malveillants dans les dépendances.

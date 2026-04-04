@@ -1,12 +1,16 @@
 import archiver from 'archiver'
 import fs from 'fs'
 import { getDb } from '../db'
+import { createLogger } from '../logger'
+
+const logger = createLogger('export')
 
 export async function streamArchiveZip(
   accountId: string,
   mailIds: string[],
   outputStream: NodeJS.WritableStream
 ): Promise<{ mailCount: number; attachmentCount: number }> {
+  logger.info({ accountId, mailCount: mailIds.length }, 'starting archive ZIP export')
   const db = getDb()
 
   const mails = await db

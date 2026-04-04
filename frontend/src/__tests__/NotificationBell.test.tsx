@@ -36,7 +36,7 @@ describe('NotificationBell', () => {
   it('renders bell icon', async () => {
     render(<NotificationBell />)
     await waitFor(() => expect(mockNotificationsApi.list).toHaveBeenCalledWith({ limit: 10 }))
-    expect(document.querySelector('.anticon-bell')).toBeInTheDocument()
+    expect(document.querySelector('.lucide-bell')).toBeInTheDocument()
   })
 
   it('shows badge with unread count', async () => {
@@ -78,7 +78,7 @@ describe('NotificationBell', () => {
     await waitFor(() => expect(mockNotificationsApi.list).toHaveBeenCalled())
 
     // Click bell to open dropdown
-    fireEvent.click(document.querySelector('.anticon-bell')!)
+    fireEvent.click(document.querySelector('.lucide-bell')!)
 
     await waitFor(() => {
       expect(screen.getByText('Notification 1')).toBeInTheDocument()
@@ -99,7 +99,7 @@ describe('NotificationBell', () => {
     render(<NotificationBell />)
     await waitFor(() => expect(mockNotificationsApi.list).toHaveBeenCalled())
 
-    fireEvent.click(document.querySelector('.anticon-bell')!)
+    fireEvent.click(document.querySelector('.lucide-bell')!)
 
     await waitFor(() => expect(screen.getByText('Unread notif')).toBeInTheDocument())
     fireEvent.click(screen.getByText('Unread notif'))
@@ -120,7 +120,7 @@ describe('NotificationBell', () => {
     render(<NotificationBell />)
     await waitFor(() => expect(mockNotificationsApi.list).toHaveBeenCalled())
 
-    fireEvent.click(document.querySelector('.anticon-bell')!)
+    fireEvent.click(document.querySelector('.lucide-bell')!)
 
     await waitFor(() => {
       expect(screen.getByText('notifications.markAllRead')).toBeInTheDocument()
@@ -131,7 +131,7 @@ describe('NotificationBell', () => {
     render(<NotificationBell />)
     await waitFor(() => expect(mockNotificationsApi.list).toHaveBeenCalled())
 
-    fireEvent.click(document.querySelector('.anticon-bell')!)
+    fireEvent.click(document.querySelector('.lucide-bell')!)
 
     await waitFor(() => {
       expect(screen.getByText('notifications.empty')).toBeInTheDocument()
@@ -150,7 +150,7 @@ describe('NotificationBell', () => {
     render(<NotificationBell />)
     await waitFor(() => expect(mockNotificationsApi.list).toHaveBeenCalled())
 
-    fireEvent.click(document.querySelector('.anticon-bell')!)
+    fireEvent.click(document.querySelector('.lucide-bell')!)
 
     await waitFor(() => expect(screen.getByText('To delete')).toBeInTheDocument())
 
@@ -176,7 +176,7 @@ describe('NotificationBell', () => {
     render(<NotificationBell />)
     await waitFor(() => expect(mockNotificationsApi.list).toHaveBeenCalled())
 
-    fireEvent.click(document.querySelector('.anticon-bell')!)
+    fireEvent.click(document.querySelector('.lucide-bell')!)
 
     await waitFor(() => expect(screen.getByText('notifications.markAllRead')).toBeInTheDocument())
 
@@ -199,7 +199,7 @@ describe('NotificationBell', () => {
     render(<NotificationBell />)
     await waitFor(() => expect(mockNotificationsApi.list).toHaveBeenCalled())
 
-    fireEvent.click(document.querySelector('.anticon-bell')!)
+    fireEvent.click(document.querySelector('.lucide-bell')!)
 
     await waitFor(() => expect(screen.getByText('Unread to delete')).toBeInTheDocument())
 
@@ -222,7 +222,7 @@ describe('NotificationBell', () => {
     render(<NotificationBell />)
     await waitFor(() => expect(mockNotificationsApi.list).toHaveBeenCalled())
 
-    fireEvent.click(document.querySelector('.anticon-bell')!)
+    fireEvent.click(document.querySelector('.lucide-bell')!)
 
     await waitFor(() => {
       expect(screen.getByText('notifications.clearRead')).toBeInTheDocument()

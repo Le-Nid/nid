@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { notification } from "antd";
-import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
+import { App } from "antd";
+import { CheckCircle, XCircle } from 'lucide-react';
 import { jobsApi, notificationsApi } from "../api";
 import { useAccount } from "./useAccount";
+import { useTranslation } from "react-i18next";
 
-const TYPE_LABELS: Record<string, string> = {
-  bulk_operation: "Opération bulk",
-  archive_mails: "Archivage NAS",
-  run_rule: "Règle automatique",
-  sync_dashboard: "Sync dashboard",
+const TYPE_LABEL_KEYS: Record<string, string> = {
+  bulk_operation: "notifier.typeBulk",
+  archive_mails: "notifier.typeArchive",
+  run_rule: "notifier.typeRule",
+  sync_dashboard: "notifier.typeSync",
 };
 
 /**
@@ -19,6 +20,8 @@ const TYPE_LABELS: Record<string, string> = {
  */
 export function useGlobalJobNotifier() {
   const { accountId } = useAccount();
+  const { notification } = App.useApp();
+  const { t } = useTranslation();
   const knownStates = useRef<Map<string, string>>(new Map());
   const [prefs, setPrefs] = useState<Record<string, boolean>>({});
 
@@ -39,13 +42,14 @@ export function useGlobalJobNotifier() {
         for (const job of jobs) {
           const prev = knownStates.current.get(job.id);
           const curr = job.status;
+          const typeLabel = TYPE_LABEL_KEYS[job.type] ? t(TYPE_LABEL_KEYS[job.type]) : job.type;
 
           if (prev && prev !== "completed" && curr === "completed" && prefs.job_completed_toast !== false) {
             notification.success({
               key: `job-${job.id}`,
-              title: `${TYPE_LABELS[job.type] ?? job.type} terminé`,
-              description: `${job.processed ?? 0} éléments traités avec succès.`,
-              icon: <CheckCircleOutlined style={{ color: "#52c41a" }} />,
+              message: t('notifier.completed', { type: typeLabel }),
+              description: t('notifier.processedCount', { count: job.processed ?? 0 }),
+              icon: <CheckCircle size={16} style={{ color: "#52c41a" }} />,
               duration: 6,
             });
           }
@@ -53,9 +57,9 @@ export function useGlobalJobNotifier() {
           if (prev && prev !== "failed" && curr === "failed" && prefs.job_failed_toast !== false) {
             notification.error({
               key: `job-${job.id}`,
-              title: `${TYPE_LABELS[job.type] ?? job.type} échoué`,
-              description: job.error ?? "Une erreur est survenue.",
-              icon: <CloseCircleOutlined style={{ color: "#ff4d4f" }} />,
+              message: t('notifier.failed', { type: typeLabel }),
+              description: job.error ?? t('notifier.genericError'),
+              icon: <XCircle size={16} style={{ color: "#ff4d4f" }} />,
               duration: 10,
             });
           }

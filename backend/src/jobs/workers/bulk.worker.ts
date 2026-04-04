@@ -2,11 +2,14 @@ import { Worker, Job } from "bullmq";
 import { getRedis } from "../../plugins/redis";
 import { getDb } from "../../db";
 import { notify } from "../../notifications/notify";
+import { createLogger } from '../../logger'
 import {
   trashMessages,
   deleteMessages,
   modifyMessages,
 } from "../../gmail/gmail.service";
+
+const bulkLogger = createLogger('bulk-worker')
 
 interface BulkPayload {
   accountId: string;
@@ -112,7 +115,7 @@ export function startBulkWorker() {
     { connection: getRedis(), concurrency: 3 },
   );
   worker.on("failed", (job, err) =>
-    console.error(`Bulk job ${job?.id} failed:`, err.message),
+    bulkLogger.error({ jobId: job?.id, err: err.message }, 'Bulk job failed'),
   );
   return worker;
 }

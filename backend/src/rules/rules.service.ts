@@ -2,9 +2,12 @@ import { getDb } from '../db'
 import { listMessages } from '../gmail/gmail.service'
 import { enqueueJob } from '../jobs/queue'
 import { config } from '../config'
+import { createLogger } from '../logger'
 import {
   RuleCondition, RuleAction, RuleCreateDTO, RuleRunResult,
 } from './rules.types'
+
+const logger = createLogger('rules')
 
 // ─── CRUD ─────────────────────────────────────────────────
 
@@ -27,6 +30,7 @@ export async function getRule(id: string, accountId: string) {
 }
 
 export async function createRule(accountId: string, dto: RuleCreateDTO) {
+  logger.info({ accountId, name: dto.name }, 'creating rule')
   return getDb()
     .insertInto('rules')
     .values({
@@ -61,6 +65,7 @@ export async function updateRule(id: string, accountId: string, dto: Partial<Rul
 }
 
 export async function deleteRule(id: string, accountId: string) {
+  logger.info({ id, accountId }, 'deleting rule')
   await getDb()
     .deleteFrom('rules')
     .where('id', '=', id)
@@ -122,6 +127,7 @@ export async function runRule(rule: any, accountId: string): Promise<RuleRunResu
     : JSON.parse(rule.action as string)
 
   const gmailQuery = buildGmailQuery(conditions)
+  logger.info({ ruleId: rule.id, accountId, gmailQuery, action: action.type }, 'executing rule')
   const messageIds: string[] = []
   let pageToken: string | null = null
 
@@ -139,6 +145,7 @@ export async function runRule(rule: any, accountId: string): Promise<RuleRunResu
   const matched = messageIds.length
 
   if (matched === 0) {
+    logger.info({ ruleId: rule.id }, 'rule matched 0 messages')
     await getDb()
       .updateTable('rules')
       .set({ last_run_at: new Date() })
@@ -168,5 +175,6 @@ export async function runRule(rule: any, accountId: string): Promise<RuleRunResu
     .where('id', '=', rule.id)
     .execute()
 
+  logger.info({ ruleId: rule.id, matched, jobId }, 'rule executed, job enqueued')
   return { ruleId: rule.id, matched, processed: matched, jobId, errors: [] }
 }

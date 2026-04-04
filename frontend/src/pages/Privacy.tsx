@@ -3,11 +3,7 @@ import {
   Typography, Card, Row, Col, Statistic, Table, Tabs, Button, Space,
   Tag, Tooltip, Progress, Input, Alert, message, Spin,
 } from 'antd'
-import {
-  EyeOutlined, ScanOutlined, LockOutlined, WarningOutlined,
-  SafetyOutlined, ReloadOutlined, ExclamationCircleOutlined,
-  BugOutlined, KeyOutlined, CheckCircleOutlined,
-} from '@ant-design/icons'
+import { Eye, Scan, Lock, AlertTriangle, ShieldCheck, RefreshCw, AlertCircle, Bug, Key, CheckCircle } from 'lucide-react'
 import { privacyApi } from '../api'
 import { useTranslation } from 'react-i18next'
 import { useAccount } from '../hooks/useAccount'
@@ -31,7 +27,7 @@ export default function PrivacyPage() {
     <div>
       {contextHolder}
       <Space style={{ marginBottom: 16 }} align="center">
-        <SafetyOutlined style={{ fontSize: 24 }} />
+        <ShieldCheck size={20} />
         <Title level={3} style={{ margin: 0 }}>{t('privacy.title')}</Title>
       </Space>
 
@@ -39,17 +35,17 @@ export default function PrivacyPage() {
         items={[
           {
             key: 'tracking',
-            label: <><EyeOutlined /> {t('privacy.tracking.tab')}</>,
+            label: <><Eye size={14} /> {t('privacy.tracking.tab')}</>,
             children: <TrackingTab accountId={accountId} lang={lang} messageApi={messageApi} setActiveJobId={setActiveJobId} />,
           },
           {
             key: 'pii',
-            label: <><BugOutlined /> {t('privacy.pii.tab')}</>,
+            label: <><Bug size={14} /> {t('privacy.pii.tab')}</>,
             children: <PiiTab accountId={accountId} lang={lang} messageApi={messageApi} setActiveJobId={setActiveJobId} />,
           },
           {
             key: 'encryption',
-            label: <><LockOutlined /> {t('privacy.encryption.tab')}</>,
+            label: <><Lock size={14} /> {t('privacy.encryption.tab')}</>,
             children: <EncryptionTab accountId={accountId} messageApi={messageApi} setActiveJobId={setActiveJobId} />,
           },
         ]}
@@ -145,7 +141,7 @@ function TrackingTab({ accountId, lang, messageApi, setActiveJobId }: Readonly<{
             <Statistic
               title={t('privacy.tracking.trackedMails')}
               value={stats?.trackedMessages ?? 0}
-              prefix={<EyeOutlined style={{ color: '#ff4d4f' }} />}
+              prefix={<Eye size={14} style={{ color: '#ff4d4f' }} />}
             />
           </Card>
         </Col>
@@ -154,7 +150,7 @@ function TrackingTab({ accountId, lang, messageApi, setActiveJobId }: Readonly<{
             <Statistic
               title={t('privacy.tracking.totalTrackers')}
               value={stats?.totalTrackers ?? 0}
-              prefix={<WarningOutlined style={{ color: '#fa8c16' }} />}
+              prefix={<AlertTriangle size={14} style={{ color: '#fa8c16' }} />}
             />
           </Card>
         </Col>
@@ -163,7 +159,7 @@ function TrackingTab({ accountId, lang, messageApi, setActiveJobId }: Readonly<{
             <Statistic
               title={t('privacy.tracking.topDomain')}
               value={stats?.topDomains?.[0]?.domain ?? '—'}
-              valueStyle={{ fontSize: 16 }}
+              styles={{ content: { fontSize: 16 } }}
             />
           </Card>
         </Col>
@@ -188,14 +184,14 @@ function TrackingTab({ accountId, lang, messageApi, setActiveJobId }: Readonly<{
       <Space style={{ marginBottom: 12 }}>
         <Button
           type="primary"
-          icon={<ScanOutlined />}
+          icon={<Scan size={14} />}
           loading={scanning}
           onClick={handleScan}
           disabled={!accountId}
         >
           {t('privacy.tracking.scan')}
         </Button>
-        <Button icon={<ReloadOutlined />} onClick={() => { refetchStats(); refetchMessages() }}>
+        <Button icon={<RefreshCw size={14} />} onClick={() => { refetchStats(); refetchMessages() }}>
           {t('common.refresh')}
         </Button>
       </Space>
@@ -293,7 +289,7 @@ function PiiTab({ accountId, lang, messageApi, setActiveJobId }: Readonly<{
         <Alert
           type="warning"
           showIcon
-          icon={<ExclamationCircleOutlined />}
+          icon={<AlertCircle size={14} />}
           message={t('privacy.pii.alertTitle')}
           description={t('privacy.pii.alertDesc', {
             count: stats.totalFindings,
@@ -309,8 +305,8 @@ function PiiTab({ accountId, lang, messageApi, setActiveJobId }: Readonly<{
             <Statistic
               title={t('privacy.pii.totalFindings')}
               value={stats?.totalFindings ?? 0}
-              prefix={<WarningOutlined style={{ color: '#ff4d4f' }} />}
-              valueStyle={stats?.totalFindings ? { color: '#ff4d4f' } : undefined}
+              prefix={<AlertTriangle size={14} style={{ color: '#ff4d4f' }} />}
+              styles={stats?.totalFindings ? { content: { color: '#ff4d4f' } } : undefined}
             />
           </Card>
         </Col>
@@ -319,7 +315,7 @@ function PiiTab({ accountId, lang, messageApi, setActiveJobId }: Readonly<{
             <Statistic
               title={t('privacy.pii.affectedMails')}
               value={stats?.affectedMails ?? 0}
-              prefix={<ExclamationCircleOutlined style={{ color: '#fa8c16' }} />}
+              prefix={<AlertCircle size={14} style={{ color: '#fa8c16' }} />}
             />
           </Card>
         </Col>
@@ -342,14 +338,14 @@ function PiiTab({ accountId, lang, messageApi, setActiveJobId }: Readonly<{
       <Space style={{ marginBottom: 12 }}>
         <Button
           type="primary"
-          icon={<ScanOutlined />}
+          icon={<Scan size={14} />}
           loading={scanning}
           onClick={handleScan}
           disabled={!accountId}
         >
           {t('privacy.pii.scan')}
         </Button>
-        <Button icon={<ReloadOutlined />} onClick={() => { refetchStats(); refetchFindings() }}>
+        <Button icon={<RefreshCw size={14} />} onClick={() => { refetchStats(); refetchFindings() }}>
           {t('common.refresh')}
         </Button>
       </Space>
@@ -424,7 +420,7 @@ function EncryptionTab({ accountId, messageApi, setActiveJobId }: Readonly<{
       <Alert
         type="info"
         showIcon
-        icon={<LockOutlined />}
+        icon={<Lock size={14} />}
         message={t('privacy.encryption.infoTitle')}
         description={t('privacy.encryption.infoDesc')}
         style={{ marginBottom: 16 }}
@@ -444,8 +440,8 @@ function EncryptionTab({ accountId, messageApi, setActiveJobId }: Readonly<{
             <Statistic
               title={t('privacy.encryption.encrypted')}
               value={status?.encrypted ?? 0}
-              prefix={<LockOutlined style={{ color: '#52c41a' }} />}
-              valueStyle={{ color: '#52c41a' }}
+              prefix={<Lock size={14} style={{ color: '#52c41a' }} />}
+              styles={{ content: { color: '#52c41a' } }}
             />
           </Card>
         </Col>
@@ -454,8 +450,8 @@ function EncryptionTab({ accountId, messageApi, setActiveJobId }: Readonly<{
             <Statistic
               title={t('privacy.encryption.unencrypted')}
               value={status?.unencrypted ?? 0}
-              prefix={status?.unencrypted ? <WarningOutlined style={{ color: '#fa8c16' }} /> : <CheckCircleOutlined style={{ color: '#52c41a' }} />}
-              valueStyle={status?.unencrypted ? { color: '#fa8c16' } : { color: '#52c41a' }}
+              prefix={status?.unencrypted ? <AlertTriangle size={14} style={{ color: '#fa8c16' }} /> : <CheckCircle size={14} style={{ color: '#52c41a' }} />}
+              styles={status?.unencrypted ? { content: { color: '#fa8c16' } } : { content: { color: '#52c41a' } }}
             />
           </Card>
         </Col>
@@ -474,7 +470,7 @@ function EncryptionTab({ accountId, messageApi, setActiveJobId }: Readonly<{
       </Row>
 
       {status?.hasEncryptionKey ? (
-        <Card title={<><LockOutlined /> {t('privacy.encryption.encryptTitle')}</>} size="small">
+        <Card title={<><Lock size={14} /> {t('privacy.encryption.encryptTitle')}</>} size="small">
           {status?.unencrypted === 0 ? (
             <Alert
               type="success"
@@ -497,7 +493,7 @@ function EncryptionTab({ accountId, messageApi, setActiveJobId }: Readonly<{
             <Button
               type="primary"
               danger
-              icon={<LockOutlined />}
+              icon={<Lock size={14} />}
               loading={encrypting}
               onClick={handleEncrypt}
               disabled={!passphrase || status?.unencrypted === 0}
@@ -507,7 +503,7 @@ function EncryptionTab({ accountId, messageApi, setActiveJobId }: Readonly<{
           </Space>
         </Card>
       ) : (
-        <Card title={<><KeyOutlined /> {t('privacy.encryption.setupTitle')}</>} size="small">
+        <Card title={<><Key size={14} /> {t('privacy.encryption.setupTitle')}</>} size="small">
           <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
             {t('privacy.encryption.setupDesc')}
           </Text>
@@ -518,7 +514,7 @@ function EncryptionTab({ accountId, messageApi, setActiveJobId }: Readonly<{
               onChange={(e) => setPassphrase(e.target.value)}
               style={{ width: 300 }}
             />
-            <Button type="primary" icon={<KeyOutlined />} onClick={handleSetup} disabled={passphrase.length < 8}>
+            <Button type="primary" icon={<Key size={14} />} onClick={handleSetup} disabled={passphrase.length < 8}>
               {t('privacy.encryption.setup')}
             </Button>
           </Space>

@@ -1,9 +1,5 @@
 import { Modal, Progress, Space, Typography, Tag, Alert } from "antd";
-import {
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  LoadingOutlined,
-} from "@ant-design/icons";
+import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { useJobSSE } from "../hooks/useJobSSE";
 import { useTranslation } from "react-i18next";
 import { STATUS_COLORS } from "../utils/constants";
@@ -29,11 +25,11 @@ export default function JobProgressModal({ jobId, onClose }: Props) {
       title={
         <Space>
           {job?.status === "active" ? (
-            <LoadingOutlined spin style={{ color: "#1677ff" }} />
+            <Loader2 size={18} className="lucide-spin" style={{ color: "#1677ff" }} />
           ) : job?.status === "completed" ? (
-            <CheckCircleOutlined style={{ color: "#52c41a" }} />
+            <CheckCircle size={18} style={{ color: "#52c41a" }} />
           ) : job?.status === "failed" ? (
-            <CloseCircleOutlined style={{ color: "#ff4d4f" }} />
+            <XCircle size={18} style={{ color: "#ff4d4f" }} />
           ) : null}
           {job ? (() => {
             const typeKeyMap: Record<string, string> = {

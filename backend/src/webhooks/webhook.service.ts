@@ -1,8 +1,8 @@
 import { getDb } from '../db'
 import * as crypto from 'crypto'
-import pino from 'pino'
+import { createLogger } from '../logger'
 
-const logger = pino({ name: 'webhook' })
+const logger = createLogger('webhook')
 
 export type WebhookEvent =
   | 'job.completed'
@@ -112,7 +112,7 @@ async function sendWebhook(
       .set({ last_triggered_at: new Date(), last_status: res.status })
       .where('id', '=', webhook.id)
       .execute()
-  } catch (err: any) {
+  } catch (err: unknown) {
     await db
       .updateTable('webhooks')
       .set({ last_triggered_at: new Date(), last_status: 0 })

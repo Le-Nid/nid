@@ -3,6 +3,9 @@ import { enqueueJob } from "./queue";
 import { recordInboxSnapshot } from "../analytics/analytics.service";
 import { processExpiredEmails } from "../expiration/expiration.service";
 import { cleanupExpiredShares } from "../archive/sharing.service";
+import { createLogger } from '../logger'
+
+const logger = createLogger('scheduler')
 
 // Simple cron scheduler — vérifie toutes les minutes si des règles
 // planifiées doivent être exécutées.
@@ -26,7 +29,7 @@ export function startRuleScheduler() {
         if (now.getHours() === 3) { // Run at 3 AM
           await enqueueJob('integrity_check', { accountId: '' });
           lastIntegrityCheck = now;
-          console.info('[Scheduler] Enqueued daily integrity check');
+          logger.info('Enqueued daily integrity check');
         }
       }
 
@@ -42,11 +45,11 @@ export function startRuleScheduler() {
           try {
             await recordInboxSnapshot(account.id);
           } catch (err) {
-            console.error(`[Scheduler] Inbox snapshot failed for ${account.id}:`, err);
+            logger.error({ err, accountId: account.id }, 'Inbox snapshot failed');
           }
         }
         lastInboxSnapshot = now;
-        console.info(`[Scheduler] Inbox zero snapshots recorded (${accounts.length} accounts)`);
+        logger.info(`Inbox zero snapshots recorded (${accounts.length} accounts)`);
       }
 
       // ─── Process expired emails — every 15 min ─────────────
@@ -54,10 +57,10 @@ export function startRuleScheduler() {
         try {
           const result = await processExpiredEmails();
           if (result.processed > 0 || result.errors > 0) {
-            console.info(`[Scheduler] Expired emails: ${result.processed} trashed, ${result.errors} errors`);
+            logger.info(`Expired emails: ${result.processed} trashed, ${result.errors} errors`);
           }
         } catch (err) {
-          console.error('[Scheduler] Expiration processing failed:', err);
+          logger.error({ err }, 'Expiration processing failed');
         }
         lastExpirationCheck = now;
       }
@@ -67,10 +70,10 @@ export function startRuleScheduler() {
         try {
           const cleaned = await cleanupExpiredShares();
           if (cleaned > 0) {
-            console.info(`[Scheduler] Cleaned ${cleaned} expired share link(s)`);
+            logger.info(`Cleaned ${cleaned} expired share link(s)`);
           }
         } catch (err) {
-          console.error('[Scheduler] Share cleanup failed:', err);
+          logger.error({ err }, 'Share cleanup failed');
         }
         lastShareCleanup = now;
       }
@@ -102,19 +105,19 @@ export function startRuleScheduler() {
             userId: rule.user_id,
             ruleId: rule.id,
           });
-          console.info(
-            `[Scheduler] Enqueued rule ${rule.id} (${rule.account_email})`,
+          logger.info(
+            `Enqueued rule ${rule.id} (${rule.account_email})`,
           );
         }
       }
     } catch (err) {
-      console.error("[Scheduler] Error during tick:", err);
+      logger.error({ err }, 'Error during tick');
     }
   }
 
   // Démarrer la boucle
   setInterval(tick, INTERVAL_MS);
-  console.info("✅ Rule scheduler started (1min interval)");
+  logger.info('Rule scheduler started (1min interval)');
 }
 
 // ─── Vérification simplifiée de schedule ──────────────────

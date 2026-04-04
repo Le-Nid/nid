@@ -165,9 +165,9 @@ export async function authRoutes(app: FastifyInstance) {
       const authCode = crypto.randomBytes(32).toString('hex')
       await redis.set(`sso:code:${authCode}`, JSON.stringify({ id: user.id, email: user.email, role: user.role }), 'EX', 60)
       return reply.redirect(`${config.FRONTEND_URL}/login?sso_code=${authCode}`)
-    } catch (err: any) {
+    } catch (err: unknown) {
       app.log.error(err)
-      const msg = err.message === 'Account is disabled' ? 'disabled' : 'error'
+      const msg = err instanceof Error && err.message === 'Account is disabled' ? 'disabled' : 'error'
       return reply.redirect(`${config.FRONTEND_URL}/login?google=${msg}`)
     }
   })
@@ -312,9 +312,9 @@ export async function authRoutes(app: FastifyInstance) {
       const authCode = crypto.randomBytes(32).toString('hex')
       await redis.set(`sso:code:${authCode}`, JSON.stringify({ id: user.id, email: user.email, role: user.role }), 'EX', 60)
       return reply.redirect(`${config.FRONTEND_URL}/login?sso_code=${authCode}`)
-    } catch (err: any) {
+    } catch (err: unknown) {
       app.log.error(err)
-      const msg = err.message === 'Account is disabled' ? 'disabled' : 'error'
+      const msg = err instanceof Error && err.message === 'Account is disabled' ? 'disabled' : 'error'
       return reply.redirect(`${config.FRONTEND_URL}/login?social=${msg}`)
     }
   })

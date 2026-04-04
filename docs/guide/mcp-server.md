@@ -91,6 +91,7 @@ Dans `.vscode/mcp.json` :
 | `list-rules` | Liste les règles automatiques |
 | `list-jobs` | Liste les jobs récents avec filtres |
 | `list-notifications` | Notifications non lues |
+| `list-saved-searches` | Liste les recherches sauvegardées |
 | `get-sender-scores` | Top expéditeurs pollueurs |
 | `search-attachments` | Recherche dans les pièces jointes |
 | `get-audit-log` | Journal d'audit |
@@ -103,6 +104,15 @@ Dans `.vscode/mcp.json` :
 | Outil | Description |
 |-------|-------------|
 | `toggle-rule` | Activer/désactiver une règle |
+| `create-rule` | Créer une règle automatique avec conditions et actions |
+| `update-rule` | Modifier une règle existante |
+| `delete-rule` | Supprimer une règle |
+| `run-rule` | Exécuter immédiatement une règle |
+| `create-notification` | Créer une notification / alerte pour un utilisateur |
+| `mark-notifications-read` | Marquer les notifications comme lues |
+| `create-saved-search` | Créer une recherche sauvegardée (dossier intelligent) |
+| `update-saved-search` | Modifier une recherche sauvegardée |
+| `delete-saved-search` | Supprimer une recherche sauvegardée |
 
 ### Ressources
 
@@ -125,6 +135,12 @@ Avec un assistant IA connecté au serveur MCP :
 > « Quelles suggestions de nettoyage sont disponibles ? »
 
 > « Désactive la règle de nettoyage des notifications GitHub »
+
+> « Crée une règle pour archiver automatiquement les mails de newsletter non lus depuis plus de 30 jours »
+
+> « Crée une recherche sauvegardée "Factures récentes" avec la requête label:factures newer_than:1m »
+
+> « Envoie-moi une alerte quand le quota Gmail approche de la limite »
 
 ---
 

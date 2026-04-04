@@ -1,0 +1,35 @@
+{
+  "name": "Nid — Gmail Manager",
+  "short_name": "Nid",
+  "description": "Gérez vos emails Gmail depuis votre propre serveur",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#1677ff",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/nid-pwa-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/nid-pwa-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/nid-pwa-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/nid-pwa-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

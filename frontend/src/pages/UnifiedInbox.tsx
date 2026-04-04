@@ -2,9 +2,7 @@ import { useState } from 'react'
 import {
   Table, Space, Button, Tag, Typography, Card, Select, Empty, Spin,
 } from 'antd'
-import {
-  ReloadOutlined, PaperClipOutlined, FilterOutlined,
-} from '@ant-design/icons'
+import { RefreshCw, Paperclip, Filter, Merge } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useUnifiedMessages } from '../hooks/queries'
 import { useAuthStore } from '../store/auth.store'
@@ -98,7 +96,7 @@ export default function UnifiedInboxPage() {
       ellipsis: true,
       render: (v: string, row: UnifiedMailRow) => (
         <Space size={4}>
-          {row.hasAttachments && <PaperClipOutlined style={{ color: '#8c8c8c', fontSize: 12 }} />}
+          {row.hasAttachments && <Paperclip size={14} style={{ color: '#8c8c8c', fontSize: 12 }} />}
           <Text strong={row.labelIds.includes('UNREAD')} style={{ fontSize: 13 }}>
             {v || t('common.noSubject')}
           </Text>
@@ -129,7 +127,7 @@ export default function UnifiedInboxPage() {
   if (gmailAccounts.length < 2) {
     return (
       <div>
-        <Title level={3}>{t('unified.title')}</Title>
+        <Title level={3}><Merge size={20} style={{ marginRight: 8 }} />{t('unified.title')}</Title>
         <Empty description={t('unified.needMultipleAccounts')} />
       </div>
     )
@@ -137,7 +135,7 @@ export default function UnifiedInboxPage() {
 
   return (
     <div>
-      <Title level={3} style={{ marginBottom: 16 }}>{t('unified.title')}</Title>
+      <Title level={3} style={{ marginBottom: 16 }}><Merge size={20} style={{ marginRight: 8 }} />{t('unified.title')}</Title>
 
       {/* Filters */}
       <Card size="small" style={{ marginBottom: 12 }}>
@@ -160,7 +158,7 @@ export default function UnifiedInboxPage() {
                 </Space>
               ),
             }))}
-            prefix={<FilterOutlined />}
+            prefix={<Filter size={14} />}
           />
           <GmailSearchInput
             value={query}
@@ -169,7 +167,7 @@ export default function UnifiedInboxPage() {
             style={{ width: 400 }}
           />
           <Button
-            icon={<ReloadOutlined />}
+            icon={<RefreshCw size={14} />}
             onClick={() => refetch()}
             loading={isLoading}
           />

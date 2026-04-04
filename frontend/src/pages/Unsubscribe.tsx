@@ -1,12 +1,9 @@
 import { useState } from 'react'
 import {
   Table, Button, Typography, Space, Tag, Popconfirm, Tooltip, Card,
-  Empty, Statistic, Row, Col, notification, message, Input,
+  Empty, Statistic, Row, Col, App, message, Input,
 } from 'antd'
-import {
-  DeleteOutlined, LinkOutlined, MailOutlined,
-  ReloadOutlined,
-} from '@ant-design/icons'
+import { Trash2, Link, Mail, RefreshCw, Ban } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAccount } from '../hooks/useAccount'
 import { formatBytes } from '../utils/format'
@@ -36,6 +33,7 @@ export default function UnsubscribePage() {
   const [deletingEmail, setDeletingEmail] = useState<string | null>(null)
   const [activeJobId, setActiveJobId] = useState<string | null>(null)
   const [messageApi, contextHolder] = message.useMessage()
+  const { notification } = App.useApp()
 
   const handleDelete = async (sender: NewsletterSender, permanent = false) => {
     setDeletingEmail(sender.email)
@@ -43,7 +41,7 @@ export default function UnsubscribePage() {
       const { jobId, count } = await deleteSenderMutation.mutateAsync({ email: sender.email, permanent })
       setActiveJobId(jobId)
       notification.success({
-        title: t('unsubscribe.deleteStarted'),
+        message: t('unsubscribe.deleteStarted'),
         description: t('unsubscribe.deleteDesc', { count, sender: sender.sender }),
       })
     } catch {
@@ -105,7 +103,7 @@ export default function UnsubscribePage() {
             <Button
               size="small"
               type="link"
-              icon={<LinkOutlined />}
+              icon={<Link size={14} />}
               href={row.unsubscribeUrl}
               target="_blank"
               rel="noopener noreferrer"
@@ -119,7 +117,7 @@ export default function UnsubscribePage() {
             <Button
               size="small"
               type="link"
-              icon={<MailOutlined />}
+              icon={<Mail size={14} />}
               href={row.unsubscribeMailto}
             >
               {t('unsubscribe.byEmail')}
@@ -146,7 +144,7 @@ export default function UnsubscribePage() {
               <Button
                 size="small"
                 danger
-                icon={<DeleteOutlined />}
+                icon={<Trash2 size={14} />}
                 loading={deletingEmail === row.email}
               />
             </Tooltip>
@@ -161,8 +159,9 @@ export default function UnsubscribePage() {
       {contextHolder}
 
       <Space style={{ marginBottom: 16 }} align="center">
+        <Ban size={20} />
         <Title level={3} style={{ margin: 0 }}>{t('unsubscribe.title')}</Title>
-        <Button icon={<ReloadOutlined />} onClick={load} loading={loading}>
+        <Button icon={<RefreshCw size={14} />} onClick={load} loading={loading}>
           {t('unsubscribe.scan')}
         </Button>
       </Space>

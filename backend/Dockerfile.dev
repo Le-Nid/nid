@@ -1,8 +1,18 @@
 FROM node:24-alpine
 WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY tsconfig.json vite.config.ts vitest.config.ts ./
+
+# Non-root user
+RUN addgroup -g 1001 -S appgroup && \
+    adduser -S appuser -u 1001 -G appgroup && \
+    chown -R appuser:appgroup /app
+
+COPY --chown=appuser:appgroup package*.json ./
+RUN npm ci
+
+COPY --chown=appuser:appgroup tsconfig.json vite.config.ts ./
+
+USER appuser
 EXPOSE 4000
-# vite-node --watch remplace tsx watch — rechargement à chaud natif
+
+# vite-node --watch — hot-reload natif
 CMD ["npm", "run", "dev"]

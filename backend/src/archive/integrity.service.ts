@@ -2,6 +2,9 @@ import { getDb } from '../db'
 import { config } from '../config'
 import * as fs from 'fs'
 import * as path from 'path'
+import { createLogger } from '../logger'
+
+const logger = createLogger('integrity')
 
 export interface IntegrityResult {
   totalRecords: number
@@ -13,6 +16,7 @@ export interface IntegrityResult {
 }
 
 export async function checkArchiveIntegrity(accountId?: string): Promise<IntegrityResult> {
+  logger.info({ accountId: accountId ?? 'all' }, 'checking archive integrity')
   const db = getDb()
 
   // 1. Get all archived mails from DB
@@ -81,7 +85,7 @@ export async function checkArchiveIntegrity(accountId?: string): Promise<Integri
     walkDir(archiveDir)
   }
 
-  return {
+  const result = {
     totalRecords: records.length,
     checkedFiles: records.length,
     missingFiles,
@@ -89,4 +93,11 @@ export async function checkArchiveIntegrity(accountId?: string): Promise<Integri
     corruptedFiles,
     healthy: missingFiles.length === 0 && corruptedFiles.length === 0,
   }
+
+  logger.info(
+    { totalRecords: result.totalRecords, missing: missingFiles.length, orphaned: orphanedFiles.length, corrupted: corruptedFiles.length, healthy: result.healthy },
+    'integrity check completed',
+  )
+
+  return result
 }

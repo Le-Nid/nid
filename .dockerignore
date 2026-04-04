@@ -1,0 +1,42 @@
+# ── Git ───────────────────────────────────────────────────
+.git
+.gitignore
+
+# ── Environment & secrets ────────────────────────────────
+.env
+.env.*
+*.pem
+*.key
+
+# ── IDE & editor ─────────────────────────────────────────
+.vscode
+.idea
+*.swp
+*.swo
+
+# ── Documentation & metadata ────────────────────────────
+docs/
+*.md
+!frontend/README.md
+LICENSE
+mkdocs.yml
+
+# ── Build artifacts & dependencies ───────────────────────
+**/node_modules
+**/dist
+**/coverage
+**/.cache
+
+# ── Docker files (avoid recursive context) ───────────────
+docker-compose*.yml
+**/Dockerfile*
+**/.dockerignore
+
+# ── Volumes & data ───────────────────────────────────────
+volumes/
+postgres/
+
+# ── Misc ─────────────────────────────────────────────────
+**/*.log
+**/npm-debug.log*
+**/.DS_Store

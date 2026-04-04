@@ -36,6 +36,45 @@ Un seul port est exposé : `3000` (configurable via `APP_PORT`).
 
 ---
 
+## Versioning
+
+Nid utilise le **Semantic Versioning** (SemVer). Le numéro de version est défini dans le fichier `VERSION` à la racine du projet.
+
+### Fichier VERSION
+
+Le fichier `VERSION` contient uniquement le numéro de version (ex. `0.1.0`). Il est la source de vérité unique pour la version de l'application.
+
+### Tags Docker
+
+Lors du publish Docker (GitHub Actions), le workflow lit le fichier `VERSION` et génère trois tags :
+
+| Tag | Exemple | Description |
+|---|---|---|
+| `latest` | `ghcr.io/le-nid/nid:latest` | Dernière version publiée |
+| Version | `ghcr.io/le-nid/nid:0.1.0` | Tag de version fixe |
+| Branche/tag Git | `ghcr.io/le-nid/nid:main` | Branche ou tag Git |
+
+### Mettre à jour la version
+
+1. Modifiez le fichier `VERSION` avec le nouveau numéro
+2. Committez et poussez sur `main`
+3. Le workflow `docker-publish.yml` build et publie automatiquement l'image avec les bons tags
+
+```bash
+echo "0.2.0" > VERSION
+git add VERSION && git commit -m "bump version to 0.2.0"
+git push
+```
+
+### Dans le Dockerfile
+
+Le `ARG APP_VERSION` est injecté au build. Il est utilisé pour :
+
+- Le label OCI `org.opencontainers.image.version`
+- La variable d'environnement `APP_VERSION` accessible au runtime dans le backend
+
+---
+
 ## Lancement
 
 ```bash

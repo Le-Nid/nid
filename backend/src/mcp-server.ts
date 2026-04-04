@@ -4,6 +4,9 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod/v4'
 import { getDb, runMigrations, closeDb } from './db'
 import { config } from './config'
+import { createLogger } from './logger'
+
+const logger = createLogger('mcp')
 
 const server = new McpServer(
   {
@@ -391,6 +394,292 @@ server.registerTool(
   },
 )
 
+// ─── Création de règles ─────────────────────────────────────
+
+server.registerTool(
+  'create-rule',
+  {
+    title: 'Créer une règle automatique',
+    description: `Crée une nouvelle règle automatique pour un compte Gmail.
+Les conditions filtrent les mails (from, to, subject, label, has_attachment, size_gt, size_lt, older_than, newer_than).
+Les opérateurs possibles : contains, not_contains, equals, not_equals, gt, lt, is_true.
+Les actions possibles : trash, delete, label, unlabel, archive, archive_nas, mark_read, mark_unread.
+Le schedule est une fréquence optionnelle : hourly, daily, weekly, monthly (null = exécution manuelle uniquement).`,
+    inputSchema: z.object({
+      accountId: z.string().describe('UUID du compte Gmail'),
+      name: z.string().describe('Nom de la règle'),
+      description: z.string().optional().describe('Description de la règle'),
+      conditions: z.array(z.object({
+        field: z.enum(['from', 'to', 'subject', 'has_attachment', 'size_gt', 'size_lt', 'label', 'older_than', 'newer_than']).describe('Champ à tester'),
+        operator: z.enum(['contains', 'not_contains', 'equals', 'not_equals', 'gt', 'lt', 'is_true']).describe('Opérateur de comparaison'),
+        value: z.union([z.string(), z.number(), z.boolean()]).describe('Valeur à comparer'),
+      })).describe('Liste des conditions à appliquer'),
+      action: z.object({
+        type: z.enum(['trash', 'delete', 'label', 'unlabel', 'archive', 'archive_nas', 'mark_read', 'mark_unread']).describe('Type d\'action'),
+        labelId: z.string().optional().describe('ID du label Gmail (requis pour label/unlabel)'),
+      }).describe('Action à exécuter sur les mails matchés'),
+      schedule: z.enum(['hourly', 'daily', 'weekly', 'monthly']).optional().describe('Fréquence d\'exécution automatique'),
+      isActive: z.boolean().optional().default(true).describe('Activer immédiatement la règle'),
+    }),
+  },
+  async ({ accountId, name, description, conditions, action, schedule, isActive }) => {
+    const { createRule } = await import('./rules/rules.service')
+    const rule = await createRule(accountId, {
+      name,
+      description,
+      conditions,
+      action,
+      schedule: schedule ?? undefined,
+      is_active: isActive,
+    })
+    return { content: [{ type: 'text', text: JSON.stringify(rule, null, 2) }] }
+  },
+)
+
+server.registerTool(
+  'update-rule',
+  {
+    title: 'Modifier une règle',
+    description: 'Modifie une règle automatique existante (nom, conditions, action, schedule, statut)',
+    inputSchema: z.object({
+      ruleId: z.string().describe('UUID de la règle à modifier'),
+      accountId: z.string().describe('UUID du compte Gmail propriétaire'),
+      name: z.string().optional().describe('Nouveau nom'),
+      description: z.string().optional().describe('Nouvelle description'),
+      conditions: z.array(z.object({
+        field: z.enum(['from', 'to', 'subject', 'has_attachment', 'size_gt', 'size_lt', 'label', 'older_than', 'newer_than']),
+        operator: z.enum(['contains', 'not_contains', 'equals', 'not_equals', 'gt', 'lt', 'is_true']),
+        value: z.union([z.string(), z.number(), z.boolean()]),
+      })).optional().describe('Nouvelles conditions'),
+      action: z.object({
+        type: z.enum(['trash', 'delete', 'label', 'unlabel', 'archive', 'archive_nas', 'mark_read', 'mark_unread']),
+        labelId: z.string().optional(),
+      }).optional().describe('Nouvelle action'),
+      schedule: z.enum(['hourly', 'daily', 'weekly', 'monthly']).nullable().optional().describe('Nouvelle fréquence (null pour manuel)'),
+      isActive: z.boolean().optional().describe('Activer ou désactiver'),
+    }),
+  },
+  async ({ ruleId, accountId, name, description, conditions, action, schedule, isActive }) => {
+    const { updateRule } = await import('./rules/rules.service')
+    const dto: Record<string, unknown> = {}
+    if (name !== undefined) dto.name = name
+    if (description !== undefined) dto.description = description
+    if (conditions !== undefined) dto.conditions = conditions
+    if (action !== undefined) dto.action = action
+    if (schedule !== undefined) dto.schedule = schedule
+    if (isActive !== undefined) dto.is_active = isActive
+    const rule = await updateRule(ruleId, accountId, dto as any)
+    return { content: [{ type: 'text', text: JSON.stringify(rule, null, 2) }] }
+  },
+)
+
+server.registerTool(
+  'delete-rule',
+  {
+    title: 'Supprimer une règle',
+    description: 'Supprime définitivement une règle automatique',
+    inputSchema: z.object({
+      ruleId: z.string().describe('UUID de la règle à supprimer'),
+      accountId: z.string().describe('UUID du compte Gmail propriétaire'),
+    }),
+    annotations: { destructiveHint: true },
+  },
+  async ({ ruleId, accountId }) => {
+    const { deleteRule } = await import('./rules/rules.service')
+    await deleteRule(ruleId, accountId)
+    return { content: [{ type: 'text', text: `Règle ${ruleId} supprimée.` }] }
+  },
+)
+
+server.registerTool(
+  'run-rule',
+  {
+    title: 'Exécuter une règle',
+    description: 'Exécute immédiatement une règle sur les mails du compte Gmail. Retourne le nombre de mails matchés et l\'ID du job créé.',
+    inputSchema: z.object({
+      ruleId: z.string().describe('UUID de la règle à exécuter'),
+      accountId: z.string().describe('UUID du compte Gmail'),
+    }),
+  },
+  async ({ ruleId, accountId }) => {
+    const { getRule, runRule } = await import('./rules/rules.service')
+    const rule = await getRule(ruleId, accountId)
+    if (!rule) return { content: [{ type: 'text', text: `Règle ${ruleId} introuvable pour ce compte.` }], isError: true }
+    const result = await runRule(rule, accountId)
+    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] }
+  },
+)
+
+// ─── Notifications / Alertes ────────────────────────────────
+
+server.registerTool(
+  'create-notification',
+  {
+    title: 'Créer une notification / alerte',
+    description: `Crée une notification in-app pour un utilisateur et déclenche les webhooks configurés.
+Catégories disponibles : weekly_report, job_completed, job_failed, rule_executed, quota_warning, integrity_alert.
+La notification respecte les préférences de l'utilisateur (in-app et webhooks).`,
+    inputSchema: z.object({
+      userId: z.string().describe('UUID de l\'utilisateur destinataire'),
+      category: z.enum(['weekly_report', 'job_completed', 'job_failed', 'rule_executed', 'quota_warning', 'integrity_alert']).describe('Catégorie de la notification'),
+      title: z.string().describe('Titre de la notification'),
+      body: z.string().optional().describe('Corps / description détaillée'),
+      data: z.record(z.string(), z.unknown()).optional().describe('Données additionnelles (JSON libre)'),
+    }),
+  },
+  async ({ userId, category, title, body, data }) => {
+    const { notify } = await import('./notifications/notify')
+    await notify({ userId, category, title, body, data })
+    return { content: [{ type: 'text', text: `Notification "${title}" créée pour l'utilisateur ${userId} (catégorie: ${category}).` }] }
+  },
+)
+
+server.registerTool(
+  'mark-notifications-read',
+  {
+    title: 'Marquer les notifications comme lues',
+    description: 'Marque une ou toutes les notifications d\'un utilisateur comme lues',
+    inputSchema: z.object({
+      userId: z.string().describe('UUID de l\'utilisateur'),
+      notificationId: z.string().optional().describe('UUID d\'une notification spécifique (si omis, marque toutes comme lues)'),
+    }),
+  },
+  async ({ userId, notificationId }) => {
+    const db = getDb()
+    let q = db
+      .updateTable('notifications')
+      .set({ is_read: true })
+      .where('user_id', '=', userId)
+    if (notificationId) q = q.where('id', '=', notificationId) as any
+    const result = await (q as any).executeTakeFirst()
+    const count = Number(result.numUpdatedRows ?? 0)
+    return { content: [{ type: 'text', text: `${count} notification(s) marquée(s) comme lue(s).` }] }
+  },
+)
+
+// ─── Recherches sauvegardées ────────────────────────────────
+
+server.registerTool(
+  'list-saved-searches',
+  {
+    title: 'Lister les recherches sauvegardées',
+    description: 'Liste toutes les recherches sauvegardées d\'un utilisateur',
+    inputSchema: z.object({
+      userId: z.string().describe('UUID de l\'utilisateur'),
+    }),
+    annotations: { readOnlyHint: true },
+  },
+  async ({ userId }) => {
+    const db = getDb()
+    const searches = await db
+      .selectFrom('saved_searches')
+      .selectAll()
+      .where('user_id', '=', userId)
+      .orderBy('sort_order', 'asc')
+      .orderBy('created_at', 'asc')
+      .execute()
+    return { content: [{ type: 'text', text: JSON.stringify(searches, null, 2) }] }
+  },
+)
+
+server.registerTool(
+  'create-saved-search',
+  {
+    title: 'Créer une recherche sauvegardée',
+    description: `Crée une recherche sauvegardée (dossier intelligent) pour un utilisateur.
+La query utilise la syntaxe Gmail native (ex: "from:github.com is:unread", "has:attachment larger:5M", "label:factures older_than:3m").`,
+    inputSchema: z.object({
+      userId: z.string().describe('UUID de l\'utilisateur'),
+      name: z.string().describe('Nom de la recherche (ex: "Factures ce mois", "Mails volumineux non archivés")'),
+      query: z.string().describe('Requête Gmail native'),
+      icon: z.string().optional().describe('Nom d\'icône (ex: "Search", "Mail", "FileText")'),
+      color: z.string().optional().describe('Couleur CSS (ex: "#1890ff", "blue")'),
+    }),
+  },
+  async ({ userId, name, query, icon, color }) => {
+    if (!name?.trim() || !query?.trim()) {
+      return { content: [{ type: 'text', text: 'Le nom et la requête sont obligatoires.' }], isError: true }
+    }
+    const db = getDb()
+    const search = await db
+      .insertInto('saved_searches')
+      .values({
+        user_id: userId,
+        name: name.trim().slice(0, 255),
+        query: query.trim().slice(0, 2000),
+        icon: icon?.slice(0, 64) ?? null,
+        color: color?.slice(0, 32) ?? null,
+      })
+      .returningAll()
+      .executeTakeFirstOrThrow()
+    return { content: [{ type: 'text', text: JSON.stringify(search, null, 2) }] }
+  },
+)
+
+server.registerTool(
+  'update-saved-search',
+  {
+    title: 'Modifier une recherche sauvegardée',
+    description: 'Modifie le nom, la requête, l\'icône ou la couleur d\'une recherche sauvegardée',
+    inputSchema: z.object({
+      userId: z.string().describe('UUID de l\'utilisateur propriétaire'),
+      searchId: z.string().describe('UUID de la recherche à modifier'),
+      name: z.string().optional().describe('Nouveau nom'),
+      query: z.string().optional().describe('Nouvelle requête Gmail'),
+      icon: z.string().optional().describe('Nouvelle icône'),
+      color: z.string().optional().describe('Nouvelle couleur'),
+    }),
+  },
+  async ({ userId, searchId, name, query, icon, color }) => {
+    const db = getDb()
+    const existing = await db
+      .selectFrom('saved_searches')
+      .select('id')
+      .where('id', '=', searchId)
+      .where('user_id', '=', userId)
+      .executeTakeFirst()
+    if (!existing) return { content: [{ type: 'text', text: `Recherche ${searchId} introuvable.` }], isError: true }
+
+    const updates: Record<string, unknown> = { updated_at: new Date() }
+    if (name !== undefined) updates.name = name.trim().slice(0, 255)
+    if (query !== undefined) updates.query = query.trim().slice(0, 2000)
+    if (icon !== undefined) updates.icon = icon?.slice(0, 64) ?? null
+    if (color !== undefined) updates.color = color?.slice(0, 32) ?? null
+
+    const updated = await db
+      .updateTable('saved_searches')
+      .set(updates)
+      .where('id', '=', searchId)
+      .where('user_id', '=', userId)
+      .returningAll()
+      .executeTakeFirstOrThrow()
+    return { content: [{ type: 'text', text: JSON.stringify(updated, null, 2) }] }
+  },
+)
+
+server.registerTool(
+  'delete-saved-search',
+  {
+    title: 'Supprimer une recherche sauvegardée',
+    description: 'Supprime définitivement une recherche sauvegardée',
+    inputSchema: z.object({
+      userId: z.string().describe('UUID de l\'utilisateur propriétaire'),
+      searchId: z.string().describe('UUID de la recherche à supprimer'),
+    }),
+    annotations: { destructiveHint: true },
+  },
+  async ({ userId, searchId }) => {
+    const db = getDb()
+    const result = await db
+      .deleteFrom('saved_searches')
+      .where('id', '=', searchId)
+      .where('user_id', '=', userId)
+      .executeTakeFirst()
+    if (!result.numDeletedRows) return { content: [{ type: 'text', text: `Recherche ${searchId} introuvable.` }], isError: true }
+    return { content: [{ type: 'text', text: `Recherche ${searchId} supprimée.` }] }
+  },
+)
+
 // ─── Resources ──────────────────────────────────────────────
 
 server.registerResource(
@@ -424,7 +713,7 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error('MCP server error:', err)
+  logger.error({ err }, 'MCP server error')
   process.exit(1)
 })
 

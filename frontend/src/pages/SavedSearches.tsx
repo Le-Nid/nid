@@ -3,10 +3,7 @@ import {
   Card, Table, Button, Space, Typography, Input, Modal, Form,
   Tag, Empty, message, Popconfirm, Select, ColorPicker,
 } from 'antd'
-import {
-  PlusOutlined, DeleteOutlined, SearchOutlined,
-  EditOutlined, FolderOutlined, PlayCircleOutlined,
-} from '@ant-design/icons'
+import { Plus, Trash2, Search, Pencil, Folder, Play, FolderOpen } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { useSavedSearches, useCreateSavedSearch, useDeleteSavedSearch, useUpdateSavedSearch } from '../hooks/queries'
@@ -111,7 +108,7 @@ export default function SavedSearchesPage() {
       dataIndex: 'query',
       ellipsis: true,
       render: (v: string) => (
-        <Tag icon={<SearchOutlined />} style={{ maxWidth: 350 }}>
+        <Tag icon={<Search size={14} />} style={{ maxWidth: 350 }}>
           <Text ellipsis style={{ maxWidth: 330, display: 'inline' }}>{v}</Text>
         </Tag>
       ),
@@ -134,21 +131,21 @@ export default function SavedSearchesPage() {
           <Button
             size="small"
             type="primary"
-            icon={<PlayCircleOutlined />}
+            icon={<Play size={14} />}
             onClick={() => handleUse(row.query)}
           >
             {t('savedSearches.use')}
           </Button>
           <Button
             size="small"
-            icon={<EditOutlined />}
+            icon={<Pencil size={14} />}
             onClick={() => openEdit(row)}
           />
           <Popconfirm
             title={t('savedSearches.deleteConfirm')}
             onConfirm={() => handleDelete(row.id)}
           >
-            <Button size="small" danger icon={<DeleteOutlined />} />
+            <Button size="small" danger icon={<Trash2 size={14} />} />
           </Popconfirm>
         </Space>
       ),
@@ -161,9 +158,9 @@ export default function SavedSearchesPage() {
 
       <Space style={{ marginBottom: 16, justifyContent: 'space-between', width: '100%' }}>
         <Title level={3} style={{ margin: 0 }}>
-          {t('savedSearches.title')}
+          <FolderOpen size={20} style={{ marginRight: 8 }} />{t('savedSearches.title')}
         </Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
+        <Button type="primary" icon={<Plus size={14} />} onClick={openCreate}>
           {t('savedSearches.newSearch')}
         </Button>
       </Space>
@@ -182,7 +179,7 @@ export default function SavedSearchesPage() {
         locale={{
           emptyText: (
             <Empty
-              image={<FolderOutlined style={{ fontSize: 48, color: '#d9d9d9' }} />}
+              image={<Folder size={14} style={{ fontSize: 48, color: '#d9d9d9' }} />}
               description={t('savedSearches.noSearches')}
             >
               <Button type="primary" onClick={openCreate}>

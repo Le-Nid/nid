@@ -8,22 +8,14 @@ import {
   Switch,
   Popconfirm,
   Tooltip,
-  notification,
+  App,
   message,
   Card,
   Empty,
   Drawer,
   Spin,
 } from "antd";
-import {
-  PlusOutlined,
-  PlayCircleOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  ClockCircleOutlined,
-  CheckCircleOutlined,
-  AppstoreOutlined,
-} from "@ant-design/icons";
+import { Plus, Play, Pencil, Trash2, Clock, CheckCircle, LayoutGrid, Bot } from 'lucide-react'
 import { useTranslation } from "react-i18next";
 import { rulesApi } from "../api";
 import { useAccount } from "../hooks/useAccount";
@@ -54,6 +46,7 @@ export default function RulesPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<Rule | null>(null);
   const [messageApi, contextHolder] = message.useMessage();
+  const { notification } = App.useApp();
   const [templateDrawer, setTemplateDrawer] = useState(false);
   const { data: templates = [], isLoading: templateLoading } = useRuleTemplates(templateDrawer);
   const toggleMutation = useToggleRule(accountId!);
@@ -73,7 +66,7 @@ export default function RulesPage() {
     try {
       const { jobId } = await runMutation.mutateAsync(rule.id);
       notification.success({
-        title: t('rules.runSuccess', { name: rule.name }),
+        message: t('rules.runSuccess', { name: rule.name }),
         description: t('rules.runJobCreated', { jobId }),
         duration: 5,
       });
@@ -194,12 +187,12 @@ export default function RulesPage() {
       render: (s: string | null, row: Rule) => (
         <Space orientation="vertical" size={0}>
           <Space size={4}>
-            {s ? <ClockCircleOutlined style={{ color: "#1677ff" }} /> : null}
+            {s ? <Clock size={14} style={{ color: "#1677ff" }} /> : null}
             <Text style={{ fontSize: 12 }}>{scheduleLabel(s)}</Text>
           </Space>
           {row.last_run_at && (
             <Text type="secondary" style={{ fontSize: 11 }}>
-              <CheckCircleOutlined style={{ color: "#52c41a" }} />{" "}
+              <CheckCircle size={14} style={{ color: "#52c41a" }} />{" "}
               {dayjs(row.last_run_at).locale(i18n.language).fromNow()}
             </Text>
           )}
@@ -216,7 +209,7 @@ export default function RulesPage() {
               size="small"
               type="primary"
               ghost
-              icon={<PlayCircleOutlined />}
+              icon={<Play size={14} />}
               loading={runningId === row.id}
               onClick={() => handleRun(row)}
               disabled={!row.is_active}
@@ -225,7 +218,7 @@ export default function RulesPage() {
           <Tooltip title={t('common.edit')}>
             <Button
               size="small"
-              icon={<EditOutlined />}
+              icon={<Pencil size={14} />}
               onClick={() => openEdit(row)}
             />
           </Tooltip>
@@ -237,7 +230,7 @@ export default function RulesPage() {
             cancelText={t('common.cancel')}
           >
             <Tooltip title={t('rules.deleteRule')}>
-              <Button size="small" danger icon={<DeleteOutlined />} />
+              <Button size="small" danger icon={<Trash2 size={14} />} />
             </Tooltip>
           </Popconfirm>
         </Space>
@@ -251,12 +244,12 @@ export default function RulesPage() {
 
       <Space style={{ marginBottom: 16 }} align="center">
         <Title level={3} style={{ margin: 0 }}>
-          {t('rules.title')}
+          <Bot size={20} style={{ marginRight: 8 }} />{t('rules.title')}
         </Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
+        <Button type="primary" icon={<Plus size={14} />} onClick={openCreate}>
           {t('rules.newRule')}
         </Button>
-        <Button icon={<AppstoreOutlined />} onClick={openTemplates}>
+        <Button icon={<LayoutGrid size={14} />} onClick={openTemplates}>
           {t('rules.templates')}
         </Button>
       </Space>
@@ -290,7 +283,7 @@ export default function RulesPage() {
               >
                 <Button
                   type="primary"
-                  icon={<PlusOutlined />}
+                  icon={<Plus size={14} />}
                   onClick={openCreate}
                 >
                   {t('rules.createFirst')}

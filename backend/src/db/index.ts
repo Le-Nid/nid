@@ -3,6 +3,9 @@ import pg from 'pg'
 import { Database } from './types'
 import { config } from '../config'
 import * as migration001 from './migrations/001_full_schema'
+import { createLogger } from '../logger'
+
+const logger = createLogger('db')
 
 // ─── Kysely instance ──────────────────────────────────────
 
@@ -45,19 +48,19 @@ export async function runMigrations(): Promise<void> {
 
   results?.forEach((result) => {
     if (result.status === 'Success') {
-      console.info(`✅ Migration "${result.migrationName}" exécutée`)
+      logger.info(`Migration "${result.migrationName}" exécutée`)
     } else if (result.status === 'Error') {
-      console.error(`❌ Migration "${result.migrationName}" échouée`)
+      logger.error(`Migration "${result.migrationName}" échouée`)
     }
   })
 
   if (error) {
-    console.error('Migration error:', error)
+    logger.error({ err: error }, 'Migration error')
     throw error
   }
 
   if (!results?.length) {
-    console.info('✅ Base de données à jour (aucune migration à appliquer)')
+    logger.info('Base de données à jour (aucune migration à appliquer)')
   }
 }
 

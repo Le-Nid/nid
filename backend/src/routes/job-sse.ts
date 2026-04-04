@@ -1,14 +1,18 @@
-import { FastifyInstance } from "fastify";
+import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { QueueEvents } from "bullmq";
 import { getRedis } from "../plugins/redis";
 import { getDb } from "../db";
+import { createLogger } from '../logger'
+import type { ServerResponse } from 'http'
+
+const logger = createLogger('job-sse')
 
 // Map des connexions SSE actives : jobId → Set<reply>
-const subscribers = new Map<string, Set<any>>();
+const subscribers = new Map<string, Set<ServerResponse>>();
 
 export async function jobSseRoutes(app: FastifyInstance) {
   // SSE: read JWT from httpOnly cookie (primary) or Authorization header (fallback)
-  const verifyToken = async (request: any, reply: any) => {
+  const verifyToken = async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       await request.jwtVerify()
     } catch {
@@ -22,7 +26,6 @@ export async function jobSseRoutes(app: FastifyInstance) {
     "/:jobId/events",
     {
       preHandler: [verifyToken],
-      config: { rawBody: false },
     },
     async (request, reply) => {
       const { jobId } = request.params as { jobId: string };
@@ -157,6 +160,6 @@ export function startQueueEventBroadcaster() {
     });
   });
 
-  console.info("✅ SSE QueueEvents broadcaster started");
+  logger.info('SSE QueueEvents broadcaster started');
   return queueEvents;
 }

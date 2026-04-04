@@ -30,7 +30,11 @@ import { sharingRoutes } from './sharing'
 
 export async function registerRoutes(app: FastifyInstance) {
   // Health check
-  app.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }))
+  app.get('/health', async () => ({
+    status: 'ok',
+    version: process.env.APP_VERSION ?? '0.1.0',
+    timestamp: new Date().toISOString(),
+  }))
 
   // API routes
   await app.register(authRoutes,      { prefix: '/api/auth' })

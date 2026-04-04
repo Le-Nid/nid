@@ -149,7 +149,7 @@ describe('SavedSearchesPage', () => {
 
     render(<SavedSearchesPage />)
     // Each row has edit, delete, and use buttons
-    const editBtns = document.querySelectorAll('.anticon-edit')
+    const editBtns = document.querySelectorAll('.lucide-pencil')
     expect(editBtns.length).toBe(2)
   })
 
@@ -161,7 +161,7 @@ describe('SavedSearchesPage', () => {
 
     render(<SavedSearchesPage />)
     // Click edit button
-    const editBtn = document.querySelector('.anticon-edit')!.closest('button')!
+    const editBtn = document.querySelector('.lucide-pencil')!.closest('button')!
     fireEvent.click(editBtn)
 
     expect(screen.getByText('savedSearches.editTitle')).toBeInTheDocument()
@@ -221,7 +221,7 @@ describe('SavedSearchesPage', () => {
     })
 
     render(<SavedSearchesPage />)
-    const deleteBtns = document.querySelectorAll('.anticon-delete')
+    const deleteBtns = document.querySelectorAll('.lucide-trash-2')
     expect(deleteBtns.length).toBe(2)
   })
 
@@ -255,7 +255,7 @@ describe('SavedSearchesPage', () => {
     })
 
     render(<SavedSearchesPage />)
-    expect(document.querySelector('.anticon-search')).toBeInTheDocument()
+    expect(document.querySelector('.lucide-search')).toBeInTheDocument()
   })
 
   it('shows null icon as default search emoji', () => {
@@ -275,7 +275,7 @@ describe('SavedSearchesPage', () => {
     })
 
     render(<SavedSearchesPage />)
-    const editBtn = document.querySelector('.anticon-edit')!.closest('button')!
+    const editBtn = document.querySelector('.lucide-pencil')!.closest('button')!
     fireEvent.click(editBtn)
 
     await waitFor(() => {
@@ -337,7 +337,7 @@ describe('SavedSearchesPage', () => {
 
     render(<SavedSearchesPage />)
     // Click delete button to open Popconfirm
-    const deleteBtn = document.querySelector('.anticon-delete')!.closest('button')!
+    const deleteBtn = document.querySelector('.lucide-trash-2')!.closest('button')!
     fireEvent.click(deleteBtn)
 
     // Click confirm in Popconfirm

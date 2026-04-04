@@ -14,7 +14,7 @@ import {
   Row,
   Col,
 } from "antd";
-import { PlusOutlined, DeleteOutlined, EyeOutlined } from "@ant-design/icons";
+import { Plus, Trash2, Eye } from 'lucide-react';
 import { useTranslation } from "react-i18next";
 import {
   Rule,
@@ -159,8 +159,9 @@ export default function RuleFormModal({
         await rulesApi.create(accountId, dto);
       }
       onSaved();
-    } catch (e: any) {
-      setError(e.response?.data?.error ?? t('common.error'));
+    } catch (e: unknown) {
+      const axiosErr = e as { response?: { data?: { error?: string } } }
+      setError(axiosErr.response?.data?.error ?? t('common.error'));
     } finally {
       setSaving(false);
     }
@@ -177,7 +178,7 @@ export default function RuleFormModal({
       footer={[
         <Button
           key="preview"
-          icon={<EyeOutlined />}
+          icon={<Eye size={14} />}
           onClick={handlePreview}
           loading={previewing}
         >
@@ -307,7 +308,7 @@ export default function RuleFormModal({
                   type="text"
                   danger
                   size="small"
-                  icon={<DeleteOutlined />}
+                  icon={<Trash2 size={14} />}
                   onClick={() => removeCondition(i)}
                 />
               )}
@@ -318,7 +319,7 @@ export default function RuleFormModal({
         <Button
           type="dashed"
           size="small"
-          icon={<PlusOutlined />}
+          icon={<Plus size={14} />}
           onClick={addCondition}
         >
           {t('ruleForm.addCondition')}

@@ -2,10 +2,7 @@ import {
   Row, Col, Card, Statistic, Table, Tag, Spin, Alert,
   Typography, Space, Button, Empty, Tooltip, Progress
 } from 'antd'
-import {
-  MailOutlined, InboxOutlined, DatabaseOutlined,
-  ReloadOutlined, WarningOutlined
-} from '@ant-design/icons'
+import { Mail, Inbox, Database, RefreshCw, AlertTriangle, LayoutDashboard } from 'lucide-react'
 import { Bar, Pie, Line } from '@ant-design/charts'
 import { useTranslation } from 'react-i18next'
 import { useAccount } from '../hooks/useAccount'
@@ -118,15 +115,16 @@ export default function DashboardPage() {
   return (
     <div>
       <Space style={{ marginBottom: 20 }} align="center">
+        <LayoutDashboard size={20} />
         <Title level={3} style={{ margin: 0 }}>{t('dashboard.title')}</Title>
         {account && <Text type="secondary">{account.email}</Text>}
-        <Button icon={<ReloadOutlined />} onClick={load} loading={loading} size="small">
+        <Button icon={<RefreshCw size={14} />} onClick={load} loading={loading} size="small">
           {t('common.refresh')}
         </Button>
       </Space>
 
       {error && (
-        <Alert type="error" title={error} icon={<WarningOutlined />}
+        <Alert type="error" title={error} icon={<AlertTriangle size={14} />}
           showIcon closable style={{ marginBottom: 16 }} />
       )}
 
@@ -135,10 +133,10 @@ export default function DashboardPage() {
         {/* KPIs */}
         <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
           {[
-            { title: t('dashboard.totalMessages'), value: stats?.totalMessages ?? 0, icon: <MailOutlined />, format: true },
-            { title: t('dashboard.unread'), value: stats?.unreadCount ?? 0, icon: <InboxOutlined />, color: stats?.unreadCount ? '#1677ff' : undefined },
-            { title: t('dashboard.estimatedSize'), value: formatBytes(stats?.totalSizeBytes ?? 0), icon: <DatabaseOutlined /> },
-            { title: t('dashboard.archivedNas'), value: archiveStats?.total_mails ?? 0, icon: <DatabaseOutlined style={{ color: '#52c41a' }} /> },
+            { title: t('dashboard.totalMessages'), value: stats?.totalMessages ?? 0, icon: <Mail size={14} />, format: true },
+            { title: t('dashboard.unread'), value: stats?.unreadCount ?? 0, icon: <Inbox size={14} />, color: stats?.unreadCount ? '#1677ff' : undefined },
+            { title: t('dashboard.estimatedSize'), value: formatBytes(stats?.totalSizeBytes ?? 0), icon: <Database size={14} /> },
+            { title: t('dashboard.archivedNas'), value: archiveStats?.total_mails ?? 0, icon: <Database size={14} style={{ color: "#52c41a" }} /> },
           ].map((kpi) => (
             <Col xs={24} sm={12} lg={6} key={kpi.title}>
               <Card size="small">
@@ -146,7 +144,7 @@ export default function DashboardPage() {
                   title={kpi.title}
                   value={kpi.value}
                   prefix={kpi.icon}
-                  valueStyle={kpi.color ? { color: kpi.color } : undefined}
+                  styles={kpi.color ? { content: { color: kpi.color } } : undefined}
                   formatter={kpi.format ? (v) => Number(v).toLocaleString('fr-FR') : undefined}
                 />
               </Card>

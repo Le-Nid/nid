@@ -9,7 +9,7 @@ BACKEND_PID=$!
 # Wait for backend to be ready
 echo "Waiting for backend to start..."
 for i in $(seq 1 30); do
-  if wget -qO- http://127.0.0.1:4000/api/auth/config > /dev/null 2>&1; then
+  if wget -qO- http://127.0.0.1:4000/api/auth/config >/dev/null 2>&1; then
     echo "Backend is ready."
     break
   fi
