@@ -61,6 +61,7 @@
     "mainMenu": "Menu principal",
     "collapseMenu": "Réduire le menu",
     "expandMenu": "Développer le menu",
+    "openMenu": "Ouvrir le menu",
     "userMenu": "Menu utilisateur",
     "logout": "Déconnexion"
   },

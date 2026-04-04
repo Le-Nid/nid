@@ -12,6 +12,15 @@ import AppRouter from './App'
 import './i18n'
 import './index.css'
 
+// Service Worker registration (PWA)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      // SW registration failed — app works fine without it
+    })
+  })
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

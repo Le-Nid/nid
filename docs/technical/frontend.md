@@ -159,3 +159,48 @@ Toutes les pages et composants de l'application sont traduits :
 
 - **Pages** : Login, Dashboard, MailManager, Jobs, Archive, Rules, Settings, Admin, Unsubscribe, Attachments, Insights, Duplicates, Privacy
 - **Composants** : AppLayout, BulkActionBar, NotificationBell, MailViewer, GmailSearchInput, RuleFormModal, JobProgressModal
+
+## PWA (Progressive Web App)
+
+Nid est une PWA installable : l'application peut être ajoutée à l'écran d'accueil sur mobile et desktop, et fonctionne partiellement hors-ligne grâce au service worker.
+
+### Configuration
+
+- **Manifest** : `public/manifest.json` — définit le nom, les icônes, les couleurs et le mode `standalone`.
+- **Service Worker** : `public/sw.js` — enregistré au chargement dans `main.tsx`.
+- **Icônes** : 192×192 et 512×512 en standard + maskable dans `public/`.
+- **Meta tags** : `theme-color`, `apple-mobile-web-app-capable`, `apple-touch-icon` dans `index.html`.
+
+### Stratégie de cache du Service Worker
+
+| Type de requête | Stratégie | Détail |
+|---|---|---|
+| API (`/api/*`) | Network-only | Pas de cache pour les données dynamiques |
+| SSE | Ignorée | Les flux temps réel ne sont pas interceptés |
+| Assets statiques (JS, CSS, images) | Cache-first | Mise en cache automatique après premier chargement |
+| Navigation (HTML) | Network-first | Fallback sur le cache si hors-ligne (app shell) |
+
+### Installation depuis le navigateur
+
+Sur Chrome/Edge (desktop et mobile), un bouton "Installer" apparaît dans la barre d'URL. Sur Safari iOS, utiliser "Ajouter à l'écran d'accueil" depuis le menu de partage.
+
+## Navigation responsive (mobile)
+
+L'application adopte une approche **responsive** (pas d'app native séparée) via le breakpoint system d'Ant Design (`Grid.useBreakpoint`).
+
+### Comportement par taille d'écran
+
+| Écran | Navigation | Contenu |
+|---|---|---|
+| **Desktop** (≥ 768px) | Sidebar fixe collapsible (220px / 64px) | Padding 24px |
+| **Mobile** (< 768px) | Drawer glissant depuis la gauche (280px) | Padding 12px |
+
+### Adaptations mobiles
+
+- **Hamburger menu** : bouton ☰ dans le header pour ouvrir le drawer de navigation.
+- **Fermeture auto** : le drawer se ferme après chaque navigation.
+- **User menu compact** : nom et badge admin masqués sur mobile, seul l'avatar reste visible.
+- **Touch-friendly** : items de menu 44px minimum (accessibilité WCAG 2.5.8).
+- **Safe areas** : support des encoches (notch) via `env(safe-area-inset-*)` pour le mode PWA standalone.
+- **Tables scrollables** : scroll horizontal natif sur les tableaux Ant Design.
+- **Modals plein écran** : les modals occupent quasi-toute la largeur sur mobile.

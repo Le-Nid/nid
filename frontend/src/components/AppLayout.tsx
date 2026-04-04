@@ -1,12 +1,12 @@
 import { Outlet, useNavigate, useLocation } from 'react-router'
-import { Layout, Menu, Select, Avatar, Dropdown, Typography, Switch, Tooltip, Tag } from 'antd'
+import { Layout, Menu, Select, Avatar, Dropdown, Typography, Switch, Tooltip, Tag, Drawer, Grid } from 'antd'
 import {
   LayoutDashboard, Mail, Database, Settings, LogOut, User, CalendarClock, Bot,
   Crown, Ban, Paperclip, LineChart, Copy, Globe, ShieldCheck, Activity,
   PanelLeftClose, PanelLeftOpen, Inbox, LayoutGrid, TrendingUp, SlidersHorizontal,
-  FolderOpen, Merge, Server, Clock, Share2, Moon, Sun,
+  FolderOpen, Merge, Server, Clock, Share2, Moon, Sun, MenuIcon,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/auth.store'
 import { useThemeStore } from '../store/theme.store'
@@ -15,6 +15,7 @@ import NotificationBell from './NotificationBell'
 
 const { Sider, Content, Header } = Layout
 const { Text } = Typography
+const { useBreakpoint } = Grid
 
 export default function AppLayout() {
   const { t, i18n } = useTranslation()
@@ -23,6 +24,20 @@ export default function AppLayout() {
   const { user, gmailAccounts, activeAccountId, setActiveAccount, logout } = useAuthStore()
   const { mode, toggle } = useThemeStore()
   const [collapsed, setCollapsed] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const screens = useBreakpoint()
+  const isMobile = !screens.md // < 768px
+
+  // Fermer le drawer mobile quand on navigue
+  const handleMenuClick = useCallback(({ key }: { key: string }) => {
+    navigate(key)
+    if (isMobile) setDrawerOpen(false)
+  }, [navigate, isMobile])
+
+  // Fermer le drawer si on passe en desktop
+  useEffect(() => {
+    if (!isMobile) setDrawerOpen(false)
+  }, [isMobile])
 
   // Notifications globales jobs — poll léger, monté une seule fois ici
   useGlobalJobNotifier()
@@ -91,35 +106,22 @@ export default function AppLayout() {
 
   const isDark = mode === 'dark'
 
-  return (
-    <Layout style={{ minHeight: '100vh' }}>
-      <Sider
-        width={220}
-        collapsedWidth={64}
-        collapsible
-        collapsed={collapsed}
-        onCollapse={setCollapsed}
-        trigger={null}
-        theme={isDark ? 'dark' : 'light'}
-        className="app-sider"
-        style={{
-          borderRight: isDark ? '1px solid #303030' : '1px solid #f0f0f0',
-        }}
-        role="navigation"
-        aria-label={t('layout.mainMenu')}
-      >
-        {/* Logo + collapse toggle */}
-        <div style={{
-          padding: collapsed ? '18px 0' : '18px 16px',
-          borderBottom: isDark ? '1px solid #303030' : '1px solid #f0f0f0',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: collapsed ? 'center' : 'space-between',
-        }} aria-label={t('layout.appName')}>
-          {collapsed
-            ? <img src={isDark ? '/nid-logomark-dark.svg' : '/nid-logomark-light.svg'} alt="Nid" style={{ width: 32, height: 32 }} />
-            : <img src={isDark ? '/nid-logo-full-dark.svg' : '/nid-logo-full-light.svg'} alt="Nid" style={{ height: 32 }} />
-          }
+  /* ─── Contenu partagé du sidebar (Sider desktop / Drawer mobile) ─── */
+  const sidebarContent = (
+    <>
+      {/* Logo */}
+      <div style={{
+        padding: (!isMobile && collapsed) ? '18px 0' : '18px 16px',
+        borderBottom: isDark ? '1px solid #303030' : '1px solid #f0f0f0',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: (!isMobile && collapsed) ? 'center' : 'space-between',
+      }} aria-label={t('layout.appName')}>
+        {(!isMobile && collapsed)
+          ? <img src={isDark ? '/nid-logomark-dark.svg' : '/nid-logomark-light.svg'} alt="Nid" style={{ width: 32, height: 32 }} />
+          : <img src={isDark ? '/nid-logo-full-dark.svg' : '/nid-logo-full-light.svg'} alt="Nid" style={{ height: 32 }} />
+        }
+        {!isMobile && (
           <button
             type="button"
             onClick={() => setCollapsed(!collapsed)}
@@ -133,74 +135,136 @@ export default function AppLayout() {
           >
             <PanelLeftClose size={16} />
           </button>
+        )}
+      </div>
+
+      {/* Bouton expand quand collapsed (desktop uniquement) */}
+      {!isMobile && collapsed && (
+        <div style={{
+          textAlign: 'center',
+          padding: '8px 0',
+          borderBottom: isDark ? '1px solid #303030' : '1px solid #f0f0f0',
+        }}>
+          <button
+            type="button"
+            onClick={() => setCollapsed(false)}
+            aria-label={t('layout.expandMenu')}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: isDark ? '#ffffffa6' : '#00000073',
+              fontSize: 16,
+            }}
+          >
+            <PanelLeftOpen size={16} />
+          </button>
         </div>
+      )}
 
-        {/* Bouton expand quand collapsed */}
-        {collapsed && (
-          <div style={{
-            textAlign: 'center',
-            padding: '8px 0',
-            borderBottom: isDark ? '1px solid #303030' : '1px solid #f0f0f0',
-          }}>
-            <button
-              type="button"
-              onClick={() => setCollapsed(false)}
-              aria-label={t('layout.expandMenu')}
-              style={{
-                background: 'none', border: 'none', cursor: 'pointer',
-                color: isDark ? '#ffffffa6' : '#00000073',
-                fontSize: 16,
-              }}
-            >
-              <PanelLeftOpen size={16} />
-            </button>
-          </div>
-        )}
-
-        {/* Sélecteur compte Gmail (masqué quand collapsed) */}
-        {!collapsed && gmailAccounts.length > 0 && (
-          <div style={{
-            padding: '10px 12px',
-            borderBottom: isDark ? '1px solid #303030' : '1px solid #f0f0f0',
-          }}>
-            <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 4 }} id="gmail-account-label">
-              {t('layout.gmailAccount')}
-            </Text>
-            <Select
-              size="small"
-              style={{ width: '100%' }}
-              value={activeAccountId}
-              onChange={setActiveAccount}
-              options={gmailAccounts.map((a) => ({ value: a.id, label: a.email }))}
-              aria-labelledby="gmail-account-label"
-            />
-          </div>
-        )}
-
-        <div className="sider-menu-scroll">
-          <Menu
-            mode="inline"
-            theme={isDark ? 'dark' : 'light'}
-            selectedKeys={[location.pathname]}
-            defaultOpenKeys={['grp-email']}
-            inlineCollapsed={collapsed}
-            items={menuItems}
-            style={{ border: 'none', paddingTop: 8 }}
-            onClick={({ key }) => navigate(key)}
+      {/* Sélecteur compte Gmail */}
+      {(isMobile || !collapsed) && gmailAccounts.length > 0 && (
+        <div style={{
+          padding: '10px 12px',
+          borderBottom: isDark ? '1px solid #303030' : '1px solid #f0f0f0',
+        }}>
+          <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 4 }} id="gmail-account-label">
+            {t('layout.gmailAccount')}
+          </Text>
+          <Select
+            size="small"
+            style={{ width: '100%' }}
+            value={activeAccountId}
+            onChange={setActiveAccount}
+            options={gmailAccounts.map((a) => ({ value: a.id, label: a.email }))}
+            aria-labelledby="gmail-account-label"
           />
         </div>
-      </Sider>
+      )}
+
+      <div className="sider-menu-scroll">
+        <Menu
+          mode="inline"
+          theme={isDark ? 'dark' : 'light'}
+          selectedKeys={[location.pathname]}
+          defaultOpenKeys={['grp-email']}
+          inlineCollapsed={!isMobile && collapsed}
+          items={menuItems}
+          style={{ border: 'none', paddingTop: 8 }}
+          onClick={handleMenuClick}
+        />
+      </div>
+    </>
+  )
+
+  return (
+    <Layout style={{ minHeight: '100vh' }}>
+      {/* Desktop : Sider fixe */}
+      {!isMobile && (
+        <Sider
+          width={220}
+          collapsedWidth={64}
+          collapsible
+          collapsed={collapsed}
+          onCollapse={setCollapsed}
+          trigger={null}
+          theme={isDark ? 'dark' : 'light'}
+          className="app-sider"
+          style={{
+            borderRight: isDark ? '1px solid #303030' : '1px solid #f0f0f0',
+          }}
+          role="navigation"
+          aria-label={t('layout.mainMenu')}
+        >
+          {sidebarContent}
+        </Sider>
+      )}
+
+      {/* Mobile : Drawer glissant */}
+      {isMobile && (
+        <Drawer
+          placement="left"
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          width={280}
+          styles={{
+            body: { padding: 0, background: isDark ? '#141414' : '#fff' },
+            header: { display: 'none' },
+          }}
+          aria-label={t('layout.mainMenu')}
+        >
+          {sidebarContent}
+        </Drawer>
+      )}
 
       <Layout>
-        <Header style={{
+        <Header className="app-header" style={{
           background:   isDark ? '#141414' : '#fff',
-          padding:      '0 24px',
+          padding:      isMobile ? '0 12px' : '0 24px',
           borderBottom: isDark ? '1px solid #303030' : '1px solid #f0f0f0',
           display:      'flex',
           justifyContent: 'flex-end',
           alignItems:   'center',
-          gap:          16,
+          gap:          isMobile ? 8 : 16,
         }} role="banner">
+          {/* Hamburger menu (mobile) */}
+          {isMobile && (
+            <button
+              type="button"
+              onClick={() => setDrawerOpen(true)}
+              aria-label={t('layout.openMenu')}
+              className="mobile-menu-btn"
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: isDark ? '#ffffffd9' : '#000000d9',
+                marginRight: 'auto',
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: 8,
+              }}
+            >
+              <MenuIcon size={22} />
+            </button>
+          )}
+
           {/* Notifications */}
           <NotificationBell />
 
@@ -235,14 +299,14 @@ export default function AppLayout() {
                 ? <Avatar src={user.avatar_url} size="small" alt={user.display_name || user.email} crossOrigin="anonymous" />
                 : <Avatar icon={<User size={14} />} size="small" aria-hidden="true" />
               }
-              <Text style={{ fontSize: 13 }}>{user?.display_name || user?.email}</Text>
-              {user?.role === 'admin' && <Tag color="red" style={{ marginLeft: 4, fontSize: 10 }}>admin</Tag>}
+              {!isMobile && <Text style={{ fontSize: 13 }}>{user?.display_name || user?.email}</Text>}
+              {!isMobile && user?.role === 'admin' && <Tag color="red" style={{ marginLeft: 4, fontSize: 10 }}>admin</Tag>}
             </button>
           </Dropdown>
         </Header>
 
         <Content id="main-content" style={{
-          padding:    24,
+          padding:    isMobile ? 12 : 24,
           background: isDark ? '#1f1f1f' : '#f5f5f5',
           minHeight:  'calc(100vh - 64px)',
         }} role="main">
