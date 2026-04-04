@@ -1,9 +1,9 @@
 import * as arctic from 'arctic'
 import { config } from '../config'
 import { getDb } from '../db'
-import pino from 'pino'
+import { createLogger } from '../logger'
 
-const logger = pino({ name: 'social-auth' })
+const logger = createLogger('social-auth')
 
 // ─── Types ──────────────────────────────────────────────────
 

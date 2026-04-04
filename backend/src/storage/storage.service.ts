@@ -6,6 +6,9 @@ import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, Head
 import { Upload } from '@aws-sdk/lib-storage'
 import { config } from '../config'
 import { getDb } from '../db'
+import { createLogger } from '../logger'
+
+const logger = createLogger('storage')
 
 export interface StorageBackend {
   type: 'local' | 's3'
@@ -227,6 +230,7 @@ export async function getStorageForUser(userId: string): Promise<StorageBackend>
     .executeTakeFirst()
 
   if (cfg?.type === 's3' && cfg.s3_endpoint && cfg.s3_access_key_id && cfg.s3_secret_access_key) {
+    logger.debug({ userId, type: 's3', endpoint: cfg.s3_endpoint }, 'using user S3 storage')
     return new S3Storage({
       endpoint: cfg.s3_endpoint,
       region: cfg.s3_region ?? 'us-east-1',

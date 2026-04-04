@@ -2,6 +2,9 @@ import { getDb } from '../db'
 import { sql } from 'kysely'
 import { listMessages, batchGetMessages } from '../gmail/gmail.service'
 import { getRedis } from '../plugins/redis'
+import { createLogger } from '../logger'
+
+const logger = createLogger('analytics')
 
 const ANALYTICS_CACHE_TTL = 60 * 15 // 15 minutes
 
@@ -27,6 +30,7 @@ export interface HeatmapCell {
 }
 
 export async function computeHeatmap(accountId: string): Promise<HeatmapCell[]> {
+  logger.info({ accountId }, 'computing email heatmap')
   // Récupère les mails récents pour construire le heatmap
   const listRes = await listMessages(accountId, { maxResults: 500 })
   if (!listRes.messages.length) return []
@@ -136,6 +140,7 @@ function calculateClutterScore(data: {
 }
 
 export async function computeSenderScores(accountId: string): Promise<SenderScoreResult[]> {
+  logger.info({ accountId }, 'computing sender scores')
   const listRes = await listMessages(accountId, { maxResults: 500 })
   if (!listRes.messages.length) return []
 
@@ -274,6 +279,7 @@ export interface CleanupSuggestionResult {
 }
 
 export async function computeCleanupSuggestions(accountId: string): Promise<CleanupSuggestionResult[]> {
+  logger.info({ accountId }, 'computing cleanup suggestions')
   const db = getDb()
   const scores = await getSenderScores(accountId)
   const suggestions: CleanupSuggestionResult[] = []

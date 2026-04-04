@@ -6,9 +6,9 @@ import { simpleParser } from 'mailparser'
 import { getDb } from '../db'
 import { getStorageForUser } from '../storage/storage.service'
 import { config } from '../config'
-import pino from 'pino'
+import { createLogger } from '../logger'
 
-const logger = pino({ name: 'import' })
+const logger = createLogger('import')
 
 // ─── Mbox parser ────────────────────────────────────────────
 

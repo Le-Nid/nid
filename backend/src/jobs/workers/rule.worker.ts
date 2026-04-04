@@ -3,9 +3,9 @@ import { getRedis } from "../../plugins/redis";
 import { getDb } from "../../db";
 import { notify } from "../../notifications/notify";
 import { getRule, runRule } from "../../rules/rules.service";
-import pino from 'pino'
+import { createLogger } from '../../logger'
 
-const ruleLogger = pino({ name: 'rule-worker' })
+const ruleLogger = createLogger('rule-worker')
 
 interface RunRulePayload {
   accountId: string;

@@ -1,6 +1,9 @@
 import { google } from 'googleapis'
 import { config } from '../config'
 import { getDb } from '../db'
+import { createLogger } from '../logger'
+
+const logger = createLogger('oauth')
 
 const SCOPES = [
   'https://www.googleapis.com/auth/gmail.modify',
@@ -27,6 +30,7 @@ export function getGmailAuthUrl(state: string): string {
 }
 
 export async function exchangeGmailCode(code: string, userId: string) {
+  logger.info({ userId }, 'exchanging Gmail OAuth code')
   const oauth2Client = createOAuth2Client()
   const { tokens }   = await oauth2Client.getToken(code)
   oauth2Client.setCredentials(tokens)
@@ -85,6 +89,7 @@ export async function getAuthenticatedClient(accountId: string) {
   // Auto-refresh du token
   oauth2Client.on('tokens', async (tokens) => {
     if (tokens.access_token) {
+      logger.info({ accountId }, 'OAuth token refreshed')
       await db
         .updateTable('gmail_accounts')
         .set({

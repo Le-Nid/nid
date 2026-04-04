@@ -1,9 +1,9 @@
 import { getDb } from '../db'
 import { shouldNotify, type NotifCategory } from './notification-prefs.service'
 import { triggerWebhooks, type WebhookEvent } from '../webhooks/webhook.service'
-import pino from 'pino'
+import { createLogger } from '../logger'
 
-const logger = pino({ name: 'notify' })
+const logger = createLogger('notify')
 
 /**
  * Maps notification categories to webhook event names.

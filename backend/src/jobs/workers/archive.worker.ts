@@ -4,9 +4,9 @@ import { getDb } from "../../db";
 import { notify } from "../../notifications/notify";
 import { archiveMail, getArchivedIds } from "../../archive/archive.service";
 import { listMessages } from "../../gmail/gmail.service";
-import pino from 'pino'
+import { createLogger } from '../../logger'
 
-const logger = pino({ name: 'archive-worker' })
+const logger = createLogger('archive-worker')
 
 interface ArchivePayload {
   accountId: string;

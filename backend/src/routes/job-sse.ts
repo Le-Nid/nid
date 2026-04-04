@@ -2,10 +2,10 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { QueueEvents } from "bullmq";
 import { getRedis } from "../plugins/redis";
 import { getDb } from "../db";
-import pino from 'pino'
+import { createLogger } from '../logger'
 import type { ServerResponse } from 'http'
 
-const logger = pino({ name: 'job-sse' })
+const logger = createLogger('job-sse')
 
 // Map des connexions SSE actives : jobId → Set<reply>
 const subscribers = new Map<string, Set<ServerResponse>>();

@@ -11,9 +11,9 @@ import { scanArchivePii } from '../../privacy/pii.service'
 import { encryptArchives } from '../../privacy/encryption.service'
 import { importMbox, importImap } from '../../archive/import.service'
 import { applyRetentionPolicies } from '../../archive/retention.service'
-import pino from 'pino'
+import { createLogger } from '../../logger'
 
-const logger = pino({ name: 'worker' })
+const logger = createLogger('worker')
 
 export function startUnifiedWorker() {
   const worker = new Worker(

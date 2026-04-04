@@ -1,8 +1,8 @@
 import { getDb } from '../db'
 import { trashMessages } from '../gmail/gmail.service'
-import pino from 'pino'
+import { createLogger } from '../logger'
 
-const logger = pino({ name: 'expiration-service' })
+const logger = createLogger('expiration')
 
 // ─── Heuristic categories for auto-detection ────────────────
 const HEURISTIC_PATTERNS: Array<{ category: string; subjectPatterns: RegExp[]; senderPatterns: RegExp[]; defaultDays: number }> = [

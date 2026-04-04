@@ -3,9 +3,9 @@ import fs from 'fs/promises'
 import { simpleParser } from 'mailparser'
 import { getDb } from '../db'
 import { config } from '../config'
-import pino from 'pino'
+import { createLogger } from '../logger'
 
-const logger = pino({ name: 'sharing-service' })
+const logger = createLogger('sharing')
 
 export interface ShareCreateDTO {
   archivedMailId: string

@@ -63,13 +63,15 @@ export async function registerPlugins(app: FastifyInstance) {
   // ─── Global error handler (Point 16) ──────────────────────
   app.setErrorHandler((error: any, request, reply) => {
     if (error instanceof ZodError) {
+      request.log.warn({ validationErrors: error.issues, url: request.url, method: request.method }, 'validation failed')
       return reply.code(400).send({ error: 'Validation failed', details: error.issues })
     }
-    if (error.statusCode) {
+    if (error.statusCode && error.statusCode < 500) {
+      request.log.warn({ statusCode: error.statusCode, url: request.url, method: request.method }, error.message)
       return reply.code(error.statusCode).send({ error: error.message })
     }
-    request.log.error(error)
-    reply.code(500).send({ error: 'Internal server error' })
+    request.log.error({ err: error, url: request.url, method: request.method, userId: (request.user as any)?.sub }, 'unhandled error')
+    reply.code(error.statusCode ?? 500).send({ error: 'Internal server error' })
   })
 
   // ─── Auth helper: verify JWT + check blacklist + check user is still active (Point 6, 13) ──

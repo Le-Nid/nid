@@ -1,8 +1,8 @@
 import { generateAllReports, WeeklyReport } from './report.service'
 import { notify } from '../notifications/notify'
-import pino from 'pino'
+import { createLogger } from '../logger'
 
-const logger = pino({ name: 'report-scheduler' })
+const logger = createLogger('report-scheduler')
 
 // Report scheduler — runs once per day, generates weekly reports on Mondays
 // Stores reports as in-app notifications

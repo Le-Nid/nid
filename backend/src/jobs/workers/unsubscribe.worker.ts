@@ -2,9 +2,9 @@ import { Worker, Job } from 'bullmq'
 import { getRedis } from '../../plugins/redis'
 import { getDb } from '../../db'
 import { scanNewsletters } from '../../unsubscribe/unsubscribe.service'
-import pino from 'pino'
+import { createLogger } from '../../logger'
 
-const unsubLogger = pino({ name: 'unsubscribe-worker' })
+const unsubLogger = createLogger('unsubscribe-worker')
 
 interface ScanUnsubscribePayload {
   accountId: string

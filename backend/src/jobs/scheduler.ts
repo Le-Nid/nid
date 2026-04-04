@@ -3,9 +3,9 @@ import { enqueueJob } from "./queue";
 import { recordInboxSnapshot } from "../analytics/analytics.service";
 import { processExpiredEmails } from "../expiration/expiration.service";
 import { cleanupExpiredShares } from "../archive/sharing.service";
-import pino from 'pino'
+import { createLogger } from '../logger'
 
-const logger = pino({ name: 'scheduler' })
+const logger = createLogger('scheduler')
 
 // Simple cron scheduler — vérifie toutes les minutes si des règles
 // planifiées doivent être exécutées.

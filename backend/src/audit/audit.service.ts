@@ -1,7 +1,7 @@
 import { getDb } from '../db'
-import pino from 'pino'
+import { createLogger } from '../logger'
 
-const logger = pino({ name: 'audit' })
+const logger = createLogger('audit')
 
 export type AuditAction =
   | 'user.login'

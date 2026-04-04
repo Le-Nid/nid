@@ -1,8 +1,8 @@
 import fs from 'fs/promises'
 import { getDb } from '../db'
-import pino from 'pino'
+import { createLogger } from '../logger'
 
-const logger = pino({ name: 'pii-scanner' })
+const logger = createLogger('pii-scanner')
 
 // ─── PII detection patterns ──────────────────────────────
 // All patterns are designed to minimize false positives

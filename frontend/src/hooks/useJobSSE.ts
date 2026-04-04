@@ -1,4 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
+import { createLogger } from '../utils/logger'
+
+const logger = createLogger('sse')
 
 export interface JobState {
   id: string
@@ -37,10 +40,13 @@ export function useJobSSE(jobId: string | null) {
           es.close()
           setConnected(false)
         }
-      } catch { /* ignore parse errors */ }
+      } catch {
+        logger.warn('Failed to parse SSE message', { jobId: jobId ?? '' })
+      }
     }
 
     es.onerror = () => {
+      logger.warn('SSE connection error', { jobId: jobId ?? '' })
       setConnected(false)
       es.close()
     }

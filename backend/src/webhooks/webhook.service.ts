@@ -1,8 +1,8 @@
 import { getDb } from '../db'
 import * as crypto from 'crypto'
-import pino from 'pino'
+import { createLogger } from '../logger'
 
-const logger = pino({ name: 'webhook' })
+const logger = createLogger('webhook')
 
 export type WebhookEvent =
   | 'job.completed'

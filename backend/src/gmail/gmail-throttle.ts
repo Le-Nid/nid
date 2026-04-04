@@ -12,9 +12,9 @@
  *   3. `accountSemaphore`  – global per-account concurrency limiter (shared across all routes)
  */
 
-import pino from 'pino'
+import { createLogger } from '../logger'
 
-const logger = pino({ name: 'gmail-throttle' })
+const logger = createLogger('gmail-throttle')
 
 const MAX_RETRIES = 5
 const BASE_DELAY_MS = 1_000

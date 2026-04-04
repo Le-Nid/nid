@@ -3,9 +3,9 @@ import pg from 'pg'
 import { Database } from './types'
 import { config } from '../config'
 import * as migration001 from './migrations/001_full_schema'
-import pino from 'pino'
+import { createLogger } from '../logger'
 
-const logger = pino({ name: 'db' })
+const logger = createLogger('db')
 
 // ─── Kysely instance ──────────────────────────────────────
 

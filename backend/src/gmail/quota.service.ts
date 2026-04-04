@@ -1,5 +1,8 @@
 import { getDb } from '../db'
 import { sql } from 'kysely'
+import { createLogger } from '../logger'
+
+const logger = createLogger('quota')
 
 /** Well-known Gmail API endpoint quota costs */
 const QUOTA_COSTS: Record<string, number> = {
@@ -28,6 +31,7 @@ const QUOTA_COSTS: Record<string, number> = {
  */
 export async function trackApiCall(accountId: string, endpoint: string): Promise<void> {
   const units = QUOTA_COSTS[endpoint] ?? 5
+  logger.debug({ accountId, endpoint, units }, 'tracking API call')
   const db = getDb()
   await db
     .insertInto('gmail_api_usage')

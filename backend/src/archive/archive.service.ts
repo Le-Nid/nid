@@ -6,6 +6,9 @@ import { getDb } from '../db'
 import { getGmailClient } from '../gmail/gmail.service'
 import { gmailRetry } from '../gmail/gmail-throttle'
 import { config } from '../config'
+import { createLogger } from '../logger'
+
+const logger = createLogger('archive')
 
 /** Decode RFC 2047 encoded-words: =?charset?encoding?text?= */
 function decodeMimeWords(str: string): string {
@@ -42,8 +45,12 @@ export async function archiveMail(accountId: string, messageId: string): Promise
     .where('gmail_message_id', '=', messageId)
     .executeTakeFirst()
 
-  if (existing) return
+  if (existing) {
+    logger.debug({ accountId, messageId }, 'mail already archived, skipping')
+    return
+  }
 
+  logger.info({ accountId, messageId }, 'archiving mail')
   const gmail = await getGmailClient(accountId)
   const res   = await gmailRetry(() => gmail.users.messages.get({
     userId: 'me', id: messageId, format: 'raw',
@@ -122,6 +129,8 @@ export async function archiveMail(accountId: string, messageId: string): Promise
       )
       .execute()
   }
+
+  logger.info({ accountId, messageId, attachments: attachments.length, emlPath }, 'mail archived successfully')
 }
 
 async function extractAttachments(

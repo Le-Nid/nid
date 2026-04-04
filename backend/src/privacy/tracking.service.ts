@@ -1,9 +1,9 @@
 import { getDb } from '../db'
 import { getGmailClient } from '../gmail/gmail.service'
 import { gmailRetry } from '../gmail/gmail-throttle'
-import pino from 'pino'
+import { createLogger } from '../logger'
 
-const logger = pino({ name: 'tracking-pixel' })
+const logger = createLogger('tracking-pixel')
 
 // Known tracking domains (common ESP pixel trackers)
 const TRACKING_DOMAINS = new Set([

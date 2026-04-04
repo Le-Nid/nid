@@ -4,9 +4,9 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod/v4'
 import { getDb, runMigrations, closeDb } from './db'
 import { config } from './config'
-import pino from 'pino'
+import { createLogger } from './logger'
 
-const logger = pino({ name: 'mcp' })
+const logger = createLogger('mcp')
 
 const server = new McpServer(
   {

@@ -2,14 +2,14 @@ import { Worker, Job } from "bullmq";
 import { getRedis } from "../../plugins/redis";
 import { getDb } from "../../db";
 import { notify } from "../../notifications/notify";
-import pino from 'pino'
+import { createLogger } from '../../logger'
 import {
   trashMessages,
   deleteMessages,
   modifyMessages,
 } from "../../gmail/gmail.service";
 
-const bulkLogger = pino({ name: 'bulk-worker' })
+const bulkLogger = createLogger('bulk-worker')
 
 interface BulkPayload {
   accountId: string;

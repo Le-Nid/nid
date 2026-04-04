@@ -2,9 +2,9 @@ import { google, gmail_v1 } from 'googleapis'
 import { getAuthenticatedClient } from '../auth/oauth.service'
 import { config } from '../config'
 import { gmailRetry, limitConcurrency, withAccountLimit } from './gmail-throttle'
-import pino from 'pino'
+import { createLogger } from '../logger'
 
-const logger = pino({ name: 'gmail' })
+const logger = createLogger('gmail')
 
 export interface MailMeta {
   id: string
