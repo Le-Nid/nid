@@ -1,19 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-// Mock pino logger
+// Mock logger to capture error calls
 const { mockLoggerError } = vi.hoisted(() => {
   const mockLoggerError = vi.fn()
   return { mockLoggerError }
 })
-vi.mock('pino', () => ({
-  default: () => ({
+vi.mock('../logger', () => {
+  const mockLogger: any = {
     info: vi.fn(),
     warn: vi.fn(),
     error: mockLoggerError,
     debug: vi.fn(),
     fatal: vi.fn(),
-  }),
-}))
+    trace: vi.fn(),
+    child: vi.fn(() => mockLogger),
+  }
+  return { logger: mockLogger, createLogger: vi.fn(() => mockLogger) }
+})
 
 // Mock DB
 const mockExecute = vi.fn()

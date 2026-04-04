@@ -78,7 +78,7 @@ describe('registerPlugins', () => {
 
     const errorHandler = app.setErrorHandler.mock.calls[0][0]
     const reply = { code: vi.fn().mockReturnThis(), send: vi.fn() }
-    const request = { log: { error: vi.fn() } }
+    const request = { log: { error: vi.fn(), warn: vi.fn() } }
 
     // Simulate a ZodError
     const { ZodError } = await import('zod')
@@ -94,7 +94,7 @@ describe('registerPlugins', () => {
 
     const errorHandler = app.setErrorHandler.mock.calls[0][0]
     const reply = { code: vi.fn().mockReturnThis(), send: vi.fn() }
-    const request = { log: { error: vi.fn() } }
+    const request = { log: { error: vi.fn(), warn: vi.fn() } }
 
     errorHandler({ statusCode: 404, message: 'Not found' }, request, reply)
     expect(reply.code).toHaveBeenCalledWith(404)
