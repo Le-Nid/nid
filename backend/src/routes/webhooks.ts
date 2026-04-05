@@ -12,6 +12,8 @@ const webhookSchema = z.object({
   events: z.array(z.enum([
     'job.completed', 'job.failed', 'rule.executed', 'quota.warning', 'integrity.failed',
   ])).min(1),
+  auth_user: z.string().max(255).nullish(),
+  auth_password: z.string().max(255).nullish(),
 })
 
 export async function webhookRoutes(app: FastifyInstance) {
@@ -45,6 +47,8 @@ export async function webhookRoutes(app: FastifyInstance) {
         type: body.type,
         events: body.events,
         secret,
+        auth_user: body.type === 'ntfy' ? (body.auth_user ?? null) : null,
+        auth_password: body.type === 'ntfy' ? (body.auth_password ?? null) : null,
       })
       .returningAll()
       .executeTakeFirstOrThrow()
@@ -58,9 +62,21 @@ export async function webhookRoutes(app: FastifyInstance) {
     const { webhookId } = request.params as { webhookId: string }
     const body = webhookSchema.partial().parse(request.body)
 
+    const { auth_user, auth_password, ...rest } = body
+    const setValues: Record<string, unknown> = { ...rest }
+    // Only persist auth fields for ntfy type
+    if (body.type === 'ntfy' || body.type === undefined) {
+      if (auth_user !== undefined) setValues.auth_user = auth_user ?? null
+      if (auth_password !== undefined) setValues.auth_password = auth_password ?? null
+    }
+    if (body.type && body.type !== 'ntfy') {
+      setValues.auth_user = null
+      setValues.auth_password = null
+    }
+
     const updated = await db
       .updateTable('webhooks')
-      .set(body as any)
+      .set(setValues as any)
       .where('id', '=', webhookId)
       .where('user_id', '=', userId)
       .returningAll()

@@ -51,7 +51,7 @@ export async function triggerWebhooks(userId: string, event: WebhookEvent, data:
 }
 
 async function sendWebhook(
-  webhook: { id: string; url: string; type: string; secret: string | null },
+  webhook: { id: string; url: string; type: string; secret: string | null; auth_user: string | null; auth_password: string | null },
   payload: WebhookPayload,
 ) {
   const db = getDb()
@@ -83,6 +83,10 @@ async function sendWebhook(
       headers['Title'] = `Nid: ${payload.event}`
       headers['Priority'] = payload.event.includes('failed') ? '4' : '3'
       headers['Tags'] = payload.event.includes('failed') ? 'warning' : 'white_check_mark'
+      if (webhook.auth_user && webhook.auth_password) {
+        const credentials = Buffer.from(`${webhook.auth_user}:${webhook.auth_password}`).toString('base64')
+        headers['Authorization'] = `Basic ${credentials}`
+      }
       break
     }
     default: {

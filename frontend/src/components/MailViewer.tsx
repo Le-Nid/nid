@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   Drawer,
+  Grid,
   Spin,
   Typography,
   Space,
@@ -84,8 +85,12 @@ function extractAttachments(payload: any) {
   return result;
 }
 
+const { useBreakpoint } = Grid;
+
 export default function MailViewer({ accountId, messageId, onClose }: Props) {
   const { t } = useTranslation();
+  const screens = useBreakpoint();
+  const isMobile = !screens.md;
   const [mail, setMail] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -170,8 +175,12 @@ export default function MailViewer({ accountId, messageId, onClose }: Props) {
       title={loading ? t('viewer.loading') : get("Subject") || t('common.noSubject')}
       open={!!messageId}
       onClose={onClose}
-      width={740}
-      styles={{ body: { padding: 16 } }}
+      width={isMobile ? '100vw' : 740}
+      styles={{
+        body: { padding: isMobile ? 12 : 16 },
+        wrapper: isMobile ? { position: 'fixed', inset: 0, width: '100vw' } : undefined,
+      }}
+      className={isMobile ? 'mail-viewer-fullscreen' : undefined}
     >
       {error && <Alert type="error" title={error} showIcon />}
 

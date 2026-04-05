@@ -102,7 +102,13 @@ services:
       - /chemin/vers/votre/nas/gmail-archives:/archives
 ```
 
-Assurez-vous que le répertoire est accessible en écriture par l'utilisateur Docker (UID 1001).
+Assurez-vous que le répertoire existe sur l'hôte. Les permissions sont corrigées automatiquement au démarrage du conteneur (`chown` vers UID 1001).
+
+!!! note "Dépannage : permission refusée"
+    Si l'archivage échoue avec une erreur de permissions, vérifiez que le conteneur a bien démarré en tant que `root` (nécessaire pour le `chown` initial). Vous pouvez aussi corriger manuellement :
+    ```bash
+    sudo chown -R 1001:1001 ./volumes/archives
+    ```
 
 ---
 

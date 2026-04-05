@@ -132,8 +132,8 @@ export default function SharingPage() {
     <>
       {contextHolder}
       <Space orientation="vertical" style={{ width: '100%' }} size="large">
-        <Title level={2}>
-          <Share2 size={22} style={{ marginRight: 8 }} />
+        <Title level={3} style={{ margin: 0, whiteSpace: 'nowrap' }}>
+          <Share2 size={20} style={{ marginRight: 8 }} />
           {t('sharing.title')}
         </Title>
         <Text type="secondary">{t('sharing.description')}</Text>

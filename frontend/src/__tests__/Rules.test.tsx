@@ -6,6 +6,7 @@ vi.mock('react-i18next', () => ({
     t: (key: string, opts?: any) => opts?.name ? `${key}:${opts.name}` : opts?.jobId ? `${key}:${opts.jobId}` : key,
     i18n: { language: 'fr' },
   }),
+  Trans: ({ i18nKey }: { i18nKey: string }) => i18nKey,
 }))
 
 vi.mock('../hooks/useAccount', () => ({

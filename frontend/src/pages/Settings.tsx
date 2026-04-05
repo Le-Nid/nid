@@ -213,13 +213,13 @@ export default function SettingsPage() {
           <Typography.Text type="secondary">{t('settings.noGmailAccount')}</Typography.Text>
         ) : (
           gmailAccounts.map((account) => (
-            <div key={account.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--ant-color-split, #f0f0f0)' }}>
-              <Space>
+            <div key={account.id} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, padding: '12px 0', borderBottom: '1px solid var(--ant-color-split, #f0f0f0)' }}>
+              <Space style={{ flex: '1 1 auto', minWidth: 0 }}>
                 <Avatar icon={<Globe size={14} />} style={{ backgroundColor: '#4285F4' }} />
-                <span>{account.email}</span>
+                <span style={{ wordBreak: 'break-all' }}>{account.email}</span>
                 {account.is_active && <Tag color="success">{t('common.active')}</Tag>}
               </Space>
-              <Space>
+              <Space wrap>
                 <Button
                   icon={<CloudCog size={14} />}
                   size="small"
@@ -501,6 +501,18 @@ export default function SettingsPage() {
                 { value: 'slack', label: 'Slack' },
                 { value: 'ntfy', label: 'Ntfy' },
               ]} />
+            </Form.Item>
+            <Form.Item noStyle dependencies={['type']}>
+              {() => webhookForm.getFieldValue('type') === 'ntfy' && (
+                <>
+                  <Form.Item name="auth_user" label={t('settings.ntfyUser')}>
+                    <Input placeholder={t('settings.ntfyUserPlaceholder')} autoComplete="off" />
+                  </Form.Item>
+                  <Form.Item name="auth_password" label={t('settings.ntfyPassword')}>
+                    <Input.Password placeholder={t('settings.ntfyPasswordPlaceholder')} autoComplete="new-password" />
+                  </Form.Item>
+                </>
+              )}
             </Form.Item>
             <Form.Item name="events" label={t('settings.webhookEvents')} rules={[{ required: true }]}>
               <Select mode="multiple" placeholder={t('settings.webhookSelectEvents')} options={[

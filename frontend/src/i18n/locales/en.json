@@ -411,6 +411,10 @@
     "webhookType": "Type",
     "webhookEvents": "Events",
     "webhookSelectEvents": "Select events",
+    "ntfyUser": "ntfy username (optional)",
+    "ntfyPassword": "ntfy password (optional)",
+    "ntfyUserPlaceholder": "Username",
+    "ntfyPasswordPlaceholder": "Password",
     "exportHint": "Export your rules and webhooks as JSON, or import an existing configuration.",
     "testSent": "Test sent",
     "gmailLimitReached": "Gmail accounts limit reached",
@@ -871,7 +875,8 @@
     "noContent": "No content available",
     "poweredBy": "Nid — Temporary archive sharing",
     "shareButton": "Share",
-    "shareTooltip": "Generate a temporary share link"
+    "shareTooltip": "Generate a temporary share link",
+    "createShare": "Create share link"
   },
 
   "notifier": {

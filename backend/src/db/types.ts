@@ -135,6 +135,8 @@ export interface WebhooksTable {
   events:            string[]
   is_active:         Generated<boolean>
   secret:            string | null
+  auth_user:         string | null
+  auth_password:     string | null
   last_triggered_at: Date | null
   last_status:       number | null
   created_at:        Generated<Date>

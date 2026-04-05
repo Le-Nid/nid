@@ -26,10 +26,10 @@ export default function PrivacyPage() {
   return (
     <div>
       {contextHolder}
-      <Space style={{ marginBottom: 16 }} align="center">
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 16 }}>
         <ShieldCheck size={20} />
-        <Title level={3} style={{ margin: 0 }}>{t('privacy.title')}</Title>
-      </Space>
+        <Title level={3} style={{ margin: 0, whiteSpace: 'nowrap' }}>{t('privacy.title')}</Title>
+      </div>
 
       <Tabs
         items={[

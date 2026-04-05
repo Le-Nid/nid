@@ -158,35 +158,35 @@ export default function UnsubscribePage() {
     <div>
       {contextHolder}
 
-      <Space style={{ marginBottom: 16 }} align="center">
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 16 }}>
         <Ban size={20} />
-        <Title level={3} style={{ margin: 0 }}>{t('unsubscribe.title')}</Title>
+        <Title level={3} style={{ margin: 0, whiteSpace: 'nowrap' }}>{t('unsubscribe.title')}</Title>
         <Button icon={<RefreshCw size={14} />} onClick={load} loading={loading}>
           {t('unsubscribe.scan')}
         </Button>
-      </Space>
+      </div>
 
       {!accountId ? (
         <Empty description={t('unsubscribe.noAccount')} />
       ) : (
         <>
-          <Row gutter={16} style={{ marginBottom: 16 }}>
-            <Col span={6}>
+          <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+            <Col xs={12} sm={6}>
               <Card size="small">
                 <Statistic title={t('unsubscribe.detected')} value={newsletters.length} />
               </Card>
             </Col>
-            <Col span={6}>
+            <Col xs={12} sm={6}>
               <Card size="small">
                 <Statistic title={t('unsubscribe.newsletterMails')} value={totalMails} />
               </Card>
             </Col>
-            <Col span={6}>
+            <Col xs={12} sm={6}>
               <Card size="small">
                 <Statistic title={t('unsubscribe.spaceUsed')} value={formatBytes(totalSize)} />
               </Card>
             </Col>
-            <Col span={6}>
+            <Col xs={12} sm={6}>
               <Card size="small" style={{ background: '#fff7e6', borderColor: '#ffd591' }}>
                 <Text style={{ fontSize: 13 }}>
                   {t('unsubscribe.hint')}

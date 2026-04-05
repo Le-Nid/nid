@@ -113,30 +113,30 @@ export default function DuplicatesPage() {
     <div>
       {contextHolder}
 
-      <Space style={{ marginBottom: 16 }} align="center">
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 16 }}>
         <Copy size={20} />
-        <Title level={3} style={{ margin: 0 }}>{t('duplicates.title')}</Title>
+        <Title level={3} style={{ margin: 0, whiteSpace: 'nowrap' }}>{t('duplicates.title')}</Title>
         <Button icon={<RefreshCw size={14} />} onClick={load} loading={loading}>
           {t('duplicates.analyze')}
         </Button>
-      </Space>
+      </div>
 
       {!accountId ? (
         <Empty description={t('duplicates.noAccount')} />
       ) : (
         <>
-          <Row gutter={16} style={{ marginBottom: 16 }}>
-            <Col span={8}>
+          <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+            <Col xs={24} sm={8}>
               <Card size="small">
                 <Statistic title={t('duplicates.groups')} value={groups.length} prefix={<Copy size={14} />} />
               </Card>
             </Col>
-            <Col span={8}>
+            <Col xs={12} sm={8}>
               <Card size="small">
                 <Statistic title={t('duplicates.duplicateMails')} value={totalDuplicateMails} />
               </Card>
             </Col>
-            <Col span={8}>
+            <Col xs={12} sm={8}>
               <Card size="small">
                 <Statistic title={t('duplicates.reclaimableSpace')} value={formatBytes(totalDuplicateSize)} />
               </Card>
