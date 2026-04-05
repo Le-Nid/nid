@@ -466,8 +466,8 @@ export default function ArchivePage() {
     <div>
       {contextHolder}
 
-      <Space style={{ marginBottom: 16, justifyContent: 'space-between', width: '100%' }}>
-        <Title level={3} style={{ margin: 0 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 16, justifyContent: 'space-between' }}>
+        <Title level={3} style={{ margin: 0, whiteSpace: 'nowrap' }}>
           <Database size={20} style={{ marginRight: 8 }} />{t('archive.title')}
         </Title>
         <Segmented
@@ -478,7 +478,7 @@ export default function ArchivePage() {
             { value: 'threads', icon: <MessageSquare size={14} />, label: t('archive.threadView') },
           ]}
         />
-      </Space>
+      </div>
 
       {/* Filtres */}
       <Card size="small" style={{ marginBottom: 12 }}>

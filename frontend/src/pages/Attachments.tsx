@@ -222,9 +222,9 @@ export default function AttachmentsPage() {
     <div>
       {contextHolder}
 
-      <Space style={{ marginBottom: 16 }} align="center">
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 16 }}>
         <Paperclip size={20} />
-        <Title level={3} style={{ margin: 0 }}>{t('attachments.title')}</Title>
+        <Title level={3} style={{ margin: 0, whiteSpace: 'nowrap' }}>{t('attachments.title')}</Title>
         <Segmented
           value={mode}
           onChange={(v) => setMode(v as ViewMode)}
@@ -240,24 +240,24 @@ export default function AttachmentsPage() {
         >
           {t('attachments.reload')}
         </Button>
-      </Space>
+      </div>
 
       {!accountId ? (
         <Empty description={t('attachments.noAccount')} />
       ) : (
         <>
-          <Row gutter={16} style={{ marginBottom: 16 }}>
-            <Col span={6}>
+          <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+            <Col xs={12} sm={6}>
               <Card size="small">
                 <Statistic title={t('attachments.totalAttachments')} value={total} prefix={<Paperclip size={14} />} />
               </Card>
             </Col>
-            <Col span={6}>
+            <Col xs={12} sm={6}>
               <Card size="small">
                 <Statistic title={t('attachments.totalSize')} value={formatBytes(totalSize)} />
               </Card>
             </Col>
-            <Col span={6}>
+            <Col xs={12} sm={6}>
               <Card size="small">
                 <Statistic
                   title={t('attachments.source')}
@@ -265,7 +265,7 @@ export default function AttachmentsPage() {
                 />
               </Card>
             </Col>
-            <Col span={6}>
+            <Col xs={12} sm={6}>
               <Card size="small">
                 <Tooltip title={dedupStats.data ? t('attachments.dedupDetails', {
                   duplicates: dedupStats.data.duplicateFiles,

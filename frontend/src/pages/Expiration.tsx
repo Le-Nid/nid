@@ -218,8 +218,8 @@ export default function ExpirationPage() {
     <>
       {contextHolder}
       <Space orientation="vertical" style={{ width: '100%' }} size="large">
-        <Title level={2}>
-          <Clock size={22} style={{ marginRight: 8 }} />
+        <Title level={3} style={{ margin: 0, whiteSpace: 'nowrap' }}>
+          <Clock size={20} style={{ marginRight: 8 }} />
           {t('expiration.title')}
         </Title>
         <Text type="secondary">{t('expiration.description')}</Text>
@@ -254,7 +254,7 @@ export default function ExpirationPage() {
           </Row>
         )}
 
-        <Space>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           <Button
             type="primary"
             icon={<Scan size={14} />}
@@ -269,7 +269,7 @@ export default function ExpirationPage() {
           >
             {t('expiration.addManual')}
           </Button>
-        </Space>
+        </div>
 
         <Table
           dataSource={expirations}

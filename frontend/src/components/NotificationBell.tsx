@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Badge, Dropdown, Typography, Button, Space, Empty, Popconfirm } from 'antd'
+import { Badge, Drawer, Dropdown, Grid, Typography, Button, Space, Empty, Popconfirm } from 'antd'
 import { Bell, Check, Trash2, ListX } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { notificationsApi } from '../api'
@@ -23,6 +23,8 @@ interface Notification {
 
 export default function NotificationBell() {
   const { t, i18n } = useTranslation()
+  const screens = Grid.useBreakpoint()
+  const isMobile = !screens.md
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [open, setOpen] = useState(false)
@@ -68,15 +70,8 @@ export default function NotificationBell() {
 
   const readCount = notifications.filter((n) => n.is_read).length
 
-  const dropdownContent = (
-    <div style={{
-      width: 360,
-      maxHeight: 400,
-      overflow: 'auto',
-      background: 'var(--ant-color-bg-elevated, #fff)',
-      borderRadius: 8,
-      boxShadow: '0 6px 16px rgba(0,0,0,0.12)',
-    }}>
+  const notificationList = (
+    <>
       <div style={{
         padding: '10px 16px',
         borderBottom: '1px solid var(--ant-color-border, #f0f0f0)',
@@ -148,12 +143,47 @@ export default function NotificationBell() {
           ))}
         </div>
       )}
-    </div>
+    </>
   )
+
+  const trigger = (
+    <Badge count={unreadCount} size="small" offset={[-2, 2]}>
+      <Bell size={18} style={{ cursor: 'pointer' }} onClick={() => setOpen(true)} />
+    </Badge>
+  )
+
+  if (isMobile) {
+    return (
+      <>
+        {trigger}
+        <Drawer
+          title={t('notifications.title')}
+          open={open}
+          onClose={() => setOpen(false)}
+          placement="right"
+          width="100vw"
+          styles={{ body: { padding: 0 } }}
+        >
+          {notificationList}
+        </Drawer>
+      </>
+    )
+  }
 
   return (
     <Dropdown
-      popupRender={() => dropdownContent}
+      popupRender={() => (
+        <div style={{
+          width: 360,
+          maxHeight: 400,
+          overflow: 'auto',
+          background: 'var(--ant-color-bg-elevated, #fff)',
+          borderRadius: 8,
+          boxShadow: '0 6px 16px rgba(0,0,0,0.12)',
+        }}>
+          {notificationList}
+        </div>
+      )}
       trigger={['click']}
       open={open}
       onOpenChange={setOpen}

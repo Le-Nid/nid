@@ -156,14 +156,14 @@ export default function SavedSearchesPage() {
     <div>
       {contextHolder}
 
-      <Space style={{ marginBottom: 16, justifyContent: 'space-between', width: '100%' }}>
-        <Title level={3} style={{ margin: 0 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 16, justifyContent: 'space-between' }}>
+        <Title level={3} style={{ margin: 0, whiteSpace: 'nowrap' }}>
           <FolderOpen size={20} style={{ marginRight: 8 }} />{t('savedSearches.title')}
         </Title>
         <Button type="primary" icon={<Plus size={14} />} onClick={openCreate}>
           {t('savedSearches.newSearch')}
         </Button>
-      </Space>
+      </div>
 
       <Card size="small" style={{ marginBottom: 16 }}>
         <Text type="secondary">{t('savedSearches.hint')}</Text>

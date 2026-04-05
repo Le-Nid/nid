@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
   Card, Tabs, Typography, Form, Input, InputNumber, Select, Switch,
-  Button, Table, Space, Popconfirm, Progress, Statistic, Row, Col,
+  Button, Table, Popconfirm, Progress, Statistic, Row, Col,
   Upload, Divider, Tag, Alert, App,
 } from 'antd'
 import { Server, Trash2, Plus, LayoutDashboard, FileInput, FileOutput, Upload as UploadIcon, Play, Webhook, ShieldCheck, Database } from 'lucide-react'
@@ -299,14 +299,14 @@ function RetentionTab() {
         style={{ marginBottom: 16 }}
       />
 
-      <Space style={{ marginBottom: 16 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 16 }}>
         <Button icon={<Plus size={14} />} type="primary" onClick={() => setShowForm(!showForm)}>
           {t('ops.retention.add')}
         </Button>
         <Button icon={<Play size={14} />} onClick={handleRun} loading={runRetention.isPending}>
           {t('ops.retention.runNow')}
         </Button>
-      </Space>
+      </div>
 
       {showForm && (
         <Card size="small" style={{ marginBottom: 16 }}>

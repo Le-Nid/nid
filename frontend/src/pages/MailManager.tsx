@@ -410,7 +410,7 @@ export default function MailManagerPage() {
             ],
           }}
         >
-          <Button type="text" icon={<MoreHorizontal size={14} />} size="small" />
+          <Button type="text" icon={<MoreHorizontal size={14} />} size="small" onClick={(e) => e.stopPropagation()} />
         </Dropdown>
       ),
     },
@@ -420,14 +420,14 @@ export default function MailManagerPage() {
     <div>
       {contextHolder}
 
-      <Space style={{ marginBottom: 16 }} align="center">
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 16 }}>
         <Mail size={20} />
-        <Title level={3} style={{ margin: 0 }}>{t('mailManager.title')}</Title>
-      </Space>
+        <Title level={3} style={{ margin: 0, whiteSpace: 'nowrap' }}>{t('mailManager.title')}</Title>
+      </div>
 
       {/* Filtres */}
       <Card size="small" style={{ marginBottom: 12 }}>
-        <Space wrap>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
           <Select
             style={{ width: 190 }}
             value={quickFilter}
@@ -441,7 +441,7 @@ export default function MailManagerPage() {
             value={query}
             onChange={setQuery}
             onSearch={() => loadFresh(true)}
-            style={{ width: 400 }}
+            style={{ flex: '1 1 200px', minWidth: 0, maxWidth: 400 }}
           />
           <Button
             icon={<RefreshCw size={14} />}
@@ -469,7 +469,7 @@ export default function MailManagerPage() {
               ~{total.toLocaleString()} {t('mailManager.results', { total, loaded: mails.length }).split('·').pop()}
             </Text>
           )}
-        </Space>
+        </div>
       </Card>
 
       {/* Bulk bar */}

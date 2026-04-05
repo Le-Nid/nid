@@ -1,6 +1,6 @@
 import {
   Row, Col, Card, Statistic, Table, Tag, Spin, Alert,
-  Typography, Space, Button, Empty, Tooltip, Progress
+  Typography, Button, Empty, Tooltip, Progress
 } from 'antd'
 import { Mail, Inbox, Database, RefreshCw, AlertTriangle, LayoutDashboard } from 'lucide-react'
 import { Bar, Pie, Line } from '@ant-design/charts'
@@ -114,14 +114,14 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: 20 }} align="center">
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 20 }}>
         <LayoutDashboard size={20} />
-        <Title level={3} style={{ margin: 0 }}>{t('dashboard.title')}</Title>
-        {account && <Text type="secondary">{account.email}</Text>}
+        <Title level={3} style={{ margin: 0, whiteSpace: 'nowrap' }}>{t('dashboard.title')}</Title>
+        {account && <Text type="secondary" style={{ whiteSpace: 'nowrap' }}>{account.email}</Text>}
         <Button icon={<RefreshCw size={14} />} onClick={load} loading={loading} size="small">
           {t('common.refresh')}
         </Button>
-      </Space>
+      </div>
 
       {error && (
         <Alert type="error" title={error} icon={<AlertTriangle size={14} />}

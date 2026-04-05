@@ -213,13 +213,13 @@ export default function SettingsPage() {
           <Typography.Text type="secondary">{t('settings.noGmailAccount')}</Typography.Text>
         ) : (
           gmailAccounts.map((account) => (
-            <div key={account.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--ant-color-split, #f0f0f0)' }}>
-              <Space>
+            <div key={account.id} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, padding: '12px 0', borderBottom: '1px solid var(--ant-color-split, #f0f0f0)' }}>
+              <Space style={{ flex: '1 1 auto', minWidth: 0 }}>
                 <Avatar icon={<Globe size={14} />} style={{ backgroundColor: '#4285F4' }} />
-                <span>{account.email}</span>
+                <span style={{ wordBreak: 'break-all' }}>{account.email}</span>
                 {account.is_active && <Tag color="success">{t('common.active')}</Tag>}
               </Space>
-              <Space>
+              <Space wrap>
                 <Button
                   icon={<CloudCog size={14} />}
                   size="small"

@@ -179,8 +179,8 @@ export default function JobsPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: 16 }} align="center" wrap>
-        <Title level={3} style={{ margin: 0 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+        <Title level={3} style={{ margin: 0, whiteSpace: 'nowrap' }}>
           <CalendarClock size={20} style={{ marginRight: 8 }} />{t('jobs.title')}
         </Title>
 
@@ -213,7 +213,7 @@ export default function JobsPage() {
             }
           />
         )}
-      </Space>
+      </div>
 
       {jobs.length === 0 && !loading ? (
         <Empty description={t('jobs.noJobs')} image={Empty.PRESENTED_IMAGE_SIMPLE} />

@@ -1,5 +1,5 @@
 import {
-  Typography, Card, Row, Col, Statistic, Table, Empty, Space, Tag, Spin,
+  Typography, Card, Row, Col, Statistic, Table, Empty, Tag, Spin,
 } from 'antd'
 import { CheckCircle, XCircle, Database, Bot, Mail, LineChart } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -35,11 +35,11 @@ export default function InsightsPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: 16 }} align="center">
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 16 }}>
         <LineChart size={20} />
-        <Title level={3} style={{ margin: 0 }}>{t('insights.title')}</Title>
+        <Title level={3} style={{ margin: 0, whiteSpace: 'nowrap' }}>{t('insights.title')}</Title>
         <Tag color="blue">{from} — {to}</Tag>
-      </Space>
+      </div>
 
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={12} sm={6}>

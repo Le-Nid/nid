@@ -130,18 +130,18 @@ export default function AdminPage() {
 
       {/* Stats globales */}
       {stats && (
-        <Row gutter={16} style={{ marginBottom: 24 }}>
-          <Col span={6}>
+        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+          <Col xs={12} sm={6}>
             <Card><Statistic title={t('admin.users')} value={stats.users} prefix={<Users size={14} />} /></Card>
           </Col>
-          <Col span={6}>
+          <Col xs={12} sm={6}>
             <Card><Statistic title={t('admin.gmailAccounts')} value={stats.gmailAccounts} prefix={<Cloud size={14} />} /></Card>
           </Col>
-          <Col span={6}>
+          <Col xs={12} sm={6}>
             <Card><Statistic title={t('admin.totalJobs')} value={stats.jobs.total} prefix={<CalendarClock size={14} />}
               suffix={<Text type="secondary" style={{ fontSize: 12 }}> ({t('admin.activeJobs', { count: stats.jobs.active })})</Text>} /></Card>
           </Col>
-          <Col span={6}>
+          <Col xs={12} sm={6}>
             <Card><Statistic title={t('admin.archives')} value={stats.archives.totalMails} prefix={<Database size={14} />}
               suffix={<Text type="secondary" style={{ fontSize: 12 }}> ({formatBytes(stats.archives.totalSizeBytes)})</Text>} /></Card>
           </Col>

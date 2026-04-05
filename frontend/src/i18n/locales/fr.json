@@ -875,7 +875,8 @@
     "noContent": "Aucun contenu disponible",
     "poweredBy": "Nid — Partage temporaire d'archive",
     "shareButton": "Partager",
-    "shareTooltip": "Générer un lien de partage temporaire"
+    "shareTooltip": "Générer un lien de partage temporaire",
+    "createShare": "Créer un lien de partage"
   },
 
   "notifier": {

@@ -16,7 +16,7 @@ import {
   Spin,
 } from "antd";
 import { Plus, Play, Pencil, Trash2, Clock, CheckCircle, LayoutGrid, Bot } from 'lucide-react'
-import { useTranslation } from "react-i18next";
+import { useTranslation, Trans } from "react-i18next";
 import { rulesApi } from "../api";
 import { useAccount } from "../hooks/useAccount";
 import {
@@ -242,8 +242,8 @@ export default function RulesPage() {
     <div>
       {contextHolder}
 
-      <Space style={{ marginBottom: 16 }} align="center">
-        <Title level={3} style={{ margin: 0 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+        <Title level={3} style={{ margin: 0, whiteSpace: 'nowrap' }}>
           <Bot size={20} style={{ marginRight: 8 }} />{t('rules.title')}
         </Title>
         <Button type="primary" icon={<Plus size={14} />} onClick={openCreate}>
@@ -252,7 +252,7 @@ export default function RulesPage() {
         <Button icon={<LayoutGrid size={14} />} onClick={openTemplates}>
           {t('rules.templates')}
         </Button>
-      </Space>
+      </div>
 
       <Card
         size="small"
@@ -262,7 +262,7 @@ export default function RulesPage() {
           borderColor: "#b7eb8f",
         }}
       >
-                <Text style={{ fontSize: 13 }}>{t('rules.description')}</Text>
+                <Text style={{ fontSize: 13 }}><Trans i18nKey="rules.description" components={{ strong: <strong /> }} /></Text>
       </Card>
 
       {!accountId ? (

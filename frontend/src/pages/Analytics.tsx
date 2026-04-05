@@ -207,9 +207,9 @@ export default function AnalyticsPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: 20 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 20 }}>
         <Activity size={20} />
-        <Title level={3} style={{ margin: 0 }}>{t('analytics.title')}</Title>
+        <Title level={3} style={{ margin: 0, whiteSpace: 'nowrap' }}>{t('analytics.title')}</Title>
         <Button
           icon={<RefreshCw size={14} />}
           onClick={() => load(true)}
@@ -218,7 +218,7 @@ export default function AnalyticsPage() {
         >
           {t('common.refresh')}
         </Button>
-      </Space>
+      </div>
 
       {error && <Alert type="error" title={error} showIcon closable style={{ marginBottom: 16 }} />}
 
