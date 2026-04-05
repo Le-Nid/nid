@@ -1282,6 +1282,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Ntfy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#topic-public-sans-authentification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Topic public (sans authentification)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#topic-protege-avec-login-mot-de-passe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Topic protégé (avec login / mot de passe)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -2727,6 +2755,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Ntfy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#topic-public-sans-authentification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Topic public (sans authentification)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#topic-protege-avec-login-mot-de-passe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Topic protégé (avec login / mot de passe)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -2904,6 +2960,7 @@
 <li><strong>URL</strong> : l'URL du webhook de votre service</li>
 <li><strong>Type</strong> : Discord, Slack, Ntfy ou Générique</li>
 <li><strong>Événements</strong> : cochez les événements qui déclenchent le webhook</li>
+<li><strong>Utilisateur / Mot de passe</strong> <em>(Ntfy uniquement)</em> : identifiants si le topic est protégé par authentification</li>
 </ul>
 </li>
 </ol>
@@ -2929,11 +2986,32 @@
 <li>Sélectionnez les événements à notifier</li>
 </ol>
 <h3 id="ntfy">Ntfy<a class="headerlink" href="#ntfy" title="Permanent link">&para;</a></h3>
+<p><a href="https://ntfy.sh">ntfy</a> permet de recevoir des notifications push sur votre téléphone ou navigateur.</p>
+<h4 id="topic-public-sans-authentification">Topic public (sans authentification)<a class="headerlink" href="#topic-public-sans-authentification" title="Permanent link">&para;</a></h4>
 <ol>
 <li>Choisissez un topic sur <a href="https://ntfy.sh">ntfy.sh</a> (ex. : <code>nid-alerts</code>)</li>
 <li>Dans Nid, créez un webhook de type <strong>Ntfy</strong> avec l'URL <code>https://ntfy.sh/nid-alerts</code></li>
 <li>Installez l'app ntfy sur votre téléphone et abonnez-vous au même topic</li>
 </ol>
+<h4 id="topic-protege-avec-login-mot-de-passe">Topic protégé (avec login / mot de passe)<a class="headerlink" href="#topic-protege-avec-login-mot-de-passe" title="Permanent link">&para;</a></h4>
+<p>Si vous hébergez votre propre serveur ntfy ou utilisez un topic protégé par mot de passe :</p>
+<ol>
+<li>Dans Nid, créez un webhook de type <strong>Ntfy</strong> avec l'URL de votre serveur (ex. : <code>https://ntfy.example.com/mon-topic</code>)</li>
+<li>Renseignez le <strong>nom d'utilisateur</strong> et le <strong>mot de passe</strong> dans les champs qui apparaissent quand le type Ntfy est sélectionné</li>
+<li>Les identifiants sont envoyés via l'en-tête HTTP <code>Authorization: Basic</code> (encodage Base64)</li>
+<li>Cliquez sur <strong>Tester</strong> pour vérifier que l'authentification fonctionne</li>
+</ol>
+<div class="admonition tip">
+<p class="admonition-title">Serveur ntfy auto-hébergé</p>
+<p>Si vous utilisez un serveur ntfy auto-hébergé avec contrôle d'accès (<code>auth-default-access: deny-all</code>), vous devez créer un utilisateur et lui autoriser l'accès en écriture au topic :
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ntfy<span class="w"> </span>user<span class="w"> </span>add<span class="w"> </span>monuser
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>ntfy<span class="w"> </span>access<span class="w"> </span>monuser<span class="w"> </span>mon-topic<span class="w"> </span>write
+</code></pre></div></p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Sécurité</p>
+<p>Les identifiants ntfy sont stockés en clair dans la base de données. Utilisez un compte dédié avec des permissions minimales (écriture seule sur le topic concerné).</p>
+</div>
 
 
 
