@@ -82,6 +82,7 @@ Les webhooks permettent d'envoyer des notifications vers des services externes q
     - **URL** : l'URL du webhook de votre service
     - **Type** : Discord, Slack, Ntfy ou Générique
     - **Événements** : cochez les événements qui déclenchent le webhook
+    - **Utilisateur / Mot de passe** *(Ntfy uniquement)* : identifiants si le topic est protégé par authentification
 
 > 📸 *Capture d'écran suggérée : formulaire de création d'un webhook avec les champs nom, URL, type et événements*
 
@@ -112,6 +113,29 @@ Les webhooks de type **Générique** incluent automatiquement un header `X-Webho
 
 ### Ntfy
 
+[ntfy](https://ntfy.sh) permet de recevoir des notifications push sur votre téléphone ou navigateur.
+
+#### Topic public (sans authentification)
+
 1. Choisissez un topic sur [ntfy.sh](https://ntfy.sh) (ex. : `nid-alerts`)
 2. Dans Nid, créez un webhook de type **Ntfy** avec l'URL `https://ntfy.sh/nid-alerts`
 3. Installez l'app ntfy sur votre téléphone et abonnez-vous au même topic
+
+#### Topic protégé (avec login / mot de passe)
+
+Si vous hébergez votre propre serveur ntfy ou utilisez un topic protégé par mot de passe :
+
+1. Dans Nid, créez un webhook de type **Ntfy** avec l'URL de votre serveur (ex. : `https://ntfy.example.com/mon-topic`)
+2. Renseignez le **nom d'utilisateur** et le **mot de passe** dans les champs qui apparaissent quand le type Ntfy est sélectionné
+3. Les identifiants sont envoyés via l'en-tête HTTP `Authorization: Basic` (encodage Base64)
+4. Cliquez sur **Tester** pour vérifier que l'authentification fonctionne
+
+!!! tip "Serveur ntfy auto-hébergé"
+    Si vous utilisez un serveur ntfy auto-hébergé avec contrôle d'accès (`auth-default-access: deny-all`), vous devez créer un utilisateur et lui autoriser l'accès en écriture au topic :
+    ```bash
+    ntfy user add monuser
+    ntfy access monuser mon-topic write
+    ```
+
+!!! warning "Sécurité"
+    Les identifiants ntfy sont stockés en clair dans la base de données. Utilisez un compte dédié avec des permissions minimales (écriture seule sur le topic concerné).

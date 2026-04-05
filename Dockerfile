@@ -39,8 +39,8 @@ LABEL org.opencontainers.image.description="Nid — All-in-one (Frontend + Backe
 LABEL org.opencontainers.image.licenses="MIT"
 LABEL org.opencontainers.image.version="${APP_VERSION}"
 
-# Install nginx, upgrade packages, remove unnecessary tools
-RUN apk add --no-cache nginx \
+# Install nginx + su-exec (lightweight gosu for Alpine), upgrade packages, remove unnecessary tools
+RUN apk add --no-cache nginx su-exec \
     && apk upgrade --no-cache \
     && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx \
               /usr/local/bin/corepack /usr/local/lib/node_modules/corepack \
@@ -68,8 +68,7 @@ COPY --chown=appuser:appgroup nginx.unified.conf /etc/nginx/http.d/default.conf
 COPY --chown=appuser:appgroup entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-USER appuser
-
+# Entrypoint runs as root to fix volume permissions, then drops to appuser via su-exec
 ENV NODE_ENV=production
 ENV APP_VERSION=${APP_VERSION}
 EXPOSE 3000

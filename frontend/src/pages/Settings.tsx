@@ -502,6 +502,18 @@ export default function SettingsPage() {
                 { value: 'ntfy', label: 'Ntfy' },
               ]} />
             </Form.Item>
+            <Form.Item noStyle dependencies={['type']}>
+              {() => webhookForm.getFieldValue('type') === 'ntfy' && (
+                <>
+                  <Form.Item name="auth_user" label={t('settings.ntfyUser')}>
+                    <Input placeholder={t('settings.ntfyUserPlaceholder')} autoComplete="off" />
+                  </Form.Item>
+                  <Form.Item name="auth_password" label={t('settings.ntfyPassword')}>
+                    <Input.Password placeholder={t('settings.ntfyPasswordPlaceholder')} autoComplete="new-password" />
+                  </Form.Item>
+                </>
+              )}
+            </Form.Item>
             <Form.Item name="events" label={t('settings.webhookEvents')} rules={[{ required: true }]}>
               <Select mode="multiple" placeholder={t('settings.webhookSelectEvents')} options={[
                 { value: 'job.completed', label: t('settings.jobCompleted') },

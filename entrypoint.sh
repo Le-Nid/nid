@@ -1,9 +1,12 @@
 #!/bin/sh
 set -e
 
-# Start the Node.js backend in the background
+# Fix ownership on bind-mounted volumes (host UID may differ from appuser 1001)
+chown -R appuser:appgroup /archives
+
+# Start the Node.js backend in the background (as appuser)
 cd /app/backend
-node dist/index.js &
+su-exec appuser node dist/index.js &
 BACKEND_PID=$!
 
 # Wait for backend to be ready
@@ -16,8 +19,8 @@ for i in $(seq 1 30); do
   sleep 1
 done
 
-# Start nginx in the foreground
-nginx -g 'daemon off;' &
+# Start nginx in the foreground (as appuser)
+su-exec appuser nginx -g 'daemon off;' &
 NGINX_PID=$!
 
 echo "Nid is running on port 3000"
