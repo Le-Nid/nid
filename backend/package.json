@@ -36,7 +36,7 @@
     "arctic": "^3.7.0",
     "bcrypt": "^6.0.0",
     "bullmq": "^5.73.0",
-    "dotenv": "^17.4.0",
+    "dotenv": "^17.4.1",
     "fastify": "^5.8.4",
     "googleapis": "^171.4.0",
     "imapflow": "^1.2.18",
@@ -54,7 +54,7 @@
   "devDependencies": {
     "@types/archiver": "^7.0.0",
     "@types/bcrypt": "^6.0.0",
-    "@types/imapflow": "^1.0.23",
+    "@types/imapflow": "^1.0.189",
     "@types/mailparser": "^3.4.6",
     "@types/node": "^25.5.2",
     "@types/pg": "^8.20.0",
