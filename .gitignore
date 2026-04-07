@@ -27,3 +27,10 @@ Thumbs.db
 *.swp
 
 coverage/
+
+# VitePress
+docs/.vitepress/dist
+docs/.vitepress/cache
+
+# Root
+/node_modules
