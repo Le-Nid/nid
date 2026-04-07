@@ -23,18 +23,19 @@ RUN apk upgrade --no-cache \
               /usr/local/bin/corepack /usr/local/lib/node_modules/corepack \
               /opt/yarn* /tmp/* /var/cache/apk/*
 
-# Non-root user setup
+# Non-root user setup — only /archives writable
 RUN addgroup -g 1001 -S appgroup && \
     adduser -S appuser -u 1001 -G appgroup && \
-    mkdir -p /app /archives && \
-    chown -R appuser:appgroup /app /archives
+    mkdir -p /archives && \
+    chown appuser:appgroup /archives
 
 WORKDIR /app
 ENV NODE_ENV=production
 
-COPY --from=deps --chown=appuser:appgroup /app/node_modules ./node_modules
-COPY --from=deps --chown=appuser:appgroup /app/package.json ./package.json
-COPY --from=builder --chown=appuser:appgroup /app/dist ./dist
+# Application files (root-owned = read-only for appuser)
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/package.json ./package.json
+COPY --from=builder /app/dist ./dist
 
 USER appuser
 EXPOSE 4000

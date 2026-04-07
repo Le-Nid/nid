@@ -1,0 +1,31 @@
+{
+  "name": "gmail-manager",
+  "version": "1.0.0",
+  "description": "<p align=\"center\">\r   <img src=\"docs/assets/nid-logo-full-light.svg\" alt=\"Nid\" height=\"80\" />\r </p>",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/le-nid/nid.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/le-nid/nid/issues"
+  },
+  "homepage": "https://github.com/le-nid/nid#readme",
+  "devDependencies": {
+    "mermaid": "^11.14.0",
+    "vitepress": "^1.6.4",
+    "vitepress-plugin-mermaid": "^2.0.17"
+  }
+}

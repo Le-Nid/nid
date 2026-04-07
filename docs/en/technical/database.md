@@ -1,0 +1,302 @@
+# Database
+
+## ERD Schema
+
+```mermaid
+erDiagram
+    users {
+        uuid id PK
+        varchar email
+        varchar password_hash "nullable (SSO)"
+        varchar role "user | admin"
+        varchar display_name
+        varchar avatar_url
+        varchar google_id "nullable, unique"
+        boolean is_active "default true"
+        integer max_gmail_accounts "default 5"
+        bigint storage_quota_bytes "default 1 Go"
+        varchar totp_secret "nullable"
+        boolean totp_enabled "default false"
+        varchar encryption_key_hash "nullable"
+        timestamptz last_login_at
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    gmail_accounts {
+        uuid id PK
+        uuid user_id FK
+        varchar email
+        text access_token
+        text refresh_token
+        timestamptz token_expiry
+        boolean is_active
+    }
+
+    archived_mails {
+        uuid id PK
+        uuid gmail_account_id FK
+        varchar gmail_message_id
+        varchar thread_id
+        text subject
+        varchar sender
+        text recipient
+        timestamptz date
+        bigint size_bytes
+        boolean has_attachments
+        text[] label_ids
+        text eml_path
+        text snippet
+        boolean is_encrypted "default false"
+        tsvector search_vector
+        timestamptz archived_at
+    }
+
+    archived_attachments {
+        uuid id PK
+        uuid archived_mail_id FK
+        varchar filename
+        varchar mime_type
+        bigint size_bytes
+        text file_path
+    }
+
+    rules {
+        uuid id PK
+        uuid gmail_account_id FK
+        varchar name
+        jsonb conditions
+        jsonb action
+        varchar schedule
+        boolean is_active
+        timestamptz last_run_at
+    }
+
+    jobs {
+        uuid id PK
+        varchar bullmq_id
+        varchar type
+        varchar status
+        integer progress
+        integer total
+        integer processed
+        uuid gmail_account_id FK
+        uuid user_id FK
+        jsonb payload
+        text error
+        timestamptz created_at
+        timestamptz completed_at
+    }
+
+    users ||--o{ gmail_accounts : "possède"
+    gmail_accounts ||--o{ archived_mails : "archive"
+    archived_mails ||--o{ archived_attachments : "contient"
+    gmail_accounts ||--o{ rules : "définit"
+    gmail_accounts ||--o{ jobs : "génère"
+    users ||--o{ jobs : "possède"
+    users ||--o{ notifications : "reçoit"
+    users ||--o{ audit_logs : "trace"
+    users ||--o{ webhooks : "configure"
+    users ||--|| notification_preferences : "paramètre"
+    gmail_accounts ||--o{ tracking_pixels : "scanne"
+    gmail_accounts ||--o{ pii_findings : "analyse"
+    archived_mails ||--o{ pii_findings : "référence"
+    users ||--o{ retention_policies : "configure"
+    gmail_accounts ||--o{ gmail_api_usage : "suit"
+    users ||--|| storage_configs : "paramètre"
+
+    tracking_pixels {
+        uuid id PK
+        uuid gmail_account_id FK
+        varchar gmail_message_id
+        varchar subject
+        varchar sender
+        timestamptz date
+        jsonb trackers "détail des trackers"
+        integer tracker_count
+        timestamptz scanned_at
+    }
+
+    pii_findings {
+        uuid id PK
+        uuid gmail_account_id FK
+        uuid archived_mail_id FK
+        varchar pii_type "credit_card, iban, ..."
+        integer count
+        varchar snippet "masqué"
+        timestamptz scanned_at
+    }
+
+    notification_preferences {
+        uuid id PK
+        uuid user_id FK "unique"
+        boolean weekly_report "default true"
+        boolean job_completed "default true"
+        boolean job_failed "default true"
+        boolean rule_executed "default false"
+        boolean quota_warning "default true"
+        boolean integrity_alert "default true"
+        boolean weekly_report_toast "default false"
+        boolean job_completed_toast "default true"
+        boolean job_failed_toast "default true"
+        boolean rule_executed_toast "default false"
+        boolean quota_warning_toast "default false"
+        boolean integrity_alert_toast "default false"
+        timestamptz updated_at
+    }
+
+    webhooks {
+        uuid id PK
+        uuid user_id FK
+        varchar name "max 100"
+        text url
+        varchar type "generic | discord | slack | ntfy"
+        text[] events
+        boolean is_active "default true"
+        varchar secret "nullable, HMAC generic"
+        timestamptz last_triggered_at
+        integer last_status
+        timestamptz created_at
+    }
+
+    notifications {
+        uuid id PK
+        uuid user_id FK
+        varchar type
+        varchar title
+        text body
+        jsonb data
+        boolean is_read "default false"
+        timestamptz created_at
+    }
+
+    audit_logs {
+        uuid id PK
+        uuid user_id FK
+        varchar action "ex: user.login, rule.create"
+        varchar target_type "nullable"
+        varchar target_id "nullable"
+        jsonb details "nullable"
+        varchar ip_address "nullable"
+        timestamptz created_at
+    }
+
+    retention_policies {
+        uuid id PK
+        uuid user_id FK
+        uuid gmail_account_id FK "nullable"
+        varchar name
+        varchar label "nullable"
+        integer max_age_days
+        boolean is_active "default true"
+        timestamptz last_run_at "nullable"
+        integer deleted_count "default 0"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    gmail_api_usage {
+        uuid id PK
+        uuid gmail_account_id FK
+        varchar endpoint
+        integer quota_units "default 5"
+        timestamptz recorded_at
+    }
+
+    storage_configs {
+        uuid id PK
+        uuid user_id FK "unique"
+        varchar type "local | s3"
+        varchar s3_endpoint "nullable"
+        varchar s3_region "nullable"
+        varchar s3_bucket "nullable"
+        varchar s3_access_key_id "nullable"
+        varchar s3_secret_access_key "nullable"
+        boolean s3_force_path_style "default true"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+```
+
+---
+
+## Indexes
+
+| Table | Index | Type | Usage |
+|---|---|---|---|
+| `archived_mails` | `search_vector` | GIN | Full-text search |
+| `archived_mails` | `gmail_account_id` | BTree | Filter by account |
+| `archived_mails` | `sender` | BTree | Filter by sender |
+| `archived_mails` | `date DESC` | BTree | Sort by date |
+| `archived_mails` | `size_bytes DESC` | BTree | Sort by size |
+| `archived_attachments` | `archived_mail_id` | BTree | Join emails ↔ attachments |
+| `jobs` | `gmail_account_id` | BTree | Filter jobs by account |
+| `jobs` | `status` | BTree | Filter by status |
+| `jobs` | `created_at DESC` | BTree | Sort by date |
+| `jobs` | `user_id` | BTree | Filter jobs by user |
+| `users` | `google_id` (partial) | Unique | Google SSO lookup |
+| `audit_logs` | `user_id + created_at` | BTree | Logs by user |
+| `audit_logs` | `action + created_at` | BTree | Filter by action |
+| `webhooks` | `user_id` | BTree | Filter by user |
+| `notification_preferences` | `user_id` | Unique | One row per user |
+| `tracking_pixels` | `gmail_account_id` | BTree | Filter by account |
+| `tracking_pixels` | `(gmail_account_id, gmail_message_id)` | Unique | Scan deduplication |
+| `pii_findings` | `gmail_account_id` | BTree | Filter by account |
+| `pii_findings` | `archived_mail_id` | BTree | Join emails ↔ PII |
+| `retention_policies` | `user_id` | BTree | Filter by user |
+| `gmail_api_usage` | `(gmail_account_id, recorded_at)` | BTree | Quota stats by account |
+| `gmail_api_usage` | `recorded_at` | BTree | Old data cleanup |
+| `storage_configs` | `user_id` | Unique | One config per user |
+
+---
+
+## Full-Text Search
+
+The `search_vector` field is automatically updated via a PostgreSQL trigger on each insert/update on `archived_mails`:
+
+```sql
+-- Poids de recherche :
+-- A (le plus fort) : sujet
+-- B : expéditeur
+-- C : snippet (extrait du corps)
+NEW.search_vector :=
+  setweight(to_tsvector('french', COALESCE(NEW.subject, '')), 'A') ||
+  setweight(to_tsvector('french', COALESCE(NEW.sender, '')), 'B') ||
+  setweight(to_tsvector('french', COALESCE(NEW.snippet, '')), 'C');
+```
+
+Search query example:
+
+```sql
+SELECT *, ts_rank(search_vector, query) AS rank
+FROM archived_mails, to_tsquery('french', 'facture & 2024') query
+WHERE gmail_account_id = $1
+  AND search_vector @@ query
+ORDER BY rank DESC, date DESC;
+```
+
+---
+
+## JSONB — Rules Format
+
+### `conditions` (array)
+
+```json
+[
+  { "field": "from", "operator": "contains", "value": "newsletter@" },
+  { "field": "subject", "operator": "contains", "value": "promotion" }
+]
+```
+
+Supported fields: `from`, `to`, `subject`, `has_attachment`, `size_gt` (bytes)
+
+Operators: `contains`, `equals`, `not_contains`, `gt`, `lt`
+
+### `action` (object)
+
+```json
+{ "type": "trash" }
+{ "type": "label", "labelId": "Label_123" }
+{ "type": "archive" }
+{ "type": "archive_nas" }
+```
