@@ -16,11 +16,12 @@ LABEL org.opencontainers.image.licenses="MIT"
 RUN apk upgrade --no-cache \
     && rm -rf /tmp/* /var/cache/apk/*
 
+# Static files root-owned = read-only, nginx only needs read access
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# nginx:stable-alpine ships a non-root-capable config, but we ensure dirs are writable
-RUN chown -R nginx:nginx /usr/share/nginx/html /var/cache/nginx /var/log/nginx /run
+# nginx runtime dirs need to be writable
+RUN chown -R nginx:nginx /var/cache/nginx /var/log/nginx /run
 
 USER nginx
 EXPOSE 80

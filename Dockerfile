@@ -46,27 +46,28 @@ RUN apk add --no-cache nginx su-exec \
               /usr/local/bin/corepack /usr/local/lib/node_modules/corepack \
               /opt/yarn* /tmp/* /var/cache/apk/*
 
-# Non-root user setup (before COPY to use --chown)
+# Non-root user — only /archives writable, nginx runtime dirs writable
 RUN addgroup -g 1001 -S appgroup && \
     adduser -S appuser -u 1001 -G appgroup && \
-    mkdir -p /app/backend /archives \
-             /var/lib/nginx /var/log/nginx /run/nginx && \
-    chown -R appuser:appgroup /app /archives \
-             /var/lib/nginx /var/log/nginx /run/nginx
+    mkdir -p /archives && \
+    chown appuser:appgroup /archives && \
+    chown -R appuser:appgroup /var/lib/nginx /var/log/nginx /run/nginx
 
-# Backend production deps + built code
+# Backend production deps + built code (root-owned = read-only for appuser)
 WORKDIR /app/backend
-COPY --from=deps --chown=appuser:appgroup /app/backend/node_modules ./node_modules
-COPY --from=deps --chown=appuser:appgroup /app/backend/package.json ./package.json
-COPY --from=backend-builder --chown=appuser:appgroup /app/backend/dist ./dist
+COPY --from=deps /app/backend/node_modules ./node_modules
+COPY --from=deps /app/backend/package.json ./package.json
+COPY --from=backend-builder /app/backend/dist ./dist
 
-# Frontend static files (served by nginx)
-COPY --from=frontend-builder --chown=appuser:appgroup /app/frontend/dist /usr/share/nginx/html
-COPY --chown=appuser:appgroup nginx.unified.conf /etc/nginx/http.d/default.conf
+# Frontend static files (root-owned = read-only)
+COPY --from=frontend-builder /app/frontend/dist /usr/share/nginx/html
 
-# Entrypoint script
-COPY --chown=appuser:appgroup entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# Nginx config (root-owned = read-only)
+COPY nginx.unified.conf /etc/nginx/http.d/default.conf
+
+# Entrypoint script (root-owned, not modifiable by appuser)
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod 755 /entrypoint.sh
 
 # Entrypoint runs as root to fix volume permissions, then drops to appuser via su-exec
 ENV NODE_ENV=production

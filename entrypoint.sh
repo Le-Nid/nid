@@ -1,8 +1,14 @@
 #!/bin/sh
 set -e
 
-# Fix ownership on bind-mounted volumes (host UID may differ from appuser 1001)
-chown -R appuser:appgroup /archives
+# Fix ownership on bind-mounted volume (host UID may differ from appuser 1001)
+# Only fix if ownership is wrong, to speed up restarts
+if [ "$(stat -c '%u' /archives)" != "1001" ]; then
+  chown -R appuser:appgroup /archives
+else
+  # Ensure new subdirectories created by host are also fixed
+  find /archives ! -user appuser -exec chown appuser:appgroup {} +
+fi
 
 # Start the Node.js backend in the background (as appuser)
 cd /app/backend
