@@ -1,7 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 
 // Test the migration up/down functions
-const mockAlterTable = vi.fn()
 const mockAddColumn = vi.fn()
 const mockDropColumn = vi.fn()
 const mockExecute = vi.fn().mockResolvedValue(undefined)
