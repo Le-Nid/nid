@@ -18,12 +18,14 @@ import {
   Segmented,
   Badge,
   List,
+  Popconfirm,
+  Alert,
 } from "antd";
-import { Search as SearchIcon, Download, Paperclip, RefreshCw, FileArchive, File, Eye, List as ListIcon, MessageSquare, Database } from 'lucide-react'
+import { Search as SearchIcon, Download, Paperclip, RefreshCw, FileArchive, File, Eye, List as ListIcon, MessageSquare, Database, Trash2, RotateCcw, AlertCircle } from 'lucide-react'
 import { useTranslation } from "react-i18next";
 import { archiveApi, archiveThreadsApi } from "../api";
 import { useAccount } from "../hooks/useAccount";
-import { useArchiveMails, useArchiveThreads } from "../hooks/queries";
+import { useArchiveMails, useArchiveThreads, useArchiveTrash } from "../hooks/queries";
 import { formatBytes, formatSender } from "../utils/format";
 import JobProgressModal from "../components/JobProgressModal";
 import api from "../api/client";
@@ -179,7 +181,7 @@ export default function ArchivePage() {
   // Viewer drawer
   const [viewing, setViewing] = useState<any>(null);
   const [viewMode, setViewMode] = useState<"html" | "raw">("html");
-  const [listMode, setListMode] = useState<"list" | "threads">("list");
+  const [listMode, setListMode] = useState<"list" | "threads" | "trash">("list");
   const [expandedThread, setExpandedThread] = useState<string | null>(null);
   const [threadMails, setThreadMails] = useState<any[]>([]);
   const [threadLoading, setThreadLoading] = useState(false);
@@ -211,11 +213,68 @@ export default function ArchivePage() {
   const threads = threadsData?.threads ?? [];
   const threadsTotal = threadsData?.total ?? 0;
 
+  // Trash query
+  const trashParams: Record<string, any> = { page, limit: 50 };
+  if (query) trashParams.q = query;
+  const { data: trashData, isLoading: trashLoading, refetch: refetchTrash } = useArchiveTrash(
+    listMode === 'trash' ? accountId : null,
+    trashParams,
+  );
+  const trashMails = trashData?.mails ?? [];
+  const trashTotal = trashData?.total ?? 0;
+  const trashRetentionDays = trashData?.retentionDays ?? 30;
+
   const load = (p = 1) => {
     setPage(p);
     if (p === page) {
+      if (listMode === 'trash') refetchTrash();
+      else {
+        refetch();
+        if (listMode === 'threads') refetchThreads();
+      }
+    }
+  };
+
+  // ─── Trash actions ──────────────────────────────────────
+  const handleTrashMails = async (ids: string[]) => {
+    if (!accountId || !ids.length) return;
+    try {
+      const result = await archiveApi.trashMails(accountId, ids);
+      notification.success({
+        message: t('archive.trashSuccess', { count: result.trashed }),
+      });
+      setSelected([]);
       refetch();
-      if (listMode === 'threads') refetchThreads();
+    } catch {
+      messageApi.error(t('archive.trashError'));
+    }
+  };
+
+  const handleRestoreMails = async (ids: string[]) => {
+    if (!accountId || !ids.length) return;
+    try {
+      const result = await archiveApi.restoreMails(accountId, ids);
+      notification.success({
+        message: t('archive.restoreSuccess', { count: result.restored }),
+      });
+      setSelected([]);
+      refetchTrash();
+    } catch {
+      messageApi.error(t('archive.restoreError'));
+    }
+  };
+
+  const handleEmptyTrash = async () => {
+    if (!accountId) return;
+    try {
+      const result = await archiveApi.emptyTrash(accountId);
+      notification.success({
+        message: t('archive.emptyTrashSuccess', { count: result.deleted }),
+      });
+      setSelected([]);
+      refetchTrash();
+    } catch {
+      messageApi.error(t('archive.emptyTrashError'));
     }
   };
 
@@ -458,7 +517,8 @@ export default function ArchivePage() {
     },
   ];
 
-  const selectedSizeBytes = mails
+  const allCurrentMails = listMode === 'trash' ? trashMails : mails;
+  const selectedSizeBytes = allCurrentMails
     .filter((m: { id: string }) => selected.includes(m.id))
     .reduce((s: number, m: { size_bytes: number }) => s + m.size_bytes, 0);
 
@@ -472,10 +532,11 @@ export default function ArchivePage() {
         </Title>
         <Segmented
           value={listMode}
-          onChange={(v) => setListMode(v as 'list' | 'threads')}
+          onChange={(v) => { setListMode(v as 'list' | 'threads' | 'trash'); setPage(1); setSelected([]); }}
           options={[
             { value: 'list', icon: <ListIcon size={14} />, label: t('archive.listView') },
             { value: 'threads', icon: <MessageSquare size={14} />, label: t('archive.threadView') },
+            { value: 'trash', icon: <Trash2 size={14} />, label: t('archive.trashView') },
           ]}
         />
       </div>
@@ -548,13 +609,39 @@ export default function ArchivePage() {
             <Text strong style={{ color: "#1677ff" }}>
               {t('archive.selectedCount', { count: selected.length, size: formatBytes(selectedSizeBytes) })}
             </Text>
-            <Button
-              icon={<FileArchive size={14} />}
-              loading={exporting}
-              onClick={() => exportZip(selected)}
-            >
-              {t('archive.exportZip')}
-            </Button>
+            {listMode !== 'trash' && (
+              <>
+                <Button
+                  icon={<FileArchive size={14} />}
+                  loading={exporting}
+                  onClick={() => exportZip(selected)}
+                >
+                  {t('archive.exportZip')}
+                </Button>
+                <Popconfirm
+                  title={t('archive.moveToTrashConfirm', { count: selected.length })}
+                  description={t('archive.moveToTrashConfirmDesc', { days: trashRetentionDays })}
+                  onConfirm={() => handleTrashMails(selected)}
+                  okText={t('archive.moveToTrash')}
+                  okButtonProps={{ danger: true }}
+                  cancelText={t('common.cancel')}
+                  icon={<AlertCircle size={14} style={{ color: 'red' }} />}
+                >
+                  <Tooltip title={t('archive.moveToTrashTooltip')}>
+                    <Button icon={<Trash2 size={14} />} danger>
+                      {t('archive.moveToTrash')}
+                    </Button>
+                  </Tooltip>
+                </Popconfirm>
+              </>
+            )}
+            {listMode === 'trash' && (
+              <Tooltip title={t('archive.restoreTooltip')}>
+                <Button icon={<RotateCcw size={14} />} onClick={() => handleRestoreMails(selected)}>
+                  {t('archive.restore')}
+                </Button>
+              </Tooltip>
+            )}
             <Button size="small" onClick={() => setSelected([])}>
               {t('archive.deselect')}
             </Button>
@@ -606,6 +693,116 @@ export default function ArchivePage() {
           onPageChange={load}
           t={t}
         />
+      )}
+
+      {/* Vue corbeille */}
+      {listMode === 'trash' && (
+        <>
+          <Alert
+            type="info"
+            showIcon
+            style={{ marginBottom: 12 }}
+            message={t('archive.trashInfo', { days: trashRetentionDays })}
+            action={
+              trashTotal > 0 ? (
+                <Popconfirm
+                  title={t('archive.emptyTrashConfirm')}
+                  description={t('archive.emptyTrashDesc')}
+                  onConfirm={handleEmptyTrash}
+                  okText={t('archive.emptyTrash')}
+                  okButtonProps={{ danger: true }}
+                  cancelText={t('common.cancel')}
+                  icon={<AlertCircle size={14} style={{ color: 'red' }} />}
+                >
+                  <Button danger size="small">{t('archive.emptyTrash')}</Button>
+                </Popconfirm>
+              ) : undefined
+            }
+          />
+
+          <Table
+            dataSource={trashMails}
+            columns={[
+              ...columns.slice(0, -2),
+              {
+                title: t('archive.deletedAt'),
+                dataIndex: 'deleted_at',
+                width: 120,
+                render: (v: string) => (
+                  <Text type="secondary" style={{ fontSize: 11 }}>
+                    {dayjs(v).format('DD/MM/YY HH:mm')}
+                  </Text>
+                ),
+              },
+              {
+                title: t('archive.expiresIn', { days: '' }).replace(/\d*[jd]$/, ''),
+                width: 80,
+                render: (_: any, row: any) => {
+                  if (!row.deleted_at) return null;
+                  const daysLeft = Math.max(0,
+                    trashRetentionDays - dayjs().diff(dayjs(row.deleted_at), 'day')
+                  );
+                  return (
+                    <Tag color={daysLeft <= 3 ? 'red' : daysLeft <= 7 ? 'orange' : 'default'}>
+                      {t('archive.expiresIn', { days: daysLeft })}
+                    </Tag>
+                  );
+                },
+              },
+              {
+                title: '',
+                width: 80,
+                render: (_: any, row: any) => (
+                  <Space size="small">
+                    <Tooltip title={t('archive.restoreTooltip')}>
+                      <Button
+                        size="small"
+                        type="text"
+                        icon={<RotateCcw size={14} />}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRestoreMails([row.id]);
+                        }}
+                      />
+                    </Tooltip>
+                    <Tooltip title={t('mailManager.read')}>
+                      <Button
+                        size="small"
+                        type="text"
+                        icon={<Eye size={14} />}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openMail(row);
+                        }}
+                      />
+                    </Tooltip>
+                  </Space>
+                ),
+              },
+            ]}
+            rowKey="id"
+            loading={trashLoading}
+            size="small"
+            scroll={{ x: 800 }}
+            rowSelection={{
+              selectedRowKeys: selected,
+              onChange: (keys) => setSelected(keys as string[]),
+            }}
+            pagination={{
+              current: page,
+              pageSize: 50,
+              total: trashTotal,
+              onChange: (p) => load(p),
+              showSizeChanger: false,
+              showTotal: (total) => `${total.toLocaleString()} mails`,
+            }}
+            onRow={(row) => ({
+              onClick: () => openMail(row),
+              style: { cursor: 'pointer' },
+            })}
+            locale={{ emptyText: <Empty description={t('archive.trashEmpty')} /> }}
+          />
+        </>
       )}
 
       {/* Viewer drawer */}

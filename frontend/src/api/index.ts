@@ -50,6 +50,24 @@ export const archiveApi = {
 
   downloadAttachment: (accountId: string, attachmentId: string) =>
     `${api.defaults.baseURL}/api/archive/${accountId}/attachments/${attachmentId}/download`,
+
+  trashMails: (accountId: string, mailIds: string[]) =>
+    api.post(`/api/archive/${accountId}/mails/trash`, { mailIds }).then((r) => r.data),
+
+  restoreMails: (accountId: string, mailIds: string[]) =>
+    api.post(`/api/archive/${accountId}/mails/restore`, { mailIds }).then((r) => r.data),
+
+  listTrash: (accountId: string, params: Record<string, any> = {}) =>
+    api.get(`/api/archive/${accountId}/trash`, { params }).then((r) => r.data),
+
+  emptyTrash: (accountId: string) =>
+    api.delete(`/api/archive/${accountId}/trash`).then((r) => r.data),
+
+  getTrashConfig: () =>
+    api.get('/api/archive/config/trash').then((r) => r.data),
+
+  updateTrashConfig: (data: { retentionDays?: number; purgeEnabled?: boolean }) =>
+    api.put('/api/archive/config/trash', data).then((r) => r.data),
 }
 
 // ─── Rules ────────────────────────────────────────────────

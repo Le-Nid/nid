@@ -1,18 +1,23 @@
 import { FastifyInstance } from "fastify";
 import { sql } from "kysely";
+import { z } from "zod";
 import { getDb } from "../db";
 import { enqueueJob } from "../jobs/queue";
 import { streamArchiveZip } from "../archive/export.service";
 import { invalidateDashboardCache } from "../dashboard/cache.service";
+import { getStorageForUser } from "../storage/storage.service";
 import fs from "node:fs";
 import { escapeIlike, notFound } from "../utils/db";
 import { extractPagination } from "../utils/pagination";
 import { authPresets } from "../utils/auth";
+import { createLogger } from "../logger";
 
 /** Sanitize filename for Content-Disposition header (Point 17) */
 function sanitizeFilename(name: string): string {
   return name.replaceAll(/["\r\n]/g, '_')
 }
+
+const logger = createLogger('archive-routes')
 
 export async function archiveRoutes(app: FastifyInstance) {
   const { accountAuth } = authPresets(app);
@@ -36,7 +41,8 @@ export async function archiveRoutes(app: FastifyInstance) {
     let query = db
       .selectFrom("archived_mails")
       .selectAll()
-      .where("gmail_account_id", "=", accountId);
+      .where("gmail_account_id", "=", accountId)
+      .where("deleted_at", "is", null);
 
     if (sender) {
       query = query.where("sender", "ilike", `%${escapeIlike(sender)}%`);
@@ -58,7 +64,8 @@ export async function archiveRoutes(app: FastifyInstance) {
       let fsQuery = db
         .selectFrom("archived_mails")
         .selectAll()
-        .where("gmail_account_id", "=", accountId);
+        .where("gmail_account_id", "=", accountId)
+        .where("deleted_at", "is", null);
 
       if (sender) {
         fsQuery = fsQuery.where("sender", "ilike", `%${escapeIlike(sender)}%`);
@@ -95,6 +102,7 @@ export async function archiveRoutes(app: FastifyInstance) {
       .selectFrom("archived_mails")
       .select((eb) => eb.fn.countAll<number>().as("count"))
       .where("gmail_account_id", "=", accountId)
+      .where("deleted_at", "is", null)
       .executeTakeFirstOrThrow();
 
     return { mails, total: Number(count), page, limit: lim };
@@ -219,7 +227,8 @@ export async function archiveRoutes(app: FastifyInstance) {
     let baseQuery = db
       .selectFrom("archived_mails")
       .where("gmail_account_id", "=", accountId)
-      .where("thread_id", "is not", null);
+      .where("thread_id", "is not", null)
+      .where("deleted_at", "is", null);
 
     if (sender) {
       baseQuery = baseQuery.where("sender", "ilike", `%${escapeIlike(sender)}%`);
@@ -259,6 +268,7 @@ export async function archiveRoutes(app: FastifyInstance) {
         FROM archived_mails
         WHERE gmail_account_id = ${accountId}
           AND thread_id IS NOT NULL
+          AND deleted_at IS NULL
           ${sender ? sql`AND sender ILIKE ${'%' + escapeIlike(sender) + '%'}` : sql``}
           ${from_date ? sql`AND date >= ${new Date(from_date)}` : sql``}
           ${to_date ? sql`AND date <= ${new Date(to_date)}` : sql``}
@@ -308,6 +318,7 @@ export async function archiveRoutes(app: FastifyInstance) {
       .selectAll()
       .where("gmail_account_id", "=", accountId)
       .where("thread_id", "=", threadId)
+      .where("deleted_at", "is", null)
       .orderBy("date", "asc")
       .execute();
 
@@ -333,5 +344,203 @@ export async function archiveRoutes(app: FastifyInstance) {
       ...m,
       attachments: attMap.get(m.id) ?? [],
     }));
+  });
+
+  // ─── Soft-delete (move to trash) ──────────────────────────
+  const trashSchema = z.object({
+    mailIds: z.array(z.string().uuid()).min(1).max(500),
+  });
+
+  app.post("/:accountId/mails/trash", accountAuth, async (request, reply) => {
+    const { accountId } = request.params as { accountId: string };
+    const { mailIds } = trashSchema.parse(request.body);
+
+    const result = await db
+      .updateTable("archived_mails")
+      .set({ deleted_at: new Date() })
+      .where("gmail_account_id", "=", accountId)
+      .where("id", "in", mailIds)
+      .where("deleted_at", "is", null)
+      .executeTakeFirst();
+
+    return { trashed: Number(result.numUpdatedRows) };
+  });
+
+  // ─── Restore from trash ───────────────────────────────────
+  app.post("/:accountId/mails/restore", accountAuth, async (request, reply) => {
+    const { accountId } = request.params as { accountId: string };
+    const { mailIds } = trashSchema.parse(request.body);
+
+    const result = await db
+      .updateTable("archived_mails")
+      .set({ deleted_at: null })
+      .where("gmail_account_id", "=", accountId)
+      .where("id", "in", mailIds)
+      .where("deleted_at", "is not", null)
+      .executeTakeFirst();
+
+    return { restored: Number(result.numUpdatedRows) };
+  });
+
+  // ─── List trash ───────────────────────────────────────────
+  app.get("/:accountId/trash", accountAuth, async (request) => {
+    const { accountId } = request.params as { accountId: string };
+    const {
+      q,
+      page: pageStr,
+      limit: limitStr,
+    } = request.query as Record<string, string>;
+
+    const { page, limit: lim, offset } = extractPagination({ page: pageStr, limit: limitStr });
+
+    let query = db
+      .selectFrom("archived_mails")
+      .selectAll()
+      .where("gmail_account_id", "=", accountId)
+      .where("deleted_at", "is not", null);
+
+    if (q) {
+      const searchTerm = q.trim().slice(0, 200);
+      query = (query as any).where(
+        sql`search_vector @@ plainto_tsquery('french', ${searchTerm})`
+      );
+    }
+
+    const mails = await query
+      .orderBy("deleted_at", "desc")
+      .limit(lim)
+      .offset(offset)
+      .execute();
+
+    const { count } = await db
+      .selectFrom("archived_mails")
+      .select((eb) => eb.fn.countAll<number>().as("count"))
+      .where("gmail_account_id", "=", accountId)
+      .where("deleted_at", "is not", null)
+      .executeTakeFirstOrThrow();
+
+    // Get trash retention config for display
+    const retentionConfig = await db
+      .selectFrom("system_config")
+      .select("value")
+      .where("key", "=", "archive_trash_retention_days")
+      .executeTakeFirst();
+    const retentionDays = retentionConfig ? Number(JSON.parse(String(retentionConfig.value))) : 30;
+
+    return { mails, total: Number(count), page, limit: lim, retentionDays };
+  });
+
+  // ─── Empty trash (permanent delete) ───────────────────────
+  app.delete("/:accountId/trash", accountAuth, async (request, reply) => {
+    const { accountId } = request.params as { accountId: string };
+    const userId = request.user.sub;
+
+    const mails = await db
+      .selectFrom("archived_mails")
+      .select(["id", "eml_path", "gmail_account_id"])
+      .where("gmail_account_id", "=", accountId)
+      .where("deleted_at", "is not", null)
+      .execute();
+
+    if (mails.length === 0) return { deleted: 0 };
+
+    const storage = await getStorageForUser(userId);
+    const mailIds = mails.map((m) => m.id);
+
+    // Delete attachments files + DB
+    const attachments = await db
+      .selectFrom("archived_attachments")
+      .select(["id", "file_path"])
+      .where("archived_mail_id", "in", mailIds)
+      .execute();
+
+    for (const att of attachments) {
+      try { await storage.deleteFile(att.file_path); } catch { /* ignore */ }
+    }
+
+    if (attachments.length) {
+      await db
+        .deleteFrom("archived_attachments")
+        .where("archived_mail_id", "in", mailIds)
+        .execute();
+    }
+
+    // Delete EML files
+    for (const mail of mails) {
+      try { await storage.deleteFile(mail.eml_path); } catch { /* ignore */ }
+    }
+
+    // Delete DB records
+    await db
+      .deleteFrom("archived_mails")
+      .where("id", "in", mailIds)
+      .execute();
+
+    logger.info(`Emptied trash for account ${accountId}: ${mails.length} mail(s) permanently deleted`);
+    return { deleted: mails.length };
+  });
+
+  // ─── System config: get trash settings ────────────────────
+  app.get("/config/trash", { preHandler: [app.authenticate] }, async () => {
+    const rows = await db
+      .selectFrom("system_config")
+      .selectAll()
+      .where("key", "in", ["archive_trash_retention_days", "archive_trash_purge_enabled"])
+      .execute();
+
+    const config: Record<string, unknown> = {};
+    for (const row of rows) {
+      config[row.key] = JSON.parse(String(row.value));
+    }
+    return {
+      retentionDays: (config.archive_trash_retention_days as number) ?? 30,
+      purgeEnabled: (config.archive_trash_purge_enabled as boolean) ?? true,
+    };
+  });
+
+  // ─── System config: update trash settings ─────────────────
+  const trashConfigSchema = z.object({
+    retentionDays: z.number().int().min(1).max(365).optional(),
+    purgeEnabled: z.boolean().optional(),
+  });
+
+  app.put("/config/trash", { preHandler: [app.authenticate] }, async (request) => {
+    const { retentionDays, purgeEnabled } = trashConfigSchema.parse(request.body);
+
+    if (retentionDays !== undefined) {
+      await db
+        .insertInto("system_config")
+        .values({
+          key: "archive_trash_retention_days",
+          value: JSON.stringify(retentionDays),
+          updated_at: new Date(),
+        })
+        .onConflict((oc) =>
+          oc.column("key").doUpdateSet({
+            value: JSON.stringify(retentionDays),
+            updated_at: new Date(),
+          })
+        )
+        .execute();
+    }
+
+    if (purgeEnabled !== undefined) {
+      await db
+        .insertInto("system_config")
+        .values({
+          key: "archive_trash_purge_enabled",
+          value: JSON.stringify(purgeEnabled),
+          updated_at: new Date(),
+        })
+        .onConflict((oc) =>
+          oc.column("key").doUpdateSet({
+            value: JSON.stringify(purgeEnabled),
+            updated_at: new Date(),
+          })
+        )
+        .execute();
+    }
+
+    return { ok: true };
   });
 }

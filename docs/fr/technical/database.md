@@ -50,6 +50,7 @@ erDiagram
         boolean is_encrypted "default false"
         tsvector search_vector
         timestamptz archived_at
+        timestamptz deleted_at "nullable, soft-delete"
     }
 
     archived_attachments {
@@ -104,6 +105,12 @@ erDiagram
     users ||--o{ retention_policies : "configure"
     gmail_accounts ||--o{ gmail_api_usage : "suit"
     users ||--|| storage_configs : "paramètre"
+
+    system_config {
+        varchar key PK "max 100"
+        jsonb value
+        timestamptz updated_at
+    }
 
     tracking_pixels {
         uuid id PK
@@ -229,6 +236,7 @@ erDiagram
 | `archived_mails` | `sender` | BTree | Filtrage par expéditeur |
 | `archived_mails` | `date DESC` | BTree | Tri par date |
 | `archived_mails` | `size_bytes DESC` | BTree | Tri par taille |
+| `archived_mails` | `(gmail_account_id, deleted_at)` | BTree (partiel) | Listing corbeille (`WHERE deleted_at IS NOT NULL`) |
 | `archived_attachments` | `archived_mail_id` | BTree | Join mails ↔ PJ |
 | `jobs` | `gmail_account_id` | BTree | Filtrage jobs par compte |
 | `jobs` | `status` | BTree | Filtrage par statut |

@@ -65,6 +65,13 @@ const useJobsReturn = {
 vi.mock("../hooks/queries", () => ({
   useJobs: () => useJobsReturn,
   useCancelJob: () => ({ mutateAsync: cancelMock }),
+  useArchiveTrashConfig: () => ({ data: { retentionDays: 30, purgeEnabled: true }, refetch: vi.fn() }),
+}));
+
+vi.mock("../api", () => ({
+  archiveApi: {
+    updateTrashConfig: vi.fn().mockResolvedValue({ ok: true }),
+  },
 }));
 
 vi.mock("../hooks/useAccount", () => ({
@@ -183,5 +190,50 @@ describe("JobsPage", () => {
 
     render(<JobsPage />);
     expect(screen.getByText("jobs.title")).toBeInTheDocument();
+  });
+
+  it("renders trash config card", () => {
+    render(<JobsPage />);
+    expect(screen.getByText("jobs.trashConfig")).toBeInTheDocument();
+    expect(screen.getByText("jobs.trashPurgeEnabled")).toBeInTheDocument();
+    expect(screen.getByText("jobs.trashRetentionDays")).toBeInTheDocument();
+  });
+
+  it("renders save button for trash config", () => {
+    render(<JobsPage />);
+    expect(screen.getByText("common.save")).toBeInTheDocument();
+  });
+
+  it("saves trash config on button click", async () => {
+    const { archiveApi } = await import("../api");
+    render(<JobsPage />);
+    const saveBtn = screen.getByText("common.save");
+    await act(async () => {
+      saveBtn.click();
+    });
+    expect(archiveApi.updateTrashConfig).toHaveBeenCalled();
+  });
+
+  it("shows progress bar for active jobs", () => {
+    useJobsReturn.data = [activeJob];
+    render(<JobsPage />);
+    expect(screen.getByText("bulk_operation")).toBeInTheDocument();
+  });
+
+  it("shows refresh button", () => {
+    render(<JobsPage />);
+    expect(screen.getByText("common.refresh")).toBeInTheDocument();
+  });
+
+  it("shows auto-refresh badge when active jobs exist", () => {
+    useJobsReturn.data = [activeJob];
+    render(<JobsPage />);
+    expect(screen.getByText("jobs.autoRefresh")).toBeInTheDocument();
+  });
+
+  it("does not show auto-refresh badge when no active jobs", () => {
+    useJobsReturn.data = [completedJob];
+    render(<JobsPage />);
+    expect(screen.queryByText("jobs.autoRefresh")).not.toBeInTheDocument();
   });
 });

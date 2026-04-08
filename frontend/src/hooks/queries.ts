@@ -24,6 +24,9 @@ export const queryKeys = {
     ['archive', accountId, 'threads', params] as const,
   archiveThread: (accountId: string, threadId: string) =>
     ['archive', accountId, 'thread', threadId] as const,
+  archiveTrash: (accountId: string, params?: Record<string, any>) =>
+    ['archive', accountId, 'trash', params] as const,
+  archiveTrashConfig: () => ['archive', 'trash-config'] as const,
   savedSearches: () => ['saved-searches'] as const,
   unified: (params?: Record<string, any>) => ['unified', params] as const,
   rules: (accountId: string) => ['rules', accountId] as const,
@@ -107,6 +110,21 @@ export function useArchiveMails(accountId: string | null, params: Record<string,
     queryKey: queryKeys.archiveMails(accountId!, params),
     queryFn: () => archiveApi.listMails(accountId!, params),
     enabled: !!accountId,
+  })
+}
+
+export function useArchiveTrash(accountId: string | null, params: Record<string, any>) {
+  return useQuery({
+    queryKey: queryKeys.archiveTrash(accountId!, params),
+    queryFn: () => archiveApi.listTrash(accountId!, params),
+    enabled: !!accountId,
+  })
+}
+
+export function useArchiveTrashConfig() {
+  return useQuery({
+    queryKey: queryKeys.archiveTrashConfig(),
+    queryFn: () => archiveApi.getTrashConfig(),
   })
 }
 

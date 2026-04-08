@@ -79,4 +79,19 @@ describe('BulkActionBar', () => {
     // The select placeholder should be visible (user labels exist)
     expect(screen.getByText('bulk.addLabel')).toBeInTheDocument()
   })
+
+  it('hides label selector when no user labels', () => {
+    const systemOnly = [{ id: 'l1', name: 'INBOX', type: 'system' }]
+    render(
+      <BulkActionBar selected={['m1']} labels={systemOnly} onBulkAction={vi.fn()} loading={false} />,
+    )
+    expect(screen.queryByText('bulk.addLabel')).not.toBeInTheDocument()
+  })
+
+  it('hides label selector when labels is empty', () => {
+    render(
+      <BulkActionBar selected={['m1']} labels={[]} onBulkAction={vi.fn()} loading={false} />,
+    )
+    expect(screen.queryByText('bulk.addLabel')).not.toBeInTheDocument()
+  })
 })

@@ -5,7 +5,6 @@ import { notify } from "../../notifications/notify";
 import { createLogger } from '../../logger'
 import {
   trashMessages,
-  deleteMessages,
   modifyMessages,
 } from "../../gmail/gmail.service";
 
@@ -16,7 +15,6 @@ interface BulkPayload {
   userId?: string;
   action:
     | "trash"
-    | "delete"
     | "label"
     | "unlabel"
     | "archive"
@@ -55,9 +53,6 @@ export function startBulkWorker() {
         switch (action) {
           case "trash":
             await trashMessages(accountId, messageIds);
-            break;
-          case "delete":
-            await deleteMessages(accountId, messageIds);
             break;
           case "archive":
             await modifyMessages(accountId, messageIds, [], ["INBOX"]);

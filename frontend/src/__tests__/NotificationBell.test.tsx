@@ -228,4 +228,118 @@ describe('NotificationBell', () => {
       expect(screen.getByText('notifications.clearRead')).toBeInTheDocument()
     })
   })
+
+  it('clears all read notifications when clear button is clicked', async () => {
+    mockNotificationsApi.list.mockResolvedValue({
+      notifications: [
+        { id: 'n1', type: 'info', title: 'Read 1', body: null, is_read: true, created_at: '2026-03-30T10:00:00.000Z' },
+        { id: 'n2', type: 'info', title: 'Unread 1', body: null, is_read: false, created_at: '2026-03-30T10:00:00.000Z' },
+      ],
+      unreadCount: 1,
+    })
+    mockNotificationsApi.removeAllRead.mockResolvedValue({})
+
+    render(<NotificationBell />)
+    await waitFor(() => expect(mockNotificationsApi.list).toHaveBeenCalled())
+
+    fireEvent.click(document.querySelector('.lucide-bell')!)
+
+    await waitFor(() => {
+      expect(screen.getByText('notifications.clearRead')).toBeInTheDocument()
+    })
+
+    // Click clear button to open Popconfirm
+    fireEvent.click(screen.getByText('notifications.clearRead'))
+
+    // Confirm the Popconfirm
+    await waitFor(() => {
+      const confirmBtn = document.querySelector('.ant-popconfirm .ant-btn-dangerous') ||
+        document.querySelector('.ant-popconfirm .ant-btn-primary')
+      if (confirmBtn) fireEvent.click(confirmBtn)
+    })
+
+    await waitFor(() => {
+      expect(mockNotificationsApi.removeAllRead).toHaveBeenCalled()
+    })
+  })
+
+  it('marks unread notification as read on Enter key', async () => {
+    mockNotificationsApi.list.mockResolvedValue({
+      notifications: [
+        { id: 'n-key', type: 'info', title: 'Key test', body: null, is_read: false, created_at: '2026-03-30T10:00:00.000Z' },
+      ],
+      unreadCount: 1,
+    })
+    mockNotificationsApi.markRead.mockResolvedValue({})
+
+    render(<NotificationBell />)
+    await waitFor(() => expect(mockNotificationsApi.list).toHaveBeenCalled())
+
+    // Open dropdown
+    fireEvent.click(document.querySelector('.lucide-bell')!)
+
+    await waitFor(() => {
+      expect(screen.getByText('Key test')).toBeInTheDocument()
+    })
+
+    // Find the notification div with role=button
+    const notifDiv = screen.getByRole('button', { name: /Key test/i })
+      ?? screen.getByText('Key test').closest('[role="button"]')
+
+    if (notifDiv) {
+      fireEvent.keyDown(notifDiv, { key: 'Enter' })
+      await waitFor(() => {
+        expect(mockNotificationsApi.markRead).toHaveBeenCalledWith('n-key')
+      })
+    }
+  })
+
+  it('marks unread notification as read on Space key', async () => {
+    mockNotificationsApi.list.mockResolvedValue({
+      notifications: [
+        { id: 'n-space', type: 'info', title: 'Space test', body: null, is_read: false, created_at: '2026-03-30T10:00:00.000Z' },
+      ],
+      unreadCount: 1,
+    })
+    mockNotificationsApi.markRead.mockResolvedValue({})
+
+    render(<NotificationBell />)
+    await waitFor(() => expect(mockNotificationsApi.list).toHaveBeenCalled())
+
+    fireEvent.click(document.querySelector('.lucide-bell')!)
+
+    await waitFor(() => {
+      expect(screen.getByText('Space test')).toBeInTheDocument()
+    })
+
+    const notifDiv = screen.getByText('Space test').closest('[role="button"]')
+    if (notifDiv) {
+      fireEvent.keyDown(notifDiv, { key: ' ' })
+      await waitFor(() => {
+        expect(mockNotificationsApi.markRead).toHaveBeenCalledWith('n-space')
+      })
+    }
+  })
+
+  it('does not add role=button to read notifications', async () => {
+    mockNotificationsApi.list.mockResolvedValue({
+      notifications: [
+        { id: 'n-read', type: 'info', title: 'Read notif', body: null, is_read: true, created_at: '2026-03-30T10:00:00.000Z' },
+      ],
+      unreadCount: 0,
+    })
+
+    render(<NotificationBell />)
+    await waitFor(() => expect(mockNotificationsApi.list).toHaveBeenCalled())
+
+    fireEvent.click(document.querySelector('.lucide-bell')!)
+
+    await waitFor(() => {
+      expect(screen.getByText('Read notif')).toBeInTheDocument()
+    })
+
+    // The read notification should not have role=button
+    const readDiv = screen.getByText('Read notif').closest('[role="button"]')
+    expect(readDiv).toBeNull()
+  })
 })

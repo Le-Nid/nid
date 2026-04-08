@@ -416,6 +416,159 @@ describe('attachmentsRoutes deep', () => {
     expect(body.attachments).toEqual([])
     await app.close()
   })
+
+  it('GET /:accountId/archived without query filter', async () => {
+    const app = await buildTestApp()
+    await app.register(attachmentsRoutes)
+    await app.ready()
+    mockExecute.mockResolvedValueOnce([{ id: 'att-1', filename: 'file.pdf' }])
+    mockExecuteTakeFirstOrThrow
+      .mockResolvedValueOnce({ count: 1 })
+      .mockResolvedValueOnce({ total_size: '5000' })
+    const res = await app.inject({ method: 'GET', url: '/acc-1/archived' })
+    expect(res.statusCode).toBe(200)
+    await app.close()
+  })
+
+  it('GET /:accountId/live/:messageId/download returns 400 without filename', async () => {
+    const app = await buildTestApp()
+    await app.register(attachmentsRoutes)
+    await app.ready()
+    const res = await app.inject({ method: 'GET', url: '/acc-1/live/msg-1/download' })
+    expect(res.statusCode).toBe(400)
+    await app.close()
+  })
+
+  it('GET /:accountId/live/:messageId/download with inline data', async () => {
+    const app = await buildTestApp()
+    await app.register(attachmentsRoutes)
+    await app.ready()
+    const b64data = Buffer.from('hello world').toString('base64url')
+    const mockGmail = {
+      users: {
+        messages: {
+          get: vi.fn().mockResolvedValue({
+            data: {
+              payload: {
+                parts: [
+                  { filename: 'doc.pdf', mimeType: 'application/pdf', body: { data: b64data } },
+                ],
+              },
+            },
+          }),
+        },
+      },
+    }
+    mockGetGmailClient.mockResolvedValueOnce(mockGmail)
+    const res = await app.inject({ method: 'GET', url: '/acc-1/live/msg-1/download?filename=doc.pdf&inline=1' })
+    expect(res.statusCode).toBe(200)
+    expect(res.headers['content-disposition']).toContain('inline')
+    await app.close()
+  })
+
+  it('GET /:accountId/live/:messageId/download with attachmentId', async () => {
+    const app = await buildTestApp()
+    await app.register(attachmentsRoutes)
+    await app.ready()
+    const b64data = Buffer.from('attachment content').toString('base64url')
+    const mockGmail = {
+      users: {
+        messages: {
+          get: vi.fn().mockResolvedValue({
+            data: {
+              payload: {
+                parts: [
+                  { filename: 'big.zip', mimeType: 'application/zip', body: { attachmentId: 'att-id-1' } },
+                ],
+              },
+            },
+          }),
+          attachments: {
+            get: vi.fn().mockResolvedValue({ data: { data: b64data } }),
+          },
+        },
+      },
+    }
+    mockGetGmailClient.mockResolvedValueOnce(mockGmail)
+    const res = await app.inject({ method: 'GET', url: '/acc-1/live/msg-1/download?filename=big.zip' })
+    expect(res.statusCode).toBe(200)
+    await app.close()
+  })
+
+  it('GET /:accountId/live/:messageId/download returns 404 when no data', async () => {
+    const app = await buildTestApp()
+    await app.register(attachmentsRoutes)
+    await app.ready()
+    const mockGmail = {
+      users: {
+        messages: {
+          get: vi.fn().mockResolvedValue({
+            data: {
+              payload: {
+                parts: [
+                  { filename: 'empty.bin', mimeType: 'application/octet-stream', body: {} },
+                ],
+              },
+            },
+          }),
+        },
+      },
+    }
+    mockGetGmailClient.mockResolvedValueOnce(mockGmail)
+    const res = await app.inject({ method: 'GET', url: '/acc-1/live/msg-1/download?filename=empty.bin' })
+    expect(res.statusCode).toBe(404)
+    await app.close()
+  })
+
+  it('GET /:accountId/live/:messageId/download returns 404 when part not found', async () => {
+    const app = await buildTestApp()
+    await app.register(attachmentsRoutes)
+    await app.ready()
+    const mockGmail = {
+      users: {
+        messages: {
+          get: vi.fn().mockResolvedValue({
+            data: { payload: { parts: [] } },
+          }),
+        },
+      },
+    }
+    mockGetGmailClient.mockResolvedValueOnce(mockGmail)
+    const res = await app.inject({ method: 'GET', url: '/acc-1/live/msg-1/download?filename=nonexistent.pdf' })
+    expect(res.statusCode).toBe(404)
+    await app.close()
+  })
+
+  it('GET /:accountId/live/:messageId/download with nested parts', async () => {
+    const app = await buildTestApp()
+    await app.register(attachmentsRoutes)
+    await app.ready()
+    const b64data = Buffer.from('nested file').toString('base64url')
+    const mockGmail = {
+      users: {
+        messages: {
+          get: vi.fn().mockResolvedValue({
+            data: {
+              payload: {
+                parts: [
+                  {
+                    filename: '',
+                    parts: [
+                      { filename: 'nested.txt', mimeType: 'text/plain', body: { data: b64data } },
+                    ],
+                  },
+                ],
+              },
+            },
+          }),
+        },
+      },
+    }
+    mockGetGmailClient.mockResolvedValueOnce(mockGmail)
+    const res = await app.inject({ method: 'GET', url: '/acc-1/live/msg-1/download?filename=nested.txt' })
+    expect(res.statusCode).toBe(200)
+    await app.close()
+  })
 })
 
 // ═══════════════════════════════════════════════════════════
@@ -1164,5 +1317,517 @@ describe('jobSseRoutes', () => {
     const { broadcastJobUpdate } = await import('../routes/job-sse')
     // Just verify it doesn't throw with no subscribers
     broadcastJobUpdate('job-1', { type: 'progress', progress: 50 })
+  })
+})
+
+// ═══════════════════════════════════════════════════════════
+// Additional branch coverage tests
+// ═══════════════════════════════════════════════════════════
+
+import { notificationsRoutes } from '../routes/notifications'
+import { reportsRoutes } from '../routes/reports'
+import { savedSearchRoutes } from '../routes/saved-searches'
+import { auditRoutes } from '../routes/audit'
+import { expirationRoutes } from '../routes/expiration'
+
+vi.mock('../archive/archive.service', () => ({
+  archiveMail: vi.fn(),
+  getArchivedIds: vi.fn().mockResolvedValue(new Set()),
+}))
+vi.mock('../archive/integrity.service', () => ({
+  checkArchiveIntegrity: vi.fn().mockResolvedValue({ ok: true }),
+}))
+vi.mock('../storage/storage.service', () => ({
+  getStorageForUser: vi.fn().mockResolvedValue({ deleteFile: vi.fn() }),
+}))
+vi.mock('../archive/trash.service', () => ({
+  purgeArchiveTrash: vi.fn().mockResolvedValue({ deleted: 0 }),
+}))
+vi.mock('../notifications/notification-prefs.service', () => ({
+  NOTIFICATION_DEFAULTS: {
+    weekly_report: true,
+    job_completed: true,
+    job_failed: true,
+  },
+}))
+vi.mock('../reports/report.service', () => ({
+  generateWeeklyReport: vi.fn().mockResolvedValue(null),
+}))
+
+const mockDetectCategory = vi.fn()
+const mockGetSuggestedDays = vi.fn().mockReturnValue(7)
+vi.mock('../expiration/expiration.service', () => ({
+  getExpirations: vi.fn().mockResolvedValue([]),
+  createExpiration: vi.fn().mockResolvedValue({ id: 'exp-1' }),
+  createExpirationsBatch: vi.fn().mockResolvedValue([]),
+  deleteExpiration: vi.fn(),
+  updateExpirationDate: vi.fn().mockResolvedValue({ id: 'exp-1' }),
+  getExpirationStats: vi.fn().mockResolvedValue({ total: 0 }),
+  detectCategory: (...args: any[]) => mockDetectCategory(...args),
+  getSuggestedDays: (...args: any[]) => mockGetSuggestedDays(...args),
+}))
+
+describe('webhookRoutes - ntfy auth branches', () => {
+  it('PUT /:webhookId with ntfy auth fields', async () => {
+    const app = await buildTestApp()
+    await app.register(webhookRoutes)
+    await app.ready()
+    mockExecuteTakeFirst.mockResolvedValueOnce({ id: 'wh-1', name: 'Updated' })
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/wh-1',
+      payload: { type: 'ntfy', auth_user: 'user', auth_password: 'pass' },
+    })
+    expect(res.statusCode).toBe(200)
+    await app.close()
+  })
+
+  it('PUT /:webhookId with generic type nullifies auth', async () => {
+    const app = await buildTestApp()
+    await app.register(webhookRoutes)
+    await app.ready()
+    mockExecuteTakeFirst.mockResolvedValueOnce({ id: 'wh-1', name: 'Updated' })
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/wh-1',
+      payload: { type: 'generic', name: 'Hook', url: 'https://example.com/hook', events: ['job.completed'] },
+    })
+    expect(res.statusCode).toBe(200)
+    await app.close()
+  })
+})
+
+describe('notificationsRoutes - branch coverage', () => {
+  it('GET / with unread_only filter', async () => {
+    const app = await buildTestApp()
+    await app.register(notificationsRoutes)
+    await app.ready()
+    mockExecute.mockResolvedValueOnce([])
+    mockExecuteTakeFirstOrThrow.mockResolvedValueOnce({ count: 0 })
+    const res = await app.inject({ method: 'GET', url: '/?unread_only=1' })
+    expect(res.statusCode).toBe(200)
+    await app.close()
+  })
+
+  it('DELETE /:notificationId deletes notification', async () => {
+    const app = await buildTestApp()
+    await app.register(notificationsRoutes)
+    await app.ready()
+    mockExecute.mockResolvedValueOnce(undefined)
+    const res = await app.inject({ method: 'DELETE', url: '/notif-1' })
+    expect(res.statusCode).toBe(200)
+    await app.close()
+  })
+
+  it('DELETE / deletes all read notifications', async () => {
+    const app = await buildTestApp()
+    await app.register(notificationsRoutes)
+    await app.ready()
+    mockExecute.mockResolvedValueOnce(undefined)
+    const res = await app.inject({ method: 'DELETE', url: '/' })
+    expect(res.statusCode).toBe(200)
+    await app.close()
+  })
+
+  it('PUT /preferences creates row if none exists', async () => {
+    const app = await buildTestApp()
+    await app.register(notificationsRoutes)
+    await app.ready()
+    mockExecuteTakeFirst.mockResolvedValueOnce(null) // no existing row
+    mockExecute.mockResolvedValueOnce(undefined) // insert
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/preferences',
+      payload: { weekly_report: false },
+    })
+    expect(res.statusCode).toBe(200)
+    await app.close()
+  })
+})
+
+describe('savedSearchRoutes - branch coverage', () => {
+  it('POST / returns 400 for empty name', async () => {
+    const app = await buildTestApp()
+    await app.register(savedSearchRoutes)
+    await app.ready()
+    const res = await app.inject({
+      method: 'POST',
+      url: '/',
+      payload: { name: '', query: 'test' },
+    })
+    expect(res.statusCode).toBe(400)
+    await app.close()
+  })
+
+  it('PUT /:searchId returns 404 when not found', async () => {
+    const app = await buildTestApp()
+    await app.register(savedSearchRoutes)
+    await app.ready()
+    mockExecuteTakeFirst.mockResolvedValueOnce(undefined)
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/search-1',
+      payload: { name: 'Updated' },
+    })
+    expect(res.statusCode).toBe(404)
+    await app.close()
+  })
+
+  it('PUT /:searchId updates all fields', async () => {
+    const app = await buildTestApp()
+    await app.register(savedSearchRoutes)
+    await app.ready()
+    mockExecuteTakeFirst.mockResolvedValueOnce({ id: 'search-1' })
+    mockExecuteTakeFirstOrThrow.mockResolvedValueOnce({
+      id: 'search-1', name: 'Updated', query: 'new query',
+      icon: 'star', color: '#00ff00', sort_order: 1,
+    })
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/search-1',
+      payload: { name: 'Updated', query: 'new query', icon: 'star', color: '#00ff00', sort_order: 1 },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.json().name).toBe('Updated')
+    await app.close()
+  })
+
+  it('PUT /:searchId with null icon and color', async () => {
+    const app = await buildTestApp()
+    await app.register(savedSearchRoutes)
+    await app.ready()
+    mockExecuteTakeFirst.mockResolvedValueOnce({ id: 'search-1' })
+    mockExecuteTakeFirstOrThrow.mockResolvedValueOnce({
+      id: 'search-1', name: 'Test', icon: null, color: null,
+    })
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/search-1',
+      payload: { icon: null, color: null },
+    })
+    expect(res.statusCode).toBe(200)
+    await app.close()
+  })
+
+  it('DELETE /:searchId returns 404 when not found', async () => {
+    const app = await buildTestApp()
+    await app.register(savedSearchRoutes)
+    await app.ready()
+    mockExecuteTakeFirst.mockResolvedValueOnce({ numDeletedRows: BigInt(0) })
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/search-1',
+    })
+    expect(res.statusCode).toBe(404)
+    await app.close()
+  })
+
+  it('DELETE /:searchId returns ok when found', async () => {
+    const app = await buildTestApp()
+    await app.register(savedSearchRoutes)
+    await app.ready()
+    mockExecuteTakeFirst.mockResolvedValueOnce({ numDeletedRows: BigInt(1) })
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/search-1',
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.json().ok).toBe(true)
+    await app.close()
+  })
+
+  it('PUT /reorder with invalid body returns ok false', async () => {
+    const app = await buildTestApp()
+    await app.register(savedSearchRoutes)
+    await app.ready()
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/reorder',
+      payload: { ids: 'not-an-array' },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.json().ok).toBe(false)
+    await app.close()
+  })
+
+  it('PUT /reorder with valid ids', async () => {
+    const app = await buildTestApp()
+    await app.register(savedSearchRoutes)
+    await app.ready()
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/reorder',
+      payload: { ids: ['id-1', 'id-2'] },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.json().ok).toBe(true)
+    await app.close()
+  })
+})
+
+describe('reportsRoutes - branch coverage', () => {
+  it('GET /weekly returns 404 when no data', async () => {
+    const app = await buildTestApp()
+    await app.register(reportsRoutes)
+    await app.ready()
+    const res = await app.inject({ method: 'GET', url: '/weekly' })
+    expect(res.statusCode).toBe(404)
+    await app.close()
+  })
+})
+
+describe('auditRoutes - branch coverage', () => {
+  it('GET / with action filter', async () => {
+    const app = await buildTestApp()
+    await app.register(auditRoutes)
+    await app.ready()
+    mockExecute.mockResolvedValueOnce([])
+    mockExecuteTakeFirstOrThrow.mockResolvedValueOnce({ count: 0 })
+    const res = await app.inject({ method: 'GET', url: '/?action=user.login' })
+    expect(res.statusCode).toBe(200)
+    await app.close()
+  })
+})
+
+describe('unifiedRoutes - branch coverage', () => {
+  it('GET /messages returns empty when no accounts', async () => {
+    const app = await buildTestApp()
+    await app.register(unifiedRoutes)
+    await app.ready()
+    mockExecute.mockResolvedValueOnce([]) // no accounts
+    const res = await app.inject({ method: 'GET', url: '/messages' })
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.messages).toEqual([])
+    await app.close()
+  })
+
+  it('GET /messages with accounts returns sorted messages', async () => {
+    const app = await buildTestApp()
+    await app.register(unifiedRoutes)
+    await app.ready()
+    mockExecute.mockResolvedValueOnce([{ id: 'acc-1', email: 'a@test.com' }])
+    mockListMessages.mockResolvedValueOnce({
+      messages: [{ id: 'msg-1' }],
+      nextPageToken: null,
+    })
+    mockBatchGetMessages.mockResolvedValueOnce([
+      { id: 'msg-1', date: '2025-01-01T00:00:00Z', subject: 'Test' },
+    ])
+    const res = await app.inject({ method: 'GET', url: '/messages?q=test' })
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.messages.length).toBe(1)
+    await app.close()
+  })
+
+  it('GET /messages ignores rejected accounts (allSettled)', async () => {
+    const app = await buildTestApp()
+    await app.register(unifiedRoutes)
+    await app.ready()
+    mockExecute.mockResolvedValueOnce([
+      { id: 'acc-1', email: 'a@test.com' },
+      { id: 'acc-2', email: 'b@test.com' },
+    ])
+    // First account succeeds, second fails
+    mockListMessages
+      .mockResolvedValueOnce({ messages: [{ id: 'msg-1' }], nextPageToken: null })
+      .mockRejectedValueOnce(new Error('OAuth expired'))
+    mockBatchGetMessages.mockResolvedValueOnce([
+      { id: 'msg-1', date: '2025-01-01T00:00:00Z', subject: 'Test' },
+    ])
+    const res = await app.inject({ method: 'GET', url: '/messages' })
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.messages.length).toBe(1)
+    expect(body.accounts.length).toBe(2)
+    await app.close()
+  })
+
+  it('GET /messages with account returning empty messages', async () => {
+    const app = await buildTestApp()
+    await app.register(unifiedRoutes)
+    await app.ready()
+    mockExecute.mockResolvedValueOnce([{ id: 'acc-1', email: 'a@test.com' }])
+    mockListMessages.mockResolvedValueOnce({ messages: null, nextPageToken: null })
+    const res = await app.inject({ method: 'GET', url: '/messages' })
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.messages).toEqual([])
+    await app.close()
+  })
+})
+
+// ═══════════════════════════════════════════════════════════
+// EXPIRATION ROUTES — branch coverage (detect ternaries)
+// ═══════════════════════════════════════════════════════════
+describe('expirationRoutes - branch coverage', () => {
+  it('POST /:accountId/detect with detected categories', async () => {
+    const app = await buildTestApp()
+    await app.register(expirationRoutes)
+    await app.ready()
+    mockDetectCategory.mockReturnValueOnce('otp')
+    const res = await app.inject({
+      method: 'POST',
+      url: '/acc-1/detect',
+      payload: {
+        messages: [
+          { gmailMessageId: 'msg-1', subject: 'Your OTP code', sender: 'noreply@bank.com' },
+        ],
+      },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.length).toBe(1)
+    expect(body[0].category).toBe('otp')
+    await app.close()
+  })
+
+  it('POST /:accountId/detect filters null categories', async () => {
+    const app = await buildTestApp()
+    await app.register(expirationRoutes)
+    await app.ready()
+    mockDetectCategory.mockReturnValueOnce(null).mockReturnValueOnce('promo')
+    const res = await app.inject({
+      method: 'POST',
+      url: '/acc-1/detect',
+      payload: {
+        messages: [
+          { gmailMessageId: 'msg-1', subject: 'Hello' },
+          { gmailMessageId: 'msg-2', subject: 'Sale ends today', sender: 'promo@shop.com' },
+        ],
+      },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.length).toBe(1)
+    expect(body[0].gmailMessageId).toBe('msg-2')
+    await app.close()
+  })
+
+  it('POST /:accountId/detect with null subject and sender', async () => {
+    const app = await buildTestApp()
+    await app.register(expirationRoutes)
+    await app.ready()
+    mockDetectCategory.mockReturnValueOnce('delivery')
+    const res = await app.inject({
+      method: 'POST',
+      url: '/acc-1/detect',
+      payload: {
+        messages: [
+          { gmailMessageId: 'msg-1', subject: null, sender: null },
+        ],
+      },
+    })
+    expect(res.statusCode).toBe(200)
+    await app.close()
+  })
+})
+
+// ═══════════════════════════════════════════════════════════
+// GMAIL ROUTES — bulk action branch coverage (archive/label)
+// ═══════════════════════════════════════════════════════════
+describe('gmailRoutes - bulk action branches', () => {
+  it('POST bulk with action=archive logs archive audit', async () => {
+    const app = await buildTestApp()
+    await app.register(gmailRoutes)
+    await app.ready()
+    const res = await app.inject({
+      method: 'POST',
+      url: '/acc-1/messages/bulk',
+      payload: { action: 'archive', messageIds: ['msg-1'] },
+    })
+    expect(res.statusCode).toBe(202)
+    await app.close()
+  })
+
+  it('POST bulk with action=label logs label audit', async () => {
+    const app = await buildTestApp()
+    await app.register(gmailRoutes)
+    await app.ready()
+    const res = await app.inject({
+      method: 'POST',
+      url: '/acc-1/messages/bulk',
+      payload: { action: 'label', messageIds: ['msg-1'], labelId: 'INBOX' },
+    })
+    expect(res.statusCode).toBe(202)
+    await app.close()
+  })
+
+  it('POST bulk with action=mark_read logs label audit', async () => {
+    const app = await buildTestApp()
+    await app.register(gmailRoutes)
+    await app.ready()
+    const res = await app.inject({
+      method: 'POST',
+      url: '/acc-1/messages/bulk',
+      payload: { action: 'mark_read', messageIds: ['msg-1'] },
+    })
+    expect(res.statusCode).toBe(202)
+    await app.close()
+  })
+})
+
+// ═══════════════════════════════════════════════════════════
+// WEBHOOK ROUTES — create with generic/ntfy types
+// ═══════════════════════════════════════════════════════════
+describe('webhookRoutes - create type branches', () => {
+  it('POST / with type=generic generates secret', async () => {
+    const app = await buildTestApp()
+    await app.register(webhookRoutes)
+    await app.ready()
+    mockExecuteTakeFirstOrThrow.mockResolvedValueOnce({ id: 'wh-1', name: 'Hook', type: 'generic', secret: 'abc' })
+    const res = await app.inject({
+      method: 'POST',
+      url: '/',
+      payload: { name: 'Hook', url: 'https://example.com/wh', events: ['job.completed'] },
+    })
+    expect(res.statusCode).toBe(201)
+    await app.close()
+  })
+
+  it('POST / with type=ntfy and auth fields', async () => {
+    const app = await buildTestApp()
+    await app.register(webhookRoutes)
+    await app.ready()
+    mockExecuteTakeFirstOrThrow.mockResolvedValueOnce({ id: 'wh-1', name: 'Ntfy', type: 'ntfy', auth_user: 'u' })
+    const res = await app.inject({
+      method: 'POST',
+      url: '/',
+      payload: {
+        name: 'Ntfy', url: 'https://ntfy.sh/topic', type: 'ntfy',
+        events: ['job.completed'], auth_user: 'user', auth_password: 'pass',
+      },
+    })
+    expect(res.statusCode).toBe(201)
+    await app.close()
+  })
+
+  it('PUT /:webhookId without type keeps ntfy auth', async () => {
+    const app = await buildTestApp()
+    await app.register(webhookRoutes)
+    await app.ready()
+    mockExecuteTakeFirst.mockResolvedValueOnce({ id: 'wh-1', name: 'Updated' })
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/wh-1',
+      payload: { auth_user: 'newuser', auth_password: 'newpass' },
+    })
+    expect(res.statusCode).toBe(200)
+    await app.close()
+  })
+
+  it('PUT /:webhookId returns 404 when not found', async () => {
+    const app = await buildTestApp()
+    await app.register(webhookRoutes)
+    await app.ready()
+    mockExecuteTakeFirst.mockResolvedValueOnce(null)
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/wh-1',
+      payload: { name: 'Nothing' },
+    })
+    expect(res.statusCode).toBe(404)
+    await app.close()
   })
 })

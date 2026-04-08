@@ -387,4 +387,105 @@ describe('authRoutes', () => {
       await app.close()
     })
   })
+
+  describe('POST /login - additional branches', () => {
+    it('returns 401 for user without password_hash (SSO-only)', async () => {
+      const app = await buildApp()
+      mockExecuteTakeFirst.mockResolvedValueOnce({
+        id: 'user-sso',
+        email: 'sso@test.com',
+        password_hash: null,
+        role: 'user',
+        is_active: true,
+        totp_enabled: false,
+      })
+
+      const res = await app.inject({
+        method: 'POST',
+        url: '/login',
+        payload: { email: 'sso@test.com', password: 'anypassword1' },
+      })
+      expect(res.statusCode).toBe(401)
+      await app.close()
+    })
+
+    it('returns 401 for invalid TOTP code', async () => {
+      const app = await buildApp()
+      mockExecuteTakeFirst.mockResolvedValueOnce({
+        id: 'user-totp',
+        email: 'totp@test.com',
+        password_hash: '$2b$12$hash',
+        role: 'user',
+        is_active: true,
+        totp_enabled: true,
+        totp_secret: 'SECRET',
+      })
+      const otplib = await import('otplib')
+      ;(otplib.verifySync as any).mockReturnValueOnce({ valid: false })
+
+      const res = await app.inject({
+        method: 'POST',
+        url: '/login',
+        payload: { email: 'totp@test.com', password: 'password123', totpCode: '000000' },
+      })
+      expect(res.statusCode).toBe(401)
+      await app.close()
+    })
+  })
+
+  describe('POST /register - additional branches', () => {
+    it('returns 403 when registration is disabled', async () => {
+      const { config } = await import('../config')
+      const originalAllow = config.ALLOW_REGISTRATION
+      ;(config as any).ALLOW_REGISTRATION = false
+
+      const app = await buildApp()
+      const res = await app.inject({
+        method: 'POST',
+        url: '/register',
+        payload: { email: 'new@test.com', password: 'password123' },
+      })
+      expect(res.statusCode).toBe(403)
+      ;(config as any).ALLOW_REGISTRATION = originalAllow
+      await app.close()
+    })
+  })
+
+  describe('GET /me - storage coalesce branch', () => {
+    it('handles null storage total', async () => {
+      const app = await buildApp()
+      mockExecuteTakeFirst
+        .mockResolvedValueOnce({ id: 'user-1', email: 'test@test.com', role: 'user', is_active: true })  // user
+        .mockResolvedValueOnce({ total: null }) // storageUsed null
+      mockExecute.mockResolvedValueOnce([]) // accounts
+
+      const token = app.jwt.sign({ sub: 'user-1', email: 'test@test.com', role: 'user' })
+      const res = await app.inject({
+        method: 'GET',
+        url: '/me',
+        headers: { authorization: `Bearer ${token}` },
+      })
+      expect(res.statusCode).toBe(200)
+      const body = res.json()
+      expect(body.storageUsedBytes).toBe(0)
+      await app.close()
+    })
+  })
+
+  describe('GET /gmail/connect - quota branches', () => {
+    it('returns 403 when gmail account quota exceeded', async () => {
+      const app = await buildApp()
+      mockExecuteTakeFirst.mockResolvedValueOnce({ max_gmail_accounts: 1 }) // user max
+      mockExecuteTakeFirstOrThrow.mockResolvedValueOnce({ count: 1 }) // current count
+
+      const token = app.jwt.sign({ sub: 'user-1', email: 'test@test.com', role: 'user' })
+      const res = await app.inject({
+        method: 'GET',
+        url: '/gmail/connect',
+        headers: { authorization: `Bearer ${token}` },
+      })
+      expect(res.statusCode).toBe(403)
+      await app.close()
+    })
+  })
 })

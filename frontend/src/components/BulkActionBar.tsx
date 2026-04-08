@@ -4,10 +4,9 @@ import {
   Select,
   Tooltip,
   Typography,
-  Popconfirm,
   Divider,
 } from "antd";
-import { Trash2, Tag, Inbox, Eye, EyeOff, AlertCircle, CloudDownload } from 'lucide-react'
+import { Trash2, Tag, Inbox, Eye, EyeOff, CloudDownload } from 'lucide-react'
 import { useTranslation } from 'react-i18next';
 
 const { Text } = Typography;
@@ -69,27 +68,6 @@ export default function BulkActionBar({
             {t('bulk.trash')}
           </Button>
         </Tooltip>
-
-        <Popconfirm
-          title={t('bulk.permanentDeleteTitle')}
-          description={t('bulk.permanentDeleteDesc', { count: selected.length })}
-          onConfirm={() => onBulkAction("delete")}
-          okText={t('common.delete')}
-          okButtonProps={{ danger: true }}
-          cancelText={t('common.cancel')}
-          icon={<AlertCircle size={14} style={{ color: "red" }} />}
-        >
-          <Tooltip title={t('bulk.permanentDeleteTooltip')}>
-            <Button
-              icon={<Trash2 size={14} />}
-              size="small"
-              danger
-              loading={loading}
-            >
-              {t('bulk.permanentDelete')}
-            </Button>
-          </Tooltip>
-        </Popconfirm>
 
         <Tooltip title={t('bulk.archiveGmailTooltip')}>
           <Button

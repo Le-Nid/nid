@@ -211,7 +211,28 @@
     "noThreads": "Aucune conversation trouvée",
     "threadParticipants": "{{count}} participant(s)",
     "pageInfo": "Page {{page}} / {{total}}",
-    "nextPage": "Suivant"
+    "nextPage": "Suivant",
+    "trashView": "Corbeille",
+    "trashEmpty": "La corbeille est vide",
+    "trashInfo": "Les mails supprimés sont définitivement effacés après {{days}} jours",
+    "moveToTrash": "Supprimer",
+    "moveToTrashTooltip": "Déplacer vers la corbeille",
+    "moveToTrashConfirm": "Supprimer {{count}} mail(s) ?",
+    "moveToTrashConfirmDesc": "Les mails seront déplacés dans la corbeille et supprimés définitivement au bout de {{days}} jours.",
+    "trashSuccess": "{{count}} mail(s) déplacé(s) dans la corbeille",
+    "restore": "Restaurer",
+    "restoreTooltip": "Restaurer depuis la corbeille",
+    "restoreSuccess": "{{count}} mail(s) restauré(s)",
+    "emptyTrash": "Vider la corbeille",
+    "emptyTrashConfirm": "Vider la corbeille ?",
+    "emptyTrashDesc": "Tous les mails de la corbeille seront supprimés définitivement. Cette action est irréversible.",
+    "emptyTrashSuccess": "Corbeille vidée — {{count}} mail(s) supprimé(s)",
+    "deletedAt": "Supprimé le",
+    "expiresIn": "Expire dans {{days}}j",
+    "trashError": "Erreur lors de la suppression",
+    "restoreError": "Erreur lors de la restauration",
+    "emptyTrashError": "Erreur lors du vidage de la corbeille",
+    "totalTrash": "{{total}} mails dans la corbeille"
   },
 
   "rules": {
@@ -330,7 +351,13 @@
     "scanAttachments": "Scan pièces jointes",
     "generateReport": "Génération rapport",
     "durationSeconds": "{{diff}}s",
-    "progressCount": "{{processed}} / {{total}}"
+    "progressCount": "{{processed}} / {{total}}",
+    "purgeArchiveTrash": "Purge corbeille archives",
+    "trashConfig": "Configuration corbeille archives",
+    "trashRetentionDays": "Délai avant suppression définitive (jours)",
+    "trashPurgeEnabled": "Purge automatique activée",
+    "trashConfigSaved": "Configuration de la corbeille sauvegardée",
+    "trashConfigError": "Erreur lors de la sauvegarde"
   },
 
   "jobModal": {
