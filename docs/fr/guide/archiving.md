@@ -106,3 +106,58 @@ Les archives sont organisées sur le NAS selon la structure suivante :
 ```
 
 Chaque mail est identifié par un UUID unique (le `gmail_message_id`).
+
+---
+
+## Corbeille des archives
+
+Les mails archivés peuvent être supprimés via la **corbeille**. La suppression est un **soft-delete** : les mails ne sont pas immédiatement effacés du disque.
+
+### Supprimer des archives
+
+1. Dans **Archives**, sélectionnez les mails à supprimer
+2. Cliquez sur **Supprimer** dans la barre d'actions
+3. Confirmez la suppression — les mails sont déplacés vers la corbeille
+
+> 📸 *Capture d'écran suggérée : bouton Supprimer et confirmation dans la barre d'actions des archives*
+
+### Consulter la corbeille
+
+Basculez vers l'onglet **Corbeille** (à côté de Liste et Conversations) pour voir les mails supprimés :
+
+- Chaque mail affiche sa **date de suppression** et le **temps restant** avant la purge définitive
+- Un indicateur couleur signale les mails proches de l'expiration (rouge ≤ 3 jours, orange ≤ 7 jours)
+
+> 📸 *Capture d'écran suggérée : onglet Corbeille avec les indicateurs d'expiration*
+
+### Restaurer des mails
+
+1. Dans l'onglet **Corbeille**, sélectionnez les mails à restaurer
+2. Cliquez sur **Restaurer** dans la barre d'actions
+3. Les mails retrouvent leur place dans les archives
+
+Vous pouvez aussi restaurer un mail individuel en cliquant sur l'icône de restauration dans sa ligne.
+
+### Vider la corbeille
+
+Le bouton **Vider la corbeille** supprime **définitivement** tous les mails de la corbeille :
+
+- Les fichiers EML sont supprimés du disque
+- Les pièces jointes associées sont supprimées
+- Les enregistrements sont supprimés de la base de données
+- **Cette action est irréversible**
+
+### Purge automatique
+
+Un job planifié purge automatiquement les mails en corbeille depuis plus de **30 jours** (par défaut). Ce job s'exécute quotidiennement à 4h du matin.
+
+Vous pouvez configurer la purge depuis la page **Jobs** :
+
+- **Activer/désactiver** la purge automatique
+- **Modifier la durée** de rétention (1 à 365 jours)
+
+> 📸 *Capture d'écran suggérée : section configuration corbeille dans la page Jobs*
+
+::: tip Conseil
+Si vous supprimez accidentellement des mails importants, vous pouvez les restaurer tant qu'ils n'ont pas été purgés. Consultez régulièrement la corbeille pour éviter les surprises.
+:::

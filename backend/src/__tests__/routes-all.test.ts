@@ -102,6 +102,14 @@ vi.mock('../notifications/notification-prefs.service', () => ({
 vi.mock('../webhooks/webhook.service', () => ({
   triggerWebhooks: vi.fn(),
 }))
+vi.mock('../storage/storage.service', () => ({
+  getStorageForUser: vi.fn().mockResolvedValue({
+    deleteFile: vi.fn().mockResolvedValue(undefined),
+  }),
+}))
+vi.mock('../archive/trash.service', () => ({
+  purgeArchiveTrash: vi.fn().mockResolvedValue({ deleted: 0 }),
+}))
 vi.mock('../plugins/redis', () => ({
   getRedis: vi.fn().mockReturnValue({
     get: vi.fn().mockResolvedValue(null),
@@ -635,6 +643,103 @@ describe('archiveRoutes', () => {
       payload: {},
     })
     expect(res.statusCode).toBe(202)
+    await app.close()
+  })
+
+  it('POST /:accountId/mails/trash soft-deletes mails', async () => {
+    const app = await buildTestApp()
+    await app.register(archiveRoutes)
+    await app.ready()
+
+    mockExecuteTakeFirst.mockResolvedValueOnce({ numUpdatedRows: BigInt(2) })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/acc-1/mails/trash',
+      payload: { mailIds: ['a0000000-0000-4000-a000-000000000001', 'a0000000-0000-4000-a000-000000000002'] },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.json()).toEqual({ trashed: 2 })
+    await app.close()
+  })
+
+  it('POST /:accountId/mails/restore restores mails from trash', async () => {
+    const app = await buildTestApp()
+    await app.register(archiveRoutes)
+    await app.ready()
+
+    mockExecuteTakeFirst.mockResolvedValueOnce({ numUpdatedRows: BigInt(1) })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/acc-1/mails/restore',
+      payload: { mailIds: ['a0000000-0000-4000-a000-000000000001'] },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.json()).toEqual({ restored: 1 })
+    await app.close()
+  })
+
+  it('GET /:accountId/trash returns trashed mails', async () => {
+    const app = await buildTestApp()
+    await app.register(archiveRoutes)
+    await app.ready()
+
+    mockExecute.mockResolvedValueOnce([{ id: 'mail-1', deleted_at: new Date().toISOString() }])
+    mockExecuteTakeFirstOrThrow.mockResolvedValueOnce({ count: 1 })
+    mockExecuteTakeFirst.mockResolvedValueOnce({ value: '30' })
+
+    const res = await app.inject({ method: 'GET', url: '/acc-1/trash' })
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.mails).toBeDefined()
+    expect(body.retentionDays).toBe(30)
+    await app.close()
+  })
+
+  it('DELETE /:accountId/trash empties trash', async () => {
+    const app = await buildTestApp()
+    await app.register(archiveRoutes)
+    await app.ready()
+
+    mockExecute.mockResolvedValueOnce([])
+
+    const res = await app.inject({ method: 'DELETE', url: '/acc-1/trash' })
+    expect(res.statusCode).toBe(200)
+    expect(res.json()).toEqual({ deleted: 0 })
+    await app.close()
+  })
+
+  it('GET /config/trash returns trash config', async () => {
+    const app = await buildTestApp()
+    await app.register(archiveRoutes)
+    await app.ready()
+
+    mockExecute.mockResolvedValueOnce([
+      { key: 'archive_trash_retention_days', value: '30' },
+      { key: 'archive_trash_purge_enabled', value: 'true' },
+    ])
+
+    const res = await app.inject({ method: 'GET', url: '/config/trash' })
+    expect(res.statusCode).toBe(200)
+    expect(res.json()).toEqual({ retentionDays: 30, purgeEnabled: true })
+    await app.close()
+  })
+
+  it('PUT /config/trash updates trash config', async () => {
+    const app = await buildTestApp()
+    await app.register(archiveRoutes)
+    await app.ready()
+
+    mockExecute.mockResolvedValue(undefined)
+
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/config/trash',
+      payload: { retentionDays: 14, purgeEnabled: false },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.json()).toEqual({ ok: true })
     await app.close()
   })
 })

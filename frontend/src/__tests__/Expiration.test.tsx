@@ -514,6 +514,43 @@ describe('ExpirationPage', () => {
     expect(screen.getByText('common.noSubject')).toBeInTheDocument()
   })
 
+  it('handles detect with no matches (empty detection result)', async () => {
+    const { gmailApi } = await import('../api')
+    ;(gmailApi.listMessages as any).mockResolvedValue({
+      messages: [{ id: 'gm-1' }],
+    })
+    ;(gmailApi.batchGetMessages as any).mockResolvedValue([
+      { id: 'gm-1', subject: 'Hello', from: 'user@test.com' },
+    ])
+
+    const mockDetectMutate = vi.fn().mockResolvedValue([])
+    mockDetect.mockReturnValue({ mutateAsync: mockDetectMutate })
+    mockExpirations.mockReturnValue({ data: [], isLoading: false })
+    mockStats.mockReturnValue({ data: null })
+
+    render(<ExpirationPage />)
+    fireEvent.click(screen.getByText('expiration.detect'))
+
+    await waitFor(() => {
+      expect(mockDetectMutate).toHaveBeenCalled()
+    })
+  })
+
+  it('handles detect when messages is null (uses ?? fallback)', async () => {
+    const { gmailApi } = await import('../api')
+    ;(gmailApi.listMessages as any).mockResolvedValue({ messages: null })
+
+    mockExpirations.mockReturnValue({ data: [], isLoading: false })
+    mockStats.mockReturnValue({ data: null })
+
+    render(<ExpirationPage />)
+    fireEvent.click(screen.getByText('expiration.detect'))
+
+    await waitFor(() => {
+      expect(gmailApi.listMessages).toHaveBeenCalled()
+    })
+  })
+
   it('renders unknown category with default color', () => {
     mockExpirations.mockReturnValue({
       data: [

@@ -6,6 +6,8 @@ import {
   duplicatesApi, notificationsApi, auditApi, twoFactorApi,
   webhooksApi, integrityApi, configApi, privacyApi, analyticsApi,
   savedSearchesApi, unifiedApi, archiveThreadsApi,
+  expirationApi, sharingApi, importApi,
+  retentionApi, quotaApi,
 } from '../api'
 
 describe('API modules', () => {
@@ -106,6 +108,42 @@ describe('API modules', () => {
     it('downloadAttachment returns correct URL', () => {
       const url = archiveApi.downloadAttachment('acc-1', 'att-1')
       expect(url).toBe('/api/archive/acc-1/attachments/att-1/download')
+    })
+
+    it('trashMails', async () => {
+      mockPost({ trashed: 2 })
+      await archiveApi.trashMails('acc-1', ['m1', 'm2'])
+      expect(api.post).toHaveBeenCalledWith('/api/archive/acc-1/mails/trash', { mailIds: ['m1', 'm2'] })
+    })
+
+    it('restoreMails', async () => {
+      mockPost({ restored: 1 })
+      await archiveApi.restoreMails('acc-1', ['m1'])
+      expect(api.post).toHaveBeenCalledWith('/api/archive/acc-1/mails/restore', { mailIds: ['m1'] })
+    })
+
+    it('listTrash', async () => {
+      mockGet({ mails: [], total: 0 })
+      await archiveApi.listTrash('acc-1', { page: 1 })
+      expect(api.get).toHaveBeenCalledWith('/api/archive/acc-1/trash', { params: { page: 1 } })
+    })
+
+    it('emptyTrash', async () => {
+      mockDelete({ deleted: 5 })
+      await archiveApi.emptyTrash('acc-1')
+      expect(api.delete).toHaveBeenCalledWith('/api/archive/acc-1/trash')
+    })
+
+    it('getTrashConfig', async () => {
+      mockGet({ retentionDays: 30, purgeEnabled: true })
+      await archiveApi.getTrashConfig()
+      expect(api.get).toHaveBeenCalledWith('/api/archive/config/trash')
+    })
+
+    it('updateTrashConfig', async () => {
+      mockPut({ ok: true })
+      await archiveApi.updateTrashConfig({ retentionDays: 14, purgeEnabled: false })
+      expect(api.put).toHaveBeenCalledWith('/api/archive/config/trash', { retentionDays: 14, purgeEnabled: false })
     })
   })
 
@@ -283,6 +321,26 @@ describe('API modules', () => {
       mockPost({ processed: 0 })
       await attachmentsApi.runDedupBackfill()
       expect(api.post).toHaveBeenCalledWith('/api/attachments/dedup-backfill')
+    })
+
+    it('downloadArchivedUrl with inline', () => {
+      const url = attachmentsApi.downloadArchivedUrl('acc-1', 'att-1', true)
+      expect(url).toBe('/api/attachments/acc-1/archived/att-1/download?inline=1')
+    })
+
+    it('downloadArchivedUrl without inline', () => {
+      const url = attachmentsApi.downloadArchivedUrl('acc-1', 'att-1')
+      expect(url).toBe('/api/attachments/acc-1/archived/att-1/download')
+    })
+
+    it('downloadLiveUrl with inline', () => {
+      const url = attachmentsApi.downloadLiveUrl('acc-1', 'msg-1', 'file.pdf', true)
+      expect(url).toBe('/api/attachments/acc-1/live/msg-1/download?filename=file.pdf&inline=1')
+    })
+
+    it('downloadLiveUrl without inline', () => {
+      const url = attachmentsApi.downloadLiveUrl('acc-1', 'msg-1', 'file.pdf')
+      expect(url).toBe('/api/attachments/acc-1/live/msg-1/download?filename=file.pdf')
     })
   })
 
@@ -535,10 +593,22 @@ describe('API modules', () => {
       expect(api.get).toHaveBeenCalledWith('/api/analytics/acc-1/sender-scores', { params: {} })
     })
 
+    it('getSenderScores with refresh', async () => {
+      mockGet({})
+      await analyticsApi.getSenderScores('acc-1', true)
+      expect(api.get).toHaveBeenCalledWith('/api/analytics/acc-1/sender-scores', { params: { refresh: '1' } })
+    })
+
     it('getCleanupSuggestions', async () => {
       mockGet([])
       await analyticsApi.getCleanupSuggestions('acc-1', false)
       expect(api.get).toHaveBeenCalledWith('/api/analytics/acc-1/cleanup-suggestions', { params: {} })
+    })
+
+    it('getCleanupSuggestions with refresh', async () => {
+      mockGet([])
+      await analyticsApi.getCleanupSuggestions('acc-1', true)
+      expect(api.get).toHaveBeenCalledWith('/api/analytics/acc-1/cleanup-suggestions', { params: { refresh: '1' } })
     })
 
     it('dismissSuggestion', async () => {
@@ -551,6 +621,12 @@ describe('API modules', () => {
       mockGet({})
       await analyticsApi.getInboxZero('acc-1', false)
       expect(api.get).toHaveBeenCalledWith('/api/analytics/acc-1/inbox-zero', { params: {} })
+    })
+
+    it('getInboxZero with refresh', async () => {
+      mockGet({})
+      await analyticsApi.getInboxZero('acc-1', true)
+      expect(api.get).toHaveBeenCalledWith('/api/analytics/acc-1/inbox-zero', { params: { refresh: '1' } })
     })
 
     it('recordSnapshot', async () => {
@@ -611,6 +687,141 @@ describe('API modules', () => {
       mockGet({ id: 't1' })
       await archiveThreadsApi.getThread('acc-1', 't1')
       expect(api.get).toHaveBeenCalledWith('/api/archive/acc-1/threads/t1')
+    })
+  })
+
+  describe('expirationApi', () => {
+    it('list', async () => {
+      mockGet([])
+      await expirationApi.list('acc-1')
+      expect(api.get).toHaveBeenCalledWith('/api/expiration/acc-1')
+    })
+
+    it('stats', async () => {
+      mockGet({ total: 5 })
+      await expirationApi.stats('acc-1')
+      expect(api.get).toHaveBeenCalledWith('/api/expiration/acc-1/stats')
+    })
+
+    it('create', async () => {
+      mockPost({ id: 'exp-1' })
+      await expirationApi.create('acc-1', { gmailMessageId: 'm1', expiresInDays: 7 })
+      expect(api.post).toHaveBeenCalledWith('/api/expiration/acc-1', { gmailMessageId: 'm1', expiresInDays: 7 })
+    })
+
+    it('createBatch', async () => {
+      mockPost({ created: 2 })
+      await expirationApi.createBatch('acc-1', [{ gmailMessageId: 'm1', expiresInDays: 7 }])
+      expect(api.post).toHaveBeenCalledWith('/api/expiration/acc-1/batch', { items: [{ gmailMessageId: 'm1', expiresInDays: 7 }] })
+    })
+
+    it('detect', async () => {
+      mockPost([])
+      await expirationApi.detect('acc-1', [{ gmailMessageId: 'm1', subject: 'test' }])
+      expect(api.post).toHaveBeenCalledWith('/api/expiration/acc-1/detect', { messages: [{ gmailMessageId: 'm1', subject: 'test' }] })
+    })
+
+    it('update', async () => {
+      mockPatch({ id: 'exp-1' })
+      await expirationApi.update('acc-1', 'exp-1', '2025-12-31')
+      expect(api.patch).toHaveBeenCalledWith('/api/expiration/acc-1/exp-1', { expiresAt: '2025-12-31' })
+    })
+
+    it('remove', async () => {
+      mockDelete({})
+      await expirationApi.remove('acc-1', 'exp-1')
+      expect(api.delete).toHaveBeenCalledWith('/api/expiration/acc-1/exp-1')
+    })
+  })
+
+  describe('sharingApi', () => {
+    it('list', async () => {
+      mockGet([])
+      await sharingApi.list()
+      expect(api.get).toHaveBeenCalledWith('/api/shares')
+    })
+
+    it('create', async () => {
+      mockPost({ token: 'abc' })
+      await sharingApi.create({ archivedMailId: 'mail-1', expiresInHours: 24 })
+      expect(api.post).toHaveBeenCalledWith('/api/shares', { archivedMailId: 'mail-1', expiresInHours: 24 })
+    })
+
+    it('revoke', async () => {
+      mockDelete({})
+      await sharingApi.revoke('share-1')
+      expect(api.delete).toHaveBeenCalledWith('/api/shares/share-1')
+    })
+
+    it('getPublic', async () => {
+      mockGet({ id: 'share-1' })
+      await sharingApi.getPublic('token-abc')
+      expect(api.get).toHaveBeenCalledWith('/api/shares/public/token-abc')
+    })
+  })
+
+  describe('importApi', () => {
+    it('importImap', async () => {
+      mockPost({ jobId: 'j1' })
+      await importApi.importImap('acc-1', { host: 'imap.test.com', port: 993, user: 'u', pass: 'p' })
+      expect(api.post).toHaveBeenCalledWith('/api/import/acc-1/imap', { host: 'imap.test.com', port: 993, user: 'u', pass: 'p' })
+    })
+
+    it('exportMbox', async () => {
+      mockPost(new Blob())
+      await importApi.exportMbox('acc-1', ['m1'])
+      expect(api.post).toHaveBeenCalledWith('/api/import/acc-1/export-mbox', { mailIds: ['m1'] }, { responseType: 'blob' })
+    })
+
+    it('importMbox', async () => {
+      mockPost({ jobId: 'j1' })
+      const file = new File(['content'], 'test.mbox', { type: 'application/mbox' })
+      await importApi.importMbox('acc-1', file)
+      expect(api.post).toHaveBeenCalledWith(
+        '/api/import/acc-1/mbox',
+        expect.any(FormData),
+        { headers: { 'Content-Type': 'multipart/form-data' } },
+      )
+    })
+  })
+
+  describe('retentionApi', () => {
+    it('list', async () => {
+      mockGet([])
+      await retentionApi.list()
+      expect(api.get).toHaveBeenCalledWith('/api/retention')
+    })
+
+    it('create', async () => {
+      mockPost({ id: 'p1' })
+      await retentionApi.create({ name: 'Policy', maxAgeDays: 30 })
+      expect(api.post).toHaveBeenCalledWith('/api/retention', { name: 'Policy', maxAgeDays: 30 })
+    })
+
+    it('update', async () => {
+      mockPut({ id: 'p1' })
+      await retentionApi.update('p1', { maxAgeDays: 60 })
+      expect(api.put).toHaveBeenCalledWith('/api/retention/p1', { maxAgeDays: 60 })
+    })
+
+    it('remove', async () => {
+      mockDelete({})
+      await retentionApi.remove('p1')
+      expect(api.delete).toHaveBeenCalledWith('/api/retention/p1')
+    })
+
+    it('run', async () => {
+      mockPost({ policiesRun: 2 })
+      await retentionApi.run()
+      expect(api.post).toHaveBeenCalledWith('/api/retention/run')
+    })
+  })
+
+  describe('quotaApi', () => {
+    it('getStats', async () => {
+      mockGet({ usage: {} })
+      await quotaApi.getStats('acc-1')
+      expect(api.get).toHaveBeenCalledWith('/api/quota/acc-1')
     })
   })
 })

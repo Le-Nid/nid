@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import {
   listMessages, getMessage, getMessageFull, batchGetMessages,
-  trashMessages, deleteMessages, modifyMessages,
+  trashMessages, modifyMessages,
   listLabels, createLabel, deleteLabel, getMailboxProfile
 } from '../gmail/gmail.service'
 import { enqueueJob } from '../jobs/queue'
@@ -50,7 +50,7 @@ export async function gmailRoutes(app: FastifyInstance) {
 
   // ─── Bulk operations (async via BullMQ) ───────────────
   const bulkSchema = z.object({
-    action: z.enum(['trash', 'delete', 'label', 'unlabel', 'mark_read', 'mark_unread', 'archive']),
+    action: z.enum(['trash', 'label', 'unlabel', 'mark_read', 'mark_unread', 'archive']),
     messageIds: z.array(z.string()).min(1, 'No messageIds provided').max(5000),
     labelId: z.string().optional(),
   })
@@ -68,7 +68,7 @@ export async function gmailRoutes(app: FastifyInstance) {
       labelId,
     })
 
-    await logAudit(userId, `bulk.${action === 'trash' ? 'trash' : action === 'delete' ? 'delete' : action === 'archive' ? 'archive' : 'label'}` as any, {
+    await logAudit(userId, `bulk.${action === 'trash' ? 'trash' : action === 'archive' ? 'archive' : 'label'}` as any, {
       targetType: 'messages', targetId: accountId,
       details: { action, count: messageIds.length, jobId: job.id },
     })
