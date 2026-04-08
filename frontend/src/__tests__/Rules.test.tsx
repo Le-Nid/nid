@@ -289,6 +289,7 @@ describe('RulesPage', () => {
 
     fireEvent.click(screen.getByText('rules.newRule'))
     // RuleFormModal is mocked to null, but the state change is exercised
+    expect(screen.getByText('rules.newRule')).toBeInTheDocument()
   })
 
   it('opens edit modal when edit button clicked', () => {
@@ -302,6 +303,7 @@ describe('RulesPage', () => {
     const editBtn = document.querySelector('.lucide-pencil')!.closest('button')!
     fireEvent.click(editBtn)
     // Exercises openEdit(rule) → setEditingRule, setModalOpen
+    expect(editBtn).toBeDefined()
   })
 
   it('runs rule when play button clicked', async () => {

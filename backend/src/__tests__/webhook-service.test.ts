@@ -164,6 +164,7 @@ describe('triggerWebhooks', () => {
     // Wait for async webhook send
     await new Promise((r) => setTimeout(r, 50))
     // The updateTable should have been called
+    expect(mockFetch).toHaveBeenCalled()
   })
 
   it('does not throw even when fetch fails', async () => {

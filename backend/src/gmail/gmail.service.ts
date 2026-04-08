@@ -86,18 +86,16 @@ export async function batchGetMessages(
   const gmail = await getGmailClient(accountId)
   const onProgress = opts?.onProgress
 
+  const fetchOne = (id: string) =>
+    gmail.users.messages
+      .get({ userId: 'me', id, format: 'metadata', metadataHeaders: ['Subject', 'From', 'To', 'Date'] })
+      .then((r) => formatMeta(r.data))
+
   // All calls go through the global per-account semaphore (5 concurrent max).
   // No chunking or local concurrency control needed — the semaphore handles it.
   const results = await Promise.all(
     messageIds.map((id) =>
-      withAccountLimit(accountId, () =>
-        gmailRetry(() =>
-          gmail.users.messages
-            .get({ userId: 'me', id, format: 'metadata', metadataHeaders: ['Subject', 'From', 'To', 'Date'] })
-            .then((r) => formatMeta(r.data))
-        ),
-        'messages.get',
-      )
+      withAccountLimit(accountId, () => gmailRetry(() => fetchOne(id)), 'messages.get')
     )
   )
   onProgress?.(messageIds.length, messageIds.length)
@@ -108,9 +106,12 @@ export async function batchGetMessages(
 // ─── Bulk operations ────────────────────────────────────
 export async function trashMessages(accountId: string, messageIds: string[]) {
   const gmail = await getGmailClient(accountId)
+  const trashOne = (id: string) =>
+    gmailRetry(() => gmail.users.messages.trash({ userId: 'me', id }))
+      .then((r) => { trackApiCall(accountId, 'messages.trash').catch(() => {}); return r })
   for (const chunk of chunks(messageIds, config.GMAIL_BATCH_SIZE)) {
     await limitConcurrency(
-      chunk.map((id) => () => gmailRetry(() => gmail.users.messages.trash({ userId: 'me', id })).then((r) => { trackApiCall(accountId, 'messages.trash').catch(() => {}); return r })),
+      chunk.map((id) => () => trashOne(id)),
       config.GMAIL_CONCURRENCY
     )
     await sleep(config.GMAIL_THROTTLE_MS)
@@ -124,17 +125,13 @@ export async function modifyMessages(
   removeLabelIds: string[]
 ) {
   const gmail = await getGmailClient(accountId)
+  const modifyOne = (id: string) =>
+    gmailRetry(() =>
+      gmail.users.messages.modify({ userId: 'me', id, requestBody: { addLabelIds, removeLabelIds } })
+    ).then((r) => { trackApiCall(accountId, 'messages.modify').catch(() => {}); return r })
   for (const chunk of chunks(messageIds, config.GMAIL_BATCH_SIZE)) {
     await limitConcurrency(
-      chunk.map((id) => () =>
-        gmailRetry(() =>
-          gmail.users.messages.modify({
-            userId: 'me',
-            id,
-            requestBody: { addLabelIds, removeLabelIds },
-          })
-        ).then((r) => { trackApiCall(accountId, 'messages.modify').catch(() => {}); return r })
-      ),
+      chunk.map((id) => () => modifyOne(id)),
       config.GMAIL_CONCURRENCY
     )
     await sleep(config.GMAIL_THROTTLE_MS)

@@ -211,7 +211,7 @@ describe('LocalStorage operations', () => {
     const fsp = (await import('fs/promises')).default
     ;(fsp.unlink as any).mockRejectedValueOnce(new Error('ENOENT'))
     // Should not throw
-    await storage.deleteFile('/nonexistent')
+    await expect(storage.deleteFile('/nonexistent')).resolves.not.toThrow()
   })
 
   it('deleteDir ignores errors', async () => {
@@ -219,7 +219,7 @@ describe('LocalStorage operations', () => {
     const fsp = (await import('fs/promises')).default
     ;(fsp.rm as any).mockRejectedValueOnce(new Error('ENOENT'))
     // Should not throw
-    await storage.deleteDir('/nonexistent')
+    await expect(storage.deleteDir('/nonexistent')).resolves.not.toThrow()
   })
 })
 
@@ -318,8 +318,7 @@ describe('S3Storage operations', () => {
   it('deleteFile ignores errors', async () => {
     mockS3Send.mockRejectedValueOnce(new Error('err'))
     const storage = await getS3Storage()
-    await storage.deleteFile('/tmp/archives/test/file.txt')
-    // Should not throw
+    await expect(storage.deleteFile('/tmp/archives/test/file.txt')).resolves.not.toThrow()
   })
 
   it('deleteDir deletes all objects with prefix', async () => {
@@ -366,6 +365,7 @@ describe('S3Storage operations', () => {
     const storage = await getS3Storage()
     await storage.mkdir('/tmp/archives/test/dir')
     // Should not call S3
+    expect(mockS3Send).not.toHaveBeenCalled()
   })
 
   it('createReadStream returns readable from S3', async () => {

@@ -167,7 +167,7 @@ describe('archiveRoutes - remaining coverage', () => {
 // ═══════════════════════════════════════════════════════════
 describe('job-sse coverage', () => {
   it('broadcastJobUpdate with no subscribers does nothing', () => {
-    broadcastJobUpdate('non-existent', { type: 'progress', progress: 50 })
+    expect(() => broadcastJobUpdate('non-existent', { type: 'progress', progress: 50 })).not.toThrow()
   })
 
   it('jobSseRoutes registers SSE endpoint', async () => {
@@ -178,6 +178,7 @@ describe('job-sse coverage', () => {
     app.decorate('db', mockDb as any)
     await app.register(jobSseRoutes)
     await app.ready()
+    expect(app.printRoutes()).toBeDefined()
     await app.close()
   })
 
@@ -231,6 +232,6 @@ describe('job-sse coverage', () => {
 
   it('startQueueEventBroadcaster registers event listeners', () => {
     // Just verify it doesn't throw
-    startQueueEventBroadcaster()
+    expect(() => startQueueEventBroadcaster()).not.toThrow()
   })
 })

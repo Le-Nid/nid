@@ -230,6 +230,7 @@ describe('archiveRoutes deep', () => {
     await app.register(archiveRoutes)
     await app.ready()
     // threads endpoint uses sql template literal - just check it's registered
+    expect(app.printRoutes()).toBeDefined()
     await app.close()
   })
 
@@ -237,6 +238,7 @@ describe('archiveRoutes deep', () => {
     const app = await buildTestApp()
     await app.register(archiveRoutes)
     await app.ready()
+    expect(app.printRoutes()).toBeDefined()
     await app.close()
   })
 
@@ -276,6 +278,7 @@ describe('adminRoutes deep', () => {
     await app.ready()
     // admin GET /users uses sql`...`.execute(db) which the proxy can't handle
     // Just verify it registered
+    expect(app.printRoutes()).toBeDefined()
     await app.close()
   })
 
@@ -1314,13 +1317,14 @@ describe('jobSseRoutes', () => {
     app.decorate('db', mockDb as any)
     await app.register(jobSseRoutes)
     await app.ready()
+    expect(app.printRoutes()).toBeDefined()
     await app.close()
   })
 
   it('broadcastJobUpdate sends data to subscribers', async () => {
     const { broadcastJobUpdate } = await import('../routes/job-sse')
     // Just verify it doesn't throw with no subscribers
-    broadcastJobUpdate('job-1', { type: 'progress', progress: 50 })
+    expect(() => broadcastJobUpdate('job-1', { type: 'progress', progress: 50 })).not.toThrow()
   })
 })
 

@@ -536,6 +536,7 @@ describe('ArchivePage', () => {
         fireEvent.click(checkboxes[0])
       })
     }
+    expect(checkboxes.length).toBeGreaterThan(0)
   })
 
   // ─── Error handling ───────────────────────────────────
@@ -1032,6 +1033,7 @@ describe('ArchivePage', () => {
         break
       }
     }
+    expect(restoreButtons.length).toBeGreaterThan(0)
   })
 
   // ─── Selection and bulk trash ─────────────────────────
@@ -1305,6 +1307,7 @@ describe('ArchivePage', () => {
         break
       }
     }
+    expect(actionCells.length).toBeGreaterThan(0)
   })
 
   // ─── Trash view showTotal in pagination ───────────────

@@ -129,21 +129,15 @@ export async function attachmentsRoutes(app: FastifyInstance) {
 
     const results: any[] = []
 
+    const fetchMessageMeta = (id: string) =>
+      gmail.users.messages
+        .get({ userId: 'me', id, format: 'metadata', metadataHeaders: ['Subject', 'From', 'Date'] })
+        .then((r) => { trackApiCall(accountId, 'messages.get').catch(() => {}); return r.data })
+
     for (let i = 0; i < messageIds.length; i += config.GMAIL_BATCH_SIZE) {
       const chunk = messageIds.slice(i, i + config.GMAIL_BATCH_SIZE)
 
-      const fetched = await Promise.all(
-        chunk.map((id) =>
-          gmail.users.messages
-            .get({
-              userId: 'me',
-              id,
-              format: 'metadata',
-              metadataHeaders: ['Subject', 'From', 'Date'],
-            })
-            .then((r) => { trackApiCall(accountId, 'messages.get').catch(() => {}); return r.data })
-        )
-      )
+      const fetched = await Promise.all(chunk.map((id) => fetchMessageMeta(id)))
 
       for (const msg of fetched) {
         const headers = msg.payload?.headers ?? []

@@ -380,7 +380,7 @@ describe('unified worker handlers', () => {
 
   it('handles unknown job type gracefully', async () => {
     const job = makeJob('unknown_type', {})
-    await processJob(job) // should not throw
+    await expect(processJob(job)).resolves.not.toThrow()
   })
 
   it('handles privacy failure with notification', async () => {

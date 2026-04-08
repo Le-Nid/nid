@@ -77,6 +77,6 @@ describe('job-sse SSE stream coverage', () => {
   })
 
   it('broadcastJobUpdate with no subscribers is a no-op', () => {
-    broadcastJobUpdate('unknown-job', { type: 'progress', progress: 50 })
+    expect(() => broadcastJobUpdate('unknown-job', { type: 'progress', progress: 50 })).not.toThrow()
   })
 })

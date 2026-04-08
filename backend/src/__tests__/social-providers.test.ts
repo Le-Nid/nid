@@ -307,6 +307,7 @@ describe('social.service - all providers coverage', () => {
       .mockResolvedValueOnce({ id: 'new-id', email: 'user@discord.com', role: 'user' })
     mockExecute.mockResolvedValue([])
 
-    await exchangeSocialCode('discord', 'code', null)
+    const result = await exchangeSocialCode('discord', 'code', null)
+    expect(result).toEqual(expect.objectContaining({ id: 'new-id', email: 'user@discord.com' }))
   })
 })

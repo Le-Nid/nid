@@ -47,19 +47,15 @@ export async function scanNewsletters(
     for (let i = 0; i < messageIds.length; i += config.GMAIL_BATCH_SIZE) {
       const chunk = messageIds.slice(i, i + config.GMAIL_BATCH_SIZE)
 
+      const fetchOneMeta = (id: string) =>
+        gmailRetry(() =>
+          gmail.users.messages
+            .get({ userId: 'me', id, format: 'metadata', metadataHeaders: ['Subject', 'From', 'Date', 'List-Unsubscribe'] })
+            .then((r: any) => { trackApiCall(accountId, 'messages.get').catch(() => {}); return r.data })
+        )
+
       const fetched = await limitConcurrency(
-        chunk.map((id: string) => () =>
-          gmailRetry(() =>
-            gmail.users.messages
-              .get({
-                userId: 'me',
-                id,
-                format: 'metadata',
-                metadataHeaders: ['Subject', 'From', 'Date', 'List-Unsubscribe'],
-              })
-              .then((r: any) => { trackApiCall(accountId, 'messages.get').catch(() => {}); return r.data })
-          )
-        ),
+        chunk.map((id: string) => () => fetchOneMeta(id)),
         config.GMAIL_CONCURRENCY
       )
 

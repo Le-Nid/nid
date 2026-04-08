@@ -497,6 +497,7 @@ describe('rule.worker', () => {
     })
     await handler(job)
     // Should not throw even with null result
+    expect(mockGetRule).toHaveBeenCalledWith('rule-1', 'acc-1')
   })
 })
 

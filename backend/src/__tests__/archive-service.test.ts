@@ -133,7 +133,7 @@ describe('archiveMail', () => {
     mockExecuteTakeFirstOrThrow.mockResolvedValueOnce({ id: 'a-1' })
 
     // Should not throw despite trackApiCall failing
-    await archiveMail('acc-1', 'msg-1')
+    await expect(archiveMail('acc-1', 'msg-1')).resolves.not.toThrow()
   })
 })
 
