@@ -18,6 +18,7 @@ export function startRuleScheduler() {
   let lastInboxSnapshot: Date | null = null;
   let lastExpirationCheck: Date | null = null;
   let lastShareCleanup: Date | null = null;
+  let lastTrashPurge: Date | null = null;
 
   async function tick() {
     const db = getDb();
@@ -76,6 +77,15 @@ export function startRuleScheduler() {
           logger.error({ err }, 'Share cleanup failed');
         }
         lastShareCleanup = now;
+      }
+
+      // ─── Purge archive trash — once per day at 4 AM ────────
+      if (!lastTrashPurge || (now.getTime() - lastTrashPurge.getTime()) > 24 * 3600 * 1000) {
+        if (now.getHours() === 4) {
+          await enqueueJob('purge_archive_trash', { accountId: '' });
+          lastTrashPurge = now;
+          logger.info('Enqueued daily archive trash purge');
+        }
       }
 
       // Récupère les règles actives avec un schedule cron

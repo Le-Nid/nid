@@ -4,6 +4,7 @@ import { Database } from './types'
 import { config } from '../config'
 import * as migration001 from './migrations/001_full_schema'
 import * as migration002 from './migrations/002_webhook_auth'
+import * as migration003 from './migrations/003_archive_trash'
 import { createLogger } from '../logger'
 
 const logger = createLogger('db')
@@ -30,6 +31,7 @@ export function getDb(): Kysely<Database> {
 const migrations: Record<string, Migration> = {
   '001_full_schema': migration001,
   '002_webhook_auth': migration002,
+  '003_archive_trash': migration003,
 }
 
 class InCodeMigrationProvider implements MigrationProvider {

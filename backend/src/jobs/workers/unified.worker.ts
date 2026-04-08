@@ -3,7 +3,7 @@ import { getRedis } from '../../plugins/redis'
 import { getDb } from '../../db'
 import { notify } from '../../notifications/notify'
 import { archiveMail, getArchivedIds } from '../../archive/archive.service'
-import { listMessages, trashMessages, deleteMessages, modifyMessages } from '../../gmail/gmail.service'
+import { listMessages, trashMessages, modifyMessages } from '../../gmail/gmail.service'
 import { getRule, runRule } from '../../rules/rules.service'
 import { scanNewsletters } from '../../unsubscribe/unsubscribe.service'
 import { scanTrackingPixels } from '../../privacy/tracking.service'
@@ -11,6 +11,7 @@ import { scanArchivePii } from '../../privacy/pii.service'
 import { encryptArchives } from '../../privacy/encryption.service'
 import { importMbox, importImap } from '../../archive/import.service'
 import { applyRetentionPolicies } from '../../archive/retention.service'
+import { purgeArchiveTrash } from '../../archive/trash.service'
 import { createLogger } from '../../logger'
 
 const logger = createLogger('worker')
@@ -38,6 +39,8 @@ export function startUnifiedWorker() {
           return handleImportImap(job)
         case 'apply_retention':
           return handleRetention(job)
+        case 'purge_archive_trash':
+          return handlePurgeTrash(job)
         default:
           logger.warn(`Unknown job type: ${job.name}`)
       }
@@ -94,15 +97,15 @@ async function handleArchive(job: Job) {
     }
     processed++
     const progress = Math.round((processed / total) * 100)
-    await job.updateProgress(progress)
 
-    if (processed % 10 === 0) {
+    if (processed % 10 === 0 || processed === total) {
       await db
         .updateTable('jobs')
         .set({ progress, processed })
         .where('bullmq_id', '=', String(job.id))
         .execute()
     }
+    await job.updateProgress(progress)
   }
 
   await db
@@ -136,21 +139,18 @@ async function handleBulk(job: Job) {
 
   const updateProgress = async (processed: number) => {
     const progress = Math.round((processed / total) * 100)
-    await job.updateProgress(progress)
     await db
       .updateTable('jobs')
       .set({ progress, processed })
       .where('bullmq_id', '=', String(job.id))
       .execute()
+    await job.updateProgress(progress)
   }
 
   try {
     switch (action) {
       case 'trash':
         await trashMessages(accountId, messageIds)
-        break
-      case 'delete':
-        await deleteMessages(accountId, messageIds)
         break
       case 'archive':
         await modifyMessages(accountId, messageIds, [], ['INBOX'])
@@ -623,6 +623,44 @@ async function handleRetention(job: Job) {
         data: { jobId: String(job.id) },
       })
     }
+    throw err
+  }
+}
+
+// ─── Purge archive trash ────────────────────────────────────
+async function handlePurgeTrash(job: Job) {
+  const db = getDb()
+
+  await db
+    .updateTable('jobs')
+    .set({ status: 'active' })
+    .where('bullmq_id', '=', String(job.id))
+    .execute()
+
+  try {
+    const result = await purgeArchiveTrash()
+
+    await db.updateTable('jobs')
+      .set({
+        status: 'completed',
+        progress: 100,
+        processed: result.deleted,
+        total: result.deleted,
+        completed_at: new Date(),
+      })
+      .where('bullmq_id', '=', String(job.id))
+      .execute()
+
+    if (result.deleted > 0) {
+      logger.info(`Purge archive trash: ${result.deleted} mail(s) permanently deleted`)
+    }
+
+    return result
+  } catch (err) {
+    await db.updateTable('jobs')
+      .set({ status: 'failed', error: String(err) })
+      .where('bullmq_id', '=', String(job.id))
+      .execute()
     throw err
   }
 }

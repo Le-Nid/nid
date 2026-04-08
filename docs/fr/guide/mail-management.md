@@ -44,7 +44,6 @@ Sélectionnez un ou plusieurs mails (cases à cocher) pour faire apparaître la 
 | Action | Description |
 |---|---|
 | **Supprimer (corbeille)** | Envoie les mails à la corbeille Gmail (récupérables 30 jours) |
-| **Supprimer définitivement** | Suppression irréversible des mails |
 | **Archiver Gmail** | Retire les mails de la boîte de réception (label INBOX) |
 | **Marquer comme lu** | Marque tous les mails sélectionnés comme lus |
 | **Marquer comme non lu** | Marque tous les mails sélectionnés comme non lus |

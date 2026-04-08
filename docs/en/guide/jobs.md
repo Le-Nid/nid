@@ -31,6 +31,7 @@ The **Jobs** page displays all your jobs with their current status:
 | **Tracking pixel scan** | Scan from the Privacy page |
 | **PII scan** | Sensitive data scan from Privacy |
 | **Archive encryption** | Encryption from Privacy |
+| **Archive trash purge** | Daily scheduled job (configurable) |
 
 ---
 
@@ -93,3 +94,18 @@ When a job finishes (success or failure), you receive a notification:
 - **In-app**: in the notification bell (🔔)
 - **Toast**: temporary pop-up at the bottom of the page (if enabled in [preferences](notifications.md))
 - **Webhook**: push to Discord, Slack, etc. (if [configured](notifications.md#webhooks))
+
+---
+
+## Archive trash configuration
+
+At the bottom of the Jobs page, a form lets you configure the **automatic purge** of the archive trash:
+
+| Setting | Description | Default |
+|---|---|---|
+| **Automatic purge enabled** | Enables or disables the scheduled purge | Enabled |
+| **Days before permanent deletion** | Number of days before trash emails are purged | 30 days |
+
+The purge job runs **daily at 4 AM** and permanently deletes emails that have been in the trash longer than the configured retention period.
+
+> 📸 *Suggested screenshot: trash configuration form at the bottom of the Jobs page*

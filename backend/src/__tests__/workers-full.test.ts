@@ -31,12 +31,10 @@ vi.mock('../archive/archive.service', () => ({
 
 const mockListMessages = vi.fn()
 const mockTrashMessages = vi.fn()
-const mockDeleteMessages = vi.fn()
 const mockModifyMessages = vi.fn()
 vi.mock('../gmail/gmail.service', () => ({
   listMessages: (...args: any[]) => mockListMessages(...args),
   trashMessages: (...args: any[]) => mockTrashMessages(...args),
-  deleteMessages: (...args: any[]) => mockDeleteMessages(...args),
   modifyMessages: (...args: any[]) => mockModifyMessages(...args),
 }))
 
@@ -138,22 +136,6 @@ describe('unified worker handlers', () => {
     await capturedHandler(job)
     expect(mockTrashMessages).toHaveBeenCalled()
     expect(mockNotify).toHaveBeenCalled()
-  })
-
-  it('handles bulk_operation delete', async () => {
-    const { startUnifiedWorker } = await import('../jobs/workers/unified.worker')
-    startUnifiedWorker()
-
-    mockDeleteMessages.mockResolvedValue(undefined)
-
-    const job = createMockJob('bulk_operation', {
-      accountId: 'acc-1',
-      action: 'delete',
-      messageIds: ['msg-1'],
-    })
-
-    await capturedHandler(job)
-    expect(mockDeleteMessages).toHaveBeenCalled()
   })
 
   it('handles bulk_operation archive', async () => {

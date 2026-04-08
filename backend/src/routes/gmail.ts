@@ -2,8 +2,9 @@ import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import {
   listMessages, getMessage, getMessageFull, batchGetMessages,
-  trashMessages, deleteMessages, modifyMessages,
-  listLabels, createLabel, deleteLabel, getMailboxProfile
+  trashMessages, modifyMessages,
+  listLabels, createLabel, deleteLabel, getMailboxProfile,
+  getGmailClient,
 } from '../gmail/gmail.service'
 import { enqueueJob } from '../jobs/queue'
 import { logAudit } from '../audit/audit.service'
@@ -37,6 +38,20 @@ export async function gmailRoutes(app: FastifyInstance) {
     return getMessageFull(accountId, messageId)
   })
 
+  // ─── Attachment data (by attachmentId from Gmail API) ─
+  app.get('/:accountId/messages/:messageId/attachments/:attachmentId', accountAuth, async (request) => {
+    const { accountId, messageId, attachmentId } = request.params as {
+      accountId: string; messageId: string; attachmentId: string
+    }
+    const gmail = await getGmailClient(accountId)
+    const res = await gmail.users.messages.attachments.get({
+      userId: 'me',
+      messageId,
+      id: attachmentId,
+    })
+    return { data: res.data.data, size: res.data.size }
+  })
+
   // ─── Batch fetch metadata ─────────────────────────────
   const batchSchema = z.object({
     ids: z.array(z.string()).min(1).max(100),
@@ -50,7 +65,7 @@ export async function gmailRoutes(app: FastifyInstance) {
 
   // ─── Bulk operations (async via BullMQ) ───────────────
   const bulkSchema = z.object({
-    action: z.enum(['trash', 'delete', 'label', 'unlabel', 'mark_read', 'mark_unread', 'archive']),
+    action: z.enum(['trash', 'label', 'unlabel', 'mark_read', 'mark_unread', 'archive']),
     messageIds: z.array(z.string()).min(1, 'No messageIds provided').max(5000),
     labelId: z.string().optional(),
   })
@@ -68,7 +83,7 @@ export async function gmailRoutes(app: FastifyInstance) {
       labelId,
     })
 
-    await logAudit(userId, `bulk.${action === 'trash' ? 'trash' : action === 'delete' ? 'delete' : action === 'archive' ? 'archive' : 'label'}` as any, {
+    await logAudit(userId, `bulk.${action === 'trash' ? 'trash' : action === 'archive' ? 'archive' : 'label'}` as any, {
       targetType: 'messages', targetId: accountId,
       details: { action, count: messageIds.length, jobId: job.id },
     })

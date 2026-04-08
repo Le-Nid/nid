@@ -112,6 +112,19 @@ describe('registerPlugins', () => {
     expect(reply.code).toHaveBeenCalledWith(500)
   })
 
+  it('error handler handles statusCode >= 500', async () => {
+    const { app } = createMockApp()
+    await registerPlugins(app)
+
+    const errorHandler = app.setErrorHandler.mock.calls[0][0]
+    const reply = { code: vi.fn().mockReturnThis(), send: vi.fn() }
+    const request = { log: { error: vi.fn() }, user: {} }
+
+    errorHandler({ statusCode: 502, message: 'Bad Gateway' }, request, reply)
+    expect(reply.code).toHaveBeenCalledWith(502)
+    expect(reply.send).toHaveBeenCalledWith({ error: 'Internal server error' })
+  })
+
   it('authenticate rejects when no valid JWT', async () => {
     const { app, decorators } = createMockApp()
     await registerPlugins(app)
@@ -127,6 +140,56 @@ describe('registerPlugins', () => {
     const { app, decorators } = createMockApp()
     app.redis = { get: vi.fn().mockResolvedValue('1') }
     await registerPlugins(app)
+
+    const request = {
+      jwtVerify: vi.fn().mockResolvedValue(undefined),
+      user: { sub: 'user-1' },
+      cookies: { token: 'jwt-token' },
+      headers: {},
+    }
+    const reply = { code: vi.fn().mockReturnThis(), send: vi.fn(), clearCookie: vi.fn().mockReturnThis() }
+
+    await decorators.authenticate(request, reply)
+    expect(reply.code).toHaveBeenCalledWith(401)
+  })
+
+  it('authenticate uses Authorization header when no cookie', async () => {
+    const { app, decorators } = createMockApp()
+    app.redis = { get: vi.fn().mockResolvedValue(null) }
+    await registerPlugins(app)
+
+    const chain3: any = new Proxy({}, {
+      get: (_target, prop) => {
+        if (prop === 'executeTakeFirst') return vi.fn().mockResolvedValue({ id: 'user-1', is_active: true, role: 'user' })
+        return (..._args: any[]) => chain3
+      },
+    })
+    app.db = new Proxy({}, { get: () => () => chain3 })
+
+    const request = {
+      jwtVerify: vi.fn().mockResolvedValue(undefined),
+      user: { sub: 'user-1', role: 'user' },
+      cookies: {},
+      headers: { authorization: 'Bearer some-jwt-token' },
+    }
+    const reply = { code: vi.fn().mockReturnThis(), send: vi.fn(), clearCookie: vi.fn().mockReturnThis() }
+
+    await decorators.authenticate(request, reply)
+    expect(reply.code).not.toHaveBeenCalled()
+  })
+
+  it('authenticate rejects inactive user', async () => {
+    const { app, decorators } = createMockApp()
+    app.redis = { get: vi.fn().mockResolvedValue(null) }
+    await registerPlugins(app)
+
+    const chain4: any = new Proxy({}, {
+      get: (_target, prop) => {
+        if (prop === 'executeTakeFirst') return vi.fn().mockResolvedValue({ id: 'user-1', is_active: false, role: 'user' })
+        return (..._args: any[]) => chain4
+      },
+    })
+    app.db = new Proxy({}, { get: () => () => chain4 })
 
     const request = {
       jwtVerify: vi.fn().mockResolvedValue(undefined),

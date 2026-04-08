@@ -55,4 +55,18 @@ describe('createLogger', () => {
     logger.info('just text')
     expect(spy).toHaveBeenCalledWith('[test]', 'just text')
   })
+
+  it('warn logs with data', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const logger = createLogger('test')
+    logger.warn('warning', { detail: 'x' })
+    expect(spy).toHaveBeenCalledWith('[test]', 'warning', { detail: 'x' })
+  })
+
+  it('info logs with data', () => {
+    const spy = vi.spyOn(console, 'info').mockImplementation(() => {})
+    const logger = createLogger('test')
+    logger.info('info', { count: 42 })
+    expect(spy).toHaveBeenCalledWith('[test]', 'info', { count: 42 })
+  })
 })

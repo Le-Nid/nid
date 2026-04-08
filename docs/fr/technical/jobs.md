@@ -30,6 +30,7 @@ Tous les types de jobs sont traités par un **worker unifié** (`unified.worker.
 | `import_mbox` | POST `/api/import/:id/mbox` |
 | `import_imap` | POST `/api/import/:id/imap` |
 | `apply_retention` | POST `/api/retention/run` |
+| `purge_archive_trash` | Job planifié quotidien (`scheduler.ts`, 4h du matin) |
 
 ---
 
@@ -85,3 +86,26 @@ Le suivi de progression utilise les **Server-Sent Events** via le endpoint `GET 
 - La connexion se reconnecte automatiquement en cas de coupure
 - Un `JobProgressModal` affiche la barre de progression en temps réel
 - Le composant `NotificationBell` reçoit également les événements pour les notifications toast
+
+---
+
+## Scheduler
+
+Le fichier `scheduler.ts` exécute des vérifications périodiques (toutes les 60 secondes) et enqueue des jobs planifiés :
+
+| Job | Fréquence | Description |
+|---|---|---|
+| `apply_retention` | Quotidien (3h) | Applique les politiques de rétention actives |
+| `purge_archive_trash` | Quotidien (4h) | Supprime définitivement les archives en corbeille expirées |
+
+### Purge de la corbeille archives
+
+Le job `purge_archive_trash` :
+
+1. Lit la configuration depuis la table `system_config` (`archive_trash_retention_days`, `archive_trash_purge_enabled`)
+2. Si désactivé (`purge_enabled = false`), le job se termine sans action
+3. Recherche les mails archivés dont `deleted_at < maintenant - retention_days`
+4. Supprime les fichiers associés (EML + pièces jointes) du stockage
+5. Supprime les entrées en base de données
+
+La rétention par défaut est de **30 jours**. Elle est configurable via l'interface (page Jobs → Configuration de la corbeille archives) ou directement dans la table `system_config`.

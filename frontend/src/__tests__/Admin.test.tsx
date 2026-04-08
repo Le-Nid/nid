@@ -392,4 +392,63 @@ describe('AdminPage', () => {
       expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(1)
     })
   })
+
+  it('shows unknown job status with default tag color', async () => {
+    const unknownStatusJob = {
+      ...sampleJob,
+      id: 'j3',
+      status: 'unknown_status',
+    }
+    mockAdminStats.mockReturnValue({ data: fullStats, isLoading: false })
+    mockAdminUsers.mockReturnValue({ data: { users: [], total: 0 }, isLoading: false })
+    mockAdminJobs.mockReturnValue({
+      data: { jobs: [unknownStatusJob], total: 1 },
+      isLoading: false,
+    })
+
+    render(<AdminPage />)
+    fireEvent.click(screen.getByRole('tab', { name: /Jobs/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText('unknown_status')).toBeInTheDocument()
+    })
+  })
+
+  it('handles InputNumber onChange with null for maxAccounts', async () => {
+    mockAdminStats.mockReturnValue({ data: fullStats, isLoading: false })
+    mockAdminUsers.mockReturnValue({
+      data: { users: [sampleUser], total: 1 },
+      isLoading: false,
+    })
+    mockAdminJobs.mockReturnValue({ data: { jobs: [], total: 0 }, isLoading: false })
+
+    render(<AdminPage />)
+    fireEvent.click(screen.getByText('common.edit'))
+
+    await waitFor(() => {
+      expect(screen.getByText('admin.editUser')).toBeInTheDocument()
+    })
+
+    // Find the InputNumber for max accounts (first one, value=5) and clear it
+    const inputNumbers = document.querySelectorAll('.ant-input-number-input')
+    // First InputNumber is maxAccounts, second is quota
+    if (inputNumbers[0]) {
+      fireEvent.change(inputNumbers[0], { target: { value: '' } })
+    }
+
+    // Save and verify fallback value
+    const saveButtons = screen.getAllByText('common.save')
+    fireEvent.click(saveButtons[saveButtons.length - 1])
+
+    await waitFor(() => {
+      expect(mockUpdateMutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'u1',
+          updates: expect.objectContaining({
+            max_gmail_accounts: expect.any(Number),
+          }),
+        })
+      )
+    })
+  })
 })

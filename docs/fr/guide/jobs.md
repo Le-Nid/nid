@@ -31,6 +31,7 @@ La page **Jobs** affiche tous vos jobs avec leur statut actuel :
 | **Scan pixels espions** | Scan depuis la page Vie privée |
 | **Scan PII** | Scan de données sensibles depuis Vie privée |
 | **Chiffrement archives** | Chiffrement depuis Vie privée |
+| **Purge corbeille archives** | Job planifié quotidien (configurable) |
 
 ---
 
@@ -93,3 +94,18 @@ Quand un job se termine (succès ou échec), vous recevez une notification :
 - **In-app** : dans la cloche de notifications (🔔)
 - **Toast** : pop-up temporaire en bas de page (si activé dans les [préférences](notifications.md))
 - **Webhook** : push vers Discord, Slack, etc. (si [configuré](notifications.md#webhooks))
+
+---
+
+## Configuration de la corbeille archives
+
+En bas de la page Jobs, un formulaire vous permet de configurer la **purge automatique** de la corbeille des archives :
+
+| Paramètre | Description | Défaut |
+|---|---|---|
+| **Purge automatique activée** | Active ou désactive la purge planifiée | Activé |
+| **Délai avant suppression définitive** | Nombre de jours avant la purge des mails dans la corbeille | 30 jours |
+
+Le job de purge s’exécute **quotidiennement à 4h du matin** et supprime définitivement les mails en corbeille depuis plus longtemps que le délai configuré.
+
+> 📸 *Capture d’écran suggérée : formulaire de configuration de la corbeille en bas de la page Jobs*
