@@ -1,12 +1,15 @@
 import { defineConfig } from 'vitepress'
 import { withMermaid } from 'vitepress-plugin-mermaid'
 
+const base = '/nid/';
+
 export default withMermaid(defineConfig({
+  base,
   title: 'Nid',
   description: 'Application self-hosted de gestion et d\'archivage Gmail',
 
   head: [
-    ['link', { rel: 'icon', href: '/assets/nid-favicon-light.svg' }],
+    ['link', { rel: 'icon', href: `${base}assets/nid-favicon-light.svg` }],
   ],
 
   ignoreDeadLinks: [
