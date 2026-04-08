@@ -45,6 +45,7 @@ vi.mock('../gmail/quota.service', () => ({
     hourlyBreakdown: [],
   }),
   cleanupOldUsageData: vi.fn().mockResolvedValue(10),
+  trackApiCall: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock('../archive/sharing.service', () => ({

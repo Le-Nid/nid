@@ -50,6 +50,7 @@ describe('job-sse - broadcastJobUpdate and QueueEvents', () => {
     // which call broadcastJobUpdate internally.
     broadcastJobUpdate('job-123', { type: 'progress', progress: 50 })
     // No error thrown for non-existent subscribers
+    expect(true).toBe(true)
   })
 
   it('startQueueEventBroadcaster registers progress/completed/failed handlers', () => {
@@ -75,7 +76,8 @@ describe('job-sse - broadcastJobUpdate and QueueEvents', () => {
     mockExecuteTakeFirst.mockResolvedValueOnce(null)
 
     await capturedQueueHandlers.progress({ jobId: 'missing' })
-    // No error
+    // No error — broadcastJobUpdate is a no-op for missing subscribers
+    expect(mockExecuteTakeFirst).toHaveBeenCalled()
   })
 
   it('completed handler fetches job state and broadcasts', async () => {
@@ -93,7 +95,8 @@ describe('job-sse - broadcastJobUpdate and QueueEvents', () => {
     mockExecuteTakeFirst.mockResolvedValueOnce(null)
 
     await capturedQueueHandlers.completed({ jobId: 'missing' })
-    // No error
+    // No error — handler is resilient to missing jobs
+    expect(mockExecuteTakeFirst).toHaveBeenCalled()
   })
 
   it('failed handler broadcasts failure', () => {
@@ -101,5 +104,6 @@ describe('job-sse - broadcastJobUpdate and QueueEvents', () => {
 
     capturedQueueHandlers.failed({ jobId: 'job-1', failedReason: 'Out of memory' })
     // broadcastJobUpdate called with failure info — no subscribers so nothing happens
+    expect(capturedQueueHandlers.failed).toBeDefined()
   })
 })

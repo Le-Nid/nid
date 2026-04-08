@@ -5,6 +5,7 @@ import { simpleParser } from 'mailparser'
 import { getDb } from '../db'
 import { getGmailClient } from '../gmail/gmail.service'
 import { gmailRetry } from '../gmail/gmail-throttle'
+import { trackApiCall } from '../gmail/quota.service'
 import { config } from '../config'
 import { createLogger } from '../logger'
 
@@ -55,6 +56,7 @@ export async function archiveMail(accountId: string, messageId: string): Promise
   const res   = await gmailRetry(() => gmail.users.messages.get({
     userId: 'me', id: messageId, format: 'raw',
   }))
+  trackApiCall(accountId, 'messages.get').catch(() => {})
 
   const msg = res.data
   if (!msg.raw) throw new Error(`Empty raw for message ${messageId}`)

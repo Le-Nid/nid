@@ -108,6 +108,7 @@ describe('oauth.service - coverage gaps', () => {
 
     // Should NOT have updated the DB (no updateTable execute call for token update)
     // The handler only runs when tokens.access_token is truthy
+    expect(mockExecute).not.toHaveBeenCalled()
   })
 
   it('getAuthenticatedClient throws when account not found', async () => {

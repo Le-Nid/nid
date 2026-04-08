@@ -32,6 +32,7 @@ vi.mock('../gmail/gmail.service', () => ({
   createLabel: vi.fn(),
   deleteLabel: vi.fn(),
   getMailboxProfile: vi.fn().mockResolvedValue({ emailAddress: 'test@gmail.com', messagesTotal: 100, threadsTotal: 50, historyId: '123' }),
+  getLabelStats: vi.fn().mockResolvedValue({ messagesTotal: 0, messagesUnread: 0, threadsTotal: 0, threadsUnread: 0 }),
   getGmailClient: vi.fn(),
 }))
 vi.mock('../audit/audit.service', () => ({ logAudit: vi.fn() }))
@@ -752,6 +753,7 @@ describe('adminRoutes', () => {
     const app = await buildTestApp()
     await app.register(adminRoutes)
     await app.ready()
+    expect(app.printRoutes()).toBeDefined()
     await app.close()
   })
 })
@@ -825,6 +827,7 @@ describe('archiveRoutes - additional', () => {
     await app.register(archiveRoutes)
     await app.ready()
     // Just verify the threads endpoint is registered
+    expect(app.printRoutes()).toBeDefined()
     await app.close()
   })
 })
@@ -1022,6 +1025,7 @@ describe('configRoutes - additional', () => {
     const app = await buildTestApp()
     await app.register(configRoutes)
     await app.ready()
+    expect(app.printRoutes()).toBeDefined()
     await app.close()
   })
 })

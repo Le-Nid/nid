@@ -366,6 +366,7 @@ describe('SavedSearchesPage', () => {
     })
 
     // The catch block should handle validation error silently
+    expect(screen.getByText('savedSearches.newSearch')).toBeInTheDocument()
   })
 
   it('closes modal on cancel', () => {

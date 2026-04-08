@@ -256,6 +256,7 @@ describe('UnifiedInboxPage', () => {
     // Click on the row
     fireEvent.click(screen.getByText('Clickable'))
     // MailViewer component receives the message/account id (mocked to null)
+    expect(screen.getByText('Clickable')).toBeInTheDocument()
   })
 
   it('shows size formatted', () => {

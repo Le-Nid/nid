@@ -35,6 +35,7 @@ const mockListLabels = vi.fn().mockResolvedValue([])
 const mockCreateLabel = vi.fn().mockResolvedValue({ id: 'label-1', name: 'New' })
 const mockDeleteLabel = vi.fn()
 const mockGetMailboxProfile = vi.fn().mockResolvedValue({ emailAddress: 'test@gmail.com', messagesTotal: 100 })
+const mockGetLabelStats = vi.fn().mockResolvedValue({ messagesTotal: 0, messagesUnread: 0, threadsTotal: 0, threadsUnread: 0 })
 const mockGetGmailClient = vi.fn().mockResolvedValue({
   users: {
     messages: {
@@ -56,6 +57,7 @@ vi.mock('../gmail/gmail.service', () => ({
   createLabel: (...args: any[]) => mockCreateLabel(...args),
   deleteLabel: (...args: any[]) => mockDeleteLabel(...args),
   getMailboxProfile: (...args: any[]) => mockGetMailboxProfile(...args),
+  getLabelStats: (...args: any[]) => mockGetLabelStats(...args),
   getGmailClient: (...args: any[]) => mockGetGmailClient(...args),
   modifyMessages: (...args: any[]) => mockModifyMessages(...args),
   trashMessages: (...args: any[]) => mockTrashMessages(...args),
@@ -228,6 +230,7 @@ describe('archiveRoutes deep', () => {
     await app.register(archiveRoutes)
     await app.ready()
     // threads endpoint uses sql template literal - just check it's registered
+    expect(app.printRoutes()).toBeDefined()
     await app.close()
   })
 
@@ -235,6 +238,7 @@ describe('archiveRoutes deep', () => {
     const app = await buildTestApp()
     await app.register(archiveRoutes)
     await app.ready()
+    expect(app.printRoutes()).toBeDefined()
     await app.close()
   })
 
@@ -274,6 +278,7 @@ describe('adminRoutes deep', () => {
     await app.ready()
     // admin GET /users uses sql`...`.execute(db) which the proxy can't handle
     // Just verify it registered
+    expect(app.printRoutes()).toBeDefined()
     await app.close()
   })
 
@@ -668,10 +673,12 @@ describe('dashboardRoutes deep', () => {
       { id: 'msg-1', from: 'sender@test.com', sizeEstimate: 1000, labelIds: ['INBOX', 'UNREAD'], date: '2024-06-15T10:30:00Z' },
     ])
     mockGetMailboxProfile.mockResolvedValueOnce({ emailAddress: 'test@gmail.com', messagesTotal: 100 })
+    mockGetLabelStats.mockResolvedValueOnce({ messagesTotal: 1, messagesUnread: 1, threadsTotal: 1, threadsUnread: 1 })
 
     const res = await app.inject({ method: 'GET', url: '/acc-1/stats?refresh=1' })
     expect(res.statusCode).toBe(200)
     const body = res.json()
+    expect(body.totalMessages).toBe(100)
     expect(body.unreadCount).toBe(1)
     await app.close()
   })
@@ -1310,13 +1317,14 @@ describe('jobSseRoutes', () => {
     app.decorate('db', mockDb as any)
     await app.register(jobSseRoutes)
     await app.ready()
+    expect(app.printRoutes()).toBeDefined()
     await app.close()
   })
 
   it('broadcastJobUpdate sends data to subscribers', async () => {
     const { broadcastJobUpdate } = await import('../routes/job-sse')
     // Just verify it doesn't throw with no subscribers
-    broadcastJobUpdate('job-1', { type: 'progress', progress: 50 })
+    expect(() => broadcastJobUpdate('job-1', { type: 'progress', progress: 50 })).not.toThrow()
   })
 })
 

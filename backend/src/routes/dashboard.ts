@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify'
 import { getDb } from '../db'
-import { listMessages, batchGetMessages, getMailboxProfile } from '../gmail/gmail.service'
+import { listMessages, batchGetMessages, getMailboxProfile, getLabelStats } from '../gmail/gmail.service'
 import { getCachedStats, setCachedStats, getCachedArchiveStats, setCachedArchiveStats } from '../dashboard/cache.service'
 import { authPresets } from '../utils/auth'
 
@@ -37,8 +37,6 @@ export async function dashboardRoutes(app: FastifyInstance) {
       for (const label of msg.labelIds)
         labelMap.set(label, (labelMap.get(label) ?? 0) + 1)
 
-    const unreadCount = messages.filter((m) => m.labelIds.includes('UNREAD')).length
-
     const timelineMap = new Map<string, number>()
     for (const msg of messages) {
       const d = new Date(msg.date)
@@ -50,10 +48,13 @@ export async function dashboardRoutes(app: FastifyInstance) {
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([month, count]) => ({ month, count }))
 
-    const profile = await getMailboxProfile(accountId)
+    const [profile, unreadLabel] = await Promise.all([
+      getMailboxProfile(accountId),
+      getLabelStats(accountId, 'UNREAD'),
+    ])
     const stats = {
-      totalMessages:  listRes.resultSizeEstimate,
-      unreadCount,
+      totalMessages:  profile.messagesTotal ?? listRes.resultSizeEstimate,
+      unreadCount:    unreadLabel.messagesTotal ?? messages.filter((m) => m.labelIds.includes('UNREAD')).length,
       totalSizeBytes: messages.reduce((s, m) => s + m.sizeEstimate, 0),
       bySender, biggestMails,
       byLabel: [...labelMap.entries()].map(([label, count]) => ({ label, count })),

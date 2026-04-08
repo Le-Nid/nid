@@ -38,7 +38,12 @@ vi.mock('../gmail/gmail-throttle', () => ({
   gmailRetry: (fn: () => any) => fn(),
 }))
 
+vi.mock('../gmail/quota.service', () => ({
+  trackApiCall: vi.fn().mockResolvedValue(undefined),
+}))
+
 import { scanTrackingPixels, getTrackingStats, listTrackedMessages } from '../privacy/tracking.service'
+import { trackApiCall } from '../gmail/quota.service'
 
 beforeEach(() => vi.clearAllMocks())
 
@@ -80,6 +85,8 @@ describe('scanTrackingPixels', () => {
     const result = await scanTrackingPixels('acc-1', { maxMessages: 10 })
     expect(result.scanned).toBe(1)
     expect(result.tracked).toBe(1)
+    expect(trackApiCall).toHaveBeenCalledWith('acc-1', 'messages.list')
+    expect(trackApiCall).toHaveBeenCalledWith('acc-1', 'messages.get')
   })
 
   it('skips already scanned messages', async () => {

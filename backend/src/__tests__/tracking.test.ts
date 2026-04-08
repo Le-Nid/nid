@@ -4,6 +4,7 @@ vi.mock('pino', () => ({ default: () => ({ warn: vi.fn(), error: vi.fn(), info: 
 vi.mock('../db', () => ({ getDb: vi.fn() }))
 vi.mock('../gmail/gmail.service', () => ({ getGmailClient: vi.fn() }))
 vi.mock('../gmail/gmail-throttle', () => ({ gmailRetry: (fn: any) => fn() }))
+vi.mock('../gmail/quota.service', () => ({ trackApiCall: vi.fn().mockResolvedValue(undefined) }))
 
 import { detectTrackingPixels } from '../privacy/tracking.service'
 
