@@ -3,7 +3,8 @@ import { z } from 'zod'
 import {
   listMessages, getMessage, getMessageFull, batchGetMessages,
   trashMessages, modifyMessages,
-  listLabels, createLabel, deleteLabel, getMailboxProfile
+  listLabels, createLabel, deleteLabel, getMailboxProfile,
+  getGmailClient,
 } from '../gmail/gmail.service'
 import { enqueueJob } from '../jobs/queue'
 import { logAudit } from '../audit/audit.service'
@@ -35,6 +36,20 @@ export async function gmailRoutes(app: FastifyInstance) {
   app.get('/:accountId/messages/:messageId/full', accountAuth, async (request) => {
     const { accountId, messageId } = request.params as { accountId: string; messageId: string }
     return getMessageFull(accountId, messageId)
+  })
+
+  // ─── Attachment data (by attachmentId from Gmail API) ─
+  app.get('/:accountId/messages/:messageId/attachments/:attachmentId', accountAuth, async (request) => {
+    const { accountId, messageId, attachmentId } = request.params as {
+      accountId: string; messageId: string; attachmentId: string
+    }
+    const gmail = await getGmailClient(accountId)
+    const res = await gmail.users.messages.attachments.get({
+      userId: 'me',
+      messageId,
+      id: attachmentId,
+    })
+    return { data: res.data.data, size: res.data.size }
   })
 
   // ─── Batch fetch metadata ─────────────────────────────
