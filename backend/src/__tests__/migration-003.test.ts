@@ -5,7 +5,6 @@ const mockAddColumn = vi.fn()
 const mockExecute = vi.fn().mockResolvedValue(undefined)
 const mockCreateTable = vi.fn()
 const mockDropTable = vi.fn()
-const mockInsertInto = vi.fn()
 
 const addColumnChain: any = {
   addColumn: vi.fn().mockReturnThis(),
