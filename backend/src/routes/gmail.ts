@@ -6,6 +6,7 @@ import {
   listLabels, createLabel, deleteLabel, getMailboxProfile,
   getGmailClient,
 } from '../gmail/gmail.service'
+import { trackApiCall } from '../gmail/quota.service'
 import { enqueueJob } from '../jobs/queue'
 import { logAudit } from '../audit/audit.service'
 import { authPresets } from '../utils/auth'
@@ -49,6 +50,7 @@ export async function gmailRoutes(app: FastifyInstance) {
       messageId,
       id: attachmentId,
     })
+    trackApiCall(accountId, 'messages.get').catch(() => {})
     return { data: res.data.data, size: res.data.size }
   })
 

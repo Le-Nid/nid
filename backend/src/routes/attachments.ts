@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { getDb } from '../db'
 import { getGmailClient } from '../gmail/gmail.service'
+import { trackApiCall } from '../gmail/quota.service'
 import { config } from '../config'
 import { escapeIlike } from '../utils/db'
 import { extractPagination } from '../utils/pagination'
@@ -121,6 +122,7 @@ export async function attachmentsRoutes(app: FastifyInstance) {
       q: 'has:attachment larger:100k',
       maxResults: Math.min(parseInt(maxResults), 500),
     })
+    trackApiCall(accountId, 'messages.list').catch(() => {})
 
     const messageIds = (listRes.data.messages ?? []).map((m) => m.id!)
     if (messageIds.length === 0) return { attachments: [], totalSizeBytes: 0 }
@@ -139,7 +141,7 @@ export async function attachmentsRoutes(app: FastifyInstance) {
               format: 'metadata',
               metadataHeaders: ['Subject', 'From', 'Date'],
             })
-            .then((r) => r.data)
+            .then((r) => { trackApiCall(accountId, 'messages.get').catch(() => {}); return r.data })
         )
       )
 
@@ -222,6 +224,7 @@ export async function attachmentsRoutes(app: FastifyInstance) {
       id: messageId,
       format: 'full',
     })
+    trackApiCall(accountId, 'messages.get').catch(() => {})
 
     const parts = msg.data.payload?.parts ?? []
     const part = findPartByFilename(parts, filename)
@@ -238,6 +241,7 @@ export async function attachmentsRoutes(app: FastifyInstance) {
         messageId,
         id: part.body.attachmentId,
       })
+      trackApiCall(accountId, 'messages.get').catch(() => {})
       data = Buffer.from(attRes.data.data!, 'base64url')
     } else {
       return reply.code(404).send({ error: 'No attachment data available' })

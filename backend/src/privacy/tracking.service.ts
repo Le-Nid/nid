@@ -1,6 +1,7 @@
 import { getDb } from '../db'
 import { getGmailClient } from '../gmail/gmail.service'
 import { gmailRetry } from '../gmail/gmail-throttle'
+import { trackApiCall } from '../gmail/quota.service'
 import { createLogger } from '../logger'
 
 const logger = createLogger('tracking-pixel')
@@ -151,6 +152,7 @@ export async function scanTrackingPixels(
   const listRes = await gmailRetry(() =>
     gmail.users.messages.list({ userId: 'me', maxResults: maxMessages }),
   )
+  trackApiCall(accountId, 'messages.list').catch(() => {})
   const messageIds = (listRes.data.messages ?? [])
     .map((m: any) => m.id!)
     .filter((id: string) => !scannedIds.has(id))
@@ -163,6 +165,7 @@ export async function scanTrackingPixels(
       const msgRes = await gmailRetry(() =>
         gmail.users.messages.get({ userId: 'me', id: messageIds[i], format: 'full' }),
       )
+      trackApiCall(accountId, 'messages.get').catch(() => {})
       const msg = msgRes.data
       const html = extractHtmlBody(msg.payload)
 
