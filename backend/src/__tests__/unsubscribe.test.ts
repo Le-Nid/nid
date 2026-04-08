@@ -24,7 +24,12 @@ vi.mock('../gmail/gmail-throttle', () => ({
   },
 }))
 
+vi.mock('../gmail/quota.service', () => ({
+  trackApiCall: vi.fn().mockResolvedValue(undefined),
+}))
+
 import { scanNewsletters, getNewsletterMessageIds } from '../unsubscribe/unsubscribe.service'
+import { trackApiCall } from '../gmail/quota.service'
 
 beforeEach(() => vi.clearAllMocks())
 
@@ -101,6 +106,10 @@ describe('scanNewsletters', () => {
     expect(result[1].count).toBe(1)
     expect(result[1].unsubscribeUrl).toBe('https://test.com/unsub')
     expect(result[1].unsubscribeMailto).toBe('mailto:stop@test.com')
+
+    // Verify tracking calls
+    expect(trackApiCall).toHaveBeenCalledWith('acc-1', 'messages.list')
+    expect(trackApiCall).toHaveBeenCalledWith('acc-1', 'messages.get')
   })
 
   it('skips messages without List-Unsubscribe header', async () => {
