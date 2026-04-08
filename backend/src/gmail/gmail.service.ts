@@ -166,6 +166,12 @@ export async function getMailboxProfile(accountId: string) {
   return res.data
 }
 
+export async function getLabelStats(accountId: string, labelId: string) {
+  const gmail = await getGmailClient(accountId)
+  const res = await gmailRetry(() => gmail.users.labels.get({ userId: 'me', id: labelId }))
+  return res.data
+}
+
 // ─── Helpers ────────────────────────────────────────────
 function formatMeta(msg: gmail_v1.Schema$Message): MailMeta {
   const headers = msg.payload?.headers ?? []

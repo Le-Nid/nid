@@ -35,6 +35,7 @@ const mockListLabels = vi.fn().mockResolvedValue([])
 const mockCreateLabel = vi.fn().mockResolvedValue({ id: 'label-1', name: 'New' })
 const mockDeleteLabel = vi.fn()
 const mockGetMailboxProfile = vi.fn().mockResolvedValue({ emailAddress: 'test@gmail.com', messagesTotal: 100 })
+const mockGetLabelStats = vi.fn().mockResolvedValue({ messagesTotal: 0, messagesUnread: 0, threadsTotal: 0, threadsUnread: 0 })
 const mockGetGmailClient = vi.fn().mockResolvedValue({
   users: {
     messages: {
@@ -56,6 +57,7 @@ vi.mock('../gmail/gmail.service', () => ({
   createLabel: (...args: any[]) => mockCreateLabel(...args),
   deleteLabel: (...args: any[]) => mockDeleteLabel(...args),
   getMailboxProfile: (...args: any[]) => mockGetMailboxProfile(...args),
+  getLabelStats: (...args: any[]) => mockGetLabelStats(...args),
   getGmailClient: (...args: any[]) => mockGetGmailClient(...args),
   modifyMessages: (...args: any[]) => mockModifyMessages(...args),
   trashMessages: (...args: any[]) => mockTrashMessages(...args),
@@ -668,10 +670,12 @@ describe('dashboardRoutes deep', () => {
       { id: 'msg-1', from: 'sender@test.com', sizeEstimate: 1000, labelIds: ['INBOX', 'UNREAD'], date: '2024-06-15T10:30:00Z' },
     ])
     mockGetMailboxProfile.mockResolvedValueOnce({ emailAddress: 'test@gmail.com', messagesTotal: 100 })
+    mockGetLabelStats.mockResolvedValueOnce({ messagesTotal: 1, messagesUnread: 1, threadsTotal: 1, threadsUnread: 1 })
 
     const res = await app.inject({ method: 'GET', url: '/acc-1/stats?refresh=1' })
     expect(res.statusCode).toBe(200)
     const body = res.json()
+    expect(body.totalMessages).toBe(100)
     expect(body.unreadCount).toBe(1)
     await app.close()
   })

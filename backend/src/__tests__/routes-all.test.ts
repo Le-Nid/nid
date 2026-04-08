@@ -32,6 +32,7 @@ vi.mock('../gmail/gmail.service', () => ({
   createLabel: vi.fn(),
   deleteLabel: vi.fn(),
   getMailboxProfile: vi.fn().mockResolvedValue({ emailAddress: 'test@gmail.com', messagesTotal: 100, threadsTotal: 50, historyId: '123' }),
+  getLabelStats: vi.fn().mockResolvedValue({ messagesTotal: 0, messagesUnread: 0, threadsTotal: 0, threadsUnread: 0 }),
   getGmailClient: vi.fn(),
 }))
 vi.mock('../audit/audit.service', () => ({ logAudit: vi.fn() }))
