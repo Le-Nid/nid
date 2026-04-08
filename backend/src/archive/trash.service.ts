@@ -1,5 +1,4 @@
 import { getDb } from '../db'
-import { sql } from 'kysely'
 import { getStorageForUser } from '../storage/storage.service'
 import { createLogger } from '../logger'
 
