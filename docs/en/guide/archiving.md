@@ -106,3 +106,58 @@ Archives are organized on the NAS according to the following structure:
 ```
 
 Each email is identified by a unique UUID (the `gmail_message_id`).
+
+---
+
+## Archive trash
+
+Archived emails can be deleted via the **trash**. Deletion is a **soft-delete**: emails are not immediately erased from disk.
+
+### Deleting archives
+
+1. In **Archives**, select the emails to delete
+2. Click **Delete** in the action bar
+3. Confirm the deletion — emails are moved to trash
+
+> 📸 *Suggested screenshot: Delete button and confirmation in the archive action bar*
+
+### Browsing the trash
+
+Switch to the **Trash** tab (next to List and Conversations) to see deleted emails:
+
+- Each email shows its **deletion date** and the **time remaining** before permanent purge
+- A color indicator highlights emails close to expiration (red ≤ 3 days, orange ≤ 7 days)
+
+> 📸 *Suggested screenshot: Trash tab with expiration indicators*
+
+### Restoring emails
+
+1. In the **Trash** tab, select the emails to restore
+2. Click **Restore** in the action bar
+3. Emails are returned to the archives
+
+You can also restore an individual email by clicking the restore icon in its row.
+
+### Emptying the trash
+
+The **Empty trash** button **permanently** deletes all emails in the trash:
+
+- EML files are deleted from disk
+- Associated attachments are deleted
+- Database records are removed
+- **This action is irreversible**
+
+### Automatic purge
+
+A scheduled job automatically purges emails that have been in the trash for more than **30 days** (by default). This job runs daily at 4 AM.
+
+You can configure the purge from the **Jobs** page:
+
+- **Enable/disable** automatic purge
+- **Change the retention period** (1 to 365 days)
+
+> 📸 *Suggested screenshot: trash configuration section on the Jobs page*
+
+::: tip Advice
+If you accidentally delete important emails, you can restore them as long as they haven't been purged. Check the trash regularly to avoid surprises.
+:::

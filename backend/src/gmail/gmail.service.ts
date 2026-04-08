@@ -112,17 +112,6 @@ export async function trashMessages(accountId: string, messageIds: string[]) {
   }
 }
 
-export async function deleteMessages(accountId: string, messageIds: string[]) {
-  const gmail = await getGmailClient(accountId)
-  for (const chunk of chunks(messageIds, config.GMAIL_BATCH_SIZE)) {
-    await limitConcurrency(
-      chunk.map((id) => () => gmailRetry(() => gmail.users.messages.delete({ userId: 'me', id }))),
-      config.GMAIL_CONCURRENCY
-    )
-    await sleep(config.GMAIL_THROTTLE_MS)
-  }
-}
-
 export async function modifyMessages(
   accountId: string,
   messageIds: string[],

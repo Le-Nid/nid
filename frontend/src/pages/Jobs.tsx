@@ -10,11 +10,17 @@ import {
   Badge,
   Select,
   Empty,
+  Card,
+  InputNumber,
+  Switch,
+  Divider,
+  message,
 } from "antd";
-import { Trash2, RefreshCw, Eye, CalendarClock } from 'lucide-react';
+import { Trash2, RefreshCw, Eye, CalendarClock, Settings } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAccount } from "../hooks/useAccount";
-import { useJobs, useCancelJob } from "../hooks/queries";
+import { useJobs, useCancelJob, useArchiveTrashConfig } from "../hooks/queries";
+import { archiveApi } from "../api";
 import JobProgressModal from "../components/JobProgressModal";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -39,6 +45,18 @@ export default function JobsPage() {
 
   const { data: jobs = [], isLoading: loading, refetch } = useJobs(params);
   const cancelMutation = useCancelJob();
+  const { data: trashConfig, refetch: refetchTrashConfig } = useArchiveTrashConfig();
+  const [trashRetentionDays, setTrashRetentionDays] = useState<number | null>(null);
+  const [trashPurgeEnabled, setTrashPurgeEnabled] = useState<boolean | null>(null);
+  const [savingTrashConfig, setSavingTrashConfig] = useState(false);
+
+  // Sync local state with fetched config
+  useEffect(() => {
+    if (trashConfig) {
+      if (trashRetentionDays === null) setTrashRetentionDays(trashConfig.retentionDays);
+      if (trashPurgeEnabled === null) setTrashPurgeEnabled(trashConfig.purgeEnabled);
+    }
+  }, [trashConfig]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const hasActiveJobs = jobs.some((j: any) =>
     ["active", "pending"].includes(j.status),
@@ -236,6 +254,61 @@ export default function JobsPage() {
         jobId={watchingJobId}
         onClose={() => setWatchingJobId(null)}
       />
+
+      {/* Configuration corbeille archives */}
+      <Divider />
+      <Card
+        title={
+          <Space>
+            <Settings size={16} />
+            <span>{t('jobs.trashConfig')}</span>
+          </Space>
+        }
+        size="small"
+        style={{ maxWidth: 500 }}
+      >
+        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <Space>
+            <span>{t('jobs.trashPurgeEnabled')}</span>
+            <Switch
+              checked={trashPurgeEnabled ?? true}
+              onChange={(v) => setTrashPurgeEnabled(v)}
+            />
+          </Space>
+          <Space>
+            <span>{t('jobs.trashRetentionDays')}</span>
+            <InputNumber
+              min={1}
+              max={365}
+              value={trashRetentionDays ?? 30}
+              onChange={(v) => setTrashRetentionDays(v)}
+              disabled={!(trashPurgeEnabled ?? true)}
+            />
+          </Space>
+          <Button
+            type="primary"
+            size="small"
+            loading={savingTrashConfig}
+            onClick={async () => {
+              setSavingTrashConfig(true);
+              try {
+                await archiveApi.updateTrashConfig({
+                  retentionDays: trashRetentionDays ?? 30,
+                  purgeEnabled: trashPurgeEnabled ?? true,
+                });
+                refetchTrashConfig();
+                message.success(t('jobs.trashConfigSaved'));
+              } catch {
+                message.error(t('jobs.trashConfigError'));
+              } finally {
+                setSavingTrashConfig(false);
+              }
+            }}
+          >
+            {t('common.save')}
+          </Button>
+        </Space>
+      </Card>
     </div>
   );
 }

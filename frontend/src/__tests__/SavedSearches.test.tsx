@@ -390,4 +390,65 @@ describe('SavedSearchesPage', () => {
 
     expect(screen.getByText('savedSearches.createTitle')).toBeInTheDocument()
   })
+
+  it('submits create form with filled values', async () => {
+    mockSavedSearches.mockReturnValue({ data: [], isLoading: false })
+
+    render(<SavedSearchesPage />)
+    fireEvent.click(screen.getByText('savedSearches.newSearch'))
+
+    await waitFor(() => {
+      expect(screen.getByText('savedSearches.createTitle')).toBeInTheDocument()
+    })
+
+    // Fill in the required form fields
+    const nameInput = screen.getByPlaceholderText('savedSearches.namePlaceholder')
+    const queryInput = screen.getByPlaceholderText('savedSearches.queryPlaceholder')
+
+    fireEvent.change(nameInput, { target: { value: 'My search' } })
+    fireEvent.change(queryInput, { target: { value: 'from:test@test.com' } })
+
+    // Click OK
+    const okBtn = document.querySelector('.ant-modal .ant-btn-primary')!
+    fireEvent.click(okBtn)
+
+    await waitFor(() => {
+      expect(mockCreateMutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'My search',
+          query: 'from:test@test.com',
+        })
+      )
+    })
+  })
+
+  it('submits edit form with updated values', async () => {
+    mockSavedSearches.mockReturnValue({
+      data: [sampleSearch],
+      isLoading: false,
+    })
+
+    render(<SavedSearchesPage />)
+    // Open edit modal
+    const editBtn = document.querySelector('.lucide-pencil')!.closest('button')!
+    fireEvent.click(editBtn)
+
+    await waitFor(() => {
+      expect(screen.getByText('savedSearches.editTitle')).toBeInTheDocument()
+    })
+
+    // Click OK to submit edit
+    const okBtn = document.querySelector('.ant-modal .ant-btn-primary')!
+    fireEvent.click(okBtn)
+
+    await waitFor(() => {
+      expect(mockUpdateMutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 's1',
+          name: 'Invoices',
+          query: 'subject:invoice',
+        })
+      )
+    })
+  })
 })

@@ -30,6 +30,7 @@ All job types are handled by a **unified worker** (`unified.worker.ts`) that dis
 | `import_mbox` | POST `/api/import/:id/mbox` |
 | `import_imap` | POST `/api/import/:id/imap` |
 | `apply_retention` | POST `/api/retention/run` |
+| `purge_archive_trash` | Scheduled daily job (`scheduler.ts`, 4 AM) |
 
 ---
 
@@ -85,3 +86,26 @@ Progress tracking uses **Server-Sent Events** via the `GET /api/jobs/events` end
 - The connection automatically reconnects on disconnection
 - A `JobProgressModal` displays the progress bar in real time
 - The `NotificationBell` component also receives events for toast notifications
+
+---
+
+## Scheduler
+
+The `scheduler.ts` file performs periodic checks (every 60 seconds) and enqueues scheduled jobs:
+
+| Job | Frequency | Description |
+|---|---|---|
+| `apply_retention` | Daily (3 AM) | Applies active retention policies |
+| `purge_archive_trash` | Daily (4 AM) | Permanently deletes expired trashed archives |
+
+### Archive Trash Purge
+
+The `purge_archive_trash` job:
+
+1. Reads configuration from the `system_config` table (`archive_trash_retention_days`, `archive_trash_purge_enabled`)
+2. If disabled (`purge_enabled = false`), the job completes without action
+3. Finds archived mails where `deleted_at < now - retention_days`
+4. Deletes associated files (EML + attachments) from storage
+5. Deletes the database entries
+
+Default retention is **30 days**. It can be configured via the UI (Jobs page → Archive trash configuration) or directly in the `system_config` table.

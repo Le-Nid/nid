@@ -31,12 +31,10 @@ vi.mock('../archive/archive.service', () => ({
 
 const mockListMessages = vi.fn().mockResolvedValue({ messages: [], nextPageToken: null })
 const mockTrashMessages = vi.fn().mockResolvedValue(undefined)
-const mockDeleteMessages = vi.fn().mockResolvedValue(undefined)
 const mockModifyMessages = vi.fn().mockResolvedValue(undefined)
 vi.mock('../gmail/gmail.service', () => ({
   listMessages: (...args: any[]) => mockListMessages(...args),
   trashMessages: (...args: any[]) => mockTrashMessages(...args),
-  deleteMessages: (...args: any[]) => mockDeleteMessages(...args),
   modifyMessages: (...args: any[]) => mockModifyMessages(...args),
 }))
 
@@ -77,6 +75,11 @@ vi.mock('../archive/import.service', () => ({
 const mockApplyRetentionPolicies = vi.fn().mockResolvedValue({ policiesRun: 2, totalDeleted: 10 })
 vi.mock('../archive/retention.service', () => ({
   applyRetentionPolicies: (...args: any[]) => mockApplyRetentionPolicies(...args),
+}))
+
+const mockPurgeArchiveTrash = vi.fn().mockResolvedValue({ deleted: 5 })
+vi.mock('../archive/trash.service', () => ({
+  purgeArchiveTrash: (...args: any[]) => mockPurgeArchiveTrash(...args),
 }))
 
 vi.mock('bullmq', () => {
@@ -165,16 +168,6 @@ describe('unified worker handlers', () => {
     await processJob(job)
     expect(mockTrashMessages).toHaveBeenCalledWith('acc-1', ['msg-1'])
     expect(mockNotify).toHaveBeenCalled()
-  })
-
-  it('handles bulk_operation delete', async () => {
-    const job = makeJob('bulk_operation', {
-      accountId: 'acc-1',
-      action: 'delete',
-      messageIds: ['msg-1'],
-    })
-    await processJob(job)
-    expect(mockDeleteMessages).toHaveBeenCalled()
   })
 
   it('handles bulk_operation archive (remove INBOX label)', async () => {
@@ -372,6 +365,19 @@ describe('unified worker handlers', () => {
     await expect(processJob(job)).rejects.toThrow('DB error')
   })
 
+  it('handles purge_archive_trash', async () => {
+    const job = makeJob('purge_archive_trash', {})
+    const result = await processJob(job)
+    expect(result).toEqual({ deleted: 5 })
+    expect(mockPurgeArchiveTrash).toHaveBeenCalled()
+  })
+
+  it('handles purge_archive_trash failure', async () => {
+    mockPurgeArchiveTrash.mockRejectedValueOnce(new Error('Purge failed'))
+    const job = makeJob('purge_archive_trash', {})
+    await expect(processJob(job)).rejects.toThrow('Purge failed')
+  })
+
   it('handles unknown job type gracefully', async () => {
     const job = makeJob('unknown_type', {})
     await processJob(job) // should not throw
@@ -385,6 +391,178 @@ describe('unified worker handlers', () => {
       action: 'scan_tracking',
     })
     await expect(processJob(job)).rejects.toThrow('Scan failed')
+    expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ category: 'job_failed' }))
+  })
+
+  // ─── Additional branch coverage ──────────────────────────
+
+  it('handles archive_mails without userId (no notification)', async () => {
+    const job = makeJob('archive_mails', {
+      accountId: 'acc-1',
+      messageIds: ['msg-1'],
+      differential: false,
+    })
+    await processJob(job)
+    expect(mockArchiveMail).toHaveBeenCalledTimes(1)
+    expect(mockNotify).not.toHaveBeenCalled()
+  })
+
+  it('handles archive_mails with archiveMail error (continues)', async () => {
+    mockArchiveMail.mockRejectedValueOnce(new Error('archive error'))
+    const job = makeJob('archive_mails', {
+      accountId: 'acc-1',
+      userId: 'user-1',
+      messageIds: ['msg-1'],
+      differential: false,
+    })
+    await processJob(job)
+    // Should not throw, error is logged and processing continues
+    expect(mockNotify).toHaveBeenCalled()
+  })
+
+  it('handles archive_mails query mode with pagination', async () => {
+    mockListMessages
+      .mockResolvedValueOnce({
+        messages: [{ id: 'msg-1' }],
+        nextPageToken: 'token-2',
+      })
+      .mockResolvedValueOnce({
+        messages: [{ id: 'msg-2' }],
+        nextPageToken: null,
+      })
+    mockGetArchivedIds.mockResolvedValueOnce(new Set())
+
+    const job = makeJob('archive_mails', {
+      accountId: 'acc-1',
+      userId: 'user-1',
+      query: 'from:test',
+      differential: true,
+    })
+    await processJob(job)
+    expect(mockArchiveMail).toHaveBeenCalledTimes(2)
+  })
+
+  it('handles bulk_operation without userId (no notify)', async () => {
+    const job = makeJob('bulk_operation', {
+      accountId: 'acc-1',
+      action: 'trash',
+      messageIds: ['msg-1'],
+    })
+    await processJob(job)
+    expect(mockTrashMessages).toHaveBeenCalled()
+    expect(mockNotify).not.toHaveBeenCalled()
+  })
+
+  it('handles run_rule without userId (no notify)', async () => {
+    mockGetRule.mockResolvedValue({ id: 'rule-1', name: 'Test', is_active: true })
+    mockRunRule.mockResolvedValue({ processed: 3 })
+    const job = makeJob('run_rule', { accountId: 'acc-1', ruleId: 'rule-1' })
+    const result = await processJob(job)
+    expect(result).toEqual({ processed: 3 })
+    expect(mockNotify).not.toHaveBeenCalled()
+  })
+
+  it('handles scan_unsubscribe failure', async () => {
+    mockScanNewsletters.mockRejectedValueOnce(new Error('scan error'))
+    const job = makeJob('scan_unsubscribe', { accountId: 'acc-1' })
+    await expect(processJob(job)).rejects.toThrow('scan error')
+  })
+
+  it('handles scan_pii with userId', async () => {
+    const job = makeJob('scan_pii', {
+      accountId: 'acc-1',
+      userId: 'user-1',
+      action: 'scan_pii',
+    })
+    await processJob(job)
+    expect(mockScanArchivePii).toHaveBeenCalled()
+    expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ category: 'job_completed' }))
+  })
+
+  it('handles scan_tracking without userId (no notify)', async () => {
+    const job = makeJob('scan_tracking', {
+      accountId: 'acc-1',
+      action: 'scan_tracking',
+    })
+    await processJob(job)
+    expect(mockScanTrackingPixels).toHaveBeenCalled()
+    expect(mockNotify).not.toHaveBeenCalled()
+  })
+
+  it('handles encrypt_archives with userId', async () => {
+    const job = makeJob('encrypt_archives', {
+      accountId: 'acc-1',
+      userId: 'user-1',
+      action: 'encrypt_archives',
+      passphrase: 'secret',
+    })
+    await processJob(job)
+    expect(mockEncryptArchives).toHaveBeenCalled()
+    expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ category: 'job_completed' }))
+  })
+
+  it('handles import_mbox without userId (no notify)', async () => {
+    const job = makeJob('import_mbox', {
+      accountId: 'acc-1',
+      filePath: '/tmp/test.mbox',
+    })
+    const result = await processJob(job)
+    expect(result).toEqual({ imported: 5, skipped: 1, errors: 0 })
+    expect(mockNotify).not.toHaveBeenCalled()
+  })
+
+  it('handles import_imap without userId (no notify)', async () => {
+    const job = makeJob('import_imap', {
+      accountId: 'acc-1',
+      imapConfig: { host: 'imap.test.com', port: 993, user: 'u', pass: 'p' },
+    })
+    const result = await processJob(job)
+    expect(result).toEqual({ imported: 3, skipped: 0, errors: 0 })
+    expect(mockNotify).not.toHaveBeenCalled()
+  })
+
+  it('handles import_imap failure with userId', async () => {
+    mockImportImap.mockRejectedValueOnce(new Error('IMAP fail'))
+    const job = makeJob('import_imap', {
+      accountId: 'acc-1',
+      userId: 'user-1',
+      imapConfig: { host: 'imap.test.com', port: 993, user: 'u', pass: 'p' },
+    })
+    await expect(processJob(job)).rejects.toThrow('IMAP fail')
+    expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ category: 'job_failed' }))
+  })
+
+  it('handles import_mbox failure with userId', async () => {
+    mockImportMbox.mockRejectedValueOnce(new Error('mbox fail'))
+    const job = makeJob('import_mbox', {
+      accountId: 'acc-1',
+      userId: 'user-1',
+      filePath: '/tmp/bad.mbox',
+    })
+    await expect(processJob(job)).rejects.toThrow('mbox fail')
+    expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ category: 'job_failed' }))
+  })
+
+  it('handles privacy scan_pii failure with userId', async () => {
+    mockScanArchivePii.mockRejectedValueOnce(new Error('PII fail'))
+    const job = makeJob('scan_pii', {
+      accountId: 'acc-1',
+      userId: 'user-1',
+      action: 'scan_pii',
+    })
+    await expect(processJob(job)).rejects.toThrow('PII fail')
+    expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ category: 'job_failed' }))
+  })
+
+  it('handles encrypt_archives failure with userId', async () => {
+    mockEncryptArchives.mockRejectedValueOnce(new Error('Encrypt fail'))
+    const job = makeJob('encrypt_archives', {
+      accountId: 'acc-1',
+      userId: 'user-1',
+      action: 'encrypt_archives',
+      passphrase: 'secret',
+    })
+    await expect(processJob(job)).rejects.toThrow('Encrypt fail')
     expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ category: 'job_failed' }))
   })
 })

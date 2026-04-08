@@ -60,6 +60,7 @@ export interface ArchivedMailsTable {
   // tsvector — généré par trigger, jamais écrit directement
   search_vector:    ColumnType<string, never, never> | null
   archived_at:      Generated<Date>
+  deleted_at:       Date | null
 }
 
 export interface ArchivedAttachmentsTable {
@@ -253,6 +254,12 @@ export interface SavedSearchesTable {
 
 // ─── Ops & Résilience tables ──────────────────────────────
 
+export interface SystemConfigTable {
+  key:        string
+  value:      ColumnType<unknown, string, string>
+  updated_at: Generated<Date>
+}
+
 export interface RetentionPoliciesTable {
   id:               Generated<string>
   user_id:          string
@@ -337,6 +344,7 @@ export interface Database {
   user_social_accounts: UserSocialAccountsTable
   saved_searches:       SavedSearchesTable
   retention_policies:   RetentionPoliciesTable
+  system_config:        SystemConfigTable
   gmail_api_usage:      GmailApiUsageTable
   storage_configs:      StorageConfigsTable
   email_expirations:    EmailExpirationsTable

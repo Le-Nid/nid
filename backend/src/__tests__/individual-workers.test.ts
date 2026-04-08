@@ -31,12 +31,10 @@ vi.mock('../archive/archive.service', () => ({
 
 const mockListMessages = vi.fn().mockResolvedValue({ messages: [], nextPageToken: null })
 const mockTrashMessages = vi.fn()
-const mockDeleteMessages = vi.fn()
 const mockModifyMessages = vi.fn()
 vi.mock('../gmail/gmail.service', () => ({
   listMessages: (...args: any[]) => mockListMessages(...args),
   trashMessages: (...args: any[]) => mockTrashMessages(...args),
-  deleteMessages: (...args: any[]) => mockDeleteMessages(...args),
   modifyMessages: (...args: any[]) => mockModifyMessages(...args),
 }))
 
@@ -188,6 +186,24 @@ describe('archive.worker', () => {
     await handler(job)
     expect(mockArchiveMail).toHaveBeenCalledTimes(2)
   })
+
+  it('skips notification when no userId', async () => {
+    startArchiveWorker()
+    const handler = capturedHandlers[capturedHandlers.length - 1]
+
+    mockArchiveMail.mockResolvedValue(undefined)
+
+    const job = createMockJob('archive_mails', {
+      accountId: 'acc-1',
+      messageIds: ['msg-1'],
+      differential: false,
+      // no userId
+    })
+
+    await handler(job)
+    const { notify } = await import('../notifications/notify')
+    expect(notify).not.toHaveBeenCalled()
+  })
 })
 
 describe('bulk.worker', () => {
@@ -206,23 +222,6 @@ describe('bulk.worker', () => {
 
     await handler(job)
     expect(mockTrashMessages).toHaveBeenCalledWith('acc-1', ['msg-1'])
-  })
-
-  it('processes delete action', async () => {
-    startBulkWorker()
-    const handler = capturedHandlers[capturedHandlers.length - 1]
-
-    mockDeleteMessages.mockResolvedValue(undefined)
-
-    const job = createMockJob('bulk_operation', {
-      accountId: 'acc-1',
-      userId: 'user-1',
-      action: 'delete',
-      messageIds: ['msg-1'],
-    })
-
-    await handler(job)
-    expect(mockDeleteMessages).toHaveBeenCalled()
   })
 
   it('processes archive action', async () => {
@@ -321,6 +320,20 @@ describe('bulk.worker', () => {
     await expect(handler(job)).rejects.toThrow('labelId required')
   })
 
+  it('unlabel without labelId throws error', async () => {
+    startBulkWorker()
+    const handler = capturedHandlers[capturedHandlers.length - 1]
+
+    const job = createMockJob('bulk_operation', {
+      accountId: 'acc-1',
+      userId: 'user-1',
+      action: 'unlabel',
+      messageIds: ['msg-1'],
+    })
+
+    await expect(handler(job)).rejects.toThrow('labelId required')
+  })
+
   it('skips non-bulk_operation jobs', async () => {
     startBulkWorker()
     const handler = capturedHandlers[capturedHandlers.length - 1]
@@ -344,6 +357,42 @@ describe('bulk.worker', () => {
     })
 
     await expect(handler(job)).rejects.toThrow('API error')
+  })
+
+  it('success without userId skips notification', async () => {
+    startBulkWorker()
+    const handler = capturedHandlers[capturedHandlers.length - 1]
+
+    mockTrashMessages.mockResolvedValue(undefined)
+
+    const job = createMockJob('bulk_operation', {
+      accountId: 'acc-1',
+      action: 'trash',
+      messageIds: ['msg-1'],
+      // no userId
+    })
+
+    await handler(job)
+    const { notify } = await import('../notifications/notify')
+    expect(notify).not.toHaveBeenCalled()
+  })
+
+  it('failure without userId skips notification', async () => {
+    startBulkWorker()
+    const handler = capturedHandlers[capturedHandlers.length - 1]
+
+    mockTrashMessages.mockRejectedValueOnce(new Error('Fail'))
+
+    const job = createMockJob('bulk_operation', {
+      accountId: 'acc-1',
+      action: 'trash',
+      messageIds: ['msg-1'],
+      // no userId
+    })
+
+    await expect(handler(job)).rejects.toThrow('Fail')
+    const { notify } = await import('../notifications/notify')
+    expect(notify).not.toHaveBeenCalled()
   })
 })
 
@@ -402,6 +451,52 @@ describe('rule.worker', () => {
     const job = createMockJob('other', { accountId: 'acc-1' })
     await handler(job)
     expect(mockGetRule).not.toHaveBeenCalled()
+  })
+
+  it('skips notify when no userId on success', async () => {
+    startRuleWorker()
+    const handler = capturedHandlers[capturedHandlers.length - 1]
+    mockGetRule.mockResolvedValueOnce({ id: 'rule-1', name: 'Test', is_active: true })
+    mockRunRule.mockResolvedValueOnce({ processed: 3 })
+
+    const job = createMockJob('run_rule', {
+      accountId: 'acc-1',
+      ruleId: 'rule-1',
+      // no userId
+    })
+    await handler(job)
+    const { notify } = await import('../notifications/notify')
+    expect(notify).not.toHaveBeenCalled()
+  })
+
+  it('skips notify when no userId on error', async () => {
+    startRuleWorker()
+    const handler = capturedHandlers[capturedHandlers.length - 1]
+    mockGetRule.mockResolvedValueOnce(null)
+
+    const job = createMockJob('run_rule', {
+      accountId: 'acc-1',
+      ruleId: 'rule-1',
+      // no userId
+    })
+    await expect(handler(job)).rejects.toThrow('Rule rule-1 not found')
+    const { notify } = await import('../notifications/notify')
+    expect(notify).not.toHaveBeenCalled()
+  })
+
+  it('handles null result.processed (coalesce ?? 0)', async () => {
+    startRuleWorker()
+    const handler = capturedHandlers[capturedHandlers.length - 1]
+    mockGetRule.mockResolvedValueOnce({ id: 'rule-1', name: 'Test', is_active: true })
+    mockRunRule.mockResolvedValueOnce(null) // result is null
+
+    const job = createMockJob('run_rule', {
+      accountId: 'acc-1',
+      userId: 'user-1',
+      ruleId: 'rule-1',
+    })
+    await handler(job)
+    // Should not throw even with null result
   })
 })
 
@@ -467,6 +562,59 @@ describe('privacy.worker', () => {
     })
 
     await expect(handler(job)).rejects.toThrow('Passphrase required')
+  })
+
+  it('scan_pii with PII found sends integrity_alert', async () => {
+    startPrivacyWorker()
+    const handler = capturedHandlers[capturedHandlers.length - 1]
+
+    mockScanArchivePii.mockResolvedValueOnce({ scanned: 50, withPii: 5 })
+
+    const job = createMockJob('scan_pii', {
+      accountId: 'acc-1',
+      userId: 'user-1',
+      action: 'scan_pii',
+    })
+
+    await handler(job)
+    const { notify } = await import('../notifications/notify')
+    expect(notify).toHaveBeenCalledWith(
+      expect.objectContaining({ category: 'integrity_alert' })
+    )
+  })
+
+  it('scan_tracking without userId skips notification', async () => {
+    startPrivacyWorker()
+    const handler = capturedHandlers[capturedHandlers.length - 1]
+
+    mockScanTrackingPixels.mockResolvedValueOnce({ scanned: 10, tracked: 1 })
+
+    const job = createMockJob('scan_tracking', {
+      accountId: 'acc-1',
+      action: 'scan_tracking',
+      // no userId
+    })
+
+    await handler(job)
+    const { notify } = await import('../notifications/notify')
+    expect(notify).not.toHaveBeenCalled()
+  })
+
+  it('error without userId skips error notification', async () => {
+    startPrivacyWorker()
+    const handler = capturedHandlers[capturedHandlers.length - 1]
+
+    mockScanTrackingPixels.mockRejectedValueOnce(new Error('Scan failed'))
+
+    const job = createMockJob('scan_tracking', {
+      accountId: 'acc-1',
+      action: 'scan_tracking',
+      // no userId
+    })
+
+    await expect(handler(job)).rejects.toThrow('Scan failed')
+    const { notify } = await import('../notifications/notify')
+    expect(notify).not.toHaveBeenCalled()
   })
 
   it('skips unrelated job names', async () => {

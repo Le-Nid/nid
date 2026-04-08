@@ -18,6 +18,7 @@ export type JobType =
   | 'import_mbox'
   | 'import_imap'
   | 'apply_retention'
+  | 'purge_archive_trash'
 
 export interface JobPayload {
   accountId: string

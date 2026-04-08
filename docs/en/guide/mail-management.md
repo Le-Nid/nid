@@ -44,7 +44,6 @@ Select one or more emails (checkboxes) to bring up the **bulk action bar**:
 | Action | Description |
 |---|---|
 | **Delete (trash)** | Sends emails to the Gmail trash (recoverable for 30 days) |
-| **Delete permanently** | Irreversible email deletion |
 | **Archive (Gmail)** | Removes emails from the inbox (INBOX label) |
 | **Mark as read** | Marks all selected emails as read |
 | **Mark as unread** | Marks all selected emails as unread |

@@ -211,7 +211,28 @@
     "noThreads": "No conversations found",
     "threadParticipants": "{{count}} participant(s)",
     "pageInfo": "Page {{page}} / {{total}}",
-    "nextPage": "Next"
+    "nextPage": "Next",
+    "trashView": "Trash",
+    "trashEmpty": "Trash is empty",
+    "trashInfo": "Deleted emails are permanently removed after {{days}} days",
+    "moveToTrash": "Delete",
+    "moveToTrashTooltip": "Move to trash",
+    "moveToTrashConfirm": "Delete {{count}} email(s)?",
+    "moveToTrashConfirmDesc": "Emails will be moved to trash and permanently deleted after {{days}} days.",
+    "trashSuccess": "{{count}} email(s) moved to trash",
+    "restore": "Restore",
+    "restoreTooltip": "Restore from trash",
+    "restoreSuccess": "{{count}} email(s) restored",
+    "emptyTrash": "Empty trash",
+    "emptyTrashConfirm": "Empty trash?",
+    "emptyTrashDesc": "All emails in the trash will be permanently deleted. This action is irreversible.",
+    "emptyTrashSuccess": "Trash emptied — {{count}} email(s) deleted",
+    "deletedAt": "Deleted on",
+    "expiresIn": "Expires in {{days}}d",
+    "trashError": "Error deleting emails",
+    "restoreError": "Error restoring emails",
+    "emptyTrashError": "Error emptying trash",
+    "totalTrash": "{{total}} emails in trash"
   },
 
   "rules": {
@@ -330,7 +351,13 @@
     "scanAttachments": "Attachment scan",
     "generateReport": "Report generation",
     "durationSeconds": "{{diff}}s",
-    "progressCount": "{{processed}} / {{total}}"
+    "progressCount": "{{processed}} / {{total}}",
+    "purgeArchiveTrash": "Archive trash purge",
+    "trashConfig": "Archive trash configuration",
+    "trashRetentionDays": "Days before permanent deletion",
+    "trashPurgeEnabled": "Automatic purge enabled",
+    "trashConfigSaved": "Trash configuration saved",
+    "trashConfigError": "Error saving configuration"
   },
 
   "jobModal": {
