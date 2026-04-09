@@ -263,6 +263,32 @@ export async function authRoutes(app: FastifyInstance) {
     return reply.code(204).send()
   })
 
+  // ─── Toggle Gmail account active/inactive ──────────────────
+  app.patch('/gmail/:accountId/toggle', { preHandler: [app.authenticate] }, async (request, reply) => {
+    const userId = request.user.sub
+    const { accountId } = request.params as { accountId: string }
+
+    const account = await db
+      .selectFrom('gmail_accounts')
+      .select(['id', 'is_active'])
+      .where('id', '=', accountId)
+      .where('user_id', '=', userId)
+      .executeTakeFirst()
+
+    if (!account) return reply.code(404).send({ error: 'Account not found' })
+
+    const newStatus = !account.is_active
+
+    await db
+      .updateTable('gmail_accounts')
+      .set({ is_active: newStatus })
+      .where('id', '=', accountId)
+      .where('user_id', '=', userId)
+      .execute()
+
+    return { id: accountId, is_active: newStatus }
+  })
+
   // ─── Social OAuth (Arctic — server-side callback) ──────────
 
   app.get('/social/:provider/url', async (request, reply) => {

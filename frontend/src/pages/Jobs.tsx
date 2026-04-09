@@ -174,7 +174,7 @@ export default function JobsPage() {
               size="small"
               type="text"
               icon={<Eye size={14} />}
-              onClick={() => setWatchingJobId(record.id)}
+              onClick={() => setWatchingJobId(record.bullmq_id ?? record.id)}
             />
           </Tooltip>
 
