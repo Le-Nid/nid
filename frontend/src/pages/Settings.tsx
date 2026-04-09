@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Card, Button, Avatar, Tag, Popconfirm, Typography, Alert, Space, Divider, Progress, Descriptions, Table, Input, App, Modal, Form, Select, Switch } from 'antd'
-import { Globe, Trash2, Plus, CheckCircle, User, History, Lock, ShieldCheck, Webhook, Download, Upload, Bell, CloudCog, Settings as SettingsIcon } from 'lucide-react'
+import { Globe, Trash2, Plus, CheckCircle, User, History, Lock, ShieldCheck, Webhook, Download, Upload, Bell, CloudCog, Settings as SettingsIcon, Pause, Play } from 'lucide-react'
 import { useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import api from '../api/client'
@@ -126,6 +126,15 @@ export default function SettingsPage() {
     fetchMe()
   }
 
+  const toggleAccount = async (accountId: string) => {
+    try {
+      await api.patch(`/api/auth/gmail/${accountId}/toggle`)
+      fetchMe()
+    } catch {
+      message.error(t('common.error'))
+    }
+  }
+
   const forceArchive = async (accountId: string) => {
     setArchivingAccount(accountId)
     try {
@@ -217,9 +226,26 @@ export default function SettingsPage() {
               <Space style={{ flex: '1 1 auto', minWidth: 0 }}>
                 <Avatar icon={<Globe size={14} />} style={{ backgroundColor: '#4285F4' }} />
                 <span style={{ wordBreak: 'break-all' }}>{account.email}</span>
-                {account.is_active && <Tag color="success">{t('common.active')}</Tag>}
+                {account.is_active
+                  ? <Tag color="success">{t('common.active')}</Tag>
+                  : <Tag color="default">{t('common.inactive')}</Tag>
+                }
               </Space>
               <Space wrap>
+                <Popconfirm
+                  title={account.is_active ? t('settings.disableSyncConfirm') : t('settings.enableSyncConfirm')}
+                  onConfirm={() => toggleAccount(account.id)}
+                  okText={account.is_active ? t('common.deactivate') : t('common.activate')}
+                  cancelText={t('common.cancel')}
+                >
+                  <Button
+                    icon={account.is_active ? <Pause size={14} /> : <Play size={14} />}
+                    size="small"
+                    type={account.is_active ? 'default' : 'primary'}
+                  >
+                    {account.is_active ? t('settings.disableSync') : t('settings.enableSync')}
+                  </Button>
+                </Popconfirm>
                 <Button
                   icon={<CloudCog size={14} />}
                   size="small"

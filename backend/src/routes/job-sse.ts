@@ -36,17 +36,25 @@ export async function jobSseRoutes(app: FastifyInstance) {
       const job = await db
         .selectFrom("jobs")
         .select(["id", "bullmq_id", "status"])
-        .where("bullmq_id", "=", jobId)
+        .where((eb) =>
+          eb.or([
+            eb('bullmq_id', '=', jobId),
+            eb('id', '=', jobId),
+          ])
+        )
         .where("user_id", "=", userId)
         .executeTakeFirst();
       if (!job) return reply.code(404).send({ error: "Job not found" });
+
+      // Use bullmq_id as the canonical key for SSE subscriptions
+      const sseKey = job.bullmq_id ?? jobId;
 
       // Si déjà terminé, envoyer l'état final directement et fermer
       if (["completed", "failed", "cancelled"].includes(job.status)) {
         const final = await db
           .selectFrom("jobs")
           .selectAll()
-          .where("bullmq_id", "=", jobId)
+          .where("id", "=", job.id)
           .executeTakeFirst();
         reply.raw.writeHead(200, {
           "Content-Type": "text/event-stream",
@@ -68,9 +76,9 @@ export async function jobSseRoutes(app: FastifyInstance) {
         "X-Accel-Buffering": "no",
       });
 
-      // Enregistrer le subscriber
-      if (!subscribers.has(jobId)) subscribers.set(jobId, new Set());
-      const subs = subscribers.get(jobId)!;
+      // Enregistrer le subscriber avec le bullmq_id (clé utilisée par les broadcasts)
+      if (!subscribers.has(sseKey)) subscribers.set(sseKey, new Set());
+      const subs = subscribers.get(sseKey)!;
       subs.add(reply.raw);
 
       // Heartbeat toutes les 15s pour garder la connexion ouverte
@@ -82,14 +90,14 @@ export async function jobSseRoutes(app: FastifyInstance) {
       reply.raw.on("close", () => {
         clearInterval(heartbeat);
         subs.delete(reply.raw);
-        if (subs.size === 0) subscribers.delete(jobId);
+        if (subs.size === 0) subscribers.delete(sseKey);
       });
 
       // Envoyer l'état courant immédiatement
       const current = await db
         .selectFrom("jobs")
         .selectAll()
-        .where("bullmq_id", "=", jobId)
+        .where("id", "=", job.id)
         .executeTakeFirst();
       reply.raw.write(`data: ${JSON.stringify(current)}\n\n`);
 
@@ -132,7 +140,7 @@ export function startQueueEventBroadcaster() {
     const row = await fetchJobState(jobId);
     if (row) {
       broadcastJobUpdate(jobId, {
-        type: "progress",
+        event: "progress",
         status: row.status,
         progress: row.progress,
         processed: row.processed,
@@ -144,7 +152,7 @@ export function startQueueEventBroadcaster() {
   queueEvents.on("completed", async ({ jobId }) => {
     const row = await fetchJobState(jobId);
     broadcastJobUpdate(jobId, {
-      type: "completed",
+      event: "completed",
       status: "completed",
       progress: 100,
       processed: row?.processed ?? row?.total ?? 0,
@@ -154,7 +162,7 @@ export function startQueueEventBroadcaster() {
 
   queueEvents.on("failed", ({ jobId, failedReason }) => {
     broadcastJobUpdate(jobId, {
-      type: "failed",
+      event: "failed",
       status: "failed",
       error: failedReason,
     });

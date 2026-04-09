@@ -19,6 +19,9 @@ export function useJobSSE(jobId: string | null) {
   const [job, setJob]         = useState<JobState | null>(null)
   const [connected, setConnected] = useState(false)
   const esRef = useRef<EventSource | null>(null)
+  const retriesRef = useRef(0)
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const MAX_RETRIES = 5
 
   const connect = useCallback(() => {
     if (!jobId) return
@@ -28,7 +31,10 @@ export function useJobSSE(jobId: string | null) {
     const es  = new EventSource(url, { withCredentials: true })
     esRef.current = es
 
-    es.onopen = () => setConnected(true)
+    es.onopen = () => {
+      setConnected(true)
+      retriesRef.current = 0
+    }
 
     es.onmessage = (e) => {
       try {
@@ -49,13 +55,26 @@ export function useJobSSE(jobId: string | null) {
       logger.warn('SSE connection error', { jobId: jobId ?? '' })
       setConnected(false)
       es.close()
+
+      // Retry with exponential backoff unless job is terminal
+      if (
+        retriesRef.current < MAX_RETRIES &&
+        (!job || !['completed', 'failed', 'cancelled'].includes(job.status))
+      ) {
+        const delay = Math.min(1000 * 2 ** retriesRef.current, 10_000)
+        retriesRef.current++
+        logger.info('SSE reconnecting', { jobId: jobId ?? '', attempt: retriesRef.current })
+        retryTimerRef.current = setTimeout(connect, delay)
+      }
     }
-  }, [jobId])
+  }, [jobId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    retriesRef.current = 0
     connect()
     return () => {
       esRef.current?.close()
+      if (retryTimerRef.current) clearTimeout(retryTimerRef.current)
       setConnected(false)
       setJob(null)
     }

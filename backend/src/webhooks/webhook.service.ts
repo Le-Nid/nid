@@ -33,13 +33,14 @@ export async function triggerWebhooks(userId: string, event: WebhookEvent, data:
   const payload: WebhookPayload = {
     event,
     timestamp: new Date().toISOString(),
-    // Point 7: only send non-sensitive summary fields
+    // Only send non-sensitive summary fields
     data: {
       ...(data.jobId ? { jobId: data.jobId } : {}),
       ...(data.status ? { status: data.status } : {}),
       ...(data.count !== undefined ? { count: data.count } : {}),
       ...(data.category ? { category: data.category } : {}),
       ...(data.title ? { title: data.title } : {}),
+      ...(data.body ? { body: data.body } : {}),
     },
   }
 
@@ -60,10 +61,12 @@ async function sendWebhook(
 
   switch (webhook.type) {
     case 'discord': {
+      const title = (payload.data.title as string) || payload.event
+      const desc = (payload.data.body as string) || JSON.stringify(payload.data, null, 2).slice(0, 2000)
       body = JSON.stringify({
         embeds: [{
-          title: `📬 ${payload.event}`,
-          description: JSON.stringify(payload.data, null, 2).slice(0, 2000),
+          title: `📬 ${title}`,
+          description: desc,
           color: payload.event.includes('failed') ? 0xff0000 : 0x00cc00,
           timestamp: payload.timestamp,
         }],
@@ -72,15 +75,18 @@ async function sendWebhook(
       break
     }
     case 'slack': {
+      const title = (payload.data.title as string) || payload.event
+      const desc = (payload.data.body as string) || JSON.stringify(payload.data, null, 2).slice(0, 2000)
       body = JSON.stringify({
-        text: `*${payload.event}*\n\`\`\`${JSON.stringify(payload.data, null, 2).slice(0, 2000)}\`\`\``,
+        text: `*${title}*\n${desc}`,
       })
       headers['Content-Type'] = 'application/json'
       break
     }
     case 'ntfy': {
-      body = JSON.stringify(payload.data)
-      headers['Title'] = `Nid: ${payload.event}`
+      const title = (payload.data.title as string) || payload.event
+      body = (payload.data.body as string) || JSON.stringify(payload.data)
+      headers['Title'] = `Nid: ${title}`
       headers['Priority'] = payload.event.includes('failed') ? '4' : '3'
       headers['Tags'] = payload.event.includes('failed') ? 'warning' : 'white_check_mark'
       if (webhook.auth_user && webhook.auth_password) {

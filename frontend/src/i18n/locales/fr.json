@@ -24,6 +24,7 @@
     "noData": "Aucune donnée",
     "noSubject": "(sans sujet)",
     "active": "Actif",
+    "inactive": "Inactif",
     "test": "Test",
     "actions": "Actions"
   },
@@ -381,6 +382,10 @@
     "disconnectHint": "Les archives existantes ne seront pas supprimées.",
     "disconnect": "Déconnecter",
     "connectGmail": "Connecter un compte Gmail",
+    "disableSync": "Désactiver la synchro",
+    "enableSync": "Activer la synchro",
+    "disableSyncConfirm": "Désactiver la synchronisation de ce compte ?",
+    "enableSyncConfirm": "Réactiver la synchronisation de ce compte ?",
     "forceArchive": "Archiver",
     "archiveStarted": "Archivage lancé",
     "archiveStartedDesc": "L'archivage différentiel de tous les mails a été lancé.",
