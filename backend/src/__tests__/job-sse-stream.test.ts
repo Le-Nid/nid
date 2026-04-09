@@ -79,4 +79,87 @@ describe('job-sse SSE stream coverage', () => {
   it('broadcastJobUpdate with no subscribers is a no-op', () => {
     expect(() => broadcastJobUpdate('unknown-job', { type: 'progress', progress: 50 })).not.toThrow()
   })
+
+  it('SSE stream returns 404 when job does not exist', async () => {
+    const app = Fastify({ logger: false })
+    app.decorateRequest('jwtVerify', async function (this: any) {
+      this.user = { sub: 'user-1' }
+    })
+    app.decorate('db', mockDb as any)
+    app.setErrorHandler(() => {})
+    await app.register(jobSseRoutes)
+
+    const address = await app.listen({ port: 0, host: '127.0.0.1' })
+
+    // Job not found
+    mockExecuteTakeFirst.mockResolvedValueOnce(undefined)
+
+    const res = await new Promise<http.IncomingMessage>((resolve) => {
+      http.get(`${address}/nonexistent/events`, resolve)
+    })
+
+    expect(res.statusCode).toBe(404)
+    await app.close()
+  })
+
+  it('SSE stream for completed job sends final state and closes immediately', async () => {
+    const app = Fastify({ logger: false })
+    app.decorateRequest('jwtVerify', async function (this: any) {
+      this.user = { sub: 'user-1' }
+    })
+    app.decorate('db', mockDb as any)
+    app.setErrorHandler(() => {})
+    await app.register(jobSseRoutes)
+
+    const address = await app.listen({ port: 0, host: '127.0.0.1' })
+
+    // Job already completed
+    mockExecuteTakeFirst
+      .mockResolvedValueOnce({ id: 'j-2', bullmq_id: 'job-2', status: 'completed', user_id: 'user-1' })
+      .mockResolvedValueOnce({ id: 'j-2', status: 'completed', progress: 100, processed: 50, total: 50 })
+
+    const receivedData = await new Promise<string>((resolve) => {
+      let data = ''
+      http.get(`${address}/job-2/events`, (res) => {
+        res.on('data', (chunk) => { data += chunk.toString() })
+        res.on('end', () => resolve(data))
+      })
+    })
+
+    expect(receivedData).toContain('data:')
+    expect(receivedData).toContain('event: close')
+    await app.close()
+  })
+
+  it('SSE stream uses jobId as key when bullmq_id is null', async () => {
+    const app = Fastify({ logger: false })
+    app.decorateRequest('jwtVerify', async function (this: any) {
+      this.user = { sub: 'user-1' }
+    })
+    app.decorate('db', mockDb as any)
+    app.setErrorHandler(() => {})
+    await app.register(jobSseRoutes)
+
+    const address = await app.listen({ port: 0, host: '127.0.0.1' })
+
+    // Job without bullmq_id
+    mockExecuteTakeFirst
+      .mockResolvedValueOnce({ id: 'j-3', bullmq_id: null, status: 'active', user_id: 'user-1' })
+      .mockResolvedValueOnce({ id: 'j-3', status: 'active', progress: 10 })
+
+    const receivedData = await new Promise<string>((resolve) => {
+      let data = ''
+      const req = http.get(`${address}/j-3/events`, (res) => {
+        res.on('data', (chunk) => {
+          data += chunk.toString()
+          if (data.includes('data:')) {
+            setTimeout(() => { req.destroy(); resolve(data) }, 50)
+          }
+        })
+      })
+    })
+
+    expect(receivedData).toContain('data:')
+    await app.close()
+  })
 })

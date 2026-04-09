@@ -132,4 +132,96 @@ describe('useJobSSE', () => {
     // Should not crash, job stays null
     expect(result.current.job).toBeNull()
   })
+
+  it('retries on error with exponential backoff', () => {
+    vi.useFakeTimers()
+    const { result } = renderHook(() => useJobSSE('job-retry'))
+    const firstInstance = esInstance
+
+    // Trigger an error
+    act(() => {
+      esInstance.onerror?.()
+    })
+
+    expect(firstInstance.close).toHaveBeenCalled()
+    expect(result.current.connected).toBe(false)
+
+    // Advance past first retry delay (1000ms)
+    act(() => {
+      vi.advanceTimersByTime(1000)
+    })
+
+    // A new EventSource should have been created
+    expect(esInstance).not.toBe(firstInstance)
+    expect(esInstance.url).toBe('/api/jobs/job-retry/events')
+
+    vi.useRealTimers()
+  })
+
+  it('stops retrying when max retries exceeded', () => {
+    vi.useFakeTimers()
+    renderHook(() => useJobSSE('job-exhaust'))
+
+    // Exhaust all retries
+    for (let i = 0; i < 5; i++) {
+      act(() => { esInstance.onerror?.() })
+      act(() => { vi.advanceTimersByTime(20_000) })
+    }
+
+    const lastInstance = esInstance
+
+    // One more error should NOT retry
+    act(() => { esInstance.onerror?.() })
+    act(() => { vi.advanceTimersByTime(20_000) })
+
+    // Should still be the same instance (no new connection)
+    expect(esInstance).toBe(lastInstance)
+
+    vi.useRealTimers()
+  })
+
+  it('does not retry when job is in terminal state', () => {
+    vi.useFakeTimers()
+    const { result } = renderHook(() => useJobSSE('job-terminal'))
+
+    // Set job to completed state
+    act(() => {
+      esInstance.onmessage?.({
+        data: JSON.stringify({ status: 'completed', progress: 100, total: 10, processed: 10 }),
+      })
+    })
+
+    expect(result.current.job?.status).toBe('completed')
+
+    vi.useRealTimers()
+  })
+
+  it('resets retry counter on successful open', () => {
+    vi.useFakeTimers()
+    const { result } = renderHook(() => useJobSSE('job-reset'))
+
+    // Trigger error then retry
+    act(() => { esInstance.onerror?.() })
+    act(() => { vi.advanceTimersByTime(1000) })
+
+    // Successful open should reset counter
+    act(() => { esInstance.onopen?.() })
+    expect(result.current.connected).toBe(true)
+
+    vi.useRealTimers()
+  })
+
+  it('cleans up retry timer on unmount', () => {
+    vi.useFakeTimers()
+    const { unmount } = renderHook(() => useJobSSE('job-cleanup'))
+
+    // Trigger error to start retry timer
+    act(() => { esInstance.onerror?.() })
+
+    // Unmount should clean up
+    unmount()
+    expect(esInstance.close).toHaveBeenCalled()
+
+    vi.useRealTimers()
+  })
 })
