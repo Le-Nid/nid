@@ -122,7 +122,8 @@ describe('triggerWebhooks', () => {
 
     const fetchCall = mockFetch.mock.calls[0]
     const body = JSON.parse(fetchCall[1].body)
-    expect(body.text).toContain('job.completed')
+    expect(body.text).toContain('Done')
+    expect(body.text).toContain('5 items processed')
   })
 
   it('sends ntfy format with priority headers and human-readable title', async () => {
