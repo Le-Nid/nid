@@ -322,6 +322,38 @@ describe('authRoutes', () => {
     })
   })
 
+  describe('PATCH /gmail/:accountId/toggle', () => {
+    it('toggles a Gmail account active status', async () => {
+      const app = await buildApp()
+      mockExecuteTakeFirst.mockResolvedValueOnce({ id: 'acc-1', is_active: true })
+      mockExecute.mockResolvedValue([])
+
+      const token = app.jwt.sign({ sub: 'user-1', email: 'test@test.com', role: 'user' })
+      const res = await app.inject({
+        method: 'PATCH',
+        url: '/gmail/acc-1/toggle',
+        headers: { authorization: `Bearer ${token}` },
+      })
+      expect(res.statusCode).toBe(200)
+      expect(res.json()).toEqual({ id: 'acc-1', is_active: false })
+      await app.close()
+    })
+
+    it('returns 404 when account not found', async () => {
+      const app = await buildApp()
+      mockExecuteTakeFirst.mockResolvedValueOnce(null)
+
+      const token = app.jwt.sign({ sub: 'user-1', email: 'test@test.com', role: 'user' })
+      const res = await app.inject({
+        method: 'PATCH',
+        url: '/gmail/not-found/toggle',
+        headers: { authorization: `Bearer ${token}` },
+      })
+      expect(res.statusCode).toBe(404)
+      await app.close()
+    })
+  })
+
   describe('GET /social/:provider/url', () => {
     it('returns social auth URL', async () => {
       const app = await buildApp()

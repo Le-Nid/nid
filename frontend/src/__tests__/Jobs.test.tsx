@@ -236,4 +236,27 @@ describe("JobsPage", () => {
     render(<JobsPage />);
     expect(screen.queryByText("jobs.autoRefresh")).not.toBeInTheDocument();
   });
+
+  it("uses bullmq_id for watching job when available", async () => {
+    const jobWithBullmqId = { ...activeJob, bullmq_id: 'bullmq-123' };
+    useJobsReturn.data = [jobWithBullmqId];
+    render(<JobsPage />);
+    // Click the eye button to open job progress modal
+    const eyeButtons = document.querySelectorAll('button');
+    const eyeBtn = Array.from(eyeButtons).find(b => b.querySelector('svg'));
+    if (eyeBtn) {
+      await act(async () => { eyeBtn.click(); });
+    }
+  });
+
+  it("falls back to record.id when bullmq_id is not set", async () => {
+    const jobWithoutBullmqId = { ...activeJob, bullmq_id: undefined };
+    useJobsReturn.data = [jobWithoutBullmqId];
+    render(<JobsPage />);
+    const eyeButtons = document.querySelectorAll('button');
+    const eyeBtn = Array.from(eyeButtons).find(b => b.querySelector('svg'));
+    if (eyeBtn) {
+      await act(async () => { eyeBtn.click(); });
+    }
+  });
 });

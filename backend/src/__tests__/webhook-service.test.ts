@@ -73,16 +73,18 @@ describe('triggerWebhooks', () => {
     )
   })
 
-  it('sends discord embed format', async () => {
+  it('sends discord embed format with human-readable title', async () => {
     mockExecute.mockResolvedValueOnce([
       { id: 'w1', url: 'https://discord.com/api/webhooks/123', type: 'discord', events: ['job.completed'], secret: null, is_active: true },
     ]).mockResolvedValue([])
 
-    await triggerWebhooks('user-1', 'job.completed', { title: 'Done' })
+    await triggerWebhooks('user-1', 'job.completed', { title: 'Done', body: '5 mails archived' })
 
     const fetchCall = mockFetch.mock.calls[0]
     const body = JSON.parse(fetchCall[1].body)
     expect(body.embeds).toBeDefined()
+    expect(body.embeds[0].title).toBe('📬 Done')
+    expect(body.embeds[0].description).toBe('5 mails archived')
     expect(body.embeds[0].color).toBe(0x00cc00) // green for success
   })
 
@@ -103,22 +105,36 @@ describe('triggerWebhooks', () => {
       { id: 'w1', url: 'https://hooks.slack.com/test', type: 'slack', events: ['job.completed'], secret: null, is_active: true },
     ]).mockResolvedValue([])
 
-    await triggerWebhooks('user-1', 'job.completed', { title: 'Done' })
+    await triggerWebhooks('user-1', 'job.completed', { title: 'Done', body: '5 items processed' })
+
+    const fetchCall = mockFetch.mock.calls[0]
+    const body = JSON.parse(fetchCall[1].body)
+    expect(body.text).toContain('Done')
+    expect(body.text).toContain('5 items processed')
+  })
+
+  it('slack falls back to event name when no title/body in data', async () => {
+    mockExecute.mockResolvedValueOnce([
+      { id: 'w1', url: 'https://hooks.slack.com/test', type: 'slack', events: ['job.completed'], secret: null, is_active: true },
+    ]).mockResolvedValue([])
+
+    await triggerWebhooks('user-1', 'job.completed', { jobId: 'j1' })
 
     const fetchCall = mockFetch.mock.calls[0]
     const body = JSON.parse(fetchCall[1].body)
     expect(body.text).toContain('job.completed')
   })
 
-  it('sends ntfy format with priority headers', async () => {
+  it('sends ntfy format with priority headers and human-readable title', async () => {
     mockExecute.mockResolvedValueOnce([
       { id: 'w1', url: 'https://ntfy.sh/topic', type: 'ntfy', events: ['integrity.failed'], secret: null, is_active: true },
     ]).mockResolvedValue([])
 
-    await triggerWebhooks('user-1', 'integrity.failed', { title: 'Alert' })
+    await triggerWebhooks('user-1', 'integrity.failed', { title: 'Alert', body: 'Archive integrity check failed' })
 
     const fetchCall = mockFetch.mock.calls[0]
-    expect(fetchCall[1].headers.Title).toContain('integrity.failed')
+    expect(fetchCall[1].headers.Title).toBe('Nid: Alert')
+    expect(fetchCall[1].body).toBe('Archive integrity check failed')
     expect(fetchCall[1].headers.Priority).toBe('4') // high for failed
     expect(fetchCall[1].headers.Tags).toBe('warning')
   })
@@ -133,6 +149,62 @@ describe('triggerWebhooks', () => {
     const fetchCall = mockFetch.mock.calls[0]
     expect(fetchCall[1].headers.Priority).toBe('3')
     expect(fetchCall[1].headers.Tags).toBe('white_check_mark')
+  })
+
+  it('ntfy webhook sends Basic auth when credentials are provided', async () => {
+    mockExecute.mockResolvedValueOnce([
+      { id: 'w1', url: 'https://ntfy.sh/topic', type: 'ntfy', events: ['job.completed'], secret: null, is_active: true, auth_user: 'myuser', auth_password: 'mypass' },
+    ]).mockResolvedValue([])
+
+    await triggerWebhooks('user-1', 'job.completed', { title: 'Done', body: '5 mails archived' })
+
+    const fetchCall = mockFetch.mock.calls[0]
+    const expected = Buffer.from('myuser:mypass').toString('base64')
+    expect(fetchCall[1].headers.Authorization).toBe(`Basic ${expected}`)
+    expect(fetchCall[1].headers.Title).toBe('Nid: Done')
+    expect(fetchCall[1].body).toBe('5 mails archived')
+  })
+
+  it('ntfy falls back to event name when no title/body in data', async () => {
+    mockExecute.mockResolvedValueOnce([
+      { id: 'w1', url: 'https://ntfy.sh/topic', type: 'ntfy', events: ['job.completed'], secret: null, is_active: true },
+    ]).mockResolvedValue([])
+
+    await triggerWebhooks('user-1', 'job.completed', { jobId: 'j1' })
+
+    const fetchCall = mockFetch.mock.calls[0]
+    expect(fetchCall[1].headers.Title).toBe('Nid: job.completed')
+    // Body is JSON since no body field provided
+    expect(JSON.parse(fetchCall[1].body)).toEqual({ jobId: 'j1' })
+  })
+
+  it('discord falls back to event name when no title/body in data', async () => {
+    mockExecute.mockResolvedValueOnce([
+      { id: 'w1', url: 'https://discord.com/api/webhooks/123', type: 'discord', events: ['job.completed'], secret: null, is_active: true },
+    ]).mockResolvedValue([])
+
+    await triggerWebhooks('user-1', 'job.completed', { jobId: 'j1' })
+
+    const fetchCall = mockFetch.mock.calls[0]
+    const body = JSON.parse(fetchCall[1].body)
+    expect(body.embeds[0].title).toBe('📬 job.completed')
+  })
+
+  it('includes status and count fields when provided', async () => {
+    mockExecute.mockResolvedValueOnce([
+      { id: 'w1', url: 'https://example.com/hook', type: 'generic', events: ['job.completed'], secret: null, is_active: true },
+    ]).mockResolvedValue([])
+
+    await triggerWebhooks('user-1', 'job.completed', {
+      title: 'Done',
+      status: 'success',
+      count: 0,
+    })
+
+    const fetchCall = mockFetch.mock.calls[0]
+    const body = JSON.parse(fetchCall[1].body)
+    expect(body.data.status).toBe('success')
+    expect(body.data.count).toBe(0)
   })
 
   it('filters sensitive data from payload', async () => {

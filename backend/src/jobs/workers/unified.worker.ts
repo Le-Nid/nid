@@ -130,6 +130,7 @@ async function handleBulk(job: Job) {
   const { accountId, action, messageIds, labelId } = job.data
   const db = getDb()
   const total = messageIds.length
+  const CHUNK_SIZE = 50
 
   await db
     .updateTable('jobs')
@@ -148,29 +149,35 @@ async function handleBulk(job: Job) {
   }
 
   try {
-    switch (action) {
-      case 'trash':
-        await trashMessages(accountId, messageIds)
-        break
-      case 'archive':
-        await modifyMessages(accountId, messageIds, [], ['INBOX'])
-        break
-      case 'mark_read':
-        await modifyMessages(accountId, messageIds, [], ['UNREAD'])
-        break
-      case 'mark_unread':
-        await modifyMessages(accountId, messageIds, ['UNREAD'], [])
-        break
-      case 'label':
-        if (!labelId) throw new Error('labelId required')
-        await modifyMessages(accountId, messageIds, [labelId], [])
-        break
-      case 'unlabel':
-        if (!labelId) throw new Error('labelId required')
-        await modifyMessages(accountId, messageIds, [], [labelId])
-        break
+    // Process in chunks to report intermediate progress
+    let processed = 0
+    for (let i = 0; i < messageIds.length; i += CHUNK_SIZE) {
+      const chunk = messageIds.slice(i, i + CHUNK_SIZE)
+      switch (action) {
+        case 'trash':
+          await trashMessages(accountId, chunk)
+          break
+        case 'archive':
+          await modifyMessages(accountId, chunk, [], ['INBOX'])
+          break
+        case 'mark_read':
+          await modifyMessages(accountId, chunk, [], ['UNREAD'])
+          break
+        case 'mark_unread':
+          await modifyMessages(accountId, chunk, ['UNREAD'], [])
+          break
+        case 'label':
+          if (!labelId) throw new Error('labelId required')
+          await modifyMessages(accountId, chunk, [labelId], [])
+          break
+        case 'unlabel':
+          if (!labelId) throw new Error('labelId required')
+          await modifyMessages(accountId, chunk, [], [labelId])
+          break
+      }
+      processed += chunk.length
+      await updateProgress(processed)
     }
-    await updateProgress(total)
     await db
       .updateTable('jobs')
       .set({ status: 'completed', completed_at: new Date() })
