@@ -1,6 +1,6 @@
 {
   "name": "nid-backend",
-  "version": "0.1.1",
+  "version": "0.2.1",
   "type": "module",
   "description": "Nid backend API — Fastify + TypeScript + Kysely",
   "main": "dist/index.js",
