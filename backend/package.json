@@ -41,7 +41,7 @@
     "googleapis": "^171.4.0",
     "imapflow": "^1.2.18",
     "ioredis": "^5.3.2",
-    "kysely": "^0.28.15",
+    "kysely": "^0.28.16",
     "mailparser": "^3.9.6",
     "nodemailer": "^8.0.4",
     "otplib": "^13.4.0",
