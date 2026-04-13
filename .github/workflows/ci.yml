@@ -45,7 +45,7 @@ jobs:
           directory: backend/coverage
 
       - name: Upload coverage artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-backend
           path: backend/coverage/lcov.info
@@ -87,7 +87,7 @@ jobs:
           directory: frontend/coverage
 
       - name: Upload coverage artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-frontend
           path: frontend/coverage/lcov.info
