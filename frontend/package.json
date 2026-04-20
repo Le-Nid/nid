@@ -22,7 +22,7 @@
     "@icons-pack/react-simple-icons": "^13.13.0",
     "@tanstack/react-query": "^5.96.2",
     "@tanstack/react-query-devtools": "^5.96.2",
-    "antd": "^6.3.5",
+    "antd": "^6.3.6",
     "axios": "^1.14.0",
     "dayjs": "^1.11.20",
     "i18next": "^26.0.3",
