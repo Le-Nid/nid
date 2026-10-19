@@ -23,11 +23,7 @@ const mockChain = {
   orderBy: vi.fn().mockReturnThis(),
   innerJoin: vi.fn().mockReturnThis(),
   values: vi.fn(() => ({ returningAll: mockReturningAll })),
-  set: vi.fn(() => ({
-    where: vi.fn(() => ({
-      execute: mockExecute,
-    })),
-  })),
+  set: vi.fn().mockReturnThis(),
   execute: mockExecute,
   executeTakeFirst: mockExecuteTakeFirst,
   executeTakeFirstOrThrow: mockExecuteTakeFirstOrThrow,
@@ -110,7 +106,7 @@ describe('Sharing Service', () => {
     })
 
     it('returns null for expired share', async () => {
-      mockExecuteTakeFirst.mockResolvedValue({
+      mockExecuteTakeFirst.mockResolvedValueOnce({
         share_id: 'share-1',
         token: 'abc',
         expires_at: new Date(Date.now() - 86400000), // expired
@@ -125,13 +121,14 @@ describe('Sharing Service', () => {
         eml_path: '/tmp/test.eml',
         is_encrypted: false,
       })
+      mockExecuteTakeFirst.mockResolvedValueOnce({ numUpdatedRows: 0n }) // guarded update matched nothing
 
       const result = await getSharedMail('abc')
       expect(result).toBeNull()
     })
 
     it('returns null when access limit reached', async () => {
-      mockExecuteTakeFirst.mockResolvedValue({
+      mockExecuteTakeFirst.mockResolvedValueOnce({
         share_id: 'share-1',
         token: 'abc',
         expires_at: new Date(Date.now() + 86400000),
@@ -146,6 +143,7 @@ describe('Sharing Service', () => {
         eml_path: '/tmp/test.eml',
         is_encrypted: false,
       })
+      mockExecuteTakeFirst.mockResolvedValueOnce({ numUpdatedRows: 0n }) // guarded update matched nothing
 
       const result = await getSharedMail('abc')
       expect(result).toBeNull()
