@@ -46,7 +46,7 @@ const { mockStorage } = vi.hoisted(() => ({
   },
 }))
 vi.mock('../storage/storage.service', () => ({
-  getStorageForUser: vi.fn().mockResolvedValue(mockStorage),
+  getLocalStorage: vi.fn().mockReturnValue(mockStorage),
 }))
 
 import { getDeduplicationStats, backfillAttachmentHashes } from '../archive/dedup.service'

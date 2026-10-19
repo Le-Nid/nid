@@ -361,33 +361,6 @@ export const archiveThreadsApi = {
     api.get(`/api/archive/${accountId}/threads/${threadId}`).then((r) => r.data),
 }
 
-// ─── Storage (S3/MinIO) ──────────────────────────────────
-export const storageApi = {
-  getConfig: () =>
-    api.get('/api/storage/config').then((r) => r.data),
-
-  saveConfig: (data: {
-    type: 'local' | 's3'
-    s3Endpoint?: string
-    s3Region?: string
-    s3Bucket?: string
-    s3AccessKeyId?: string
-    s3SecretAccessKey?: string
-    s3ForcePathStyle?: boolean
-  }) =>
-    api.put('/api/storage/config', data).then((r) => r.data),
-
-  testS3: (data: {
-    endpoint: string
-    region?: string
-    bucket?: string
-    accessKeyId: string
-    secretAccessKey: string
-    forcePathStyle?: boolean
-  }) =>
-    api.post('/api/storage/test-s3', data).then((r) => r.data),
-}
-
 // ─── Retention Policies ──────────────────────────────────
 export const retentionApi = {
   list: () =>

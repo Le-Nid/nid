@@ -1,5 +1,5 @@
 import { getDb } from '../db'
-import { getStorageForUser } from '../storage/storage.service'
+import { getLocalStorage } from '../storage/storage.service'
 import { createLogger } from '../logger'
 
 const logger = createLogger('trash')
@@ -55,7 +55,7 @@ export async function purgeArchiveTrash(): Promise<{ deleted: number }> {
   }
 
   for (const [userId, { ids, emlPaths }] of byUser) {
-    const storage = await getStorageForUser(userId)
+    const storage = getLocalStorage()
 
     // Delete attachments
     const attachments = await db

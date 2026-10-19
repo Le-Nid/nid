@@ -1,14 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   Card, Tabs, Typography, Form, Input, InputNumber, Select, Switch,
   Button, Table, Popconfirm, Progress, Statistic, Row, Col,
   Upload, Divider, Tag, Alert, App,
 } from 'antd'
-import { Server, Trash2, Plus, LayoutDashboard, FileInput, FileOutput, Upload as UploadIcon, Play, Webhook, ShieldCheck, Database } from 'lucide-react'
+import { Server, Trash2, Plus, LayoutDashboard, FileInput, FileOutput, Upload as UploadIcon, Play, Webhook } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/auth.store'
 import {
-  useStorageConfig, useSaveStorageConfig, useTestS3,
   useRetentionPolicies, useCreateRetentionPolicy, useUpdateRetentionPolicy,
   useDeleteRetentionPolicy, useRunRetention,
   useQuotaStats,
@@ -28,13 +27,8 @@ export default function OpsResilience() {
       <Paragraph type="secondary">{t('ops.description')}</Paragraph>
 
       <Tabs
-        defaultActiveKey="storage"
+        defaultActiveKey="retention"
         items={[
-          {
-            key: 'storage',
-            label: <span><Server size={14} /> {t('ops.tabs.storage')}</span>,
-            children: <StorageTab />,
-          },
           {
             key: 'retention',
             label: <span><Trash2 size={14} /> {t('ops.tabs.retention')}</span>,
@@ -53,140 +47,6 @@ export default function OpsResilience() {
         ]}
       />
     </div>
-  )
-}
-
-// ─── Storage Tab ────────────────────────────────────────────
-
-function StorageTab() {
-  const { t } = useTranslation()
-  const { message } = App.useApp()
-  const [form] = Form.useForm()
-  const { data: cfg, isLoading } = useStorageConfig()
-  const saveConfig = useSaveStorageConfig()
-  const testS3 = useTestS3()
-  const [storageType, setStorageType] = useState<'local' | 's3'>('local')
-
-  useEffect(() => {
-    if (cfg) {
-      setStorageType(cfg.type ?? 'local')
-      form.setFieldsValue({
-        type: cfg.type ?? 'local',
-        s3Endpoint: cfg.s3_endpoint,
-        s3Region: cfg.s3_region,
-        s3Bucket: cfg.s3_bucket,
-        s3ForcePathStyle: cfg.s3_force_path_style ?? true,
-      })
-    }
-  }, [cfg, form])
-
-  const handleSave = async (values: any) => {
-    try {
-      await saveConfig.mutateAsync(values)
-      message.success(t('ops.storage.saved'))
-    } catch {
-      message.error(t('common.error'))
-    }
-  }
-
-  const handleTest = async () => {
-    const values = form.getFieldsValue()
-    try {
-      const result = await testS3.mutateAsync({
-        endpoint: values.s3Endpoint,
-        region: values.s3Region,
-        bucket: values.s3Bucket,
-        accessKeyId: values.s3AccessKeyId,
-        secretAccessKey: values.s3SecretAccessKey,
-        forcePathStyle: values.s3ForcePathStyle,
-      })
-      if (result.success) {
-        message.success(t('ops.storage.testSuccess'))
-      } else {
-        message.error(`${t('ops.storage.testFailed')}: ${result.error}`)
-      }
-    } catch {
-      message.error(t('ops.storage.testFailed'))
-    }
-  }
-
-  return (
-    <Card loading={isLoading}>
-      <Alert
-        message={t('ops.storage.info')}
-        type="info"
-        showIcon
-        style={{ marginBottom: 24 }}
-      />
-
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={handleSave}
-        initialValues={{ type: 'local', s3ForcePathStyle: true, s3Region: 'us-east-1', s3Bucket: 'nid-archives' }}
-      >
-        <Form.Item name="type" label={t('ops.storage.type')}>
-          <Select onChange={(v) => setStorageType(v)}>
-            <Select.Option value="local">
-              <Database size={14} /> {t('ops.storage.local')}
-            </Select.Option>
-            <Select.Option value="s3">
-              <Server size={14} /> {t('ops.storage.s3')}
-            </Select.Option>
-          </Select>
-        </Form.Item>
-
-        {storageType === 's3' && (
-          <>
-            <Form.Item name="s3Endpoint" label={t('ops.storage.endpoint')} rules={[{ required: true }]}>
-              <Input placeholder="https://s3.amazonaws.com ou https://minio.local:9000" />
-            </Form.Item>
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item name="s3Region" label={t('ops.storage.region')}>
-                  <Input placeholder="us-east-1" />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item name="s3Bucket" label={t('ops.storage.bucket')}>
-                  <Input placeholder="nid-archives" />
-                </Form.Item>
-              </Col>
-            </Row>
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item name="s3AccessKeyId" label={t('ops.storage.accessKey')} rules={[{ required: true }]}>
-                  <Input />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item name="s3SecretAccessKey" label={t('ops.storage.secretKey')} rules={[{ required: true }]}>
-                  <Input.Password />
-                </Form.Item>
-              </Col>
-            </Row>
-            <Form.Item name="s3ForcePathStyle" label={t('ops.storage.pathStyle')} valuePropName="checked">
-              <Switch />
-            </Form.Item>
-
-            <Button
-              icon={<ShieldCheck size={14} />}
-              onClick={handleTest}
-              loading={testS3.isPending}
-              style={{ marginBottom: 16 }}
-            >
-              {t('ops.storage.test')}
-            </Button>
-          </>
-        )}
-
-        <Form.Item>
-          <Button type="primary" htmlType="submit" loading={saveConfig.isPending}>
-            {t('common.save')}
-          </Button>
-        </Form.Item>
-      </Form>
-    </Card>
   )
 }
 

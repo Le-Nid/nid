@@ -19,7 +19,7 @@ vi.mock('../db', () => ({ getDb: () => mockDb }))
 
 const mockDeleteFile = vi.fn().mockResolvedValue(undefined)
 vi.mock('../storage/storage.service', () => ({
-  getStorageForUser: vi.fn().mockResolvedValue({ deleteFile: (...args: any[]) => mockDeleteFile(...args) }),
+  getLocalStorage: vi.fn().mockReturnValue({ deleteFile: (...args: any[]) => mockDeleteFile(...args) }),
 }))
 
 vi.mock('../logger', () => {

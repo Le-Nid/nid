@@ -8,55 +8,13 @@ Nid offre des outils d'opérations et de résilience pour gérer le stockage, la
 
 Dans la barre latérale, ouvrez le groupe **Système** et cliquez sur **Ops & Résilience**.
 
-La page est organisée en 4 onglets :
+La page est organisée en 3 onglets :
 
 | Onglet | Fonctionnalité |
 |---|---|
-| **Stockage S3** | Configuration du stockage distant (S3, MinIO, Backblaze B2) |
 | **Rétention** | Politiques de suppression automatique des archives anciennes |
 | **Quota API** | Suivi en temps réel de la consommation du quota Gmail API |
 | **Import / Export** | Import mbox et IMAP, export mbox |
-
----
-
-## Stockage distant (S3 / MinIO)
-
-Par défaut, Nid stocke les archives EML sur le système de fichiers local (NAS). Vous pouvez configurer un stockage S3-compatible pour :
-
-- **Géo-répliquer** vos archives sur un cloud distant
-- Utiliser des services comme **AWS S3**, **MinIO**, **Backblaze B2**, **Wasabi**, etc.
-- Séparer le stockage de l'application
-
-### Configurer le stockage S3
-
-1. Dans l'onglet **Stockage S3**, sélectionnez le type **S3-compatible**
-2. Renseignez les informations de connexion :
-   - **Endpoint** : URL de votre serveur S3 (ex. `https://s3.amazonaws.com` ou `https://minio.local:9000`)
-   - **Région** : région S3 (ex. `us-east-1`, `eu-west-1`)
-   - **Bucket** : nom du bucket de stockage
-   - **Access Key ID** et **Secret Access Key** : identifiants d'accès
-   - **Path-style** : à activer pour MinIO (désactiver pour AWS S3)
-3. Cliquez sur **Tester la connexion** pour vérifier que les identifiants sont corrects
-4. Cliquez sur **Sauvegarder**
-
-> 📸 *Capture d'écran suggérée : formulaire de configuration S3 avec les champs endpoint, région, bucket et les boutons tester/sauvegarder*
-
-::: tip Configuration globale vs par utilisateur
-Le stockage S3 peut être configuré de deux manières :
-
-- **Globalement** via les variables d'environnement (`S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, etc.) — tous les utilisateurs utilisent le même stockage
-- **Par utilisateur** via l'interface — chaque utilisateur peut configurer son propre stockage S3
-
-La configuration par utilisateur a priorité sur la configuration globale.
-:::
-
-::: info MinIO
-Pour utiliser MinIO (auto-hébergé), activez le **Path-style** et pointez l'endpoint vers votre instance MinIO (ex. `http://minio:9000`).
-:::
-
-### Revenir au stockage local
-
-Sélectionnez le type **Local (NAS / disque)** et sauvegardez.
 
 ---
 

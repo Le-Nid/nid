@@ -5,7 +5,7 @@ import { getDb } from "../db";
 import { enqueueJob } from "../jobs/queue";
 import { streamArchiveZip } from "../archive/export.service";
 import { invalidateDashboardCache } from "../dashboard/cache.service";
-import { getStorageForUser } from "../storage/storage.service";
+import { getLocalStorage } from "../storage/storage.service";
 import fs from "node:fs";
 import { escapeIlike, notFound } from "../utils/db";
 import { extractPagination } from "../utils/pagination";
@@ -444,7 +444,7 @@ export async function archiveRoutes(app: FastifyInstance) {
 
     if (mails.length === 0) return { deleted: 0 };
 
-    const storage = await getStorageForUser(userId);
+    const storage = getLocalStorage();
     const mailIds = mails.map((m) => m.id);
 
     // Delete attachments files + DB

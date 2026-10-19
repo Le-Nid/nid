@@ -69,7 +69,7 @@ The **Space Saved** card displays:
 
 If you archived emails before deduplication was enabled, click the **Analyze** button to calculate hashes for existing attachments. This operation:
 
-1. Reads each file from storage (local or S3)
+1. Reads each file from local storage
 2. Calculates the SHA-256 hash
 3. Identifies duplicates and removes redundant copies
 4. Updates the database to point to the unique file

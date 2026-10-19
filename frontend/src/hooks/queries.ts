@@ -4,7 +4,7 @@ import {
   adminApi, unsubscribeApi, attachmentsApi, reportsApi,
   duplicatesApi, analyticsApi, privacyApi, notificationsApi,
   auditApi, webhooksApi, savedSearchesApi, unifiedApi, archiveThreadsApi,
-  storageApi, retentionApi, quotaApi, importApi,
+  retentionApi, quotaApi, importApi,
   expirationApi, sharingApi,
 } from '../api'
 
@@ -67,7 +67,6 @@ export const queryKeys = {
   },
   audit: (params?: Record<string, any>) => ['audit', params] as const,
   webhooks: () => ['webhooks'] as const,
-  storage: () => ['storage'] as const,
   retention: () => ['retention'] as const,
   quota: (accountId: string) => ['quota', accountId] as const,
   expiration: (accountId: string) => ['expiration', accountId] as const,
@@ -459,31 +458,6 @@ export function useArchiveThread(accountId: string | null, threadId: string | nu
     queryKey: queryKeys.archiveThread(accountId!, threadId!),
     queryFn: () => archiveThreadsApi.getThread(accountId!, threadId!),
     enabled: !!accountId && !!threadId,
-  })
-}
-
-// ─── Storage ──────────────────────────────────────────────
-
-export function useStorageConfig() {
-  return useQuery({
-    queryKey: queryKeys.storage(),
-    queryFn: () => storageApi.getConfig(),
-  })
-}
-
-export function useSaveStorageConfig() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (data: Parameters<typeof storageApi.saveConfig>[0]) =>
-      storageApi.saveConfig(data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.storage() }),
-  })
-}
-
-export function useTestS3() {
-  return useMutation({
-    mutationFn: (data: Parameters<typeof storageApi.testS3>[0]) =>
-      storageApi.testS3(data),
   })
 }
 

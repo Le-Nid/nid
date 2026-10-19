@@ -25,7 +25,7 @@ const { mockStorage } = vi.hoisted(() => ({
   },
 }))
 vi.mock('../storage/storage.service', () => ({
-  getStorageForUser: vi.fn().mockResolvedValue(mockStorage),
+  getLocalStorage: vi.fn().mockReturnValue(mockStorage),
 }))
 
 import {

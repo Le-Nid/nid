@@ -282,20 +282,6 @@ export interface GmailApiUsageTable {
   recorded_at:      Generated<Date>
 }
 
-export interface StorageConfigsTable {
-  id:                   Generated<string>
-  user_id:              string
-  type:                 Generated<string>  // 'local' | 's3'
-  s3_endpoint:          string | null
-  s3_region:            string | null
-  s3_bucket:            string | null
-  s3_access_key_id:     string | null
-  s3_secret_access_key: string | null
-  s3_force_path_style:  Generated<boolean>
-  created_at:           Generated<Date>
-  updated_at:           Generated<Date>
-}
-
 // ─── Expiration & Sharing tables ──────────────────────────
 
 export interface EmailExpirationsTable {
@@ -346,7 +332,6 @@ export interface Database {
   retention_policies:   RetentionPoliciesTable
   system_config:        SystemConfigTable
   gmail_api_usage:      GmailApiUsageTable
-  storage_configs:      StorageConfigsTable
   email_expirations:    EmailExpirationsTable
   archive_shares:       ArchiveSharesTable
 }
@@ -383,8 +368,6 @@ export type RetentionPolicy    = Selectable<RetentionPoliciesTable>
 export type NewRetentionPolicy = Insertable<RetentionPoliciesTable>
 export type GmailApiUsage      = Selectable<GmailApiUsageTable>
 export type NewGmailApiUsage   = Insertable<GmailApiUsageTable>
-export type StorageConfig      = Selectable<StorageConfigsTable>
-export type NewStorageConfig   = Insertable<StorageConfigsTable>
 
 export type EmailActivityHeatmap    = Selectable<EmailActivityHeatmapTable>
 export type SenderScore             = Selectable<SenderScoresTable>

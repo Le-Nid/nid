@@ -1,5 +1,5 @@
 import { getDb } from '../db'
-import { getStorageForUser } from '../storage/storage.service'
+import { getLocalStorage } from '../storage/storage.service'
 import { createLogger } from '../logger'
 
 const logger = createLogger('retention')
@@ -70,7 +70,7 @@ async function applyPolicy(policy: {
 
   if (mails.length === 0) return 0
 
-  const storage = await getStorageForUser(policy.user_id)
+  const storage = getLocalStorage()
   const mailIds = mails.map((m) => m.id)
 
   // Delete attachments first

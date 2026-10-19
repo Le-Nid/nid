@@ -21,12 +21,6 @@ vi.mock('../config', () => ({
     GMAIL_BATCH_SIZE: 25,
     GMAIL_THROTTLE_MS: 1000,
     GMAIL_CONCURRENCY: 10,
-    S3_ENDPOINT: '',
-    S3_REGION: 'us-east-1',
-    S3_BUCKET: 'test',
-    S3_ACCESS_KEY_ID: '',
-    S3_SECRET_ACCESS_KEY: '',
-    S3_FORCE_PATH_STYLE: true,
   },
 }))
 

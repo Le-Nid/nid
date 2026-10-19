@@ -8,55 +8,13 @@ Nid provides operations and resilience tools to manage storage, archive retentio
 
 In the sidebar, open the **System** group and click **Ops & Resilience**.
 
-The page is organized into 4 tabs:
+The page is organized into 3 tabs:
 
 | Tab | Feature |
 |---|---|
-| **S3 Storage** | Remote storage configuration (S3, MinIO, Backblaze B2) |
 | **Retention** | Automatic deletion policies for old archives |
 | **API Quota** | Real-time tracking of Gmail API quota usage |
 | **Import / Export** | Mbox and IMAP import, mbox export |
-
----
-
-## Remote Storage (S3 / MinIO)
-
-By default, Nid stores EML archives on the local file system (NAS). You can configure S3-compatible storage to:
-
-- **Geo-replicate** your archives to a remote cloud
-- Use services such as **AWS S3**, **MinIO**, **Backblaze B2**, **Wasabi**, etc.
-- Separate storage from the application
-
-### Configure S3 Storage
-
-1. In the **S3 Storage** tab, select the **S3-compatible** type
-2. Fill in the connection details:
-   - **Endpoint**: URL of your S3 server (e.g., `https://s3.amazonaws.com` or `https://minio.local:9000`)
-   - **Region**: S3 region (e.g., `us-east-1`, `eu-west-1`)
-   - **Bucket**: storage bucket name
-   - **Access Key ID** and **Secret Access Key**: access credentials
-   - **Path-style**: enable for MinIO (disable for AWS S3)
-3. Click **Test Connection** to verify that the credentials are correct
-4. Click **Save**
-
-> 📸 *Suggested screenshot: S3 configuration form with endpoint, region, bucket fields and test/save buttons*
-
-::: tip Global vs. per-user configuration
-S3 storage can be configured in two ways:
-
-- **Globally** via environment variables (`S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, etc.) — all users share the same storage
-- **Per user** via the interface — each user can configure their own S3 storage
-
-Per-user configuration takes priority over the global configuration.
-:::
-
-::: info MinIO
-To use MinIO (self-hosted), enable **Path-style** and point the endpoint to your MinIO instance (e.g., `http://minio:9000`).
-:::
-
-### Revert to Local Storage
-
-Select the **Local (NAS / disk)** type and save.
 
 ---
 

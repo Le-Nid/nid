@@ -755,26 +755,9 @@
     "description": "Stockage distant, politiques de rétention, suivi quota Gmail API, import/export de mails.",
     "selectAccount": "Sélectionnez un compte Gmail pour accéder à cette fonctionnalité.",
     "tabs": {
-      "storage": "Stockage S3",
       "retention": "Rétention",
       "quota": "Quota API",
       "import": "Import / Export"
-    },
-    "storage": {
-      "info": "Configurez un stockage S3-compatible (AWS S3, MinIO, Backblaze B2…) comme alternative au stockage local NAS pour vos archives.",
-      "type": "Type de stockage",
-      "local": "Local (NAS / disque)",
-      "s3": "S3-compatible",
-      "endpoint": "Endpoint S3",
-      "region": "Région",
-      "bucket": "Bucket",
-      "accessKey": "Access Key ID",
-      "secretKey": "Secret Access Key",
-      "pathStyle": "Path-style (requis pour MinIO)",
-      "test": "Tester la connexion",
-      "testSuccess": "Connexion S3 réussie",
-      "testFailed": "Échec de connexion S3",
-      "saved": "Configuration stockage sauvegardée"
     },
     "retention": {
       "info": "Les politiques de rétention suppriment automatiquement les archives plus anciennes que la durée configurée.",

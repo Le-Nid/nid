@@ -698,7 +698,6 @@ server.registerResource(
         allowRegistration: config.ALLOW_REGISTRATION,
         gmailBatchSize: config.GMAIL_BATCH_SIZE,
         gmailConcurrency: config.GMAIL_CONCURRENCY,
-        s3Configured: !!config.S3_ENDPOINT,
       }, null, 2),
     }],
   }),

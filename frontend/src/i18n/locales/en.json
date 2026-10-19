@@ -755,26 +755,9 @@
     "description": "Remote storage, retention policies, Gmail API quota monitoring, mail import/export.",
     "selectAccount": "Select a Gmail account to access this feature.",
     "tabs": {
-      "storage": "S3 Storage",
       "retention": "Retention",
       "quota": "API Quota",
       "import": "Import / Export"
-    },
-    "storage": {
-      "info": "Configure an S3-compatible storage (AWS S3, MinIO, Backblaze B2…) as an alternative to local NAS storage for your archives.",
-      "type": "Storage type",
-      "local": "Local (NAS / disk)",
-      "s3": "S3-compatible",
-      "endpoint": "S3 Endpoint",
-      "region": "Region",
-      "bucket": "Bucket",
-      "accessKey": "Access Key ID",
-      "secretKey": "Secret Access Key",
-      "pathStyle": "Path-style (required for MinIO)",
-      "test": "Test connection",
-      "testSuccess": "S3 connection successful",
-      "testFailed": "S3 connection failed",
-      "saved": "Storage configuration saved"
     },
     "retention": {
       "info": "Retention policies automatically delete archives older than the configured duration.",

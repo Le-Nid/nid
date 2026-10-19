@@ -143,48 +143,6 @@ With multiple users active simultaneously, increase `GMAIL_THROTTLE_MS` or decre
 
 ---
 
-## Remote Storage (S3/MinIO)
-
-In addition to local storage, Nid can archive to an S3-compatible bucket. These variables define the **global** configuration (all users). Each user can also configure their own S3 storage via the interface.
-
-| Variable | Default | Description |
-|---|---|---|
-| `S3_ENDPOINT` | *(empty)* | S3 server URL (e.g. `https://s3.amazonaws.com` or `https://minio.local:9000`). If empty, global S3 storage is disabled |
-| `S3_REGION` | `us-east-1` | S3 bucket region |
-| `S3_BUCKET` | `nid-archives` | Storage bucket name |
-| `S3_ACCESS_KEY_ID` | *(empty)* | Access Key ID for S3 authentication |
-| `S3_SECRET_ACCESS_KEY` | *(empty)* | Secret Access Key for S3 authentication |
-| `S3_FORCE_PATH_STYLE` | `true` | Use path-style for S3 requests. Required for MinIO, disable for AWS S3 |
-
-::: tip MinIO in Docker
-To use self-hosted MinIO, add a `minio` service to your `docker-compose.yml`:
-
-```yaml
-minio:
-  image: minio/minio
-  command: server /data --console-address ":9001"
-  environment:
-    MINIO_ROOT_USER: minioadmin
-    MINIO_ROOT_PASSWORD: minioadmin
-  volumes:
-    - minio_data:/data
-  ports:
-    - "9000:9000"
-    - "9001:9001"
-```
-
-Then configure:
-```bash
-S3_ENDPOINT=http://minio:9000
-S3_ACCESS_KEY_ID=minioadmin
-S3_SECRET_ACCESS_KEY=minioadmin
-S3_BUCKET=nid-archives
-S3_FORCE_PATH_STYLE=true
-```
-:::
-
----
-
 ## Docker Volumes
 
 ### Default configuration

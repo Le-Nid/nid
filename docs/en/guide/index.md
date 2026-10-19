@@ -23,7 +23,7 @@ Nid is a Gmail mailbox management and archiving application, installed on your o
 | [**Privacy**](privacy.md) | Detect tracking pixels and protect your data |
 | [**Unified inbox**](unified-inbox.md) | View all your Gmail accounts in a single view |
 | [**Saved searches**](saved-searches.md) | Save your favorite filters |
-| [**Ops & Resilience**](ops-resilience.md) | S3 storage, retention, API quota, import/export |
+| [**Ops & Resilience**](ops-resilience.md) | Retention, API quota, import/export |
 | [**Notifications**](notifications.md) | Stay informed via in-app notifications and webhooks |
 | [**Settings**](settings.md) | 2FA, export/import, language, theme |
 | [**Administration**](admin.md) | Manage users and quotas (admins) |

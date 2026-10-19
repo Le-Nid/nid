@@ -1,6 +1,6 @@
 import { createHash } from 'crypto'
 import { getDb } from '../db'
-import { getStorageForUser } from '../storage/storage.service'
+import { getLocalStorage } from '../storage/storage.service'
 import { sql } from 'kysely'
 import { createLogger } from '../logger'
 
@@ -99,7 +99,7 @@ export async function getDeduplicationStats(userId: string) {
 export async function backfillAttachmentHashes(userId: string) {
   logger.info({ userId }, 'backfilling attachment hashes')
   const db = getDb()
-  const storage = await getStorageForUser(userId)
+  const storage = getLocalStorage()
 
   // Récupérer les comptes Gmail de l'utilisateur
   const accounts = await db
@@ -161,7 +161,7 @@ export async function backfillAttachmentHashes(userId: string) {
  */
 async function cleanupDuplicateFiles(userId: string) {
   const db = getDb()
-  const storage = await getStorageForUser(userId)
+  const storage = getLocalStorage()
 
   const accounts = await db
     .selectFrom('gmail_accounts')
