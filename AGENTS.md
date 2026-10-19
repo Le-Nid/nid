@@ -58,3 +58,18 @@ Le script CI (`.github/workflows/ci.yml`) exécute : `npm ci` → `typecheck` �
 - Les tests frontend avec Ant Design nécessitent les stubs jsdom (`matchMedia`, `getComputedStyle`) dans `frontend/src/__tests__/setup.ts`.
 - En dev local (hors Docker), `backend/.env` pointe vers `localhost` pour DATABASE_URL/REDIS_URL. En Docker, utiliser les noms de service `postgres`/`redis`.
 - Les lockfiles générés sur le host peuvent manquer des dépendances musl pour `node:24-alpine`. Regénérer dans le conteneur si `npm ci` échoue en Docker.
+
+## Outils agent (`.claude/`)
+
+Vendorisés dans le repo pour fonctionner à l'identique en local et en cloud (les plugins Claude Code ne sont pas installés en session cloud).
+
+- **ponytail** v5.3.2 (MIT, [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail)) — skills `.claude/skills/ponytail*`, hooks Node `.claude/hooks/ponytail-*.js` (CommonJS, d'où `.claude/hooks/package.json`). Niveaux : `/ponytail lite|full|ultra|off`. Revue : `/ponytail-review`. Ruleset réinjecté à chaque prompt.
+- **graphify** v0.9.92 (MIT, [Graphify-Labs/graphify](https://github.com/Graphify-Labs/graphify)) — skill `.claude/skills/graphify`, hooks `graphify-setup.sh` (SessionStart : installe le CLI `graphifyy` en cloud, puis `graphify update .`) et `graphify-prompt.sh` (à chaque prompt : update incrémental en arrière-plan + rappel `graphify query`). En local : `uv tool install graphifyy==0.9.92` une fois. `graphify-out/` est ignoré par git.
+- Mise à jour : recopier `skills/` et `hooks/` depuis le tag amont, bumper les versions ici et dans `graphify-setup.sh` / `.graphify_version`.
+
+### graphify
+
+Rules:
+- When graphify-out/graph.json exists, run `graphify query "<question>"` before your first grep, search or source-file read for a codebase question, and put this rule in every subagent prompt that explores code. Read raw files only for lines the graph or an earlier read already located. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
