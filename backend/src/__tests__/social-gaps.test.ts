@@ -73,6 +73,7 @@ vi.mock('arctic', () => ({
   decodeIdToken: vi.fn().mockReturnValue({
     sub: 'google-user-id',
     email: 'user@gmail.com',
+    email_verified: true,
     name: 'Test User',
     picture: 'https://lh3.google.com/photo',
   }),

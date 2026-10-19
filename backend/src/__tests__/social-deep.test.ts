@@ -73,6 +73,7 @@ vi.mock('arctic', () => ({
   decodeIdToken: vi.fn().mockReturnValue({
     sub: 'google-user-id',
     email: 'user@gmail.com',
+    email_verified: true,
     name: 'Test User',
     picture: 'https://lh3.google.com/photo',
   }),
@@ -207,6 +208,23 @@ describe('exchangeSocialCode', () => {
 
     const result = await exchangeSocialCode('google', 'code', 'verifier')
     expect(result.id).toBe('existing-user')
+  })
+
+  it('refuses to link an existing account when the provider did not verify the email', async () => {
+    const { decodeIdToken } = await import('arctic')
+    ;(decodeIdToken as any).mockReturnValueOnce({ sub: 'attacker-id', email: 'user@gmail.com', email_verified: false })
+    mockValidateAuthorizationCode.mockResolvedValueOnce({
+      accessToken: () => 'access-token',
+      accessTokenExpiresAt: () => new Date(Date.now() + 3600000),
+      hasRefreshToken: () => false,
+      idToken: () => 'id-token',
+    })
+    mockExecuteTakeFirst
+      .mockResolvedValueOnce(null) // no social account
+      .mockResolvedValueOnce({ id: 'existing-user', email: 'user@gmail.com', role: 'admin', is_active: true }) // victim
+
+    await expect(exchangeSocialCode('google', 'code', 'verifier')).rejects.toThrow('Email not verified')
+    expect(mockExecute).not.toHaveBeenCalled() // nothing linked
   })
 
   it('throws for unconfigured provider', async () => {

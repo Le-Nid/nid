@@ -14,6 +14,8 @@ interface SocialProfile {
   email: string
   name: string | null
   avatar: string | null
+  /** Only a provider-verified email may link to an existing account or match ADMIN_EMAIL. */
+  emailVerified: boolean
 }
 
 interface ProviderEntry {
@@ -51,7 +53,7 @@ function buildProviders(): Partial<Record<SocialProvider, ProviderEntry>> {
         // Decode id_token directly — no extra network call needed
         const claims = arctic.decodeIdToken(tokens!.idToken())
         const c = claims as Record<string, any>
-        return { id: c.sub, email: c.email, name: c.name ?? null, avatar: c.picture ?? null }
+        return { id: c.sub, email: c.email, name: c.name ?? null, avatar: c.picture ?? null, emailVerified: c.email_verified === true }
       },
     }
   }
@@ -68,7 +70,8 @@ function buildProviders(): Partial<Record<SocialProvider, ProviderEntry>> {
           headers: { Authorization: `Bearer ${accessToken}` },
         })
         const data = await res.json() as Record<string, any>
-        return { id: data.id, email: data.mail || data.userPrincipalName || '', name: data.displayName ?? null, avatar: null }
+        // 'common' tenant: any tenant admin can set `mail`/UPN to any address, so it is never proof of ownership
+        return { id: data.id, email: data.mail || data.userPrincipalName || '', name: data.displayName ?? null, avatar: null, emailVerified: false }
       },
     }
   }
@@ -90,6 +93,7 @@ function buildProviders(): Partial<Record<SocialProvider, ProviderEntry>> {
           email: data.email ?? '',
           name: data.global_name || data.username,
           avatar: data.avatar ? `https://cdn.discordapp.com/avatars/${data.id}/${data.avatar}.png` : null,
+          emailVerified: data.verified === true,
         }
       },
     }
@@ -106,7 +110,8 @@ function buildProviders(): Partial<Record<SocialProvider, ProviderEntry>> {
         const params = new URLSearchParams({ access_token: accessToken, fields: 'id,name,email,picture' })
         const res = await fetch(`https://graph.facebook.com/me?${params}`)
         const data = await res.json() as Record<string, any>
-        return { id: data.id, email: data.email ?? '', name: data.name ?? null, avatar: data.picture?.data?.url ?? null }
+        // Facebook exposes no verified flag
+        return { id: data.id, email: data.email ?? '', name: data.name ?? null, avatar: data.picture?.data?.url ?? null, emailVerified: false }
       },
     }
   }
@@ -123,7 +128,7 @@ function buildProviders(): Partial<Record<SocialProvider, ProviderEntry>> {
           headers: { Authorization: `Bearer ${accessToken}` },
         })
         const data = await res.json() as Record<string, any>
-        return { id: data.sub, email: data.email ?? '', name: data.name ?? null, avatar: data.picture ?? null }
+        return { id: data.sub, email: data.email ?? '', name: data.name ?? null, avatar: data.picture ?? null, emailVerified: data.email_verified === true }
       },
     }
   }
@@ -140,7 +145,7 @@ function buildProviders(): Partial<Record<SocialProvider, ProviderEntry>> {
           headers: { Authorization: `Bearer ${accessToken}` },
         })
         const data = await res.json() as Record<string, any>
-        return { id: data.sub, email: data.email ?? '', name: data.name ?? data.preferred_username ?? null, avatar: null }
+        return { id: data.sub, email: data.email ?? '', name: data.name ?? data.preferred_username ?? null, avatar: null, emailVerified: data.email_verified === true }
       },
     }
   }
@@ -312,6 +317,8 @@ async function linkOrCreateSocialUser(provider: SocialProvider, profile: SocialP
     .executeTakeFirst()
 
   if (existing && !existing.is_active) throw new Error('Account is disabled')
+  // An unverified email would let anyone take over the account registered with it
+  if (existing && !profile.emailVerified) throw new Error('Email not verified by provider')
 
   let userId: string
 
@@ -328,7 +335,7 @@ async function linkOrCreateSocialUser(provider: SocialProvider, profile: SocialP
   } else {
     if (!config.ALLOW_REGISTRATION) throw new Error('Registration is disabled')
 
-    const role = config.ADMIN_EMAIL && profile.email === config.ADMIN_EMAIL ? 'admin' : 'user'
+    const role = config.ADMIN_EMAIL && profile.emailVerified && profile.email === config.ADMIN_EMAIL ? 'admin' : 'user'
 
     const inserted = await db
       .insertInto('users')
