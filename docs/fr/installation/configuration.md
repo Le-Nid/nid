@@ -21,12 +21,10 @@ Toutes les variables d'environnement de Nid, définies dans le fichier `.env` à
 | Variable | Défaut | Description |
 |---|---|---|
 | `JWT_SECRET` | — | **Requis.** Secret de signature des access tokens. Générez avec `openssl rand -hex 64` |
-| `JWT_REFRESH_SECRET` | — | **Requis.** Secret de signature des refresh tokens |
-| `JWT_EXPIRY` | `15m` | Durée de validité de l'access token |
-| `JWT_REFRESH_EXPIRY` | `30d` | Durée de validité du refresh token |
+| `JWT_EXPIRY` | `24h` | Durée de validité du token de session (le cookie dure 24h, rester ≤ 24h) |
 
 ::: warning Sécurité
-Utilisez des secrets aléatoires longs (au moins 64 caractères hexadécimaux). Ne réutilisez jamais le même secret pour les access et refresh tokens.
+Utilisez des secrets aléatoires longs (au moins 64 caractères hexadécimaux).
 :::
 
 ---

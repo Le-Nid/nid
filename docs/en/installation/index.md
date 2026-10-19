@@ -32,7 +32,6 @@ Edit the `.env` file with the minimum required values:
 ```bash
 # JWT Secrets — generate random values
 JWT_SECRET=$(openssl rand -hex 64)
-JWT_REFRESH_SECRET=$(openssl rand -hex 64)
 
 # Google credentials (see Google Cloud guide)
 GOOGLE_CLIENT_ID=your_client_id.apps.googleusercontent.com

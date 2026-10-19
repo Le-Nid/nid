@@ -15,9 +15,7 @@ export const config = {
   REDIS_URL: process.env.REDIS_URL ?? 'redis://redis:6379',
 
   JWT_SECRET: require_env('JWT_SECRET'),
-  JWT_REFRESH_SECRET: require_env('JWT_REFRESH_SECRET'),
-  JWT_EXPIRY: process.env.JWT_EXPIRY ?? '15m',
-  JWT_REFRESH_EXPIRY: process.env.JWT_REFRESH_EXPIRY ?? '30d',
+  JWT_EXPIRY: process.env.JWT_EXPIRY ?? '24h', // same lifetime as the auth cookie; the frontend never refreshes
 
   GOOGLE_CLIENT_ID: require_env('GOOGLE_CLIENT_ID'),
   GOOGLE_CLIENT_SECRET: require_env('GOOGLE_CLIENT_SECRET'),

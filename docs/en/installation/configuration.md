@@ -21,12 +21,10 @@ All Nid environment variables, defined in the `.env` file at the project root.
 | Variable | Default | Description |
 |---|---|---|
 | `JWT_SECRET` | — | **Required.** Signing secret for access tokens. Generate with `openssl rand -hex 64` |
-| `JWT_REFRESH_SECRET` | — | **Required.** Signing secret for refresh tokens |
-| `JWT_EXPIRY` | `15m` | Access token validity duration |
-| `JWT_REFRESH_EXPIRY` | `30d` | Refresh token validity duration |
+| `JWT_EXPIRY` | `24h` | Session token validity (the auth cookie lasts 24h, keep it ≤ 24h) |
 
 ::: warning Security
-Use long random secrets (at least 64 hexadecimal characters). Never reuse the same secret for access and refresh tokens.
+Use long random secrets (at least 64 hexadecimal characters).
 :::
 
 ---

@@ -87,7 +87,7 @@ All environment variables are documented in `.env.example` and in the [configura
 
 | Variable | Description |
 |---|---|
-| `JWT_SECRET` / `JWT_REFRESH_SECRET` | JWT secrets (generate with `openssl rand -hex 64`) |
+| `JWT_SECRET` | JWT secret (generate with `openssl rand -hex 64`) |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | OAuth2 credentials |
 | `POSTGRES_USER` / `POSTGRES_PASSWORD` | Database access |
 | `ALLOW_REGISTRATION` | `true` (default) or `false` to close registrations |
@@ -182,7 +182,7 @@ Toutes les variables d'environnement sont documentées dans `.env.example` et da
 
 | Variable | Description |
 |---|---|
-| `JWT_SECRET` / `JWT_REFRESH_SECRET` | Secrets JWT (générez avec `openssl rand -hex 64`) |
+| `JWT_SECRET` | Secret JWT (générez avec `openssl rand -hex 64`) |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Credentials OAuth2 |
 | `POSTGRES_USER` / `POSTGRES_PASSWORD` | Accès base de données |
 | `ALLOW_REGISTRATION` | `true` (défaut) ou `false` pour fermer les inscriptions |

@@ -42,7 +42,6 @@ Add this configuration to `claude_desktop_config.json`:
       "env": {
         "DATABASE_URL": "postgres://user:pass@localhost:5432/nid",
         "JWT_SECRET": "votre-secret",
-        "JWT_REFRESH_SECRET": "votre-refresh-secret",
         "GOOGLE_CLIENT_ID": "votre-client-id",
         "GOOGLE_CLIENT_SECRET": "votre-client-secret",
         "GOOGLE_REDIRECT_URI": "http://localhost:4000/api/auth/gmail/callback"
@@ -66,7 +65,6 @@ In `.vscode/mcp.json`:
       "env": {
         "DATABASE_URL": "postgres://user:pass@localhost:5432/nid",
         "JWT_SECRET": "votre-secret",
-        "JWT_REFRESH_SECRET": "votre-refresh-secret",
         "GOOGLE_CLIENT_ID": "votre-client-id",
         "GOOGLE_CLIENT_SECRET": "votre-client-secret",
         "GOOGLE_REDIRECT_URI": "http://localhost:4000/api/auth/gmail/callback"
