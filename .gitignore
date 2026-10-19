@@ -34,3 +34,6 @@ docs/.vitepress/cache
 
 # Root
 /node_modules
+
+# graphify (régénéré au démarrage de session)
+graphify-out/
