@@ -5,7 +5,7 @@ import { getDb } from "../db";
 import { enqueueJob } from "../jobs/queue";
 import { streamArchiveZip } from "../archive/export.service";
 import { invalidateDashboardCache } from "../dashboard/cache.service";
-import { getLocalStorage } from "../storage/storage.service";
+import { deleteArchivedMails } from "../archive/trash.service";
 import fs from "node:fs";
 import { escapeIlike, notFound } from "../utils/db";
 import { extractPagination } from "../utils/pagination";
@@ -433,7 +433,6 @@ export async function archiveRoutes(app: FastifyInstance) {
   // ─── Empty trash (permanent delete) ───────────────────────
   app.delete("/:accountId/trash", accountAuth, async (request, reply) => {
     const { accountId } = request.params as { accountId: string };
-    const userId = request.user.sub;
 
     const mails = await db
       .selectFrom("archived_mails")
@@ -444,37 +443,7 @@ export async function archiveRoutes(app: FastifyInstance) {
 
     if (mails.length === 0) return { deleted: 0 };
 
-    const storage = getLocalStorage();
-    const mailIds = mails.map((m) => m.id);
-
-    // Delete attachments files + DB
-    const attachments = await db
-      .selectFrom("archived_attachments")
-      .select(["id", "file_path"])
-      .where("archived_mail_id", "in", mailIds)
-      .execute();
-
-    for (const att of attachments) {
-      try { await storage.deleteFile(att.file_path); } catch { /* ignore */ }
-    }
-
-    if (attachments.length) {
-      await db
-        .deleteFrom("archived_attachments")
-        .where("archived_mail_id", "in", mailIds)
-        .execute();
-    }
-
-    // Delete EML files
-    for (const mail of mails) {
-      try { await storage.deleteFile(mail.eml_path); } catch { /* ignore */ }
-    }
-
-    // Delete DB records
-    await db
-      .deleteFrom("archived_mails")
-      .where("id", "in", mailIds)
-      .execute();
+    await deleteArchivedMails(mails);
 
     logger.info(`Emptied trash for account ${accountId}: ${mails.length} mail(s) permanently deleted`);
     return { deleted: mails.length };

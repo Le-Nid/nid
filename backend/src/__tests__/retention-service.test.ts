@@ -216,7 +216,7 @@ describe('applyRetentionPolicies', () => {
     expect(result.totalDeleted).toBe(0)
   })
 
-  it('handles deleteFile errors gracefully', async () => {
+  it('deletes attachment and EML files after the DB rows', async () => {
     const policy = {
       id: 'p1',
       user_id: 'user-1',
@@ -227,18 +227,18 @@ describe('applyRetentionPolicies', () => {
       is_active: true,
       deleted_count: 0,
     }
-    mockStorage.deleteFile.mockRejectedValue(new Error('file not found'))
-
     mockExecute
       .mockResolvedValueOnce([policy])
       .mockResolvedValueOnce([{ id: 'mail-1', eml_path: '/tmp/1.eml', gmail_account_id: 'acc-1' }])
       .mockResolvedValueOnce([{ id: 'att-1', file_path: '/tmp/att.pdf' }])
       .mockResolvedValueOnce([]) // delete attachments from DB
       .mockResolvedValueOnce([]) // delete mails from DB
+      .mockResolvedValueOnce([]) // attachment files still referenced elsewhere
       .mockResolvedValueOnce([]) // update stats
 
-    // Should not throw even when storage.deleteFile fails
     const result = await applyRetentionPolicies()
     expect(result.totalDeleted).toBe(1)
+    expect(mockStorage.deleteFile).toHaveBeenCalledWith('/tmp/att.pdf')
+    expect(mockStorage.deleteFile).toHaveBeenCalledWith('/tmp/1.eml')
   })
 })

@@ -131,6 +131,32 @@ export async function verifyEncryptionKey(userId: string, passphrase: string): P
 }
 
 /**
+ * Older archives deduplicated attachments across accounts. Before encrypting a file
+ * another account still uses, give this account its own copy so the other one stays readable.
+ */
+async function detachSharedFile(filePath: string, accountId: string): Promise<string> {
+  const db = getDb()
+  const shared = await db
+    .selectFrom('archived_attachments')
+    .innerJoin('archived_mails', 'archived_mails.id', 'archived_attachments.archived_mail_id')
+    .select('archived_attachments.id')
+    .where('archived_attachments.file_path', '=', filePath)
+    .where('archived_mails.gmail_account_id', '!=', accountId)
+    .executeTakeFirst()
+  if (!shared) return filePath
+
+  const copyPath = `${filePath}.${accountId}`
+  await fs.copyFile(filePath, copyPath)
+  await db
+    .updateTable('archived_attachments')
+    .set({ file_path: copyPath })
+    .where('file_path', '=', filePath)
+    .where('archived_mail_id', 'in', db.selectFrom('archived_mails').select('id').where('gmail_account_id', '=', accountId))
+    .execute()
+  return copyPath
+}
+
+/**
  * Encrypt all un-encrypted archives for an account.
  */
 export async function encryptArchives(
@@ -164,7 +190,7 @@ export async function encryptArchives(
 
       for (const att of attachments) {
         try {
-          await encryptFile(att.file_path, passphrase)
+          await encryptFile(await detachSharedFile(att.file_path, accountId), passphrase)
         } catch (err) {
           logger.warn(`Failed to encrypt attachment ${att.file_path}: ${(err as Error).message}`)
         }

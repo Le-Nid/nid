@@ -45,48 +45,50 @@ export async function purgeArchiveTrash(): Promise<{ deleted: number }> {
 
   if (mails.length === 0) return { deleted: 0 }
 
-  // Group by user for storage access
-  const byUser = new Map<string, { ids: string[], emlPaths: string[] }>()
-  for (const mail of mails) {
-    const entry = byUser.get(mail.user_id) ?? { ids: [], emlPaths: [] }
-    entry.ids.push(mail.id)
-    entry.emlPaths.push(mail.eml_path)
-    byUser.set(mail.user_id, entry)
-  }
-
-  for (const [userId, { ids, emlPaths }] of byUser) {
-    const storage = getLocalStorage()
-
-    // Delete attachments
-    const attachments = await db
-      .selectFrom('archived_attachments')
-      .select(['id', 'file_path'])
-      .where('archived_mail_id', 'in', ids)
-      .execute()
-
-    for (const att of attachments) {
-      try { await storage.deleteFile(att.file_path) } catch { /* ignore */ }
-    }
-
-    if (attachments.length) {
-      await db
-        .deleteFrom('archived_attachments')
-        .where('archived_mail_id', 'in', ids)
-        .execute()
-    }
-
-    // Delete EML files
-    for (const emlPath of emlPaths) {
-      try { await storage.deleteFile(emlPath) } catch { /* ignore */ }
-    }
-
-    // Delete DB records
-    await db
-      .deleteFrom('archived_mails')
-      .where('id', 'in', ids)
-      .execute()
-  }
+  await deleteArchivedMails(mails)
 
   logger.info(`Purged ${mails.length} expired trash mail(s) (retention: ${retentionDays} days)`)
   return { deleted: mails.length }
+}
+
+/** Delete files that no archived_attachments row points to anymore (attachments are shared by content hash). */
+export async function deleteUnreferencedFiles(filePaths: string[]): Promise<number> {
+  const unique = [...new Set(filePaths)]
+  if (unique.length === 0) return 0
+
+  const stillUsed = await getDb()
+    .selectFrom('archived_attachments')
+    .select('file_path')
+    .where('file_path', 'in', unique)
+    .execute()
+  const used = new Set(stillUsed.map((r) => r.file_path))
+
+  const storage = getLocalStorage()
+  let deleted = 0
+  for (const filePath of unique) {
+    if (used.has(filePath)) continue
+    await storage.deleteFile(filePath)
+    deleted++
+  }
+  return deleted
+}
+
+/** Permanently delete archived mails: DB rows first, then the files nothing else uses. */
+export async function deleteArchivedMails(mails: { id: string; eml_path: string }[]): Promise<void> {
+  if (mails.length === 0) return
+  const db = getDb()
+  const ids = mails.map((m) => m.id)
+
+  const attachments = await db
+    .selectFrom('archived_attachments')
+    .select('file_path')
+    .where('archived_mail_id', 'in', ids)
+    .execute()
+
+  await db.deleteFrom('archived_attachments').where('archived_mail_id', 'in', ids).execute()
+  await db.deleteFrom('archived_mails').where('id', 'in', ids).execute()
+
+  await deleteUnreferencedFiles(attachments.map((a) => a.file_path))
+  const storage = getLocalStorage()
+  for (const mail of mails) await storage.deleteFile(mail.eml_path)
 }
