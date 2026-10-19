@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { Queue, Worker, Job } from 'bullmq'
 import { getRedis } from '../plugins/redis'
 import { getDb } from '../db'
@@ -43,9 +44,15 @@ export function getQueue(): Queue {
   return _queue
 }
 
-export async function enqueueJob(type: JobType, payload: JobPayload) {
+/** `dedupId`: while a job with this id is waiting or running, enqueueing it again is a no-op. */
+export async function enqueueJob(type: JobType, payload: JobPayload, opts: { dedupId?: string } = {}) {
   const queue = getQueue()
-  const job = await queue.add(type, payload, { jobId: `${type}-${Date.now()}` })
+  const jobId = `${type}-${randomUUID()}`
+  const job = await queue.add(type, payload, {
+    jobId,
+    ...(opts.dedupId ? { deduplication: { id: opts.dedupId } } : {}),
+  })
+  if (job.id !== jobId) return job // deduplicated: BullMQ returned the job already queued
 
   // Pre-insert job row so SSE can find it immediately
   const db = getDb()
@@ -58,7 +65,7 @@ export async function enqueueJob(type: JobType, payload: JobPayload) {
       progress: 0,
       processed: 0,
       total: 0,
-      gmail_account_id: payload.accountId,
+      gmail_account_id: payload.accountId || null, // '' = job not tied to an account
       user_id: payload.userId ?? null,
       payload: JSON.stringify(payload),
     })
