@@ -5,6 +5,7 @@ import Fastify from 'fastify'
 const mockExecute = vi.fn()
 const mockExecuteTakeFirst = vi.fn()
 const mockExecuteTakeFirstOrThrow = vi.fn()
+const mockWhere = vi.fn()
 
 const chainable: any = () => {
   const chain: any = new Proxy({}, {
@@ -12,6 +13,7 @@ const chainable: any = () => {
       if (prop === 'execute') return mockExecute
       if (prop === 'executeTakeFirst') return mockExecuteTakeFirst
       if (prop === 'executeTakeFirstOrThrow') return mockExecuteTakeFirstOrThrow
+      if (prop === 'where') return (...args: any[]) => { mockWhere(...args); return chain }
       return (..._args: any[]) => chain
     },
   })
@@ -607,6 +609,16 @@ describe('attachmentsRoutes', () => {
     const res = await app.inject({ method: 'GET', url: '/acc-1/archived/att-1/download' })
     expect(res.statusCode).toBe(200)
     expect(res.headers['content-type']).toContain('application/pdf')
+    await app.close()
+  })
+
+  it('GET /:accountId/archived/:attachmentId/download only looks in the account from the URL', async () => {
+    mockExecuteTakeFirst.mockResolvedValueOnce(null)
+    const app = await buildTestApp()
+    await app.register(attachmentsRoutes)
+    await app.ready()
+    await app.inject({ method: 'GET', url: '/acc-1/archived/att-of-another-user/download' })
+    expect(mockWhere).toHaveBeenCalledWith('archived_mails.gmail_account_id', '=', 'acc-1')
     await app.close()
   })
 

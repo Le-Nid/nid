@@ -130,9 +130,7 @@ export async function archiveRoutes(app: FastifyInstance) {
       .where("archived_mail_id", "=", mailId)
       .execute();
 
-    const emlContent = fs.existsSync(mail.eml_path)
-      ? fs.readFileSync(mail.eml_path, "utf-8")
-      : null;
+    const emlContent = await fs.promises.readFile(mail.eml_path, "utf-8").catch(() => null);
 
     return { ...mail, emlContent, attachments };
   });
@@ -142,12 +140,15 @@ export async function archiveRoutes(app: FastifyInstance) {
     "/:accountId/attachments/:attachmentId/download",
     accountAuth,
     async (request, reply) => {
-      const { attachmentId } = request.params as { attachmentId: string };
+      const { accountId, attachmentId } = request.params as { accountId: string; attachmentId: string };
 
+      // accountAuth only checks accountId: the attachment must also belong to it
       const att = await db
         .selectFrom("archived_attachments")
-        .selectAll()
-        .where("id", "=", attachmentId)
+        .innerJoin("archived_mails", "archived_mails.id", "archived_attachments.archived_mail_id")
+        .selectAll("archived_attachments")
+        .where("archived_attachments.id", "=", attachmentId)
+        .where("archived_mails.gmail_account_id", "=", accountId)
         .executeTakeFirst();
 
       if (!att) return notFound(reply);

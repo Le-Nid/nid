@@ -174,20 +174,22 @@ export async function attachmentsRoutes(app: FastifyInstance) {
 
   // ─── Deduplication stats ──────────────────────────────
   app.get('/dedup-stats', auth, async (request) => {
-    const user = (request as any).user
-    return getDeduplicationStats(user.id)
+    return getDeduplicationStats(request.user.sub)
   })
 
   // ─── Download archived attachment ─────────────────────
   app.get('/:accountId/archived/:attachmentId/download', accountAuth, async (request, reply) => {
-    const { attachmentId } = request.params as { attachmentId: string }
+    const { accountId, attachmentId } = request.params as { accountId: string; attachmentId: string }
     const { inline: inlineParam } = request.query as { inline?: string }
 
     const db = getDb()
+    // accountAuth only checks accountId: the attachment must also belong to it
     const att = await db
       .selectFrom('archived_attachments')
-      .selectAll()
-      .where('id', '=', attachmentId)
+      .innerJoin('archived_mails', 'archived_mails.id', 'archived_attachments.archived_mail_id')
+      .selectAll('archived_attachments')
+      .where('archived_attachments.id', '=', attachmentId)
+      .where('archived_mails.gmail_account_id', '=', accountId)
       .executeTakeFirst()
 
     if (!att) return reply.code(404).send({ error: 'Attachment not found' })
@@ -252,9 +254,7 @@ export async function attachmentsRoutes(app: FastifyInstance) {
 
   // ─── Backfill hashes for existing attachments ─────────
   app.post('/dedup-backfill', auth, async (request) => {
-    const user = (request as any).user
-    const result = await backfillAttachmentHashes(user.id)
-    return result
+    return backfillAttachmentHashes(request.user.sub)
   })
 }
 
