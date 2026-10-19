@@ -40,7 +40,7 @@ export async function checkArchiveIntegrity(accountId?: string): Promise<Integri
     dbPaths.add(fullPath)
 
     try {
-      const stat = fs.statSync(fullPath)
+      const stat = await fs.promises.stat(fullPath)
       // Check if file is empty (likely corrupt)
       if (stat.size === 0) {
         corruptedFiles.push(record.eml_path)
@@ -53,36 +53,18 @@ export async function checkArchiveIntegrity(accountId?: string): Promise<Integri
   // 3. Check for orphaned files (on disk but not in DB)
   const orphanedFiles: string[] = []
   const archiveDir = config.ARCHIVE_PATH
+  // Archives live under ARCHIVE_PATH/<accountId>/…
+  const scanDir = accountId ? path.join(archiveDir, accountId) : archiveDir
 
-  function walkDir(dir: string) {
-    try {
-      const entries = fs.readdirSync(dir, { withFileTypes: true })
-      for (const entry of entries) {
-        const full = path.join(dir, entry.name)
-        if (entry.isDirectory()) {
-          walkDir(full)
-        } else if (entry.name.endsWith('.eml')) {
-          if (!dbPaths.has(full)) {
-            orphanedFiles.push(path.relative(archiveDir, full))
-          }
-        }
-      }
-    } catch {
-      // directory doesn't exist or not readable
+  try {
+    const entries = await fs.promises.readdir(scanDir, { recursive: true, withFileTypes: true })
+    for (const entry of entries) {
+      if (!entry.isFile() || !entry.name.endsWith('.eml')) continue
+      const full = path.join(entry.parentPath, entry.name)
+      if (!dbPaths.has(full)) orphanedFiles.push(path.relative(archiveDir, full))
     }
-  }
-
-  if (accountId) {
-    // Only scan subdirectories for this account
-    const accountDirs = [...new Set(records.map((r) => {
-      const parts = r.eml_path.split('/')
-      return parts[0] // accountId directory
-    }))]
-    for (const sub of accountDirs) {
-      walkDir(path.join(archiveDir, sub))
-    }
-  } else {
-    walkDir(archiveDir)
+  } catch {
+    // directory doesn't exist or not readable
   }
 
   const result = {
