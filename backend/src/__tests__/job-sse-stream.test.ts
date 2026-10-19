@@ -42,6 +42,7 @@ describe('job-sse SSE stream coverage', () => {
       this.user = { sub: 'user-1' }
     })
     app.decorate('db', mockDb as any)
+    app.decorate('authenticate', async (req: any) => { await req.jwtVerify() })
     app.setErrorHandler(() => {})
     await app.register(jobSseRoutes)
 
@@ -86,6 +87,7 @@ describe('job-sse SSE stream coverage', () => {
       this.user = { sub: 'user-1' }
     })
     app.decorate('db', mockDb as any)
+    app.decorate('authenticate', async (req: any) => { await req.jwtVerify() })
     app.setErrorHandler(() => {})
     await app.register(jobSseRoutes)
 
@@ -108,6 +110,7 @@ describe('job-sse SSE stream coverage', () => {
       this.user = { sub: 'user-1' }
     })
     app.decorate('db', mockDb as any)
+    app.decorate('authenticate', async (req: any) => { await req.jwtVerify() })
     app.setErrorHandler(() => {})
     await app.register(jobSseRoutes)
 
@@ -137,6 +140,7 @@ describe('job-sse SSE stream coverage', () => {
       this.user = { sub: 'user-1' }
     })
     app.decorate('db', mockDb as any)
+    app.decorate('authenticate', async (req: any) => { await req.jwtVerify() })
     app.setErrorHandler(() => {})
     await app.register(jobSseRoutes)
 
