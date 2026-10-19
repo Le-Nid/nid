@@ -1,5 +1,8 @@
 import { getDb } from '../db'
 import * as crypto from 'crypto'
+import { lookup } from 'node:dns/promises'
+import { BlockList, isIP } from 'node:net'
+import { config } from '../config'
 import { createLogger } from '../logger'
 
 const logger = createLogger('webhook')
@@ -10,6 +13,34 @@ export type WebhookEvent =
   | 'rule.executed'
   | 'quota.warning'
   | 'integrity.failed'
+
+// Loopback, private, link-local (cloud metadata), CGNAT and unspecified ranges
+const privateNetworks = new BlockList()
+for (const [net, prefix] of [['0.0.0.0', 8], ['10.0.0.0', 8], ['100.64.0.0', 10], ['127.0.0.0', 8], ['169.254.0.0', 16], ['172.16.0.0', 12], ['192.168.0.0', 16]] as const) {
+  privateNetworks.addSubnet(net, prefix, 'ipv4')
+}
+for (const [net, prefix] of [['::', 128], ['::1', 128], ['fc00::', 7], ['fe80::', 10]] as const) {
+  privateNetworks.addSubnet(net, prefix, 'ipv6')
+}
+
+export function isPrivateAddress(address: string): boolean {
+  const mapped = address.toLowerCase().startsWith('::ffff:') && isIP(address.slice(7)) === 4 ? address.slice(7) : address
+  return privateNetworks.check(mapped, isIP(mapped) === 6 ? 'ipv6' : 'ipv4')
+}
+
+/**
+ * Any user can register a webhook URL, so refuse the internal network unless the admin allows it.
+ * shortcut: DNS is resolved again by fetch (rebinding window), pin the resolved IP if this app is exposed publicly.
+ */
+async function assertPublicUrl(url: string) {
+  if (config.WEBHOOK_ALLOW_PRIVATE_NETWORKS) return
+  const { hostname } = new URL(url)
+  const host = hostname.replace(/^\[|\]$/g, '')
+  const addresses = isIP(host) ? [{ address: host }] : await lookup(host, { all: true })
+  if (addresses.some((a) => isPrivateAddress(a.address))) {
+    throw new Error(`Webhook target ${hostname} is on a private network (set WEBHOOK_ALLOW_PRIVATE_NETWORKS=true to allow)`)
+  }
+}
 
 interface WebhookPayload {
   event: WebhookEvent
@@ -110,10 +141,12 @@ async function sendWebhook(
   }
 
   try {
+    await assertPublicUrl(webhook.url)
     const res = await fetch(webhook.url, {
       method: 'POST',
       headers,
       body,
+      redirect: 'error', // a redirect could point back to the internal network
       signal: AbortSignal.timeout(10_000),
     })
 

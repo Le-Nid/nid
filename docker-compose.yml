@@ -22,6 +22,7 @@ services:
       GOOGLE_SSO_REDIRECT_URI: ${FRONTEND_URL:-http://localhost:3000}/api/auth/google/callback
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
       ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-true}
+      WEBHOOK_ALLOW_PRIVATE_NETWORKS: ${WEBHOOK_ALLOW_PRIVATE_NETWORKS:-false}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
       ARCHIVE_PATH: /archives
     volumes:
