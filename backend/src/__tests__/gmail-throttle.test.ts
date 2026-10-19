@@ -50,6 +50,23 @@ describe('gmailRetry', () => {
     expect(result).toBe('recovered')
   })
 
+  it('retries on 403 rateLimitExceeded', async () => {
+    let attempt = 0
+    const fn = () => {
+      attempt++
+      if (attempt < 2) throw Object.assign(new Error('rate limit'), { code: 403, errors: [{ reason: 'userRateLimitExceeded' }] })
+      return Promise.resolve('ok')
+    }
+
+    expect(await gmailRetry(fn, 3)).toBe('ok')
+  })
+
+  it('does not retry a plain 403 (permission denied)', async () => {
+    const fn = vi.fn(() => { throw Object.assign(new Error('forbidden'), { code: 403, errors: [{ reason: 'insufficientPermissions' }] }) })
+    await expect(gmailRetry(fn, 3)).rejects.toThrow('forbidden')
+    expect(fn).toHaveBeenCalledTimes(1)
+  })
+
   it('throws on non-retryable error', async () => {
     const fn = () => {
       throw Object.assign(new Error('not found'), { code: 404 })
