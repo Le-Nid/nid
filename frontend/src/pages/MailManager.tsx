@@ -347,6 +347,7 @@ export default function MailManagerPage() {
           />
           <Button
             icon={<RefreshCw size={14} />}
+            aria-label={t('common.refresh')}
             onClick={() => void refetch()}
             loading={isFetching && !isFetchingNextPage}
           />
