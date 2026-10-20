@@ -4,7 +4,7 @@ import { BrowserRouter } from 'react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import { useTranslation } from 'react-i18next'
-import { useThemeStore } from './store/theme.store'
+import './store/theme.store' // applies the .dark class before the first render
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { createLogger } from './utils/logger'
 import { registerSW } from 'virtual:pwa-register'
@@ -43,21 +43,14 @@ const queryClient = new QueryClient({
   },
 })
 
-// Wrapper pour lire le store Zustand DANS l'arbre React
+// <html lang> suit la langue i18n
 function ThemedApp() {
-  const mode = useThemeStore((s) => s.mode)
   const { i18n } = useTranslation()
   const lang = i18n.language?.startsWith('en') ? 'en' : 'fr'
 
   React.useEffect(() => {
     document.documentElement.lang = lang
   }, [lang])
-
-  // Tailwind/shadcn dark tokens (§4.5) follow the same store as antd's algorithm
-  React.useEffect(() => {
-    document.documentElement.classList.toggle('dark', mode === 'dark')
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', mode === 'dark' ? '#09090b' : '#ffffff')
-  }, [mode])
 
   return (
     <QueryClientProvider client={queryClient}>

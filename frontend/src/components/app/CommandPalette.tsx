@@ -9,7 +9,7 @@ import { useAuthStore } from '@/store/auth.store'
 import { LEGACY_PAGES, visibleNav } from './nav'
 
 /** ⌘K / Ctrl+K — navigation only in L0 (contextual actions come with their pages). */
-export default function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+export default function CommandPalette({ open, onOpenChange }: Readonly<{ open: boolean; onOpenChange: (open: boolean) => void }>) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const role = useAuthStore((s) => s.user?.role)

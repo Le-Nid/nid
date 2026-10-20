@@ -3,9 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { ArrowDown, ArrowUp, ArrowUpDown, Columns3 } from 'lucide-react'
 import {
   columnVisibilityFeature, metaHelper, rowSelectionFeature, rowSortingFeature, tableFeatures,
-  type Cell, type Row, type RowData,
+  type Cell, type Header, type ReactTable, type Row, type RowData,
 } from '@tanstack/react-table'
-import type { ReactTable } from '@tanstack/react-table'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -44,11 +43,24 @@ const SKELETON_ROWS = 5
 const role = (cell: Cell<F, any, any>) => cell.column.columnDef.meta?.mobile ?? 'meta'
 const isInteractive = (e: MouseEvent) => !!(e.target as HTMLElement).closest('button, a, input, [role="checkbox"], [role="menuitem"]')
 
+const ARIA_SORT = { asc: 'ascending', desc: 'descending' } as const
+function ariaSort(header: Header<F, any, any>) {
+  if (!header.column.getCanSort()) return undefined
+  const sorted = header.column.getIsSorted()
+  return sorted ? ARIA_SORT[sorted] : 'none'
+}
+
+function SortIcon({ sorted }: Readonly<{ sorted: false | 'asc' | 'desc' }>) {
+  if (sorted === 'asc') return <ArrowUp className="size-3.5" aria-hidden="true" />
+  if (sorted === 'desc') return <ArrowDown className="size-3.5" aria-hidden="true" />
+  return <ArrowUpDown className="size-3.5 opacity-50" aria-hidden="true" />
+}
+
 /**
  * One TanStack Table instance rendered as a <table> at ≥md and as cards below (M1, M2).
  * Selection checkboxes appear when the table is created with `enableRowSelection`.
  */
-export function DataList<TData extends RowData>({ table, rowLabel, onRowOpen, empty, isLoading }: DataListProps<TData>) {
+export function DataList<TData extends RowData>({ table, rowLabel, onRowOpen, empty, isLoading }: Readonly<DataListProps<TData>>) {
   const { t } = useTranslation()
   const isMobile = useIsMobile()
   const selectable = !!table.options.enableRowSelection
@@ -152,32 +164,29 @@ export function DataList<TData extends RowData>({ table, rowLabel, onRowOpen, em
               {selectable && (
                 <TableHead scope="col" className="w-10">
                   <Checkbox
-                    checked={allSelected ? true : table.getIsSomePageRowsSelected() ? 'indeterminate' : false}
+                    checked={allSelected || (table.getIsSomePageRowsSelected() && 'indeterminate')}
                     onCheckedChange={(v) => table.toggleAllPageRowsSelected(!!v)}
                     aria-label={t('dataList.selectAll')}
                   />
                 </TableHead>
               )}
               {group.headers.map((header) => {
-                const sorted = header.column.getIsSorted()
                 const end = header.column.columnDef.meta?.align === 'end'
                 return (
                   <TableHead
                     key={header.id}
                     scope="col"
                     className={cn(end && 'text-right')}
-                    aria-sort={header.column.getCanSort() ? (sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : 'none') : undefined}
+                    aria-sort={ariaSort(header)}
                   >
-                    {header.isPlaceholder ? null : header.column.getCanSort() ? (
+                    {!header.isPlaceholder && (header.column.getCanSort() ? (
                       <button type="button" onClick={header.column.getToggleSortingHandler()} className={cn('inline-flex items-center gap-1 hover:text-foreground', end && 'flex-row-reverse')}>
                         <table.FlexRender header={header} />
-                        {sorted === 'asc' ? <ArrowUp className="size-3.5" aria-hidden="true" />
-                          : sorted === 'desc' ? <ArrowDown className="size-3.5" aria-hidden="true" />
-                          : <ArrowUpDown className="size-3.5 opacity-50" aria-hidden="true" />}
+                        <SortIcon sorted={header.column.getIsSorted()} />
                       </button>
                     ) : (
                       <table.FlexRender header={header} />
-                    )}
+                    ))}
                   </TableHead>
                 )
               })}

@@ -1,6 +1,6 @@
 import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { createColumnHelper, useTable } from '@tanstack/react-table'
+import { createColumnHelper, useTable, type ColumnDef } from '@tanstack/react-table'
 import i18n from '../i18n'
 import { DataList, dataListFeatures } from '../components/app/DataList'
 
@@ -20,10 +20,17 @@ const columns = col.columns([
   col.accessor('internalRef', { header: 'Réf.', meta: { mobile: 'hidden' }, enableSorting: false }),
 ])
 
-function MailList({ data = MAILS, onOpen = vi.fn(), isLoading = false }: { data?: Mail[]; onOpen?: (id: string) => void; isLoading?: boolean }) {
+// Mobile-only placements: avatar before the text, row menu after it
+const cardColumns = col.columns([
+  col.display({ id: 'avatar', cell: () => <span>Avatar</span>, meta: { mobile: 'leading' } }),
+  ...columns,
+  col.display({ id: 'actions', cell: () => <button type="button">Actions</button>, meta: { mobile: 'menu' } }),
+])
+
+function MailList({ data = MAILS, onOpen = vi.fn(), isLoading = false, cols = columns }: { data?: Mail[]; onOpen?: (id: string) => void; isLoading?: boolean; cols?: ColumnDef<typeof dataListFeatures, Mail, any>[] }) {
   const table = useTable({
     features: dataListFeatures,
-    columns,
+    columns: cols,
     data,
     getRowId: (m) => m.id,
     enableRowSelection: true,
@@ -87,6 +94,25 @@ describe('DataList', () => {
     expect(card.getByText('3 oct.')).toBeInTheDocument() // first meta, next to the title
     expect(card.getByText('1,2 Mo')).toBeInTheDocument() // other meta
     expect(card.queryByText('ref-secret-1')).not.toBeInTheDocument() // hidden
+  })
+
+  it('opens a card from its title, with avatar and menu around it', async () => {
+    mobile = true
+    const onOpen = vi.fn()
+    render(<MailList cols={cardColumns} onOpen={onOpen} />)
+    const card = within(screen.getAllByRole('listitem')[1])
+    expect(card.getByText('Avatar')).toBeInTheDocument()
+    await userEvent.click(card.getByRole('button', { name: 'Actions' }))
+    expect(onOpen).not.toHaveBeenCalled()
+    await userEvent.click(card.getByRole('button', { name: 'Réunion lundi' }))
+    expect(onOpen).toHaveBeenCalledWith('m2')
+  })
+
+  it('shows skeleton cards while loading on mobile', () => {
+    mobile = true
+    render(<MailList data={[]} isLoading />)
+    expect(screen.getByRole('list', { name: 'Chargement de la liste' })).toBeInTheDocument()
+    expect(screen.getAllByRole('listitem')).toHaveLength(5)
   })
 
   it('switches table ↔ cards on the same instance, keeping the selection', async () => {

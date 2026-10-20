@@ -9,7 +9,7 @@ import { useAuthStore } from '@/store/auth.store'
 import { NAV, isActive, visibleNav, type NavEntry } from './nav'
 
 // N2: 4 destinations + "Plus" (§3.1). Labels at 12 px rather than 11 (O8).
-const BAR = ['overview', 'mails', 'cleanup', 'archives']
+const BAR = new Set(['overview', 'mails', 'cleanup', 'archives'])
 const MORE_GROUPS = [
   { titleKey: 'shell.tools', keys: ['rules', 'activity'] },
   { titleKey: 'shell.settings', keys: ['settings'] },
@@ -23,7 +23,7 @@ export default function BottomNav() {
   const { user, logout } = useAuthStore()
   const [moreOpen, setMoreOpen] = useState(false)
   const entries = visibleNav(user?.role)
-  const moreActive = entries.some((e) => !BAR.includes(e.key) && isActive(e, pathname))
+  const moreActive = entries.some((e) => !BAR.has(e.key) && isActive(e, pathname))
 
   const tab = 'flex min-h-[52px] flex-col items-center justify-center gap-0.5 text-xs font-medium'
   const linkRow = (e: NavEntry) => {
@@ -49,7 +49,7 @@ export default function BottomNav() {
       className="fixed inset-x-0 bottom-0 z-30 border-t bg-background pb-[max(22px,env(safe-area-inset-bottom))]"
     >
       <ul className="grid grid-cols-5">
-        {NAV.filter((e) => BAR.includes(e.key)).map((e) => {
+        {NAV.filter((e) => BAR.has(e.key)).map((e) => {
           const active = isActive(e, pathname)
           return (
             <li key={e.key}>

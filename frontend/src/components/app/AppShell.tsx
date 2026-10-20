@@ -25,7 +25,7 @@ function LegacyNotifications() {
   return <NotificationBell />
 }
 
-function UserMenu({ withAccounts }: { withAccounts: boolean }) {
+function UserMenu({ withAccounts }: Readonly<{ withAccounts: boolean }>) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const { user, gmailAccounts, activeAccountId, setActiveAccount, logout } = useAuthStore()

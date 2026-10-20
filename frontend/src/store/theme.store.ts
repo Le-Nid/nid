@@ -21,6 +21,14 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   },
 }))
 
+// Tailwind/shadcn dark tokens (§4.5) and the browser chrome follow the same store as antd's algorithm
+const apply = ({ mode }: ThemeState) => {
+  document.documentElement.classList.toggle('dark', mode === 'dark')
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', mode === 'dark' ? '#09090b' : '#ffffff')
+}
+apply(useThemeStore.getState())
+useThemeStore.subscribe(apply)
+
 systemDark?.addEventListener?.('change', () => {
   if (!localStorage.getItem('theme')) useThemeStore.setState({ mode: systemMode() })
 })

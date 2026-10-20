@@ -44,16 +44,16 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 function RouteFallback() {
   const { t } = useTranslation();
   return (
-    <div role="status" aria-label={t("shell.loading")} className="flex flex-col gap-3 p-6">
+    <output aria-label={t("shell.loading")} className="flex flex-col gap-3 p-6">
       <Skeleton className="h-8 w-48" />
       <Skeleton className="h-24 w-full" />
       <Skeleton className="h-24 w-full" />
-    </div>
+    </output>
   );
 }
 
 /** §3.3 redirects keep the query string (e.g. /settings?gmail=connected from the OAuth callback). */
-function Redirect({ to }: { to: string }) {
+function Redirect({ to }: Readonly<{ to: string }>) {
   const { search, hash } = useLocation();
   return <Navigate to={{ pathname: to, search, hash }} replace />;
 }

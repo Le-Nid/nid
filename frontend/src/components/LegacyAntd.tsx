@@ -10,7 +10,7 @@ import { useThemeStore } from '../store/theme.store'
  * antd context for pages not yet migrated to shadcn (§9.1). Removed with antd in L10.
  * `layer`: antd styles go to @layer antd, ordered in index.css between Tailwind's preflight and utilities.
  */
-export default function LegacyAntd({ children }: { children: ReactNode }) {
+export default function LegacyAntd({ children }: Readonly<{ children: ReactNode }>) {
   const mode = useThemeStore((s) => s.mode)
   const { i18n } = useTranslation()
 

@@ -237,6 +237,7 @@
     all: revert-layer;
   }
   @media (prefers-reduced-motion: reduce) {
+    /* !important needed to override inline/library animations */
     *, ::before, ::after {
       animation-duration: 1ms !important;
       animation-iteration-count: 1 !important;

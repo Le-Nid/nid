@@ -13,7 +13,7 @@ import { isActive, visibleNav, type NavEntry } from './nav'
 
 const isMac = /Mac|iPhone|iPad/.test(navigator.userAgent)
 
-export default function AppSidebar({ onSearch }: { onSearch: () => void }) {
+export default function AppSidebar({ onSearch }: Readonly<{ onSearch: () => void }>) {
   const { t } = useTranslation()
   const { pathname } = useLocation()
   const { state, toggleSidebar } = useSidebar()
