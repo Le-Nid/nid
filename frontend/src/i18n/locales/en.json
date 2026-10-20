@@ -876,5 +876,34 @@
     "failed": "{{type}} failed",
     "processedCount": "{{count}} items processed successfully.",
     "genericError": "An error occurred."
+  },
+
+  "shell": {
+    "mainNav": "Main navigation",
+    "overview": "Overview",
+    "home": "Home",
+    "mails": "Mail",
+    "cleanup": "Cleanup",
+    "rules": "Rules & labels",
+    "archives": "Archives",
+    "activity": "Activity",
+    "settings": "Settings",
+    "admin": "Admin",
+    "administration": "Administration",
+    "tools": "Tools",
+    "more": "More",
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar",
+    "search": "Search…",
+    "palette": "Command palette",
+    "paletteDescription": "Go to a Nid page",
+    "palettePlaceholder": "Go to…",
+    "noResults": "No results",
+    "goTo": "Go to",
+    "legacyPages": "Other pages (being migrated)",
+    "language": "Language",
+    "darkMode": "Dark mode",
+    "logout": "Log out",
+    "loading": "Loading"
   }
 }

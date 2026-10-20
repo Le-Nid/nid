@@ -75,7 +75,7 @@ test('Archive', async ({ page }) => {
   await page.goto('/archive')
   await expect(page.getByRole('heading', { name: t('archive.title') })).toBeVisible()
   await expect(page.getByText('Édition du matin archivée')).toBeVisible()
-  await expect(page.getByRole('button', { name: t('common.search') })).toBeVisible()
+  await expect(page.getByRole('main').getByRole('button', { name: t('common.search') })).toBeVisible()
 })
 
 test('Rules', async ({ page }) => {
@@ -95,7 +95,7 @@ test('Jobs', async ({ page }) => {
 test('Settings', async ({ page }) => {
   await page.goto('/settings')
   await expect(page.getByRole('heading', { name: t('settings.title') })).toBeVisible()
-  await expect(page.getByText('alice@gmail.com').first()).toBeVisible()
+  await expect(page.getByRole('main').getByText('alice@gmail.com').first()).toBeVisible()
   await expect(page.getByRole('button', { name: t('settings.connectGmail') })).toBeVisible()
 })
 

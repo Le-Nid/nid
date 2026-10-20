@@ -15,7 +15,7 @@ const TYPE_LABEL_KEYS: Record<string, string> = {
  * Lance un poll léger (5s) sur les jobs actifs du compte courant.
  * Quand un job passe à completed/failed, affiche une notification Ant Design.
  * Respecte la préférence `toast_enabled` de l'utilisateur.
- * Doit être monté une seule fois dans AppLayout.
+ * Doit être monté une seule fois (AppShell).
  */
 export function useGlobalJobNotifier() {
   const { accountId } = useAccount();

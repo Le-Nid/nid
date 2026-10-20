@@ -1,0 +1,103 @@
+import { useState, type CSSProperties } from 'react'
+import { Outlet, useNavigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
+import { LogOut, User } from 'lucide-react'
+import { SidebarProvider } from '@/components/ui/sidebar'
+import { TooltipProvider } from '@/components/ui/tooltip'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
+  DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { useIsMobile } from '@/hooks/use-mobile'
+import { useGlobalJobNotifier } from '@/hooks/useGlobalJobNotifier'
+import { useAuthStore } from '@/store/auth.store'
+import { useThemeStore } from '@/store/theme.store'
+import LegacyAntd from '../LegacyAntd'
+import NotificationBell from '../NotificationBell'
+import AppSidebar from './AppSidebar'
+import BottomNav from './BottomNav'
+import CommandPalette from './CommandPalette'
+
+// Still antd (needs App.useApp for job toasts); moves to sonner with UndoToast in L1/L3.
+function LegacyNotifications() {
+  useGlobalJobNotifier()
+  return <NotificationBell />
+}
+
+function UserMenu({ withAccounts }: { withAccounts: boolean }) {
+  const { t, i18n } = useTranslation()
+  const navigate = useNavigate()
+  const { user, gmailAccounts, activeAccountId, setActiveAccount, logout } = useAuthStore()
+  const { mode, toggle } = useThemeStore()
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-11 gap-2 px-2 md:h-9" aria-label={t('layout.userMenu')}>
+          <span className="grid size-8 place-items-center overflow-hidden rounded-full bg-avatar text-avatar-foreground">
+            {user?.avatar_url
+              ? <img src={user.avatar_url} alt="" crossOrigin="anonymous" className="size-full object-cover" />
+              : <User className="size-4" aria-hidden="true" />}
+          </span>
+          <span className="hidden max-w-48 truncate text-sm md:inline">{user?.display_name || user?.email}</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-64">
+        <DropdownMenuLabel className="truncate font-normal text-muted-foreground">{user?.email}</DropdownMenuLabel>
+        {withAccounts && gmailAccounts.length > 0 && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>{t('layout.gmailAccount')}</DropdownMenuLabel>
+            <DropdownMenuRadioGroup value={activeAccountId ?? ''} onValueChange={setActiveAccount}>
+              {gmailAccounts.map((a) => <DropdownMenuRadioItem key={a.id} value={a.id}>{a.email}</DropdownMenuRadioItem>)}
+            </DropdownMenuRadioGroup>
+          </>
+        )}
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel>{t('shell.language')}</DropdownMenuLabel>
+        <DropdownMenuRadioGroup value={i18n.language?.startsWith('en') ? 'en' : 'fr'} onValueChange={(l) => i18n.changeLanguage(l)}>
+          <DropdownMenuRadioItem value="fr" lang="fr">Français</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="en" lang="en">English</DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuCheckboxItem checked={mode === 'dark'} onCheckedChange={toggle}>{t('shell.darkMode')}</DropdownMenuCheckboxItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem variant="destructive" onSelect={() => logout().then(() => navigate('/login'))}>
+          <LogOut aria-hidden="true" />
+          {t('shell.logout')}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+/** Layout of every authenticated page (§5.2): sidebar ≥md, bottom bar <md, ⌘K palette. */
+export default function AppShell() {
+  const isMobile = useIsMobile()
+  const dark = useThemeStore((s) => s.mode) === 'dark'
+  const [paletteOpen, setPaletteOpen] = useState(false)
+
+  return (
+    <TooltipProvider>
+      <SidebarProvider style={{ '--sidebar-width': '15rem' } as CSSProperties}>
+        {!isMobile && <AppSidebar onSearch={() => setPaletteOpen(true)} />}
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="sticky top-0 z-20 flex min-h-14 items-center gap-2 border-b bg-background px-3 pt-[env(safe-area-inset-top)] md:px-6">
+            {isMobile && <img src={dark ? '/nid-logo-full-dark.svg' : '/nid-logo-full-light.svg'} alt="Nid" className="h-7 w-auto" />}
+            <div className="ml-auto flex items-center gap-1">
+              <LegacyAntd><LegacyNotifications /></LegacyAntd>
+              <UserMenu withAccounts={isMobile} />
+            </div>
+          </header>
+          {/* id kept for the skip link in index.html */}
+          <main id="main-content" tabIndex={-1} className="flex flex-1 flex-col pb-[calc(52px+max(22px,env(safe-area-inset-bottom)))] md:pb-0">
+            <Outlet />
+          </main>
+        </div>
+        {isMobile && <BottomNav />}
+        <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+      </SidebarProvider>
+    </TooltipProvider>
+  )
+}

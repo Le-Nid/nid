@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import { useTranslation } from 'react-i18next'
 import { useThemeStore } from './store/theme.store'
-import LegacyAntd from './components/LegacyAntd'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { createLogger } from './utils/logger'
 import { registerSW } from 'virtual:pwa-register'
@@ -61,13 +60,11 @@ function ThemedApp() {
   }, [mode])
 
   return (
-    <LegacyAntd>
-      <QueryClientProvider client={queryClient}>
-        <ErrorBoundary>
-          <AppRouter />
-        </ErrorBoundary>
-      </QueryClientProvider>
-    </LegacyAntd>
+    <QueryClientProvider client={queryClient}>
+      <ErrorBoundary>
+        <AppRouter />
+      </ErrorBoundary>
+    </QueryClientProvider>
   )
 }
 

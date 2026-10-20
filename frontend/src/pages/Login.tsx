@@ -41,7 +41,7 @@ export default function LoginPage() {
 
     if (ssoCode) {
       loginWithSsoCode(ssoCode)
-        .then(() => navigate('/dashboard'))
+        .then(() => navigate('/overview'))
         .catch(() => setError(t('login.errorSocial')))
     } else if (googleError === 'disabled' || socialError === 'disabled') {
       setError(t('login.errorDisabled'))
@@ -54,7 +54,7 @@ export default function LoginPage() {
     setLoading(true); setError(null)
     try {
       await login(values.email, values.password, totpRequired ? totpCode : undefined)
-      navigate('/dashboard')
+      navigate('/overview')
     } catch (e: unknown) {
       const axiosErr = e as { response?: { data?: { error?: string } } }
       if (axiosErr.response?.data?.error === 'TOTP_REQUIRED') {
@@ -72,7 +72,7 @@ export default function LoginPage() {
     setLoading(true); setError(null)
     try {
       await login(savedCredentials.email, savedCredentials.password, totpCode)
-      navigate('/dashboard')
+      navigate('/overview')
     } catch (e: unknown) {
       const axiosErr = e as { response?: { data?: { error?: string } } }
       setError(axiosErr.response?.data?.error ?? t('login.errorTotpInvalid'))
@@ -83,7 +83,7 @@ export default function LoginPage() {
     setLoading(true); setError(null)
     try {
       await register(values.email, values.password)
-      navigate('/settings')
+      navigate('/settings/account')
     } catch (e: unknown) {
       const axiosErr = e as { response?: { data?: { error?: string } } }
       setError(axiosErr.response?.data?.error ?? t('login.errorRegister'))
