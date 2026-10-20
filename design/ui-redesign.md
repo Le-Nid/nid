@@ -1,7 +1,6 @@
 # Nid — Spécification de la refonte UI (phase 2)
 
-Source de vérité de la refonte. Prototype validé (13 artboards) : https://claude.ai/artifact/2qEiArAYNPjidwm73HksPh
-Artboards en cours d'ajout (Activité, Paramètres, Admin, Libellés) : cette spec fait foi tant qu'ils ne sont pas validés.
+Source de vérité de la refonte. Prototype validé (19 artboards) : https://claude.ai/artifact/2qEiArAYNPjidwm73HksPh
 
 Versions vérifiées le 2026-10-20 : `shadcn` 4.22.1 (CLI), `tailwindcss` 4.3.3, `@tanstack/react-table` 9.3.1, `@tanstack/react-query` 5.104.x (déjà installé), `sonner` 2.0.8, `cmdk` 1.1.1.
 
@@ -65,7 +64,9 @@ Versions vérifiées le 2026-10-20 : `shadcn` 4.22.1 (CLI), `tailwindcss` 4.3.3,
 | L6 | Libellé de la politique de rétention = Select des vrais libellés (corrige le bug actuel de texte libre). |
 | A1 | Cible RGAA 4.1 / WCAG 2.1 AA (+ taille de cible WCAG 2.2) : cibles tactiles ≥ 44 px, focus visible, vrais boutons/liens/labels, `aria-label` sur les boutons icône, contraste AA sur chaque paire de tokens, `prefers-reduced-motion`, `prefers-color-scheme`, safe-area insets (PWA, vite-plugin-pwa déjà en place). |
 
-Règles de spec ajoutées ici (non négociées, modifiables) : R1 `--input` renforcé (§4.1), R2 `LabelBadge` = pastille + texte `foreground` (§5.2), R3 raccourcis « G puis X » désactivables (WCAG 2.1.4).
+Règles de spec ajoutées ici (non négociées, modifiables) : R1 `--input` renforcé (§4.1, écart au prototype), R2 libellés utilisateur = pastille + texte `foreground`, catégories = paires fond/texte vérifiées (§4.1), R3 raccourcis « G puis X » désactivables (WCAG 2.1.4).
+
+**Hypothèses à valider (H1)**, issues du prototype : entrée de nav « Règles » renommée **« Règles & libellés »** (page à 2 onglets Règles / Libellés) ; onglet gauche de la barre mobile libellé **« Accueil »** (= Vue d'ensemble).
 
 ---
 
@@ -75,19 +76,19 @@ Règles de spec ajoutées ici (non négociées, modifiables) : R1 `--input` renf
 
 | Entrée | Route | Icône (lucide) | Compteur sidebar (SSE, D6) | Desktop | Barre mobile |
 |---|---|---|---|---|---|
-| Vue d'ensemble | `/overview` | `layout-dashboard` | — | sidebar | ✔ |
+| Vue d'ensemble | `/overview` | `layout-dashboard` | — | sidebar | ✔ libellé « Accueil » (H1) |
 | Mails | `/mails` | `inbox` | nb mails du compte (`48 212`) | sidebar | ✔ |
 | Nettoyage | `/cleanup` | `brush-cleaning` | volume récupérable (`6,1 Go`, badge accent) | sidebar | ✔ |
-| Règles | `/rules` | `zap` | nb règles actives | sidebar | Plus |
+| Règles & libellés (H1) | `/rules?tab=rules\|labels` | `zap` | nb règles actives | sidebar | Plus › Outils |
 | Archives | `/archives` | `archive` | — | sidebar | ✔ |
-| Activité | `/activity` | `activity` | jobs en cours (`1 en cours`, badge accent) | sidebar | Plus |
-| Paramètres | `/settings/:section?` | `sliders-horizontal` | — | sidebar | Plus |
-| Admin | `/admin` | `shield` | — | sidebar, groupe « Administration », si `role=admin` | Plus, si admin |
+| Activité | `/activity` | `activity` | jobs en cours (`2 en cours`, badge accent) | sidebar | Plus › Outils |
+| Paramètres | `/settings/:section?` | `sliders-horizontal` | — | sidebar | Plus › Paramètres |
+| Admin | `/admin` | `shield` | — | sidebar, groupe « Administration », si `role=admin` | Plus › Administration, si admin |
 
 - Sidebar desktop (prototype) : 240 px, fond `--sidebar`, en-tête logo + bouton « Réduire la barre latérale », sélecteur de compte, bouton « Rechercher… ⌘K », nav, pied = progression de la sauvegarde NAS en cours (JobProgressInline compact). Repliée = icônes seules + tooltip (mode `collapsible="icon"` du composant shadcn `sidebar`).
-- Barre mobile : 5 items `min-height: 52px`, padding bas `max(22px, env(safe-area-inset-bottom))`. « Plus » ouvre une bottom sheet (Drawer) listant Règles, Activité, Paramètres, Admin + compteurs.
+- Barre mobile : 5 items `min-height: 52px`, padding bas `max(22px, env(safe-area-inset-bottom))`. « Plus » ouvre une page (artboard 17, §7.7) : Outils (Règles & libellés, Activité), Paramètres (5 sections), Administration, Se déconnecter.
 - En-tête de page : fil d'Ariane (desktop), titre, actions primaires ; mobile : titre 26 px + bouton compte (avatar) à droite.
-- Raccourcis (prototype) : `⌘K`/`Ctrl+K` palette ; `G puis O/M/N/R/A/T/P` = Vue d'ensemble/Mails/Nettoyage/Règles/Archives/Activité/Paramètres (R3 : interrupteur « Raccourcis clavier à une touche » dans Paramètres > Affichage).
+- Raccourcis (prototype) : `⌘K`/`Ctrl+K` palette ; `G puis O/M/N/R/A/T/P` = Vue d'ensemble/Mails/Nettoyage/Règles & libellés/Archives/Activité/Paramètres (R3 : interrupteur « Raccourcis clavier à une touche » dans Paramètres > Compte).
 
 ### 3.2 Pages → sections
 
@@ -96,11 +97,11 @@ Règles de spec ajoutées ici (non négociées, modifiables) : R1 `--input` renf
 | Vue d'ensemble | Salutation + compte/sync · 4 KPI cliquables (Mails dans Gmail + quota, Récupérable, Sauvegarde NAS %, Règles actives) · Top encombreurs · Suggestions (actions inline) · Sauvegarde/jobs en cours |
 | Mails | Sélecteur de compte (dont « Tous les comptes ») · barre de recherche à jetons + chips de recherches enregistrées · liste/table · barre d'actions de sélection · lecteur |
 | Nettoyage | Onglets « Expéditeurs & newsletters » / « Gros mails & pièces jointes » · tri (Nombre de mails, Taille, Jamais ouverts) · filtre « Newsletters uniquement (List-Unsubscribe) » · progression inline par ligne |
-| Règles | Mes règles · Modèles (dont ex-Expiration, L5) · sheet de création/édition avec aperçu |
+| Règles & libellés (H1) | Onglet Règles (liste, sheet de création/édition avec aperçu) · onglet Libellés (arbre Gmail, catégories, modèles L5) |
 | Archives | Bandeau état de sauvegarde + couverture · arbre de libellés (L3) · recherche plein texte (D4) + filtres · résultats surlignés · lecteur d'archive (Partager, Restaurer, Supprimer définitivement) · onglets secondaires Corbeille, Rétention |
-| Activité | Jobs en cours · Historique des jobs · Journal d'audit |
-| Paramètres | Comptes · Profil & sécurité · Notifications · Affichage · Données |
-| Admin | Statistiques · Utilisateurs · Jobs (tous) · Quota API · Pièces jointes dédupliquées |
+| Activité | Filtres compte + statut (En attente, En cours, Échouées, Terminées) · liste des tâches avec action par statut |
+| Paramètres | Compte · Sécurité · Comptes Gmail · Notifications & webhooks · Données |
+| Admin | Onglets Utilisateurs · Système (corbeille de l'instance, intégrité, quota API) · Audit |
 
 ### 3.3 Devenir des pages actuelles et redirections
 
@@ -118,13 +119,13 @@ Toutes les anciennes routes restent en `<Navigate replace>` pendant au moins une
 | `/unsubscribe` | Nettoyage > Expéditeurs | `/cleanup?tab=senders` |
 | `/attachments` | Nettoyage > Gros mails & PJ | `/cleanup?tab=large` |
 | `/rules` | Règles | — |
-| `/expiration` | Règles > Modèles | `/rules?tab=templates` |
+| `/expiration` | Règles & libellés > Libellés (modèles) | `/rules?tab=labels` |
 | `/archive` | Archives | `/archives` |
-| `/sharing` | lecteur d'archive « Partager » + liste des liens actifs dans Paramètres > Profil & sécurité | `/settings/security` |
-| `/privacy` | Paramètres > Affichage (images distantes) | `/settings/display` |
-| `/ops` | Données / Rétention / Quota | `/settings/data` |
+| `/sharing` | lecteur d'archive « Partager » + liens actifs dans Paramètres > Sécurité | `/settings/security` |
+| `/privacy` | Paramètres > Compte (images distantes) | `/settings/account` |
+| `/ops` | Paramètres > Données / Archives > Rétention / Admin > Système | `/settings/data` |
 | `/jobs` | Activité | `/activity` |
-| `/settings` | Paramètres | `/settings/accounts` |
+| `/settings` | Paramètres | `/settings/account` |
 | `/admin` | Admin | — |
 | `/login`, `/shared/:token` | inchangées (composants migrés) | — |
 
@@ -134,41 +135,51 @@ Toutes les anciennes routes restent en `<Navigate replace>` pendant au moins une
 
 ## 4. Design tokens
 
-Extraits des `<style>` du prototype (`.nid` / `.nid.dark`). Police : **Geist** (texte), **Geist Mono** (chiffres, tailles, requêtes, kbd) ; fallback `ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif`. Polices auto-hébergées (`@fontsource-variable/geist`, `@fontsource-variable/geist-mono`) — pas de CDN (self-hosted, PWA hors ligne).
+Valeurs du prototype (`.nid` / `.nid.dark`, complément du 2026-10-20 qui fait foi). Polices : **Geist** 400/500/600/700 (texte), **Geist Mono** 400/500 (chiffres, tailles, opérateurs de recherche, kbd) ; fallback `ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif`. Auto-hébergées (`@fontsource-variable/geist`, `@fontsource-variable/geist-mono`), pas de CDN (self-hosted, PWA hors ligne).
 
-### 4.1 Couleurs (prototype → variables shadcn)
+### 4.1 Correspondance prototype → shadcn
 
-Le `--accent` du prototype est le bleu de marque = `--primary` shadcn ; le `--accent` shadcn (fond de survol) = `--muted` du prototype.
+Piège de nommage : chez shadcn, `--accent` est le **fond de survol neutre** (items de menu, lignes survolées), pas la couleur de marque. Le `--accent` du prototype (bleu) devient `--primary` ; le `--accent` shadcn reçoit le `--muted` du prototype. Les rôles sans équivalent shadcn deviennent des variables applicatives (marquées « app »), exposées à Tailwind dans `@theme inline`.
 
-| Rôle | Proto | Variable shadcn / app | Clair | Sombre |
+| Proto | Variable(s) shadcn / app | Clair | Sombre | Remarque |
 |---|---|---|---|---|
-| Fond | `--bg` | `--background` | `#ffffff` | `#09090b` |
-| Texte | `--fg` | `--foreground`, `--card-foreground`, `--popover-foreground` | `#09090b` | `#fafafa` |
-| Surface carte | `--card` | `--card`, `--popover` | `#ffffff` | `#111113` |
-| Surface atténuée | `--muted` | `--muted`, `--secondary`, `--accent`, `--sidebar` | `#f4f4f5` | `#1c1c1f` |
-| Texte secondaire | `--mfg` | `--muted-foreground` | `#52525b` | `#a1a1aa` |
-| Bordure décorative | `--border` | `--border`, `--sidebar-border` | `#e4e4e7` | `#27272a` |
-| Bordure de champ (R1) | — | `--input` | `#71717a` | `#71717a` |
-| Marque | `--accent` | `--primary`, `--sidebar-primary` | `#2563eb` | `#2563eb` |
-| Texte sur marque | `--accent-fg` | `--primary-foreground` | `#ffffff` | `#ffffff` |
-| Fond marque doux | `--accent-soft` | `--primary-soft` (app) | `#eff6ff` | `#172554` |
-| Lien / texte marque | `--accent-text` | `--primary-text` (app) | `#1d4ed8` | `#93c5fd` |
-| Focus | `--ring` | `--ring`, `--sidebar-ring` | `#2563eb` | `#60a5fa` |
-| Danger | `--danger` | `--destructive` | `#b91c1c` | `#f87171` |
-| Danger doux | `--danger-soft` | `--destructive-soft` (app) | `#fef2f2` | `#450a0a` * |
-| Succès | `--ok` | `--success` (app) | `#15803d` | `#4ade80` * |
-| Succès doux | `--ok-soft` | `--success-soft` (app) | `#f0fdf4` | `#052e16` * |
-| Avertissement | `--warn` | `--warning` (app) | `#854d0e` ** | `#fde047` * |
-| Avertissement doux | `--warn-soft` / `--warn-border` | `--warning-soft` / `--warning-border` (app) | `#fefce8` / `#fde68a` | `#422006` / `#854d0e` * |
-| Surlignage recherche | `--hl` | `--highlight` (+ texte forcé `#09090b`) | `#fef08a` | `#fef08a` |
-| Toast | `--toast` / `--toast-fg` | `--toast` / `--toast-foreground` (app) | `#18181b` / `#fafafa` | `#fafafa` / `#09090b` |
-| Voile modal | `--scrim` | `--scrim` (app) | `rgba(9,9,11,.45)` | `rgba(0,0,0,.6)` |
-| Progression | `.bar span` | `--progress` (app) | `#2563eb` | `#60a5fa` * |
-| Avatar | inline | `--avatar` / `--avatar-foreground` (app) | `#dbeafe` / `#1e3a8a` | `#1e3a8a` / `#dbeafe` |
+| `--bg` | `--background` | `#ffffff` | `#09090b` | |
+| `--fg` | `--foreground`, `--card-foreground`, `--popover-foreground`, `--secondary-foreground`, `--accent-foreground` | `#09090b` | `#fafafa` | |
+| `--card` | `--card`, `--popover` | `#ffffff` | `#111113` | |
+| `--muted` | `--muted`, `--secondary`, `--accent` (survol), `--sidebar` | `#f4f4f5` | `#1c1c1f` | sidebar desktop = fond `--muted` |
+| `--mfg` | `--muted-foreground` | `#52525b` | `#a1a1aa` | texte secondaire, placeholders |
+| `--border` | `--border`, `--sidebar-border` | `#e4e4e7` | `#27272a` | séparateurs, contours de cartes |
+| — | `--input` | `#71717a` | `#71717a` | **R1, écart au prototype** (qui borde les champs en `--border`, 1,27:1) |
+| `--accent` | `--primary`, `--sidebar-primary`, `--chart-1` | `#2563eb` | `#2563eb` | survol `--primary-hover` (app) `#1d4ed8` |
+| `--accent-fg` | `--primary-foreground`, `--sidebar-primary-foreground` | `#ffffff` | `#ffffff` | |
+| `--accent-soft` | `--primary-soft` (app), `--sidebar-accent` | `#eff6ff` | `#172554` | badges accent, radio cochée |
+| `--accent-text` | `--primary-text` (app) | `#1d4ed8` | `#93c5fd` | liens, icône nav active (mobile) |
+| `--ring` | `--ring`, `--sidebar-ring` | `#2563eb` | `#60a5fa` | |
+| `--danger` | `--destructive` (texte/icône) | `#b91c1c` | `#f87171` | |
+| — | `--destructive-solid` / `-hover` (app, bouton plein) | `#b91c1c` / `#991b1b` | `#b91c1c` / `#991b1b` * | texte `#ffffff` |
+| `--danger-soft` | `--destructive-soft` (app) | `#fef2f2` | `#450a0a` * | |
+| `--ok` / `--ok-soft` | `--success` / `--success-soft` (app) | `#15803d` / `#f0fdf4` | `#4ade80` / `#052e16` * | |
+| `--warn` / `--warn-soft` | `--warning` / `--warning-soft` (app) | `#a16207` / `#fefce8` | `#facc15` / `#422006` * | bandeau images distantes aligné sur ces tokens (le prototype y met `#854d0e`) |
+| badge warn / bordure warn | `--warning-badge` / `--warning-border` (app) | `#fef9c3` / `#fde68a` | `#713f12` / `#854d0e` * | |
+| `--toast` / `--toast-fg` | `--toast` / `--toast-foreground` (app) | `#18181b` / `#fafafa` | `#fafafa` / `#09090b` | toast inversé |
+| jauge toast | `--toast-progress` (app) | `#60a5fa` | `#2563eb` | |
+| `--hl` | `--highlight` / `--highlight-foreground` (app) | `#fef08a` / `#09090b` | `#854d0e` / `#fafafa` | `<mark>` |
+| overlay | `--scrim` (app) | `rgba(9,9,11,.45)` | `rgba(0,0,0,.6)` | |
+| `.bar span` | `--progress` (app) | `#2563eb` | `#60a5fa` * | `#2563eb` sur piste sombre = 2,88 ✘ |
+| avatar | `--avatar` / `--avatar-foreground` (app) | `#dbeafe` / `#1e3a8a` | `#1e3a8a` / `#dbeafe` | |
 
-\* absent du prototype, proposé ici (contraste vérifié). ** le prototype utilise `#a16207` (Mails) et `#854d0e` (lecteur) : unifié sur `#854d0e`.
+\* défini ici (absent du prototype), contraste vérifié §4.2.
 
-Catégories Gmail (L2, pastilles, proposé) : Promotions `#16a34a`, Réseaux sociaux `#2563eb`, Mises à jour `#d97706`, Forums `#7c3aed` ; libellé texte toujours en `--foreground`.
+**Catégories Gmail** (L2) — badge fond/texte (`--cat-<id>-bg` / `--cat-<id>-fg`, app) :
+
+| Catégorie | Clair (fond / texte) | Ratio | Sombre * (fond / texte) | Ratio |
+|---|---|---|---|---|
+| Promotions | `#dcfce7` / `#166534` | 6,49 | `#052e16` / `#86efac` | 10,62 |
+| Réseaux sociaux | `#dbeafe` / `#1e40af` | 7,15 | `#172554` / `#93c5fd` | 8,15 |
+| Mises à jour | `#ffedd5` / `#9a3412` | 6,38 | `#431407` / `#fdba74` | 9,28 |
+| Forums | `#f3e8ff` / `#6b21a8` | 7,39 | `#3b0764` / `#d8b4fe` | 8,48 |
+
+Libellés utilisateur Gmail : couleur Gmail en pastille seulement (R2, rayon 2–3 px), texte en `--foreground`.
 
 ### 4.2 Contrastes calculés (WCAG 2.x, luminance relative)
 
@@ -177,51 +188,62 @@ Catégories Gmail (L2, pastilles, proposé) : Promotions `#16a34a`, Réseaux soc
 | foreground / background | 19,90 | 19,06 | 4,5 | ✔ |
 | muted-foreground / background | 7,73 | 7,76 | 4,5 | ✔ |
 | muted-foreground / muted | 7,03 | 6,63 | 4,5 | ✔ |
-| muted-foreground / card (sombre) | — | 7,36 | 4,5 | ✔ |
+| muted-foreground / card | 7,73 | 7,36 | 4,5 | ✔ |
 | primary-foreground / primary | 5,17 | 5,17 | 4,5 | ✔ |
+| blanc / primary-hover `#1d4ed8` | 6,70 | 6,70 | 4,5 | ✔ |
 | primary-text / primary-soft | 6,16 | 8,15 | 4,5 | ✔ |
 | primary-text / background (liens) | 6,70 | 11,03 | 4,5 | ✔ |
 | destructive / background | 6,47 | 7,19 | 4,5 | ✔ |
 | destructive / destructive-soft | 5,91 | 5,84 | 4,5 | ✔ |
+| blanc / destructive-solid (hover) | 6,47 (8,31) | 6,47 (8,31) | 4,5 | ✔ |
 | success / success-soft | 4,79 | 8,55 | 4,5 | ✔ (clair juste) |
-| warning / warning-soft | 6,62 | 11,06 | 4,5 | ✔ |
+| warning / warning-soft | 4,76 | 9,52 | 4,5 | ✔ (clair juste) |
+| warning / warning-badge | 4,58 | 5,66 | 4,5 | ✔ (clair juste) |
+| warning / background | 4,92 | 12,99 | 4,5 | ✔ |
 | toast-foreground / toast | 16,97 | 19,06 | 4,5 | ✔ |
-| #09090b / highlight | 17,10 | 17,10 | 4,5 | ✔ |
+| toast-progress / toast | 6,97 | 4,95 | 3 | ✔ |
+| highlight-foreground / highlight | 17,10 | 6,56 | 4,5 | ✔ |
 | avatar-foreground / avatar | 8,49 | 8,49 | 4,5 | ✔ |
 | ring / background (focus) | 5,17 | 7,83 | 3 | ✔ |
-| input / background (R1) | 4,83 | 4,12 | 3 | ✔ |
-| border / background | 1,27 | 1,34 | 3 | ✘ → réservé aux séparateurs et contours de cartes (non porteurs d'info, 1.4.11 non applicable) ; jamais seul contour d'un contrôle |
-| progress / border (piste) | 4,07 | 5,86 | 3 | ✔ (avec `#60a5fa` en sombre ; `#2563eb` donnerait 2,88 ✘) |
+| input / background (R1) | 4,83 | 4,12 (3,90 sur card) | 3 | ✔ |
+| progress / border (piste) | 4,07 | 5,86 | 3 | ✔ |
+| border / background | 1,27 | 1,34 | 3 | ✘ → séparateurs et contours de cartes uniquement, jamais seul contour d'un contrôle |
+| warning-border / background (sombre) | — | 2,90 | 3 | décoratif seulement (le texte porte l'info) |
 
-Interdits : `#a1a1aa` sur blanc (2,56) et `#52525b` sur fond sombre (2,57) pour du texte ; placeholder = `--muted-foreground`.
+Interdits pour du texte : `#a1a1aa` sur blanc (2,56), `#52525b` sur fond sombre (2,57).
 
 ### 4.3 Typographie
 
-| Token | Taille / interligne | Graisse | Usage |
+| Rôle | Taille / interligne | Graisse | Notes |
 |---|---|---|---|
-| `text-2xs` | 11 px | 500 | kbd, labels barre mobile (prototype ; proposé 12 px, §10) |
-| `text-xs` | 12 / 16 px | 500 | badges, en-têtes de colonnes, méta |
-| `text-sm` | 13 / 18 px | 400–500 | méta, snippets desktop, chips desktop |
-| `text-base` | 14 / 1.45 (desktop), 15 / 1.4 (mobile) | 400 | corps |
-| `text-md` | 16 px | 500 | items de sheet, champs mobile (≥ 16 px : évite le zoom iOS) |
-| `text-lg` | 18 px | 600 | titres de sheet |
-| `text-xl` | 21–22 px | 600 | sujet du mail (lecteur) |
-| `text-2xl` | 24 px desktop / 26 px mobile | 600, `letter-spacing: -0.02em` | H1 de page |
-| `text-kpi` | 28 px desktop / 24 px mobile | 600, mono | valeurs KPI |
+| Corps desktop | 14 / 1.45 | 400 | |
+| Corps mobile | 15 / 1.4 | 400 | lecture d'un mail : 15 / 1.5 |
+| Champs mobiles | 16 | 400 | évite le zoom iOS |
+| Petits | 13 · 12 · 11 | 400–500 | 11 = labels barre mobile, kbd (O8) |
+| Badge | 12 | 500 | hauteur 22 |
+| Titre de section | 15 | 600 | |
+| Titre de page | 24 desktop / 26 mobile | 600, `letter-spacing: -0.02em` | un `h1` par page |
+| Objet de mail (lecteur) | 21 | 600 | |
+| KPI | 28 desktop / 24 mobile | 600, `tabular-nums` | |
+| Mono | hérite | 400 / 500 | compteurs, tailles, `from:`/`older_than:`, kbd |
 
-Chiffres : `font-variant-numeric: tabular-nums` + Geist Mono pour compteurs, tailles, dates en colonne. Formats via `Intl.NumberFormat`/`Intl.DateTimeFormat` de la langue i18next (« 48 212 », « 6,1 Go », « 3 oct. »).
+Formats via `Intl.NumberFormat` / `Intl.DateTimeFormat` de la langue i18next (« 48 212 », « 6,1 Go », « 3 oct. »).
 
 ### 4.4 Espacements, tailles, rayons, ombres, mouvement
 
 | Catégorie | Valeurs |
 |---|---|
-| Espacement | base 4 px (échelle Tailwind par défaut) ; gouttière mobile 16 px ; padding page desktop 24 px ; sidebar 240 px |
-| Hauteurs | bouton 36 px (desktop), `sm` 32 px, icône 36×36 ; input 36 px desktop / 44 px mobile ; chip 32 px desktop / 36 px mobile ; option palette, item, radio ≥ 44–48 px ; item de sheet 52 px ; action barre lecteur 56 px ; item barre mobile 52 px |
-| Cibles | toute cible tactile < md : ≥ 44×44 px (zone cliquable, padding ou `::after`) ; desktop ≥ 24×24 (WCAG 2.5.8) |
-| Rayons | `--radius: 0.625rem` (10 px) → `rounded-lg` 10 (cartes), `rounded-md` 8 (boutons, champs), `rounded-sm` 6 (jetons) ; 12 px sheets/cartes mobiles ; 999 px badges/chips/avatars ; 4–5 px kbd |
-| Ombres | `--shadow-ring: 0 0 0 1px var(--border)` (nav active) ; `--shadow-xs: 0 1px 2px rgba(0,0,0,.08)` ; `--shadow-popover: 0 10px 30px rgba(0,0,0,.18)` (sombre `.4`) ; `--shadow-dialog: 0 24px 60px rgba(0,0,0,.25)` ; `--shadow-sheet: 0 -4px 16px rgba(0,0,0,.06)` |
-| Mouvement | undo : barre `drain` 10 s linéaire ; skeleton : shimmer 1,4 s ease-in-out infini ; sheets/dialogs : 200 ms ease-out (proposé) ; sous `prefers-reduced-motion: reduce` : shimmer et `drain` désactivés (compte à rebours textuel conservé), transitions ≤ 1 ms |
-| Focus | `outline: 2px solid var(--ring); outline-offset: 2px` sur `:focus-visible` (champs : `focus-within`, offset 1 px) |
+| Échelle d'espacement | 2 · 4 · 6 · 8 · 10 · 12 · 14 · 16 · 20 · 24 · 32 px (= échelle Tailwind par défaut, pas de config) |
+| Page desktop | padding 24 (haut 32), `max-width` 1040–1180 px ; sidebar 240 ; header 56 |
+| Mobile | padding 16 ; gap entre cartes 8–10 ; padding de carte 12–14 ; sheet 20 ; safe-area bas 22–28 = `max(22px, env(safe-area-inset-bottom))` |
+| Contrôles | bouton 36 (petit 32) ; recherche 40 ; chips 32 desktop / 36 mobile ; badge 22 ; progress 6 ; checkbox 16 desktop / 20–22 mobile |
+| Listes | en-tête de table 40 ; ligne 52 ; ligne riche (snippet) 64 ; ligne mobile 52 ; radios 48 ; item barre du bas ≥ 52 ; barre d'actions 56 |
+| Cibles | mobile ≥ 44×44 (zone cliquable étendue si besoin) ; desktop ≥ 24×24 (WCAG 2.5.8) |
+| Icônes / avatars | icônes 16 / 20, trait 2 (lucide) ; avatars 32 / 40 |
+| Rayons | 8 contrôles desktop · 10 contrôles mobiles et cartes desktop · 12 cartes mobiles, dialogue, ⌘K, toast mobile · 16 haut de sheet · 6 onglets, arbre, opérateurs · 5 kbd · 2–3 pastille de libellé · 999 badges, chips, progress, avatars |
+| Ombres | `--shadow-toast: 0 10px 30px rgba(0,0,0,.18)` · `--shadow-dialog: 0 24px 60px rgba(0,0,0,.25)` (⌘K, dialogue) · `--shadow-tab: 0 1px 2px rgba(0,0,0,.08)` (onglet actif) · `--shadow-actionbar: 0 -4px 16px rgba(0,0,0,.06)` (barre d'actions mobile) · nav active : `0 0 0 1px var(--border)` |
+| Focus | `outline: 2px solid var(--ring); outline-offset: 2px` sur `:focus-visible` (champs : `focus-within`) |
+| Mouvement | jauge d'annulation `scaleX(1→0)` linéaire 10 s ; skeleton shimmer 1,4 s ease-in-out ; sheets/dialogs 200 ms ease-out (proposé) ; `prefers-reduced-motion: reduce` → jauge et shimmer figés (compte à rebours textuel conservé), transitions ≤ 1 ms |
 
 ### 4.5 Implémentation Tailwind v4
 
@@ -237,20 +259,19 @@ Chiffres : `font-variant-numeric: tabular-nums` + Geist Mono pour compteurs, tai
 .dark { --background: #09090b; /* … */ }
 
 @theme inline {
-  --color-background: var(--background);  /* + toutes les variables shadcn standard */
-  --color-primary-soft: var(--primary-soft);
-  --color-primary-text: var(--primary-text);
-  --color-success: var(--success);  --color-success-soft: var(--success-soft);
-  --color-warning: var(--warning);  --color-warning-soft: var(--warning-soft);
-  --color-destructive-soft: var(--destructive-soft);
-  --color-highlight: var(--highlight);  --color-progress: var(--progress);
+  --color-background: var(--background);  /* + variables shadcn standard */
+  --color-primary-soft: var(--primary-soft);  --color-primary-text: var(--primary-text);
+  --color-success: var(--success);  --color-warning: var(--warning);  /* + *-soft, badge, border */
+  --color-destructive-soft: var(--destructive-soft);  --color-highlight: var(--highlight);
+  --radius-sm: 6px; --radius-md: 8px; --radius-lg: 10px; --radius-xl: 12px; --radius-2xl: 16px;
   --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, monospace;
 }
 ```
 
-- Thème : classe `.dark` sur `<html>` pilotée par le store `theme` existant ; valeur `system` = `matchMedia('(prefers-color-scheme: dark)')`. Mettre à jour `<meta name="theme-color">` (clair `#ffffff`, sombre `#09090b`).
-- Les valeurs restent en hex (pas de conversion OKLCH) pour rester traçables au prototype.
+- Rayons : les multiplicateurs shadcn par défaut (`--radius` × 0,6/0,8/1/1,4/1,8) donnent 6/8/10/14/18 ; on fixe `xl`=12 et `2xl`=16 pour coller au prototype.
+- Thème : classe `.dark` sur `<html>` pilotée par le store `theme` existant ; `system` = `matchMedia('(prefers-color-scheme: dark)')` ; `<meta name="theme-color">` clair `#ffffff`, sombre `#09090b`.
+- Valeurs en hex (pas d'OKLCH) pour rester traçables au prototype.
 
 ---
 
@@ -280,11 +301,11 @@ Notes vérifiées : `sidebar` tire `sheet`, `skeleton`, `tooltip` et le hook `us
 | `PageHeader` | Fil d'Ariane (desktop), H1, sous-titre, actions | `title`, `description?`, `actions?`, `breadcrumb?` | un seul `h1` par page ; actions secondaires dans un `DropdownMenu` < md |
 | `DataList<T>` (= `ResponsiveTable`) | Rend une instance TanStack Table en `<table>` (≥md) ou cartes (<md) ; tri, sélection, visibilité des colonnes, pagination serveur, skeleton, vide, erreur | `table`, `isLoading`, `error`, `empty: ReactNode`, `onRowOpen(row)`, `rowLabel(row)` | table : `<th scope="col">`, `aria-sort` ; cartes : `role="list"`/`listitem`, carte = lien/bouton unique + checkbox et menu séparés (pas de boutons imbriqués) ; nom de checkbox = `rowLabel` |
 | `BulkActionBar` | Barre des actions sur la sélection + bannière select-all (I2) | `count`, `total?`, `mode: 'ids'\|'query'`, `actions: Action[]`, `onSelectAll`, `onClear` | `role="toolbar" aria-label="Actions sur la sélection"` ; compteur en `aria-live="polite"` ; desktop : barre au-dessus de la table, mobile : barre basse au-dessus de la safe area |
-| `UndoToast` | Toast D1 : libellé, compte à rebours 10 s, bouton Annuler → annule le job différé | `jobId`, `message`, `delayMs=10000` | toast `aria-live="polite"` ; bouton « Annuler » atteignable au clavier (raccourci sonner `Alt+T`) ; pas de fermeture auto avant l'échéance ; barre `drain` décorative (`aria-hidden`) |
+| `UndoToast` | Toast D1 : « Suppression de N mail(s) dans 10 s — Annuler », secondaire « Vers la corbeille Gmail · suivi dans Activité », jauge 10 s, Annuler → annule le job différé | `jobId`, `message`, `delayMs=10000` | toast `aria-live="polite"` ; bouton « Annuler » atteignable au clavier (raccourci sonner `Alt+T`) ; pas de fermeture auto avant l'échéance ; barre `drain` décorative (`aria-hidden`) |
 | `ConfirmDialog` | D2 uniquement : action définitive | `title`, `description`, `confirmLabel`, `onConfirm`, `destructive` | `AlertDialog` ; focus initial sur « Annuler » ; libellé = verbe explicite (« Supprimer définitivement 12 archives ») |
 | `MailCard` | Carte mobile d'un mail (avatar, expéditeur, objet, snippet, libellés, taille, date, PJ) | `mail`, `selected`, `onOpen`, `onToggle` | ≥ 44 px ; non lu = graisse 600 + texte « non lu » caché |
 | `MailViewer` | Lecteur Gmail + archive : en-tête, bandeau expéditeur (« 214 mails de cet expéditeur… Nettoyer »), images distantes bloquées (I4), corps en iframe `sandbox`, barre d'actions | `source: 'gmail'\|'archive'`, `mailId`, `accountId`, `onClose` | iframe `title` ; images bloquées : placeholder avec `alt` ; `role="toolbar" aria-label="Actions sur ce mail"` ; mobile plein écran, desktop sheet latérale droite |
-| `LabelBadge` | Libellé Gmail / catégorie (L1, L2) | `label: {name, color?, type}` | R2 : pastille couleur (`aria-hidden`) + texte `--foreground` → AA quelle que soit la couleur Gmail |
+| `LabelBadge` | Libellé Gmail / catégorie (L1, L2) | `label: {name, color?, type}` | R2 : libellé utilisateur = pastille (`aria-hidden`) + texte `--foreground` ; catégorie = paire `--cat-*` (§4.1) ; AA dans les deux cas |
 | `LabelTree` | Arbre de libellés avec compteurs (Archives, L3) | `labels`, `value`, `onChange` | `role="tree"`/`treeitem`, flèches clavier ; < md : sheet de filtres |
 | `SearchBar` | Recherche Gmail à jetons (`category:promotions` ×), chips de recherches enregistrées (P3), « Enregistrer la recherche » | `value`, `onChange`, `saved`, `onSave` | `input` labellisé ; jetons = boutons « Retirer le filtre … » ; chips = `toggle-group` |
 | `EmptyState` | Vide avec action (I1) | `icon`, `title`, `description`, `action` | basé sur `empty` ; action = vrai bouton/lien |
@@ -328,7 +349,7 @@ Règles : focus piégé, `Échap` ferme, focus rendu au déclencheur ; titre obl
 | Supprimer une règle, un webhook, un lien de partage, déconnecter un compte | toast avec « Annuler » (restauration client) ; déconnexion compte = `ConfirmDialog` (perte d'accès) |
 | Désabonnement sans `List-Unsubscribe` | D3 : bouton désactivé (`aria-disabled` + tooltip/texte « Cet expéditeur ne propose pas de désabonnement automatique ») ; « Tout supprimer » et « Toujours faire ça » restent actifs |
 
-Texte du toast : « {N} mails mis à la corbeille dans 10 s — Annuler ». Après échéance : toast de résultat avec lien « Voir dans Activité ».
+Texte du toast (prototype) : « Suppression de {N} mail(s) dans 10 s — Annuler » + « Vers la corbeille Gmail · suivi dans Activité » (libellé adapté à l'action : archivage, sauvegarde NAS…). Le job reste visible « En attente » dans Activité jusqu'à l'échéance.
 
 ### 6.4 Sélection & « tous les résultats » (I2)
 
@@ -353,7 +374,7 @@ Texte du toast : « {N} mails mis à la corbeille dans 10 s — Annuler ». Apr�
 ### 6.7 Images distantes (I4, P5)
 
 - HTML du mail rendu dans `<iframe sandbox srcdoc>` (pas de scripts) ; avant injection : `img[src^=http]`, `srcset`, `background` CSS distants remplacés par un placeholder (dimensions conservées, `alt` d'origine + « (image bloquée) »).
-- Bandeau `--warning-soft` « Images distantes bloquées — Afficher » ; « Toujours afficher pour cet expéditeur » (préférence par expéditeur, stockée côté serveur avec les préférences utilisateur).
+- Bandeau `--warning` sur `--warning-soft` (bordure `--warning-border`) « Images distantes bloquées — Afficher » ; « Toujours afficher pour cet expéditeur » (préférence par expéditeur, stockée côté serveur avec les préférences utilisateur).
 - Pixels de suivi détectés (1×1, domaines connus) : jamais chargés, mention « 1 pixel de suivi bloqué ».
 
 ### 6.8 Formulaires
@@ -395,10 +416,10 @@ Endpoints : existants (`frontend/src/api/index.ts`) ; **nouveaux** en gras (dét
 - **Données** : `GET /api/unsubscribe/:id/newsletters`, `POST …/scan`, `GET …/newsletters/:sender/messages`, `POST …/newsletters/:sender/delete`, `GET /api/analytics/:id/sender-scores`, `GET /api/attachments/:id/live|archived`, URLs de téléchargement existantes.
 - **Nouveau** : **`delete` d'expéditeur en job différé** (B1). D3 : pas de nouvel endpoint, désabonnement possible si `unsubscribeUrl` ou `unsubscribeMailto` non nul (déjà dans le payload).
 
-### 7.4 Règles (`/rules`) — artboard 12
+### 7.4 Règles & libellés > Règles (`/rules`) — artboard 12
 
 - **But** : automatiser ; créer une règle là où le besoin apparaît.
-- **Sections** : onglet **Mes règles** (nom, conditions en clair, action, dernière exécution, mails traités, interrupteur actif, menu Exécuter/Modifier/Supprimer) ; onglet **Modèles** (ex-Expiration + L5, carte « Créer » en un clic) ; `RuleSheet` : « Quand un mail arrive de » (modifiable), « Et qu'il a plus de » (7 jours / 30 jours / 6 mois), « Alors » (Sauvegarder sur le NAS puis supprimer · Archiver (retirer de la boîte) · Supprimer · Appliquer un libellé · Expire dans X jours), « Appliquer aussi aux mails déjà reçus », aperçu « 143 mails concernés · 58 Mo » + 3 exemples + « Voir les 143 mails » (→ Mails avec la requête).
+- **Sections** : onglet **Règles** (nom, conditions en clair, action, dernière exécution, mails traités, interrupteur actif, menu Exécuter/Modifier/Supprimer) ; les modèles sont dans l'onglet Libellés (§7.9) ; `RuleSheet` : « Quand un mail arrive de » (modifiable), « Et qu'il a plus de » (7 jours / 30 jours / 6 mois), « Alors » (Sauvegarder sur le NAS puis supprimer · Archiver (retirer de la boîte) · Supprimer · Appliquer un libellé · Expire dans X jours), « Appliquer aussi aux mails déjà reçus », aperçu « 143 mails concernés · 58 Mo » + 3 exemples + « Voir les 143 mails » (→ Mails avec la requête).
 - **Points d'entrée contextuels** : lecteur de mail, ligne expéditeur (Nettoyage), barre de sélection et recherche (Mails), palette ⌘K, suggestions (Vue d'ensemble).
 - **Données** : `GET/POST/PUT/DELETE /api/rules/:id[/…]`, `PATCH …/toggle`, `POST …/run`, `POST …/preview`, `GET /api/rules/templates`, `POST …/from-template`.
 - **Nouveau** : **preview avec `samples` et `sizeBytes`** (B6) ; **modèles libellé+règle** et action « expire » (B8).
@@ -410,36 +431,59 @@ Endpoints : existants (`frontend/src/api/index.ts`) ; **nouveaux** en gras (dét
 - **Lecteur d'archive** : `MailViewer source="archive"` + fil (threads), PJ, actions **Partager** (P7 : durée, lien copiable, révocation), Restaurer, Supprimer définitivement (D2).
 - **Onglets secondaires** : **Corbeille** (liste, restaurer, vider = D2, réglages rétention/purge) ; **Rétention** (politiques, libellé = Select L6, exécuter).
 - **Mobile** : recherche en tête, filtres en sheet, cartes résultat avec extrait 3 lignes.
-- **Données** : `GET /api/archive/:id/mails[/:mid]`, `GET …/threads[/:tid]`, `POST …/archive`, `POST …/mails/trash|restore`, `GET|DELETE …/trash`, `GET|PUT /api/archive/config/trash`, `POST /api/import/:id/export-mbox`, `GET/POST/PUT/DELETE /api/retention`, `POST /api/retention/run`, `GET/POST/DELETE /api/shares`, `GET /api/integrity/check` (action « Vérifier l'intégrité »).
+- **Données** : `GET /api/archive/:id/mails[/:mid]`, `GET …/threads[/:tid]`, `POST …/archive`, `POST …/mails/trash|restore`, `GET|DELETE …/trash`, `GET|PUT /api/archive/config/trash`, `POST /api/import/:id/export-mbox`, `GET/POST/PUT/DELETE /api/retention`, `POST /api/retention/run`, `GET/POST/DELETE /api/shares`.
 - **Nouveau** : **FTS corps + `highlight`** (B2) ; **`GET /api/labels/:id` + compteurs par libellé** (B4) ; **mails non sauvegardés / couverture** (S, si absent de `archive-stats`).
 
-### 7.6 Activité (`/activity`) — artboard à venir
+### 7.6 Activité (`/activity`) — artboards 14, 15
 
-- **But** : ce qui tourne, ce qui a tourné, qui a fait quoi.
-- **Sections** : En cours (progression live, Arrêter) ; Historique (type, statut, compte, début, durée, résultat, erreur dépliable) ; Journal d'audit (action, cible, date, détails) ; jobs différés D1 visibles avec « Annuler » jusqu'à l'échéance.
-- **Mobile** : cartes, filtre statut en chips.
-- **Données** : `GET /api/jobs`, `GET /api/jobs/:id`, `DELETE /api/jobs/:id`, SSE `GET /api/jobs/:id/events`, `GET /api/audit`, `GET /api/notifications` (cloche de l'en-tête conservée).
-- **Nouveau** : statut **`scheduled`** (B1).
+- **But** : tout ce que vous et vos règles avez lancé, en direct.
+- **Sections** : filtre compte (dont « Tous les comptes ») ; filtres statut en chips avec compteurs (Toutes, En attente, En cours, Échouées, Terminées) ; table Statut · Tâche (libellé + compte + origine « Mails › Promotions ») · Progression / résultat · Durée · Actions ; « 7 sur 24 · historique conservé 30 jours » + « Afficher plus ».
+- **Actions par statut** : En attente (job différé D1, « dans 8 s ») → Annuler ; En cours → Arrêter ; Échouée (« NAS injoignable après 3 tentatives ») → Relancer, Détails ; Terminée → Voir.
+- **Mobile** : chips défilants, cartes (statut + durée, tâche, compte · heure, progression, action), accès via « Plus ».
+- **Données** : `GET /api/jobs`, `GET /api/jobs/:id`, `DELETE /api/jobs/:id`, SSE `GET /api/jobs/:id/events`, `GET /api/notifications` (cloche conservée).
+- **Nouveau** : statut **`scheduled`** (B1) ; **Relancer** (B11) ; compteurs par statut (paramètre de `GET /api/jobs`, S).
 
-### 7.7 Paramètres (`/settings/:section`) — artboard à venir
+### 7.7 Paramètres (`/settings/:section`) — artboards 16, 17
 
-| Section | Contenu (existant sauf mention) |
+| Section (slug) | Contenu |
 |---|---|
-| `accounts` Comptes | comptes Gmail (connecter, synchro on/off, forcer la sauvegarde, déconnecter = ConfirmDialog), stockage d'archive |
-| `security` Profil & sécurité | profil, 2FA (QR, code), **liens de partage actifs** (ex-Sharing, révoquer) |
-| `notifications` Notifications | préférences in-app / webhook par événement (dont rapport hebdo, P1), webhooks (CRUD, test), ntfy |
-| `display` Affichage | thème (système/clair/sombre), langue, images distantes (I4, par défaut bloquées), raccourcis à une touche (R3) |
-| `data` Données | import mbox (Takeout, L4) / IMAP, export mbox, export/import de configuration |
+| Compte (`account`) | profil, langue, thème (système/clair/sombre), images distantes (I4, bloquées par défaut), raccourcis à une touche (R3) |
+| Sécurité (`security`) | 2FA (QR, code ; état « 2FA activée » visible dans la liste mobile), liens de partage actifs (ex-Sharing, révoquer) |
+| Comptes Gmail (`gmail`) | par compte : avatar, état (« Synchronisé » / « Action requise » si l'accès Google a expiré), dernière synchro + nb mails, dernière sauvegarde NAS + %, sauvegarde automatique (interrupteur) + fréquence (toutes les heures / 6 h / une fois par jour), Synchroniser maintenant, Reconnecter (avec Google), Déconnecter (« arrête la synchronisation mais conserve ses archives sur le NAS ») ; « Ajouter un compte Gmail » |
+| Notifications & webhooks (`notifications`) | préférences in-app / webhook par événement (dont rapport hebdo, P1), webhooks (CRUD, test), ntfy |
+| Données (`data`) | import mbox (Takeout, L4) / IMAP, export mbox, export/import de configuration |
 
-- Desktop : nav secondaire à gauche ; mobile : liste de sections → page.
-- Données : `/api/auth/2fa/*`, `/api/notifications/preferences`, `/api/webhooks*`, `/api/config/export|import`, `/api/import/:id/mbox|imap|export-mbox`, `/api/shares`.
-- Chiffrement : masqué (P5, §10). Tracking/PII : supprimés de l'UI.
+- **Desktop** (16) : onglets de section en haut de page, contenu en cartes.
+- **Mobile** (17) : l'écran « Plus » sert de racine : groupe **Outils** (Règles & libellés, Activité + « 2 en cours »), groupe **Paramètres** (5 sections, avec résumé : « 2FA activée », « 1 action requise », « Import, export »), groupe **Administration** (« Admin de l'instance », admins seulement), pied « Connectée en tant que … · Se déconnecter de Nid ». Chaque section ouvre une page.
+- **Données** : `/api/auth/2fa/*`, `/api/notifications/preferences`, `/api/webhooks*`, `/api/config/export|import`, `/api/import/:id/mbox|imap|export-mbox`, `/api/shares`, endpoints comptes existants (connexion, synchro, déconnexion).
+- **Nouveau** : **fréquence de sauvegarde par compte** (B12) ; **état « Action requise »** (jeton Google expiré/révoqué exposé par compte, S).
+- Chiffrement : masqué (P5, O1). Tracking/PII : supprimés de l'UI.
 
-### 7.8 Admin (`/admin`, D7) — artboard à venir
+### 7.8 Admin (`/admin`, D7) — artboard 18
 
-- **Sections** : Statistiques (utilisateurs, comptes, stockage, jobs) ; Utilisateurs (rôle, actif, nb comptes, stockage, dernière connexion, modifier) ; Jobs (tous utilisateurs) ; Quota API (par compte : endpoint, unités, appels, par heure — ex-Ops) ; Pièces jointes dédupliquées (stats + backfill).
-- **Données** : `GET /api/admin/stats|users|jobs`, `GET|PATCH /api/admin/users/:id`, `GET /api/quota/:id`, `GET /api/attachments/dedup-stats`, `POST /api/attachments/dedup-backfill`.
+- **Onglets** : **Utilisateurs** (rôle, actif, nb comptes, stockage, dernière connexion, modifier) · **Système** · **Audit**.
+- **Système** : « Réglages de l'instance Nid, pour tous les utilisateurs. »
+  - Corbeille des archives : durée maximale pour l'instance (7 / 30 / 90 jours ; chaque utilisateur peut choisir plus court), volume actuel (« 2 914 mails · 412 Mo · prochaine purge le 24 octobre »), **« Vider la corbeille maintenant… »** → seul `ConfirmDialog` de la page : « Vider définitivement la corbeille ? — 2 914 mails (412 Mo) seront supprimés du NAS pour tous les utilisateurs… » / Annuler / Supprimer définitivement.
+  - Intégrité des archives : état, dernier contrôle, nb mails vérifiés, planification, « Lancer un contrôle » (déplacé depuis Archives : routes `integrity` réservées aux admins).
+  - Quota API Gmail (projet Google de l'instance) : unités du jour / quota, pic par utilisateur / 250 u/s, réponses 429 sur 24 h (ex-Ops).
+  - Pied : versions (Nid, PostgreSQL, Redis, concurrence du worker).
+- **Audit** : journal de l'instance (utilisateur, action, cible, date).
+- Jobs de tous les utilisateurs et dédup PJ : section Système ou onglet supplémentaire (non dessinés, O15).
+- **Données** : `GET /api/admin/stats|users|jobs`, `GET|PATCH /api/admin/users/:id`, `GET|PUT /api/archive/config/trash`, `DELETE /api/archive/:id/trash` (par compte aujourd'hui), `GET /api/integrity/check`, `POST /api/integrity/check/async`, `GET /api/quota/:accountId`, `GET /api/attachments/dedup-stats`, `POST /api/attachments/dedup-backfill`.
+- **Nouveau** : **quota instance agrégé + compte de 429** (B13) ; **audit de l'instance** (B14, `GET /api/audit` est limité à l'utilisateur) ; **vidage de corbeille de l'instance** (B15).
 - Accès : `AdminRoute` existant ; entrée de nav absente pour les non-admins.
+
+### 7.9 Libellés (`/rules?tab=labels`) — artboard 19
+
+Hypothèse à valider (H1) : page « Règles & libellés », onglets **Règles** (§7.4) / **Libellés** (compteur « 18 »).
+
+- **Sous-titre** : « Vos libellés Gmail, synchronisés avec leurs couleurs, et des modèles prêts à l'emploi. »
+- **Libellés Gmail** : arbre (L3 ; ex. Factures › EDF, Free, Impôts) avec pastille couleur Gmail (R2) et nombre de mails ; « Nouveau » (création côté Gmail) ; menu par libellé (renommer, couleur, créer une règle, voir les mails).
+- **Catégories Gmail** : Promotions, Réseaux sociaux, Mises à jour, Forums, traduites, badges colorés (§4.1), « Attribuées par Gmail, non modifiables. »
+- **Modèles** (L5) : Factures, Livraisons, Banque, Billets & voyages, Codes OTP (expire après 1 jour) + modèles ex-Expiration ; « Un clic crée le libellé Gmail et la règle qui le remplit. » ; état « Déjà actif » → « Modifier la règle », sinon « Créer le libellé et la règle ».
+- **Mobile** : sections empilées, arbre en liste indentée (cibles 44 px), modèles en cartes.
+- **Données** : `GET/POST /api/gmail/:id/labels`, `GET /api/rules/templates`, `POST /api/rules/:id/from-template`.
+- **Nouveau** : `gmail_labels` + compteurs (B4), modèles libellé+règle (B8), renommage/couleur de libellé (extension de `/api/gmail/:id/labels`, S).
 
 ---
 
@@ -459,8 +503,13 @@ Endpoints : existants (`frontend/src/api/index.ts`) ; **nouveaux** en gras (dét
 | B8 | Modèles libellé + règle (L5, P4) | modèles Factures, Livraisons, Banque, Billets & voyages, OTP (expire après 1 jour) + catégories ex-Expiration ; `from-template` crée le libellé Gmail si absent puis la règle ; action « expire dans X jours » = condition `older_than` + `trash` exécutée par le planificateur de règles ; migration des expirations existantes (§10) | Règles | M |
 | B9 | Rétention par libellé (L6) | Zod : `label` doit exister dans `gmail_labels` du compte (id, plus de texte libre) | Archives > Rétention | S |
 | B10 | Préférences lecteur (I4) | préférences utilisateur `remote_images: 'block'\|'allow'` + liste d'expéditeurs autorisés | Lecteurs, Paramètres | S |
+| B11 | Relancer un job | `POST /api/jobs/:id/retry` (réenfile le même payload, nouvel id, lien au job d'origine) | Activité | S |
+| B12 | Fréquence de sauvegarde | par compte : `backup_enabled`, `backup_interval` (1 h / 6 h / 24 h) lus par le planificateur | Paramètres > Comptes Gmail | S |
+| B13 | Quota de l'instance | agrégat unités/jour, pic par utilisateur, nombre de 429 relancés sur 24 h (le throttle les compte déjà ou à instrumenter) | Admin > Système | M |
+| B14 | Audit de l'instance | `GET /api/admin/audit` (filtre utilisateur/action), `adminAuth` | Admin > Audit | S |
+| B15 | Corbeille de l'instance | durée max instance + plafond par utilisateur ; `DELETE /api/admin/archive-trash` (tous comptes, audité) | Admin > Système | S |
 
-Ordre : B1 → B5 → B3 → B4 → B6/B8/B9 → B2 → B7/B10. Chaque prérequis = PR backend séparée avec tests Vitest, puis `graphify update .`.
+Ordre : B1 → B5 → B3 → B4 → B6/B8/B9 → B2 → B7/B10 → B11–B15. Chaque prérequis = PR backend séparée avec tests Vitest, puis `graphify update .`.
 
 ---
 
@@ -485,9 +534,9 @@ Ordre : B1 → B5 → B3 → B4 → B6/B8/B9 → B2 → B7/B10. Chaque prérequi
 | L4 | Backend B4, B9, B2 (migration + backfill) | — | tests ; backfill idempotent |
 | L5 | **Archives** (arbre, FTS, lecteur, Partager, Corbeille, Rétention) ; suppression Sharing, Archive | L1, L4 | e2e recherche + surlignage + partage ; baseline en baisse ; 0 antd |
 | L6 | **Nettoyage** ; suppression Unsubscribe, Attachments | L1, L2 | e2e désabonnement (D2, D3) + undo ; 0 antd |
-| L7 | **Règles** (+ B6, B8, RuleSheet contextuel partout) ; suppression Expiration | L1, L4 | e2e création depuis expéditeur avec aperçu ; 0 antd |
+| L7 | **Règles & libellés** (onglets Règles + Libellés ; B6, B8 ; RuleSheet contextuel partout) ; suppression Expiration | L1, L4 | e2e création depuis expéditeur avec aperçu ; 0 antd |
 | L8 | **Vue d'ensemble** (+ B3 compteurs SSE) ; suppression Dashboard, Analytics, Insights | L1 | e2e KPI → navigation ; compteurs live ; 0 antd |
-| L9 | **Activité**, **Paramètres** (+ B7, B10), **Admin** ; suppression Jobs, OpsResilience, Privacy | L1 | e2e par page ; 0 antd |
+| L9 | **Activité** (+ B11), **Paramètres** + écran « Plus » (+ B7, B10, B12), **Admin** (+ B13–B15) ; suppression Jobs, OpsResilience, Privacy | L1 | e2e par page ; 0 antd |
 | L10 | Login, SharedMail ; retrait `antd`, `@ant-design/charts`, `LegacyAntd`, `AppLayout` ; nettoyage i18n (clés orphelines) | tous | `npm ls antd` vide ; bundle initial réduit (mesuré) ; baseline a11y ≤ état L9 |
 | L11 | Backend : retrait PII / tracking scan / saved-searches inutilisés (après décision §10) | L10 | migration de suppression réversible documentée |
 
@@ -507,9 +556,12 @@ Chaque lot : CI verte (`typecheck`, `test --coverage`, `build`, e2e), captures m
 | O6 | Heatmap et inbox-zero (ex-Analytics) | Non repris en Vue d'ensemble : confirmer l'abandon (et l'endpoint `snapshot`). |
 | O7 | Données PII / tracking existantes | Purge des tables et endpoints (L11). |
 | O8 | Labels de la barre mobile en 11 px | Proposé 12 px (lisibilité, pas d'exigence RGAA stricte). |
-| O9 | Tokens sombres success/warning/danger-soft/progress | Proposés §4.1, absents du prototype : à valider visuellement. |
+| O9 | Tokens sombres success/warning/danger-soft/badge/progress/catégories | Définis §4.1 (AA vérifié), absents du prototype : à valider visuellement. |
 | O10 | Lecteur desktop | Prototype mobile seulement : sheet latérale proposée vs volet scindé permanent. |
-| O11 | Artboards Activité, Paramètres, Admin, Libellés | En cours ; mettre à jour §7.6–7.8 et §3 à leur validation. |
 | O12 | Undo hors ligne (PWA) | Comportement si le réseau tombe pendant les 10 s (job déjà en file côté serveur : l'annulation échoue → message explicite). |
 | O13 | Plafond du select-all serveur (B5) | Valeur par défaut (ex. 50 000) et comportement au-delà. |
 | O14 | Préflight Tailwind vs antd | Stratégie exacte de cascade validée en L0. |
+| O15 | Admin : jobs de tous les utilisateurs, dédup PJ | Non dessinés dans l'artboard 18 : section Système ou 4e onglet. |
+| O16 | Compte Gmail « Partagé avec Julien Martin » (artboard 16) | Partage d'un compte entre utilisateurs Nid : n'existe pas au backend ; hors périmètre sauf décision. |
+| O17 | Audit utilisateur | L'audit passe dans Admin ; un non-admin n'a plus de vue sur son propre journal (aujourd'hui dans Settings) : l'accepter ou l'ajouter à Activité. |
+| O18 | Planification de l'intégrité | Prototype « automatique chaque dimanche », planificateur actuel quotidien : aligner. |
