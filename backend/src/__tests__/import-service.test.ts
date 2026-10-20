@@ -5,7 +5,7 @@ vi.mock('../config', () => ({
 }))
 
 vi.mock('../storage/storage.service', () => ({
-  getStorageForUser: vi.fn().mockResolvedValue({
+  getLocalStorage: vi.fn().mockReturnValue({
     type: 'local',
     writeFile: vi.fn().mockResolvedValue(undefined),
     readFile: vi.fn().mockResolvedValue(Buffer.from('test')),
@@ -243,8 +243,8 @@ describe('exportMbox', () => {
   })
 
   it('handles read errors for individual mails', async () => {
-    const { getStorageForUser } = await import('../storage/storage.service')
-    const storage = await (getStorageForUser as any)('user-1')
+    const { getLocalStorage } = await import('../storage/storage.service')
+    const storage = (getLocalStorage as any)()
     storage.readFileUtf8.mockRejectedValueOnce(new Error('file not found'))
     storage.readFileUtf8.mockResolvedValueOnce('Subject: OK\n\nBody')
 

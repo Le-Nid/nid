@@ -5,6 +5,7 @@ import Fastify from 'fastify'
 const mockExecute = vi.fn()
 const mockExecuteTakeFirst = vi.fn()
 const mockExecuteTakeFirstOrThrow = vi.fn()
+const mockWhere = vi.fn()
 
 const chainable: any = () => {
   const chain: any = new Proxy({}, {
@@ -12,6 +13,7 @@ const chainable: any = () => {
       if (prop === 'execute') return mockExecute
       if (prop === 'executeTakeFirst') return mockExecuteTakeFirst
       if (prop === 'executeTakeFirstOrThrow') return mockExecuteTakeFirstOrThrow
+      if (prop === 'where') return (...args: any[]) => { mockWhere(...args); return chain }
       return (..._args: any[]) => chain
     },
   })
@@ -53,10 +55,6 @@ vi.mock('../archive/sharing.service', () => ({
   getUserShares: vi.fn().mockResolvedValue([]),
   revokeShare: vi.fn().mockResolvedValue(true),
   getSharedMail: vi.fn().mockResolvedValue({ subject: 'Shared', sender: 'a@b.com' }),
-}))
-
-vi.mock('../storage/storage.service', () => ({
-  testS3Connection: vi.fn().mockResolvedValue({ success: true }),
 }))
 
 vi.mock('../archive/retention.service', () => ({
@@ -124,7 +122,6 @@ beforeEach(() => vi.clearAllMocks())
 
 import { quotaRoutes } from '../routes/quota'
 import { sharingRoutes } from '../routes/sharing'
-import { storageRoutes } from '../routes/storage'
 import { retentionRoutes } from '../routes/retention'
 import { expirationRoutes } from '../routes/expiration'
 import { importRoutes } from '../routes/import'
@@ -229,121 +226,6 @@ describe('sharingRoutes', () => {
     const token = 'b'.repeat(64)
     const res = await app.inject({ method: 'GET', url: `/public/${token}` })
     expect(res.statusCode).toBe(404)
-    await app.close()
-  })
-})
-
-// ═════════════════════════════════════════════════════════
-// STORAGE ROUTES
-// ═════════════════════════════════════════════════════════
-describe('storageRoutes', () => {
-  it('GET /config returns storage config', async () => {
-    mockExecuteTakeFirst.mockResolvedValueOnce({
-      id: 'cfg-1', type: 's3', s3_endpoint: 'http://minio:9000',
-    })
-    const app = await buildTestApp()
-    await app.register(storageRoutes)
-    await app.ready()
-    const res = await app.inject({ method: 'GET', url: '/config' })
-    expect(res.statusCode).toBe(200)
-    expect(res.json().type).toBe('s3')
-    await app.close()
-  })
-
-  it('GET /config returns local default when no config', async () => {
-    mockExecuteTakeFirst.mockResolvedValueOnce(null)
-    const app = await buildTestApp()
-    await app.register(storageRoutes)
-    await app.ready()
-    const res = await app.inject({ method: 'GET', url: '/config' })
-    expect(res.statusCode).toBe(200)
-    expect(res.json().type).toBe('local')
-    await app.close()
-  })
-
-  it('PUT /config saves S3 config', async () => {
-    mockExecuteTakeFirst.mockResolvedValueOnce(null) // no existing config
-    mockExecute.mockResolvedValueOnce([]) // insert
-    const app = await buildTestApp()
-    await app.register(storageRoutes)
-    await app.ready()
-    const res = await app.inject({
-      method: 'PUT',
-      url: '/config',
-      payload: {
-        type: 's3',
-        s3Endpoint: 'http://minio:9000',
-        s3AccessKeyId: 'key',
-        s3SecretAccessKey: 'secret',
-      },
-    })
-    expect(res.statusCode).toBe(200)
-    await app.close()
-  })
-
-  it('PUT /config updates existing config', async () => {
-    mockExecuteTakeFirst.mockResolvedValueOnce({ id: 'cfg-1' }) // existing config
-    mockExecute.mockResolvedValueOnce([]) // update
-    const app = await buildTestApp()
-    await app.register(storageRoutes)
-    await app.ready()
-    const res = await app.inject({
-      method: 'PUT',
-      url: '/config',
-      payload: {
-        type: 's3',
-        s3Endpoint: 'http://minio:9000',
-        s3AccessKeyId: 'key',
-        s3SecretAccessKey: 'secret',
-      },
-    })
-    expect(res.statusCode).toBe(200)
-    await app.close()
-  })
-
-  it('PUT /config rejects S3 without credentials', async () => {
-    const app = await buildTestApp()
-    await app.register(storageRoutes)
-    await app.ready()
-    const res = await app.inject({
-      method: 'PUT',
-      url: '/config',
-      payload: { type: 's3' },
-    })
-    expect(res.statusCode).toBe(400)
-    await app.close()
-  })
-
-  it('PUT /config saves local config', async () => {
-    mockExecuteTakeFirst.mockResolvedValueOnce(null)
-    mockExecute.mockResolvedValueOnce([])
-    const app = await buildTestApp()
-    await app.register(storageRoutes)
-    await app.ready()
-    const res = await app.inject({
-      method: 'PUT',
-      url: '/config',
-      payload: { type: 'local' },
-    })
-    expect(res.statusCode).toBe(200)
-    await app.close()
-  })
-
-  it('POST /test-s3 tests connection', async () => {
-    const app = await buildTestApp()
-    await app.register(storageRoutes)
-    await app.ready()
-    const res = await app.inject({
-      method: 'POST',
-      url: '/test-s3',
-      payload: {
-        endpoint: 'http://minio:9000',
-        accessKeyId: 'key',
-        secretAccessKey: 'secret',
-      },
-    })
-    expect(res.statusCode).toBe(200)
-    expect(res.json().success).toBe(true)
     await app.close()
   })
 })
@@ -727,6 +609,16 @@ describe('attachmentsRoutes', () => {
     const res = await app.inject({ method: 'GET', url: '/acc-1/archived/att-1/download' })
     expect(res.statusCode).toBe(200)
     expect(res.headers['content-type']).toContain('application/pdf')
+    await app.close()
+  })
+
+  it('GET /:accountId/archived/:attachmentId/download only looks in the account from the URL', async () => {
+    mockExecuteTakeFirst.mockResolvedValueOnce(null)
+    const app = await buildTestApp()
+    await app.register(attachmentsRoutes)
+    await app.ready()
+    await app.inject({ method: 'GET', url: '/acc-1/archived/att-of-another-user/download' })
+    expect(mockWhere).toHaveBeenCalledWith('archived_mails.gmail_account_id', '=', 'acc-1')
     await app.close()
   })
 

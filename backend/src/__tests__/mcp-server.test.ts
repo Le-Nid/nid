@@ -7,9 +7,7 @@ vi.mock('../config', () => ({
     DATABASE_URL: 'postgres://test:test@localhost:5432/test',
     REDIS_URL: 'redis://localhost:6379',
     JWT_SECRET: 'test-secret',
-    JWT_REFRESH_SECRET: 'test-refresh-secret',
     JWT_EXPIRY: '15m',
-    JWT_REFRESH_EXPIRY: '30d',
     GOOGLE_CLIENT_ID: 'test-client-id',
     GOOGLE_CLIENT_SECRET: 'test-client-secret',
     GOOGLE_REDIRECT_URI: 'http://localhost:4000/api/auth/gmail/callback',
@@ -21,12 +19,6 @@ vi.mock('../config', () => ({
     GMAIL_BATCH_SIZE: 25,
     GMAIL_THROTTLE_MS: 1000,
     GMAIL_CONCURRENCY: 10,
-    S3_ENDPOINT: '',
-    S3_REGION: 'us-east-1',
-    S3_BUCKET: 'test',
-    S3_ACCESS_KEY_ID: '',
-    S3_SECRET_ACCESS_KEY: '',
-    S3_FORCE_PATH_STYLE: true,
   },
 }))
 

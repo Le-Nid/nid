@@ -141,7 +141,7 @@
 
 ### Ops & Résilience
 
-- [x] **Stockage distant (S3/MinIO)** — Alternative au NAS local : archiver vers un bucket S3-compatible. Permet de géo-répliquer les archives
+- [x] **Stockage distant (S3/MinIO)** — Alternative au NAS local : archiver vers un bucket S3-compatible. Permet de géo-répliquer les archives — *retiré : les écritures n’ont jamais été branchées sur S3*
 - [x] **Politiques de rétention** — Supprimer automatiquement les archives de plus de X mois/années. Configurable par compte ou par label
 - [x] **Dashboard quota Gmail API** — Visualiser la consommation du quota Gmail API en temps réel (250 unités/user/sec). Historique et alertes si proche du plafond
 - [x] **Import IMAP** — Importer des mails depuis d'autres providers (Outlook, ProtonMail export) dans le système d'archives

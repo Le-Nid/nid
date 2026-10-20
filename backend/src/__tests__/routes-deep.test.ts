@@ -1346,7 +1346,7 @@ vi.mock('../archive/integrity.service', () => ({
   checkArchiveIntegrity: vi.fn().mockResolvedValue({ ok: true }),
 }))
 vi.mock('../storage/storage.service', () => ({
-  getStorageForUser: vi.fn().mockResolvedValue({ deleteFile: vi.fn() }),
+  getLocalStorage: vi.fn().mockReturnValue({ deleteFile: vi.fn() }),
 }))
 vi.mock('../archive/trash.service', () => ({
   purgeArchiveTrash: vi.fn().mockResolvedValue({ deleted: 0 }),

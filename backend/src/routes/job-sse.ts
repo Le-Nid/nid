@@ -1,4 +1,4 @@
-import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import { FastifyInstance } from "fastify";
 import { QueueEvents } from "bullmq";
 import { getRedis } from "../plugins/redis";
 import { getDb } from "../db";
@@ -11,21 +11,12 @@ const logger = createLogger('job-sse')
 const subscribers = new Map<string, Set<ServerResponse>>();
 
 export async function jobSseRoutes(app: FastifyInstance) {
-  // SSE: read JWT from httpOnly cookie (primary) or Authorization header (fallback)
-  const verifyToken = async (request: FastifyRequest, reply: FastifyReply) => {
-    try {
-      await request.jwtVerify()
-    } catch {
-      return reply.code(401).send({ error: "Unauthorized" });
-    }
-  };
-
   // ─── SSE stream pour un job précis ────────────────────────
   // GET /api/jobs/:jobId/events → text/event-stream
   app.get(
     "/:jobId/events",
     {
-      preHandler: [verifyToken],
+      preHandler: [app.authenticate], // also honours logout and disabled accounts
     },
     async (request, reply) => {
       const { jobId } = request.params as { jobId: string };

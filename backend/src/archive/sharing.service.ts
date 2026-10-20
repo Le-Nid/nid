@@ -73,9 +73,6 @@ export async function getSharedMail(token: string) {
     .select([
       'archive_shares.id as share_id',
       'archive_shares.token',
-      'archive_shares.expires_at',
-      'archive_shares.access_count',
-      'archive_shares.max_access',
       'archived_mails.id as mail_id',
       'archived_mails.subject',
       'archived_mails.sender',
@@ -90,21 +87,18 @@ export async function getSharedMail(token: string) {
 
   if (!share) return null
 
-  // Check expiration
-  if (new Date(share.expires_at) < now) return null
-
-  // Check max access
-  if (share.max_access !== null && share.access_count >= share.max_access) return null
-
   // Check encrypted (can't share encrypted mails)
   if (share.is_encrypted) return null
 
-  // Increment access count
-  await db
+  // Check expiry + max access and count the view in one statement, so parallel requests can't exceed max_access
+  const counted = await db
     .updateTable('archive_shares')
-    .set({ access_count: share.access_count + 1 })
+    .set((eb) => ({ access_count: eb('access_count', '+', 1) }))
     .where('id', '=', share.share_id)
-    .execute()
+    .where('expires_at', '>', now)
+    .where((eb) => eb.or([eb('max_access', 'is', null), eb('access_count', '<', eb.ref('max_access'))]))
+    .executeTakeFirst()
+  if (Number(counted.numUpdatedRows) === 0) return null
 
   // Read EML and extract HTML body
   let htmlBody: string | null = null

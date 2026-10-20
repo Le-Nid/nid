@@ -32,7 +32,7 @@ Le script CI (`.github/workflows/ci.yml`) exécute : `npm ci` → `typecheck` �
 - **Services** : logique métier dans `backend/src/{module}/{module}.service.ts`. Les routes appellent les services, jamais de logique DB directe dans les routes.
 - **Base de données** : requêtes Kysely typées. Migrations in-code dans `backend/src/db/migrations/` (numérotées 001, 004–007). Types DB dans `backend/src/db/types.ts` avec `Generated<>` et `ColumnType<>`.
 - **Jobs** : un seul worker BullMQ unifié (`backend/src/jobs/workers/unified.worker.ts`, concurrence 3). Enqueue via `enqueueJob()` dans `backend/src/jobs/queue.ts`. Chaque job type a un handler dédié. Progress tracké en DB + SSE.
-- **Gmail API** : throttling dans `backend/src/gmail/gmail-throttle.ts` (semaphore par compte, 5 concurrent max, retry exponentiel sur 429/503).
+- **Gmail API** : throttling dans `backend/src/gmail/gmail-throttle.ts` (semaphore par compte, 5 concurrent max, retry exponentiel sur 429/500/503 et 403 rateLimitExceeded).
 - **ESM obligatoire** : `"type": "module"` dans package.json, Vite build en format `es` uniquement. Ne jamais utiliser `require()`.
 
 ### Frontend
@@ -58,6 +58,11 @@ Le script CI (`.github/workflows/ci.yml`) exécute : `npm ci` → `typecheck` �
 - Les tests frontend avec Ant Design nécessitent les stubs jsdom (`matchMedia`, `getComputedStyle`) dans `frontend/src/__tests__/setup.ts`.
 - En dev local (hors Docker), `backend/.env` pointe vers `localhost` pour DATABASE_URL/REDIS_URL. En Docker, utiliser les noms de service `postgres`/`redis`.
 - Les lockfiles générés sur le host peuvent manquer des dépendances musl pour `node:24-alpine`. Regénérer dans le conteneur si `npm ci` échoue en Docker.
+
+## Workflow agent
+
+- Une fois le travail terminé : commit, push sur la branche de travail, puis **ouvrir une Pull Request** vers `main` pour validation par le tech lead. Ne jamais merger soi-même.
+- Si la PR précédente de la branche est déjà mergée, repartir de `main` et ouvrir une nouvelle PR.
 
 ## Outils agent (`.claude/`)
 

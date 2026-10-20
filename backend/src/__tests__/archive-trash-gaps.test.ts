@@ -53,7 +53,7 @@ vi.mock('../dashboard/cache.service', () => ({
   invalidateDashboardCache: vi.fn(),
 }))
 vi.mock('../storage/storage.service', () => ({
-  getStorageForUser: vi.fn().mockResolvedValue({
+  getLocalStorage: vi.fn().mockReturnValue({
     deleteFile: vi.fn().mockResolvedValue(undefined),
   }),
 }))
@@ -126,6 +126,8 @@ describe('archiveRoutes — trash coverage gaps', () => {
     mockExecute.mockResolvedValueOnce(undefined)
     // Delete mails from DB
     mockExecute.mockResolvedValueOnce(undefined)
+    // Attachment files still referenced elsewhere
+    mockExecute.mockResolvedValueOnce([])
 
     const res = await app.inject({ method: 'DELETE', url: '/acc-1/trash' })
     expect(res.statusCode).toBe(200)

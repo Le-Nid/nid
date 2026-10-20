@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { Queue, Worker, Job } from 'bullmq'
 import { getRedis } from '../plugins/redis'
 import { getDb } from '../db'
@@ -43,27 +44,32 @@ export function getQueue(): Queue {
   return _queue
 }
 
-export async function enqueueJob(type: JobType, payload: JobPayload) {
+/** `dedupId`: while a job with this id is waiting or running, enqueueing it again is a no-op. */
+export async function enqueueJob(type: JobType, payload: JobPayload, opts: { dedupId?: string } = {}) {
   const queue = getQueue()
-  const job = await queue.add(type, payload, { jobId: `${type}-${Date.now()}` })
-
-  // Pre-insert job row so SSE can find it immediately
-  const db = getDb()
-  await db
-    .insertInto('jobs')
-    .values({
-      bullmq_id: String(job.id),
-      type,
-      status: 'pending',
-      progress: 0,
-      processed: 0,
-      total: 0,
-      gmail_account_id: payload.accountId,
-      user_id: payload.userId ?? null,
-      payload: JSON.stringify(payload),
-    })
-    .onConflict((oc: any) => oc.doNothing())
-    .execute()
+  const jobId = `${type}-${randomUUID()}`
+  const job = await queue.add(type, payload, {
+    jobId,
+    ...(opts.dedupId ? { deduplication: { id: opts.dedupId } } : {}),
+  })
+  // Pre-insert job row so SSE can find it immediately (skipped when BullMQ deduplicated: the row already exists)
+  if (job.id === jobId) {
+    await getDb()
+      .insertInto('jobs')
+      .values({
+        bullmq_id: String(job.id),
+        type,
+        status: 'pending',
+        progress: 0,
+        processed: 0,
+        total: 0,
+        gmail_account_id: payload.accountId || null, // '' = job not tied to an account
+        user_id: payload.userId ?? null,
+        payload: JSON.stringify(payload),
+      })
+      .onConflict((oc: any) => oc.doNothing())
+      .execute()
+  }
 
   return job
 }

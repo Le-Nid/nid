@@ -32,7 +32,10 @@ export async function gmailRetry<T>(fn: () => Promise<T>, retries = MAX_RETRIES)
     } catch (err: unknown) {
       const errObj = err as Record<string, any>
       const status = errObj?.code ?? errObj?.response?.status ?? errObj?.status
-      const isRetryable = status === 429 || status === 503 || status === 500
+      // Gmail also signals rate limits as 403 with a rateLimitExceeded / userRateLimitExceeded reason
+      const reason = errObj?.errors?.[0]?.reason ?? errObj?.response?.data?.error?.errors?.[0]?.reason
+      const isRateLimit403 = status === 403 && (reason === 'rateLimitExceeded' || reason === 'userRateLimitExceeded')
+      const isRetryable = status === 429 || status === 503 || status === 500 || isRateLimit403
 
       if (isRetryable && attempt < retries) {
         const retryAfterMs = parseRetryAfter(err)
@@ -152,9 +155,9 @@ export async function withAccountLimit<T>(
     const result = await fn()
     // Fire-and-forget quota tracking
     if (endpoint) {
-      import('./quota.service').then(({ trackApiCall }) =>
-        trackApiCall(accountId, endpoint).catch(() => {}),
-      )
+      import('./quota.service')
+        .then(({ trackApiCall }) => trackApiCall(accountId, endpoint))
+        .catch(() => {}) // a failed import or insert must not become an unhandled rejection
     }
     return result
   } finally {

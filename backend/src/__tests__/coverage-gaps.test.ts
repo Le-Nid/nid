@@ -176,6 +176,7 @@ describe('job-sse coverage', () => {
       this.user = { sub: 'user-1' }
     })
     app.decorate('db', mockDb as any)
+    app.decorate('authenticate', async (req: any, reply: any) => req.jwtVerify().catch(() => reply.code(401).send({ error: 'Unauthorized' })))
     await app.register(jobSseRoutes)
     await app.ready()
     expect(app.printRoutes()).toBeDefined()
@@ -188,6 +189,7 @@ describe('job-sse coverage', () => {
       throw new Error('JWT expired')
     })
     app.decorate('db', mockDb as any)
+    app.decorate('authenticate', async (req: any, reply: any) => req.jwtVerify().catch(() => reply.code(401).send({ error: 'Unauthorized' })))
     await app.register(jobSseRoutes)
     await app.ready()
     const res = await app.inject({ method: 'GET', url: '/job-1/events' })
@@ -201,6 +203,7 @@ describe('job-sse coverage', () => {
       this.user = { sub: 'user-1' }
     })
     app.decorate('db', mockDb as any)
+    app.decorate('authenticate', async (req: any, reply: any) => req.jwtVerify().catch(() => reply.code(401).send({ error: 'Unauthorized' })))
     await app.register(jobSseRoutes)
     await app.ready()
     mockExecuteTakeFirst.mockResolvedValueOnce(null)
@@ -215,6 +218,7 @@ describe('job-sse coverage', () => {
       this.user = { sub: 'user-1' }
     })
     app.decorate('db', mockDb as any)
+    app.decorate('authenticate', async (req: any, reply: any) => req.jwtVerify().catch(() => reply.code(401).send({ error: 'Unauthorized' })))
     await app.register(jobSseRoutes)
     await app.ready()
     mockExecuteTakeFirst

@@ -32,7 +32,6 @@ cp .env.example .env
 ```bash
 # Secrets JWT — générez des valeurs aléatoires
 JWT_SECRET=$(openssl rand -hex 64)
-JWT_REFRESH_SECRET=$(openssl rand -hex 64)
 
 # Credentials Google (voir guide Google Cloud)
 GOOGLE_CLIENT_ID=votre_client_id.apps.googleusercontent.com

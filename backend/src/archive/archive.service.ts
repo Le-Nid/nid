@@ -90,7 +90,7 @@ export async function archiveMail(accountId: string, messageId: string): Promise
   await fs.mkdir(mailDir, { recursive: true })
   await fs.writeFile(emlPath, rawEml, 'utf-8')
 
-  const attachments = await extractAttachments(rawEml, attachDir)
+  const attachments = await extractAttachments(rawEml, attachDir, accountId)
 
   const attachmentNames = attachments.map((a) => a.filename).join(' ')
 
@@ -137,7 +137,8 @@ export async function archiveMail(accountId: string, messageId: string): Promise
 
 async function extractAttachments(
   rawEml: string,
-  attachDir: string
+  attachDir: string,
+  accountId: string
 ): Promise<{ filename: string; mimeType: string; size: number; filePath: string; contentHash: string }[]> {
   const results: { filename: string; mimeType: string; size: number; filePath: string; contentHash: string }[] = []
   const db = getDb()
@@ -150,11 +151,13 @@ async function extractAttachments(
 
     const contentHash = createHash('sha256').update(att.content).digest('hex')
 
-    // Chercher un fichier existant avec le même hash pour déduplication
+    // Chercher un fichier existant avec le même hash, dans ce compte uniquement (le chiffrement est par compte)
     const existing = await db
       .selectFrom('archived_attachments')
-      .select('file_path')
-      .where('content_hash', '=', contentHash)
+      .innerJoin('archived_mails', 'archived_mails.id', 'archived_attachments.archived_mail_id')
+      .select('archived_attachments.file_path')
+      .where('archived_attachments.content_hash', '=', contentHash)
+      .where('archived_mails.gmail_account_id', '=', accountId)
       .executeTakeFirst()
 
     let filePath: string

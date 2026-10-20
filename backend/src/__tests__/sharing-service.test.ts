@@ -109,6 +109,7 @@ describe('getSharedMail', () => {
       is_encrypted: false,
       eml_path: '/tmp/test.eml',
     })
+    mockExecuteTakeFirst.mockResolvedValueOnce({ numUpdatedRows: 0n }) // expires_at > now not met
     const result = await getSharedMail('expired-token')
     expect(result).toBeNull()
   })
@@ -121,6 +122,7 @@ describe('getSharedMail', () => {
       max_access: 5,
       is_encrypted: false,
     })
+    mockExecuteTakeFirst.mockResolvedValueOnce({ numUpdatedRows: 0n }) // access_count < max_access not met
     const result = await getSharedMail('maxed-token')
     expect(result).toBeNull()
   })
@@ -151,14 +153,13 @@ describe('getSharedMail', () => {
       snippet: 'Hello...',
       eml_path: '/tmp/test.eml',
     })
-    mockExecute.mockResolvedValueOnce([]) // update access_count
+    mockExecuteTakeFirst.mockResolvedValueOnce({ numUpdatedRows: 1n }) // access counted
 
     const result = await getSharedMail('valid-token')
     expect(result).not.toBeNull()
     expect(result!.subject).toBe('Shared Subject')
     expect(result!.htmlBody).toBe('<p>Hello</p>')
     expect(result!.textBody).toBe('Hello')
-    expect(mockExecute).toHaveBeenCalled() // access count incremented
   })
 })
 

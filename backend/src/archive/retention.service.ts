@@ -1,5 +1,5 @@
 import { getDb } from '../db'
-import { getStorageForUser } from '../storage/storage.service'
+import { deleteArchivedMails } from './trash.service'
 import { createLogger } from '../logger'
 
 const logger = createLogger('retention')
@@ -70,35 +70,7 @@ async function applyPolicy(policy: {
 
   if (mails.length === 0) return 0
 
-  const storage = await getStorageForUser(policy.user_id)
-  const mailIds = mails.map((m) => m.id)
-
-  // Delete attachments first
-  const attachments = await db
-    .selectFrom('archived_attachments')
-    .select(['id', 'file_path'])
-    .where('archived_mail_id', 'in', mailIds)
-    .execute()
-
-  for (const att of attachments) {
-    try { await storage.deleteFile(att.file_path) } catch { /* ignore */ }
-  }
-
-  await db
-    .deleteFrom('archived_attachments')
-    .where('archived_mail_id', 'in', mailIds)
-    .execute()
-
-  // Delete EML files
-  for (const mail of mails) {
-    try { await storage.deleteFile(mail.eml_path) } catch { /* ignore */ }
-  }
-
-  // Delete DB records
-  await db
-    .deleteFrom('archived_mails')
-    .where('id', 'in', mailIds)
-    .execute()
+  await deleteArchivedMails(mails)
 
   logger.info(`[retention] Policy "${policy.id}": deleted ${mails.length} archive(s) older than ${policy.max_age_days} days`)
   return mails.length

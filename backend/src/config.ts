@@ -15,9 +15,7 @@ export const config = {
   REDIS_URL: process.env.REDIS_URL ?? 'redis://redis:6379',
 
   JWT_SECRET: require_env('JWT_SECRET'),
-  JWT_REFRESH_SECRET: require_env('JWT_REFRESH_SECRET'),
-  JWT_EXPIRY: process.env.JWT_EXPIRY ?? '15m',
-  JWT_REFRESH_EXPIRY: process.env.JWT_REFRESH_EXPIRY ?? '30d',
+  JWT_EXPIRY: process.env.JWT_EXPIRY ?? '24h', // same lifetime as the auth cookie; the frontend never refreshes
 
   GOOGLE_CLIENT_ID: require_env('GOOGLE_CLIENT_ID'),
   GOOGLE_CLIENT_SECRET: require_env('GOOGLE_CLIENT_SECRET'),
@@ -50,20 +48,14 @@ export const config = {
   // Inscription ouverte ou fermée (défaut: true)
   ALLOW_REGISTRATION: process.env.ALLOW_REGISTRATION !== 'false',
 
+  // Webhooks vers le réseau local (ntfy, Home Assistant…) — désactivé par défaut (SSRF)
+  WEBHOOK_ALLOW_PRIVATE_NETWORKS: process.env.WEBHOOK_ALLOW_PRIVATE_NETWORKS === 'true',
+
   // Gmail API throttle — stay under 250 quota units/user/sec
   // Most endpoints = 5 units → max ~50 concurrent requests/sec
   GMAIL_BATCH_SIZE: 25,
   GMAIL_THROTTLE_MS: 1_000,
   GMAIL_CONCURRENCY: 10,
-
-  // S3-compatible storage (MinIO, AWS S3, Backblaze B2, etc.)
-  // Si S3_ENDPOINT est défini, le stockage distant est disponible
-  S3_ENDPOINT:          process.env.S3_ENDPOINT ?? '',
-  S3_REGION:            process.env.S3_REGION ?? 'us-east-1',
-  S3_BUCKET:            process.env.S3_BUCKET ?? 'nid-archives',
-  S3_ACCESS_KEY_ID:     process.env.S3_ACCESS_KEY_ID ?? '',
-  S3_SECRET_ACCESS_KEY: process.env.S3_SECRET_ACCESS_KEY ?? '',
-  S3_FORCE_PATH_STYLE:  process.env.S3_FORCE_PATH_STYLE !== 'false',  // true pour MinIO
 } as const
 
 export type Config = typeof config

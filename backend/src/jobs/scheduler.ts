@@ -110,11 +110,12 @@ export function startRuleScheduler() {
 
       for (const rule of rules) {
         if (rule.schedule && shouldRun(rule.schedule, rule.last_run_at, now)) {
+          // last_run_at is only written once the rule ran, so dedupe the minutes it waits in the queue
           await enqueueJob("run_rule", {
             accountId: rule.gmail_account_id,
             userId: rule.user_id,
             ruleId: rule.id,
-          });
+          }, { dedupId: `run_rule-${rule.id}` });
           logger.info(
             `Enqueued rule ${rule.id} (${rule.account_email})`,
           );

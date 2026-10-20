@@ -104,7 +104,7 @@ vi.mock('../webhooks/webhook.service', () => ({
   triggerWebhooks: vi.fn(),
 }))
 vi.mock('../storage/storage.service', () => ({
-  getStorageForUser: vi.fn().mockResolvedValue({
+  getLocalStorage: vi.fn().mockReturnValue({
     deleteFile: vi.fn().mockResolvedValue(undefined),
   }),
 }))

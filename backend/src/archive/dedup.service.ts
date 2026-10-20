@@ -1,8 +1,9 @@
 import { createHash } from 'crypto'
 import { getDb } from '../db'
-import { getStorageForUser } from '../storage/storage.service'
+import { getLocalStorage } from '../storage/storage.service'
 import { sql } from 'kysely'
 import { createLogger } from '../logger'
+import { deleteUnreferencedFiles } from './trash.service'
 
 const logger = createLogger('dedup')
 
@@ -71,7 +72,7 @@ export async function getDeduplicationStats(userId: string) {
       SELECT DISTINCT ON (aa.content_hash) aa.size_bytes
       FROM archived_attachments aa
       INNER JOIN archived_mails am ON am.id = aa.archived_mail_id
-      WHERE am.gmail_account_id = ANY(${sql.raw(`ARRAY[${accountIds.map((id) => `'${id}'`).join(',')}]::uuid[]`)})
+      WHERE am.gmail_account_id = ANY(${accountIds}::uuid[])
       AND aa.content_hash IS NOT NULL
       ORDER BY aa.content_hash, aa.created_at ASC
     ) sub
@@ -99,7 +100,7 @@ export async function getDeduplicationStats(userId: string) {
 export async function backfillAttachmentHashes(userId: string) {
   logger.info({ userId }, 'backfilling attachment hashes')
   const db = getDb()
-  const storage = await getStorageForUser(userId)
+  const storage = getLocalStorage()
 
   // Récupérer les comptes Gmail de l'utilisateur
   const accounts = await db
@@ -161,7 +162,6 @@ export async function backfillAttachmentHashes(userId: string) {
  */
 async function cleanupDuplicateFiles(userId: string) {
   const db = getDb()
-  const storage = await getStorageForUser(userId)
 
   const accounts = await db
     .selectFrom('gmail_accounts')
@@ -173,13 +173,13 @@ async function cleanupDuplicateFiles(userId: string) {
   if (accountIds.length === 0) return 0
 
   // Trouver les hash avec plusieurs fichiers différents
-  const duplicates = await sql<{ content_hash: string; file_paths: string[] }>`
-    SELECT aa.content_hash, array_agg(DISTINCT aa.file_path) AS file_paths
+  const duplicates = await sql<{ gmail_account_id: string; content_hash: string; file_paths: string[] }>`
+    SELECT am.gmail_account_id, aa.content_hash, array_agg(DISTINCT aa.file_path) AS file_paths
     FROM archived_attachments aa
     INNER JOIN archived_mails am ON am.id = aa.archived_mail_id
-    WHERE am.gmail_account_id = ANY(${sql.raw(`ARRAY[${accountIds.map((id) => `'${id}'`).join(',')}]::uuid[]`)})
+    WHERE am.gmail_account_id = ANY(${accountIds}::uuid[])
     AND aa.content_hash IS NOT NULL
-    GROUP BY aa.content_hash
+    GROUP BY am.gmail_account_id, aa.content_hash
     HAVING COUNT(DISTINCT aa.file_path) > 1
   `.execute(db)
 
@@ -188,22 +188,16 @@ async function cleanupDuplicateFiles(userId: string) {
   for (const dup of duplicates.rows) {
     const canonicalPath = dup.file_paths[0]
 
-    // Mettre à jour toutes les entrées pour utiliser le fichier canonique
+    // Faire pointer les entrées de ce compte vers le fichier canonique
     await db
       .updateTable('archived_attachments')
       .set({ file_path: canonicalPath })
       .where('content_hash', '=', dup.content_hash)
+      .where('archived_mail_id', 'in', db.selectFrom('archived_mails').select('id').where('gmail_account_id', '=', dup.gmail_account_id))
       .execute()
 
-    // Supprimer les fichiers en double (sauf le canonique)
-    for (let i = 1; i < dup.file_paths.length; i++) {
-      try {
-        await storage.deleteFile(dup.file_paths[i])
-        removed++
-      } catch {
-        // Fichier déjà supprimé ou inaccessible
-      }
-    }
+    // Supprimer les doublons que plus personne n'utilise
+    removed += await deleteUnreferencedFiles(dup.file_paths.slice(1))
   }
 
   return removed

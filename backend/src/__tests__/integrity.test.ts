@@ -117,3 +117,22 @@ describe('checkArchiveIntegrity', () => {
     expect(result.totalRecords).toBe(1)
   })
 })
+
+describe('checkArchiveIntegrity for one account', () => {
+  it('does not report other accounts\' files as orphaned', async () => {
+    const mine = path.join(mockArchivePath, 'acc1', '2024', '01')
+    const theirs = path.join(mockArchivePath, 'acc2', '2024', '01')
+    mkdirSync(mine, { recursive: true })
+    mkdirSync(theirs, { recursive: true })
+    writeFileSync(path.join(mine, 'a.eml'), 'x')
+    writeFileSync(path.join(mine, 'stray.eml'), 'x')
+    writeFileSync(path.join(theirs, 'b.eml'), 'x')
+    // eml_path is stored absolute, as archiveMail writes it
+    mockExecute.mockResolvedValue([
+      { id: 'm1', eml_path: path.join(mine, 'a.eml'), gmail_account_id: 'acc1', size_bytes: 1 },
+    ])
+
+    const result = await checkArchiveIntegrity('acc1')
+    expect(result.orphanedFiles).toEqual([path.join('acc1', '2024', '01', 'stray.eml')])
+  })
+})

@@ -21,12 +21,10 @@ All Nid environment variables, defined in the `.env` file at the project root.
 | Variable | Default | Description |
 |---|---|---|
 | `JWT_SECRET` | — | **Required.** Signing secret for access tokens. Generate with `openssl rand -hex 64` |
-| `JWT_REFRESH_SECRET` | — | **Required.** Signing secret for refresh tokens |
-| `JWT_EXPIRY` | `15m` | Access token validity duration |
-| `JWT_REFRESH_EXPIRY` | `30d` | Refresh token validity duration |
+| `JWT_EXPIRY` | `24h` | Session token validity (the auth cookie lasts 24h, keep it ≤ 24h) |
 
 ::: warning Security
-Use long random secrets (at least 64 hexadecimal characters). Never reuse the same secret for access and refresh tokens.
+Use long random secrets (at least 64 hexadecimal characters).
 :::
 
 ---
@@ -104,6 +102,7 @@ Example: `http://localhost:3000/api/auth/social/microsoft/callback`
 |---|---|---|
 | `ADMIN_EMAIL` | *(empty)* | The user who signs up with this email automatically gets the `admin` role |
 | `ALLOW_REGISTRATION` | `true` | `false` to close registrations (form and SSO). Attempts will return a 403 error |
+| `WEBHOOK_ALLOW_PRIVATE_NETWORKS` | `false` | `true` to let webhooks target the local network (ntfy, Home Assistant on your LAN). Off by default: any user could otherwise probe internal services (SSRF) |
 
 ---
 
@@ -139,48 +138,6 @@ Gmail API enforces quotas (250 units/user/second). These variables control the t
 
 ::: info Tuning
 With multiple users active simultaneously, increase `GMAIL_THROTTLE_MS` or decrease `GMAIL_BATCH_SIZE` to avoid 429 errors (rate limit).
-:::
-
----
-
-## Remote Storage (S3/MinIO)
-
-In addition to local storage, Nid can archive to an S3-compatible bucket. These variables define the **global** configuration (all users). Each user can also configure their own S3 storage via the interface.
-
-| Variable | Default | Description |
-|---|---|---|
-| `S3_ENDPOINT` | *(empty)* | S3 server URL (e.g. `https://s3.amazonaws.com` or `https://minio.local:9000`). If empty, global S3 storage is disabled |
-| `S3_REGION` | `us-east-1` | S3 bucket region |
-| `S3_BUCKET` | `nid-archives` | Storage bucket name |
-| `S3_ACCESS_KEY_ID` | *(empty)* | Access Key ID for S3 authentication |
-| `S3_SECRET_ACCESS_KEY` | *(empty)* | Secret Access Key for S3 authentication |
-| `S3_FORCE_PATH_STYLE` | `true` | Use path-style for S3 requests. Required for MinIO, disable for AWS S3 |
-
-::: tip MinIO in Docker
-To use self-hosted MinIO, add a `minio` service to your `docker-compose.yml`:
-
-```yaml
-minio:
-  image: minio/minio
-  command: server /data --console-address ":9001"
-  environment:
-    MINIO_ROOT_USER: minioadmin
-    MINIO_ROOT_PASSWORD: minioadmin
-  volumes:
-    - minio_data:/data
-  ports:
-    - "9000:9000"
-    - "9001:9001"
-```
-
-Then configure:
-```bash
-S3_ENDPOINT=http://minio:9000
-S3_ACCESS_KEY_ID=minioadmin
-S3_SECRET_ACCESS_KEY=minioadmin
-S3_BUCKET=nid-archives
-S3_FORCE_PATH_STYLE=true
-```
 :::
 
 ---

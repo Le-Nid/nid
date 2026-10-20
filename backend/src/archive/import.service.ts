@@ -4,7 +4,7 @@ import path from 'path'
 import { Readable } from 'stream'
 import { simpleParser } from 'mailparser'
 import { getDb } from '../db'
-import { getStorageForUser } from '../storage/storage.service'
+import { getLocalStorage, type StorageBackend } from '../storage/storage.service'
 import { config } from '../config'
 import { createLogger } from '../logger'
 
@@ -56,7 +56,7 @@ export async function importMbox(
   let errors = 0
 
   const db = getDb()
-  const storage = await getStorageForUser(userId)
+  const storage = getLocalStorage()
 
   for (let i = 0; i < rawMessages.length; i++) {
     try {
@@ -85,7 +85,7 @@ export async function importMbox(
  */
 async function importSingleEml(
   db: ReturnType<typeof getDb>,
-  storage: Awaited<ReturnType<typeof getStorageForUser>>,
+  storage: StorageBackend,
   accountId: string,
   rawEml: string,
 ): Promise<'imported' | 'skipped'> {
@@ -218,7 +218,7 @@ export async function importImap(
       const total = Math.min(status.messages ?? 0, imapConfig.maxMessages ?? Infinity)
 
       const db = getDb()
-      const storage = await getStorageForUser(userId)
+      const storage = getLocalStorage()
       let processed = 0
 
       // Fetch messages (newest first)
@@ -263,7 +263,7 @@ export async function exportMbox(
   mailIds?: string[],
 ): Promise<Readable> {
   const db = getDb()
-  const storage = await getStorageForUser(userId)
+  const storage = getLocalStorage()
 
   let query = db
     .selectFrom('archived_mails')

@@ -39,7 +39,7 @@ vi.mock('../db', () => ({
 }))
 
 vi.mock('../storage/storage.service', () => ({
-  getStorageForUser: vi.fn().mockResolvedValue({
+  getLocalStorage: vi.fn().mockReturnValue({
     exists: vi.fn().mockResolvedValue(true),
     readFile: vi.fn().mockResolvedValue(Buffer.from('test-content')),
     deleteFile: vi.fn().mockResolvedValue(undefined),

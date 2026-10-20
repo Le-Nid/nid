@@ -19,7 +19,7 @@ vi.mock('../db', () => ({ getDb: () => mockDb }))
 
 const mockDeleteFile = vi.fn().mockResolvedValue(undefined)
 vi.mock('../storage/storage.service', () => ({
-  getStorageForUser: vi.fn().mockResolvedValue({ deleteFile: (...args: any[]) => mockDeleteFile(...args) }),
+  getLocalStorage: vi.fn().mockReturnValue({ deleteFile: (...args: any[]) => mockDeleteFile(...args) }),
 }))
 
 vi.mock('../logger', () => {
@@ -28,7 +28,7 @@ vi.mock('../logger', () => {
   return { createLogger: vi.fn(() => mockLogger) }
 })
 
-import { purgeArchiveTrash } from '../archive/trash.service'
+import { purgeArchiveTrash, deleteUnreferencedFiles } from '../archive/trash.service'
 
 beforeEach(() => vi.clearAllMocks())
 
@@ -52,7 +52,7 @@ describe('purgeArchiveTrash', () => {
     expect(result).toEqual({ deleted: 0 })
   })
 
-  it('deletes expired trash mails grouped by user', async () => {
+  it('deletes expired trash mails and their files', async () => {
     mockExecuteTakeFirst.mockResolvedValueOnce({ value: '7' }) // retention
     mockExecuteTakeFirst.mockResolvedValueOnce({ value: 'true' }) // enabled
     // Expired mails
@@ -68,6 +68,8 @@ describe('purgeArchiveTrash', () => {
     mockExecute.mockResolvedValueOnce(undefined)
     // deleteFrom mails
     mockExecute.mockResolvedValueOnce(undefined)
+    // attachment files still referenced elsewhere
+    mockExecute.mockResolvedValueOnce([])
 
     const result = await purgeArchiveTrash()
     expect(result).toEqual({ deleted: 2 })
@@ -99,5 +101,17 @@ describe('purgeArchiveTrash', () => {
     // Only EML file deleted
     expect(mockDeleteFile).toHaveBeenCalledTimes(1)
     expect(mockDeleteFile).toHaveBeenCalledWith('/data/mail-1.eml')
+  })
+})
+
+describe('deleteUnreferencedFiles', () => {
+  it('keeps a deduplicated file another mail still uses', async () => {
+    mockExecute.mockResolvedValueOnce([{ file_path: '/data/shared.pdf' }])
+
+    const deleted = await deleteUnreferencedFiles(['/data/shared.pdf', '/data/own.pdf', '/data/own.pdf'])
+
+    expect(deleted).toBe(1)
+    expect(mockDeleteFile).toHaveBeenCalledTimes(1)
+    expect(mockDeleteFile).toHaveBeenCalledWith('/data/own.pdf')
   })
 })

@@ -69,7 +69,7 @@ La carte **Espace économisé** affiche :
 
 Si vous avez archivé des mails avant l'activation de la déduplication, cliquez sur le bouton **Analyser** pour calculer les hash des pièces jointes existantes. Cette opération :
 
-1. Lit chaque fichier sur le stockage (local ou S3)
+1. Lit chaque fichier sur le stockage local
 2. Calcule le hash SHA-256
 3. Identifie les doublons et supprime les copies redondantes
 4. Met à jour la base de données pour pointer vers le fichier unique

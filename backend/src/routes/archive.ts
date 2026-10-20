@@ -5,7 +5,7 @@ import { getDb } from "../db";
 import { enqueueJob } from "../jobs/queue";
 import { streamArchiveZip } from "../archive/export.service";
 import { invalidateDashboardCache } from "../dashboard/cache.service";
-import { getStorageForUser } from "../storage/storage.service";
+import { deleteArchivedMails } from "../archive/trash.service";
 import fs from "node:fs";
 import { escapeIlike, notFound } from "../utils/db";
 import { extractPagination } from "../utils/pagination";
@@ -130,9 +130,7 @@ export async function archiveRoutes(app: FastifyInstance) {
       .where("archived_mail_id", "=", mailId)
       .execute();
 
-    const emlContent = fs.existsSync(mail.eml_path)
-      ? fs.readFileSync(mail.eml_path, "utf-8")
-      : null;
+    const emlContent = await fs.promises.readFile(mail.eml_path, "utf-8").catch(() => null);
 
     return { ...mail, emlContent, attachments };
   });
@@ -142,12 +140,15 @@ export async function archiveRoutes(app: FastifyInstance) {
     "/:accountId/attachments/:attachmentId/download",
     accountAuth,
     async (request, reply) => {
-      const { attachmentId } = request.params as { attachmentId: string };
+      const { accountId, attachmentId } = request.params as { accountId: string; attachmentId: string };
 
+      // accountAuth only checks accountId: the attachment must also belong to it
       const att = await db
         .selectFrom("archived_attachments")
-        .selectAll()
-        .where("id", "=", attachmentId)
+        .innerJoin("archived_mails", "archived_mails.id", "archived_attachments.archived_mail_id")
+        .selectAll("archived_attachments")
+        .where("archived_attachments.id", "=", attachmentId)
+        .where("archived_mails.gmail_account_id", "=", accountId)
         .executeTakeFirst();
 
       if (!att) return notFound(reply);
@@ -433,7 +434,6 @@ export async function archiveRoutes(app: FastifyInstance) {
   // ─── Empty trash (permanent delete) ───────────────────────
   app.delete("/:accountId/trash", accountAuth, async (request, reply) => {
     const { accountId } = request.params as { accountId: string };
-    const userId = request.user.sub;
 
     const mails = await db
       .selectFrom("archived_mails")
@@ -444,37 +444,7 @@ export async function archiveRoutes(app: FastifyInstance) {
 
     if (mails.length === 0) return { deleted: 0 };
 
-    const storage = await getStorageForUser(userId);
-    const mailIds = mails.map((m) => m.id);
-
-    // Delete attachments files + DB
-    const attachments = await db
-      .selectFrom("archived_attachments")
-      .select(["id", "file_path"])
-      .where("archived_mail_id", "in", mailIds)
-      .execute();
-
-    for (const att of attachments) {
-      try { await storage.deleteFile(att.file_path); } catch { /* ignore */ }
-    }
-
-    if (attachments.length) {
-      await db
-        .deleteFrom("archived_attachments")
-        .where("archived_mail_id", "in", mailIds)
-        .execute();
-    }
-
-    // Delete EML files
-    for (const mail of mails) {
-      try { await storage.deleteFile(mail.eml_path); } catch { /* ignore */ }
-    }
-
-    // Delete DB records
-    await db
-      .deleteFrom("archived_mails")
-      .where("id", "in", mailIds)
-      .execute();
+    await deleteArchivedMails(mails);
 
     logger.info(`Emptied trash for account ${accountId}: ${mails.length} mail(s) permanently deleted`);
     return { deleted: mails.length };
