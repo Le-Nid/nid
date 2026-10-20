@@ -213,6 +213,17 @@ describe('trashMessages', () => {
     expect(mockTrash).toHaveBeenCalledTimes(2)
     expect(mockTrackApiCall).toHaveBeenCalledWith('acc-1', 'messages.trash')
   })
+
+  it('skips a message already gone from Gmail instead of failing the batch', async () => {
+    mockTrash.mockRejectedValueOnce({ code: 404 }).mockResolvedValue({ data: {} })
+    await expect(trashMessages('acc-1', ['gone', 'msg-2'])).resolves.toBeUndefined()
+    expect(mockTrash).toHaveBeenCalledTimes(2)
+  })
+
+  it('still fails on other errors', async () => {
+    mockTrash.mockRejectedValueOnce({ code: 401 })
+    await expect(trashMessages('acc-1', ['msg-1'])).rejects.toEqual({ code: 401 })
+  })
 })
 
 // ─── modifyMessages ─────────────────────────────────────

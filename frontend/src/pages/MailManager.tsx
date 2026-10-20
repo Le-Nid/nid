@@ -270,14 +270,14 @@ export default function MailManagerPage() {
   };
 
   // ─── Bulk actions ─────────────────────────────────────────
-  const handleBulkAction = async (action: string, labelId?: string) => {
-    if (!selected.length || !accountId) return;
+  const handleBulkAction = async (action: string, labelId?: string, ids: string[] = selected) => {
+    if (!ids.length || !accountId) return;
 
     if (action === "archive_nas") {
       setBulkLoading(true);
       try {
         const { jobId } = await archiveApi.triggerArchive(accountId, {
-          messageIds: selected,
+          messageIds: ids,
           differential: true,
         });
         setActiveJobId(jobId);
@@ -286,6 +286,8 @@ export default function MailManagerPage() {
           description: t('mailManager.archiveAllDesc'),
         });
         setSelected([]);
+      } catch {
+        messageApi.error(t('mailManager.bulkError'));
       } finally {
         setBulkLoading(false);
       }
@@ -297,16 +299,17 @@ export default function MailManagerPage() {
       const { jobId } = await gmailApi.bulkOperation(
         accountId,
         action,
-        selected,
+        ids,
         labelId,
       );
       setActiveJobId(jobId);
       notification.success({
         message: t('mailManager.bulkStarted'),
-        description: t('mailManager.bulkStartedDesc', { count: selected.length }),
+        description: t('mailManager.bulkStartedDesc', { count: ids.length }),
       });
       setSelected([]);
-      setTimeout(loadFresh, 3000);
+      // forceRefresh: otherwise the cached page brings the trashed mails back
+      setTimeout(() => loadFresh(true), 3000);
     } catch {
       messageApi.error(t('mailManager.bulkError'));
     } finally {
@@ -403,11 +406,17 @@ export default function MailManagerPage() {
           trigger={["click"]}
           menu={{
             items: [
-              {key: "read", label: t('mailManager.read'), onClick: () => setViewingId(row.id)},
-              {key: "trash", label: t('mailManager.trashAction'), onClick: () => handleBulkAction("trash")},
-              {key: "archive", label: t('mailManager.archiveGmail'), onClick: () => handleBulkAction("archive")},
-              {key: "nas", label: t('mailManager.archiveNas'), onClick: () => handleBulkAction("archive_nas")},
+              {key: "read", label: t('mailManager.read')},
+              {key: "trash", label: t('mailManager.trashAction')},
+              {key: "archive", label: t('mailManager.archiveGmail')},
+              {key: "archive_nas", label: t('mailManager.archiveNas')},
             ],
+            // Row actions target this row, not the checked selection; stopPropagation keeps the row click from opening the viewer
+            onClick: ({ key, domEvent }) => {
+              domEvent.stopPropagation();
+              if (key === "read") setViewingId(row.id);
+              else handleBulkAction(key, undefined, [row.id]);
+            },
           }}
         >
           <Button type="text" icon={<MoreHorizontal size={14} />} size="small" onClick={(e) => e.stopPropagation()} />

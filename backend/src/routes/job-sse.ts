@@ -10,6 +10,8 @@ const logger = createLogger('job-sse')
 // Map des connexions SSE actives : jobId → Set<reply>
 const subscribers = new Map<string, Set<ServerResponse>>();
 
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 export async function jobSseRoutes(app: FastifyInstance) {
   // ─── SSE stream pour un job précis ────────────────────────
   // GET /api/jobs/:jobId/events → text/event-stream
@@ -27,11 +29,11 @@ export async function jobSseRoutes(app: FastifyInstance) {
       const job = await db
         .selectFrom("jobs")
         .select(["id", "bullmq_id", "status"])
+        // Clients pass either the row uuid or the BullMQ id (`type-uuid`); comparing a non-uuid to `id` is a Postgres error
         .where((eb) =>
-          eb.or([
-            eb('bullmq_id', '=', jobId),
-            eb('id', '=', jobId),
-          ])
+          UUID_RE.test(jobId)
+            ? eb.or([eb('bullmq_id', '=', jobId), eb('id', '=', jobId)])
+            : eb('bullmq_id', '=', jobId)
         )
         .where("user_id", "=", userId)
         .executeTakeFirst();

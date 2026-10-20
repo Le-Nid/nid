@@ -61,7 +61,9 @@ export async function archiveMail(accountId: string, messageId: string): Promise
   const msg = res.data
   if (!msg.raw) throw new Error(`Empty raw for message ${messageId}`)
 
-  const rawEml  = Buffer.from(msg.raw, 'base64url').toString('utf-8')
+  // Keep the exact bytes on disk: a utf-8 round-trip corrupts latin1/8bit mails
+  const rawBuf  = Buffer.from(msg.raw, 'base64url')
+  const rawEml  = rawBuf.toString('utf-8')
 
   // Parse headers from raw EML (format: 'raw' doesn't populate payload.headers)
   const headerSection = rawEml.split(/\r?\n\r?\n/)[0] ?? ''
@@ -79,7 +81,8 @@ export async function archiveMail(accountId: string, messageId: string): Promise
   }
   const get = (name: string) => decodeMimeWords(parsedHeaders.get(name.toLowerCase()) ?? '')
 
-  const date  = new Date(get('Date') || Date.now())
+  let date = new Date(get('Date'))
+  if (Number.isNaN(date.getTime())) date = new Date(Number(msg.internalDate) || Date.now())
   const year  = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
 
@@ -88,9 +91,9 @@ export async function archiveMail(accountId: string, messageId: string): Promise
   const attachDir = path.join(mailDir, `${messageId}_attachments`)
 
   await fs.mkdir(mailDir, { recursive: true })
-  await fs.writeFile(emlPath, rawEml, 'utf-8')
+  await fs.writeFile(emlPath, rawBuf)
 
-  const attachments = await extractAttachments(rawEml, attachDir, accountId)
+  const attachments = await extractAttachments(rawBuf, attachDir, accountId)
 
   const attachmentNames = attachments.map((a) => a.filename).join(' ')
 
@@ -136,7 +139,7 @@ export async function archiveMail(accountId: string, messageId: string): Promise
 }
 
 async function extractAttachments(
-  rawEml: string,
+  rawEml: Buffer,
   attachDir: string,
   accountId: string
 ): Promise<{ filename: string; mimeType: string; size: number; filePath: string; contentHash: string }[]> {
@@ -146,7 +149,7 @@ async function extractAttachments(
   const parsed = await simpleParser(rawEml)
   const attachments = parsed.attachments ?? []
 
-  for (const att of attachments) {
+  for (const [i, att] of attachments.entries()) {
     if (!att.filename) continue
 
     const contentHash = createHash('sha256').update(att.content).digest('hex')
@@ -166,7 +169,8 @@ async function extractAttachments(
       filePath = existing.file_path
     } else {
       await fs.mkdir(attachDir, { recursive: true })
-      const safeName = att.filename.replace(/[^a-zA-Z0-9._-]/g, '_')
+      // Index prefix: two attachments may share a name (e.g. inline image.png)
+      const safeName = `${i}_${att.filename.replace(/[^a-zA-Z0-9._-]/g, '_')}`
       filePath = path.join(attachDir, safeName)
       await fs.writeFile(filePath, att.content)
     }

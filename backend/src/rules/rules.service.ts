@@ -79,6 +79,7 @@ export function buildGmailQuery(conditions: RuleCondition[]): string {
   const parts: string[] = []
 
   for (const cond of conditions) {
+    const before = parts.length
     switch (cond.field) {
       case 'from':
         if (cond.operator === 'contains' || cond.operator === 'equals')
@@ -110,8 +111,11 @@ export function buildGmailQuery(conditions: RuleCondition[]): string {
         else if (cond.operator === 'not_equals') parts.push(`-label:${cond.value}`)
         break
     }
+    // An ignored condition widens the query, up to the whole mailbox: refuse it
+    if (parts.length === before) throw new Error(`Unsupported rule condition: ${cond.field} ${cond.operator}`)
   }
 
+  if (!parts.length) throw new Error('A rule needs at least one condition')
   return parts.join(' ')
 }
 

@@ -48,8 +48,9 @@ export async function importMbox(
   filePath: string,
   opts?: { onProgress?: (done: number, total: number) => Promise<void> },
 ): Promise<{ imported: number; skipped: number; errors: number }> {
-  const content = await fs.readFile(filePath, 'utf-8')
-  const rawMessages = parseMbox(content)
+  // latin1 maps each byte to one char, so Buffer.from(msg, 'latin1') gives back the exact bytes
+  const content = await fs.readFile(filePath, 'latin1')
+  const rawMessages = parseMbox(content).map((m) => Buffer.from(m, 'latin1'))
   const total = rawMessages.length
   let imported = 0
   let skipped = 0
@@ -87,7 +88,7 @@ async function importSingleEml(
   db: ReturnType<typeof getDb>,
   storage: StorageBackend,
   accountId: string,
-  rawEml: string,
+  rawEml: Buffer,
 ): Promise<'imported' | 'skipped'> {
   const parsed = await simpleParser(rawEml)
 
@@ -117,10 +118,10 @@ async function importSingleEml(
 
   // Extract and save attachments
   const attachments: { filename: string; mimeType: string; size: number; filePath: string }[] = []
-  for (const att of parsed.attachments ?? []) {
+  for (const [i, att] of (parsed.attachments ?? []).entries()) {
     if (!att.filename) continue
     await storage.mkdir(attachDir)
-    const safeName = att.filename.replace(/[^a-zA-Z0-9._-]/g, '_')
+    const safeName = `${i}_${att.filename.replace(/[^a-zA-Z0-9._-]/g, '_')}`
     const attPath = path.join(attachDir, safeName)
     await storage.writeFile(attPath, att.content)
     attachments.push({
@@ -225,7 +226,7 @@ export async function importImap(
       const range = imapConfig.maxMessages ? `1:${imapConfig.maxMessages}` : '1:*'
       for await (const msg of client.fetch(range, { source: true })) {
         try {
-          const rawEml = msg.source?.toString('utf-8')
+          const rawEml = msg.source
           if (!rawEml) { skipped++; continue }
           const result = await importSingleEml(db, storage, accountId, rawEml)
           if (result === 'imported') imported++
