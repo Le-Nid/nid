@@ -52,25 +52,24 @@ export async function enqueueJob(type: JobType, payload: JobPayload, opts: { ded
     jobId,
     ...(opts.dedupId ? { deduplication: { id: opts.dedupId } } : {}),
   })
-  if (job.id !== jobId) return job // deduplicated: BullMQ returned the job already queued
-
-  // Pre-insert job row so SSE can find it immediately
-  const db = getDb()
-  await db
-    .insertInto('jobs')
-    .values({
-      bullmq_id: String(job.id),
-      type,
-      status: 'pending',
-      progress: 0,
-      processed: 0,
-      total: 0,
-      gmail_account_id: payload.accountId || null, // '' = job not tied to an account
-      user_id: payload.userId ?? null,
-      payload: JSON.stringify(payload),
-    })
-    .onConflict((oc: any) => oc.doNothing())
-    .execute()
+  // Pre-insert job row so SSE can find it immediately (skipped when BullMQ deduplicated: the row already exists)
+  if (job.id === jobId) {
+    await getDb()
+      .insertInto('jobs')
+      .values({
+        bullmq_id: String(job.id),
+        type,
+        status: 'pending',
+        progress: 0,
+        processed: 0,
+        total: 0,
+        gmail_account_id: payload.accountId || null, // '' = job not tied to an account
+        user_id: payload.userId ?? null,
+        payload: JSON.stringify(payload),
+      })
+      .onConflict((oc: any) => oc.doNothing())
+      .execute()
+  }
 
   return job
 }

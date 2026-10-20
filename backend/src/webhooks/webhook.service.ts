@@ -2,6 +2,7 @@ import { getDb } from '../db'
 import * as crypto from 'crypto'
 import { lookup } from 'node:dns/promises'
 import { BlockList, isIP } from 'node:net'
+import { URL } from 'node:url'
 import { config } from '../config'
 import { createLogger } from '../logger'
 
