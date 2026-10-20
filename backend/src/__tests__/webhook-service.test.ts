@@ -51,6 +51,16 @@ describe('SSRF guard', () => {
   )
   it.each(['93.184.216.34', '2606:4700::1111'])('treats %s as public', (ip) => expect(isPrivateAddress(ip)).toBe(false))
 
+  it('does not call a bracketed IPv6 loopback webhook', async () => {
+    mockExecute.mockResolvedValueOnce([
+      { id: 'w1', url: 'http://[::1]:8080/hook', type: 'generic', events: ['job.completed'], secret: null, is_active: true },
+    ])
+    await triggerWebhooks('user-1', 'job.completed', {})
+    await flush()
+    expect(mockLookup).not.toHaveBeenCalled()
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+
   it('does not call a webhook whose host resolves to the internal network', async () => {
     mockLookup.mockResolvedValueOnce([{ address: '172.18.0.3', family: 4 }]) // e.g. the postgres container
     mockExecute.mockResolvedValueOnce([

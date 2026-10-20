@@ -35,7 +35,7 @@ export function isPrivateAddress(address: string): boolean {
 async function assertPublicUrl(url: string) {
   if (config.WEBHOOK_ALLOW_PRIVATE_NETWORKS) return
   const { hostname } = new URL(url)
-  const host = hostname.replace(/^\[|\]$/g, '')
+  const host = hostname.startsWith('[') ? hostname.slice(1, -1) : hostname // IPv6 literals come bracketed
   const addresses = isIP(host) ? [{ address: host }] : await lookup(host, { all: true })
   if (addresses.some((a) => isPrivateAddress(a.address))) {
     throw new Error(`Webhook target ${hostname} is on a private network (set WEBHOOK_ALLOW_PRIVATE_NETWORKS=true to allow)`)
