@@ -64,8 +64,8 @@ export async function retentionRoutes(app: FastifyInstance) {
     return reply.code(204).send()
   })
 
-  // ─── Run all retention policies now (manual trigger) ──────
+  // ─── Run the caller's retention policies now (manual trigger) ──────
   app.post('/run', auth, async (request) => {
-    return applyRetentionPolicies()
+    return applyRetentionPolicies(request.user.sub)
   })
 }

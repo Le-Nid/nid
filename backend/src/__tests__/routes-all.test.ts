@@ -452,6 +452,18 @@ describe('rulesRoutes', () => {
     await app.close()
   })
 
+  it('PUT with schedule: null unschedules the rule', async () => {
+    const { updateRule } = await import('../rules/rules.service')
+    const app = await buildTestApp()
+    await app.register(rulesRoutes)
+    await app.ready()
+
+    const res = await app.inject({ method: 'PUT', url: '/acc-1/rule-1', payload: { schedule: null } })
+    expect(res.statusCode).toBe(200)
+    expect(updateRule).toHaveBeenCalledWith('rule-1', 'acc-1', expect.objectContaining({ schedule: null }))
+    await app.close()
+  })
+
   it('GET /templates returns rule templates', async () => {
     const app = await buildTestApp()
     await app.register(rulesRoutes)

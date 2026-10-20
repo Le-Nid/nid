@@ -12,6 +12,7 @@ import { encryptArchives } from '../../privacy/encryption.service'
 import { importMbox, importImap } from '../../archive/import.service'
 import { applyRetentionPolicies } from '../../archive/retention.service'
 import { purgeArchiveTrash } from '../../archive/trash.service'
+import { checkArchiveIntegrity } from '../../archive/integrity.service'
 import { createLogger } from '../../logger'
 
 const logger = createLogger('worker')
@@ -41,8 +42,11 @@ export function startUnifiedWorker() {
           return handleRetention(job)
         case 'purge_archive_trash':
           return handlePurgeTrash(job)
+        case 'integrity_check':
+          return handleIntegrity(job)
         default:
-          logger.warn(`Unknown job type: ${job.name}`)
+          // Fail loudly: a silent no-op left the job row pending forever
+          throw new Error(`Unknown job type: ${job.name}`)
       }
     },
     { connection: getRedis(), concurrency: 3 },
@@ -56,72 +60,94 @@ export function startUnifiedWorker() {
 }
 
 // ─── Archive ────────────────────────────────────────────────
+async function listAllMessageIds(accountId: string, query?: string): Promise<string[]> {
+  const ids: string[] = []
+  let pageToken: string | null = null
+  do {
+    const res: any = await listMessages(accountId, {
+      query: query || undefined,
+      maxResults: 500,
+      pageToken: pageToken ?? undefined,
+    })
+    ids.push(...(res.messages ?? []).map((m: any) => m.id))
+    pageToken = res.nextPageToken
+  } while (pageToken)
+  return ids
+}
+
 async function handleArchive(job: Job) {
   const { accountId, messageIds, query, differential = true } = job.data
   const db = getDb()
 
-  let ids: string[] = messageIds ?? []
+  try {
+    let ids: string[] = messageIds?.length ? messageIds : await listAllMessageIds(accountId, query)
 
-  if (!ids.length) {
-    let pageToken: string | null = null
-    do {
-      const res: any = await listMessages(accountId, {
-        query: query || undefined,
-        maxResults: 500,
-        pageToken: pageToken ?? undefined,
+    if (differential) {
+      const archived = await getArchivedIds(accountId)
+      ids = ids.filter((id) => !archived.has(id))
+    }
+
+    const total = ids.length
+
+    await db
+      .updateTable('jobs')
+      .set({ status: 'active', total })
+      .where('bullmq_id', '=', String(job.id))
+      .execute()
+
+    let processed = 0
+    let failed = 0
+    for (const messageId of ids) {
+      try {
+        await archiveMail(accountId, messageId)
+      } catch (err) {
+        failed++
+        logger.error({ messageId, err }, 'Failed to archive message')
+      }
+      processed++
+      const progress = Math.round((processed / total) * 100)
+
+      if (processed % 10 === 0 || processed === total) {
+        await db
+          .updateTable('jobs')
+          .set({ progress, processed })
+          .where('bullmq_id', '=', String(job.id))
+          .execute()
+      }
+      await job.updateProgress(progress)
+    }
+
+    // Every message failing means a systemic problem (token, disk…), not a bad mail
+    const allFailed = total > 0 && failed === total
+    await db
+      .updateTable('jobs')
+      .set({
+        status: allFailed ? 'failed' : 'completed',
+        progress: 100,
+        processed: total,
+        completed_at: new Date(),
+        ...(failed ? { error: `${failed}/${total} message(s) failed to archive` } : {}),
       })
-      ids.push(...(res.messages ?? []).map((m: any) => m.id))
-      pageToken = res.nextPageToken
-    } while (pageToken)
-  }
+      .where('bullmq_id', '=', String(job.id))
+      .execute()
 
-  if (differential) {
-    const archived = await getArchivedIds(accountId)
-    ids = ids.filter((id) => !archived.has(id))
-  }
-
-  const total = ids.length
-
-  await db
-    .updateTable('jobs')
-    .set({ status: 'active', total })
-    .where('bullmq_id', '=', String(job.id))
-    .execute()
-
-  let processed = 0
-  for (const messageId of ids) {
-    try {
-      await archiveMail(accountId, messageId)
-    } catch (err) {
-      logger.error({ messageId, err }, 'Failed to archive message')
+    if (job.data.userId) {
+      const failedNote = failed ? `, ${failed} en échec` : ''
+      await notify({
+        userId: job.data.userId,
+        category: allFailed ? 'job_failed' : 'job_completed',
+        title: allFailed ? 'Archivage échoué' : 'Archivage terminé',
+        body: `${total - failed} mail(s) archivé(s) sur le NAS${failedNote}.`,
+        data: { jobId: String(job.id), count: total - failed, failed },
+      })
     }
-    processed++
-    const progress = Math.round((processed / total) * 100)
-
-    if (processed % 10 === 0 || processed === total) {
-      await db
-        .updateTable('jobs')
-        .set({ progress, processed })
-        .where('bullmq_id', '=', String(job.id))
-        .execute()
-    }
-    await job.updateProgress(progress)
-  }
-
-  await db
-    .updateTable('jobs')
-    .set({ status: 'completed', progress: 100, processed: total, completed_at: new Date() })
-    .where('bullmq_id', '=', String(job.id))
-    .execute()
-
-  if (job.data.userId) {
-    await notify({
-      userId: job.data.userId,
-      category: 'job_completed',
-      title: 'Archivage terminé',
-      body: `${total} mail(s) archivé(s) sur le NAS.`,
-      data: { jobId: String(job.id), count: total },
-    })
+  } catch (err) {
+    await db
+      .updateTable('jobs')
+      .set({ status: 'failed', error: String(err) })
+      .where('bullmq_id', '=', String(job.id))
+      .execute()
+    throw err
   }
 }
 
@@ -155,6 +181,8 @@ async function handleBulk(job: Job) {
       const chunk = messageIds.slice(i, i + CHUNK_SIZE)
       switch (action) {
         case 'trash':
+        // shortcut: the gmail.modify scope cannot delete permanently; Gmail empties its trash after 30 days
+        case 'delete':
           await trashMessages(accountId, chunk)
           break
         case 'archive':
@@ -174,6 +202,8 @@ async function handleBulk(job: Job) {
           if (!labelId) throw new Error('labelId required')
           await modifyMessages(accountId, chunk, [], [labelId])
           break
+        default:
+          throw new Error(`Unknown bulk action: ${action}`)
       }
       processed += chunk.length
       await updateProgress(processed)
@@ -668,6 +698,32 @@ async function handlePurgeTrash(job: Job) {
       .set({ status: 'failed', error: String(err) })
       .where('bullmq_id', '=', String(job.id))
       .execute()
+    throw err
+  }
+}
+
+// ─── Integrity check ────────────────────────────────────────
+async function handleIntegrity(job: Job) {
+  const db = getDb()
+  await db.updateTable('jobs').set({ status: 'active' }).where('bullmq_id', '=', String(job.id)).execute()
+
+  try {
+    const result = await checkArchiveIntegrity(job.data.accountId || undefined)
+    await db.updateTable('jobs')
+      .set({ status: 'completed', progress: 100, processed: result.checkedFiles, total: result.totalRecords, completed_at: new Date() })
+      .where('bullmq_id', '=', String(job.id))
+      .execute()
+
+    if (!result.healthy) {
+      const admins = await db.selectFrom('users').select('id').where('role', '=', 'admin').execute()
+      const body = `${result.missingFiles.length} fichier(s) manquant(s), ${result.corruptedFiles.length} corrompu(s), ${result.orphanedFiles.length} orphelin(s).`
+      await Promise.all(admins.map(({ id }) =>
+        notify({ userId: id, category: 'integrity_alert', title: 'Intégrité des archives', body, data: { jobId: String(job.id) } }),
+      ))
+    }
+    return result
+  } catch (err) {
+    await db.updateTable('jobs').set({ status: 'failed', error: String(err) }).where('bullmq_id', '=', String(job.id)).execute()
     throw err
   }
 }

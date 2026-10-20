@@ -82,6 +82,11 @@ vi.mock('../archive/trash.service', () => ({
   purgeArchiveTrash: (...args: any[]) => mockPurgeArchiveTrash(...args),
 }))
 
+const mockCheckIntegrity = vi.fn()
+vi.mock('../archive/integrity.service', () => ({
+  checkArchiveIntegrity: (...args: any[]) => mockCheckIntegrity(...args),
+}))
+
 vi.mock('bullmq', () => {
   return {
     Worker: class MockWorker {
@@ -378,9 +383,34 @@ describe('unified worker handlers', () => {
     await expect(processJob(job)).rejects.toThrow('Purge failed')
   })
 
-  it('handles unknown job type gracefully', async () => {
+  it('runs bulk "delete" as trash (gmail.modify cannot delete permanently)', async () => {
+    await processJob(makeJob('bulk_operation', { accountId: 'acc-1', action: 'delete', messageIds: ['msg-1'] }))
+    expect(mockTrashMessages).toHaveBeenCalledWith('acc-1', ['msg-1'])
+  })
+
+  it('fails an unknown bulk action instead of reporting success', async () => {
+    await expect(processJob(makeJob('bulk_operation', { accountId: 'acc-1', action: 'nope', messageIds: ['msg-1'] })))
+      .rejects.toThrow('Unknown bulk action')
+  })
+
+  it('reports an archive job where every message failed as failed', async () => {
+    mockArchiveMail.mockRejectedValue(new Error('token revoked'))
+    await processJob(makeJob('archive_mails', { accountId: 'acc-1', userId: 'user-1', messageIds: ['m1', 'm2'], differential: false }))
+    expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ category: 'job_failed' }))
+    mockArchiveMail.mockResolvedValue(undefined)
+  })
+
+  it('runs integrity_check and alerts admins when unhealthy', async () => {
+    mockCheckIntegrity.mockResolvedValueOnce({ totalRecords: 2, checkedFiles: 2, missingFiles: ['a'], orphanedFiles: [], corruptedFiles: [], healthy: false })
+    mockExecute.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([{ id: 'admin-1' }])
+    await processJob(makeJob('integrity_check', { accountId: '' }))
+    expect(mockCheckIntegrity).toHaveBeenCalledWith(undefined)
+    expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ userId: 'admin-1', category: 'integrity_alert' }))
+  })
+
+  it('fails unknown job types instead of completing them silently', async () => {
     const job = makeJob('unknown_type', {})
-    await expect(processJob(job)).resolves.not.toThrow()
+    await expect(processJob(job)).rejects.toThrow('Unknown job type')
   })
 
   it('handles privacy failure with notification', async () => {

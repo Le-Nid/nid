@@ -54,10 +54,16 @@ const actionSchema = z.object({
   labelId: z.string().optional(),
 });
 
+const conditionsSchema = z
+  .array(conditionSchema)
+  .min(1)
+  .refine((conds) => { try { buildGmailQuery(conds); return true } catch { return false } },
+    { message: "Unsupported condition (field/operator combination)" });
+
 const ruleCreateSchema = z.object({
   name: z.string().min(1).max(255),
   description: z.string().optional(),
-  conditions: z.array(conditionSchema).min(1),
+  conditions: conditionsSchema,
   action: actionSchema,
   schedule: z
     .enum(["hourly", "daily", "weekly", "monthly"])
@@ -119,10 +125,8 @@ export async function rulesRoutes(app: FastifyInstance) {
       ruleId: string;
     };
     const dto = ruleCreateSchema.partial().parse(request.body);
-    return updateRule(ruleId, accountId, {
-      ...dto,
-      schedule: dto.schedule ?? undefined,
-    });
+    // dto.schedule: null = unschedule, undefined = unchanged
+    return updateRule(ruleId, accountId, dto);
   });
 
   app.patch("/:accountId/:ruleId/toggle", accountAuth, async (request, reply) => {
@@ -160,7 +164,7 @@ export async function rulesRoutes(app: FastifyInstance) {
 
   app.post("/:accountId/preview", accountAuth, async (request) => {
     const { accountId } = request.params as { accountId: string };
-    const { conditions } = request.body as { conditions: any[] };
+    const conditions = conditionsSchema.parse((request.body as { conditions?: unknown })?.conditions);
     const query = buildGmailQuery(conditions);
     const res = await listMessages(accountId, { query, maxResults: 1 });
     return { query, estimatedCount: res.resultSizeEstimate ?? 0 };

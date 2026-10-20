@@ -46,7 +46,14 @@ describe('buildGmailQuery', () => {
     expect(buildGmailQuery(conds)).toBe('from:(promo) subject:(offre)')
   })
 
-  it('retourne chaîne vide pour tableau vide', () => {
-    expect(buildGmailQuery([])).toBe('')
+  it('refuse un tableau vide (sinon toute la boîte est ciblée)', () => {
+    expect(() => buildGmailQuery([])).toThrow()
+  })
+})
+
+describe('RULE_TEMPLATES', () => {
+  it('only use conditions buildGmailQuery can translate', async () => {
+    const { RULE_TEMPLATES } = await import('../rules/rule-templates')
+    for (const tpl of RULE_TEMPLATES) expect(() => buildGmailQuery(tpl.dto.conditions)).not.toThrow()
   })
 })

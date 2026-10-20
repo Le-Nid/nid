@@ -352,8 +352,7 @@ describe('unified worker handlers', () => {
     startUnifiedWorker()
 
     const job = createMockJob('unknown_type', { accountId: 'acc-1' })
-    await capturedHandler(job) // Should log warning but not throw
-    expect(capturedHandler).toBeDefined()
+    await expect(capturedHandler(job)).rejects.toThrow('Unknown job type')
   })
 
   it('handles archive_mails with differential', async () => {

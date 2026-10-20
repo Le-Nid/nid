@@ -104,11 +104,23 @@ export async function batchGetMessages(
 }
 
 // ─── Bulk operations ────────────────────────────────────
+/** A message deleted in Gmail meanwhile must not fail the whole batch (expiration, rules, bulk). */
+function ignoreGone(err: any) {
+  const status = err?.code ?? err?.response?.status ?? err?.status
+  if (status === 404 || status === 410) return
+  throw err
+}
+
 export async function trashMessages(accountId: string, messageIds: string[]) {
   const gmail = await getGmailClient(accountId)
-  const trashOne = (id: string) =>
-    gmailRetry(() => gmail.users.messages.trash({ userId: 'me', id }))
-      .then((r) => { trackApiCall(accountId, 'messages.trash').catch(() => {}); return r })
+  const trashOne = async (id: string) => {
+    try {
+      await gmailRetry(() => gmail.users.messages.trash({ userId: 'me', id }))
+      trackApiCall(accountId, 'messages.trash').catch(() => {})
+    } catch (err) {
+      ignoreGone(err)
+    }
+  }
   for (const chunk of chunks(messageIds, config.GMAIL_BATCH_SIZE)) {
     await limitConcurrency(
       chunk.map((id) => () => trashOne(id)),
@@ -125,10 +137,16 @@ export async function modifyMessages(
   removeLabelIds: string[]
 ) {
   const gmail = await getGmailClient(accountId)
-  const modifyOne = (id: string) =>
-    gmailRetry(() =>
-      gmail.users.messages.modify({ userId: 'me', id, requestBody: { addLabelIds, removeLabelIds } })
-    ).then((r) => { trackApiCall(accountId, 'messages.modify').catch(() => {}); return r })
+  const modifyOne = async (id: string) => {
+    try {
+      await gmailRetry(() =>
+        gmail.users.messages.modify({ userId: 'me', id, requestBody: { addLabelIds, removeLabelIds } })
+      )
+      trackApiCall(accountId, 'messages.modify').catch(() => {})
+    } catch (err) {
+      ignoreGone(err)
+    }
+  }
   for (const chunk of chunks(messageIds, config.GMAIL_BATCH_SIZE)) {
     await limitConcurrency(
       chunk.map((id) => () => modifyOne(id)),

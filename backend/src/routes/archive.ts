@@ -20,7 +20,7 @@ function sanitizeFilename(name: string): string {
 const logger = createLogger('archive-routes')
 
 export async function archiveRoutes(app: FastifyInstance) {
-  const { accountAuth } = authPresets(app);
+  const { accountAuth, adminAuth } = authPresets(app);
   const db = getDb();
 
   // ─── Liste mails archivés ─────────────────────────────────
@@ -474,7 +474,8 @@ export async function archiveRoutes(app: FastifyInstance) {
     purgeEnabled: z.boolean().optional(),
   });
 
-  app.put("/config/trash", { preHandler: [app.authenticate] }, async (request) => {
+  // Instance-wide setting: admin only
+  app.put("/config/trash", adminAuth, async (request) => {
     const { retentionDays, purgeEnabled } = trashConfigSchema.parse(request.body);
 
     if (retentionDays !== undefined) {

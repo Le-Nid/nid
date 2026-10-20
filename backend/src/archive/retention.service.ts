@@ -4,18 +4,20 @@ import { createLogger } from '../logger'
 
 const logger = createLogger('retention')
 
-export async function applyRetentionPolicies(): Promise<{
+/** `userId`: only that user's policies (manual run); omitted = every user's (scheduled run). */
+export async function applyRetentionPolicies(userId?: string): Promise<{
   policiesRun: number
   totalDeleted: number
 }> {
   const db = getDb()
   let totalDeleted = 0
 
-  const policies = await db
+  let query = db
     .selectFrom('retention_policies')
     .selectAll()
     .where('is_active', '=', true)
-    .execute()
+  if (userId) query = query.where('user_id', '=', userId)
+  const policies = await query.execute()
 
   for (const policy of policies) {
     try {

@@ -27,7 +27,7 @@ export interface Rule {
   description?: string
   conditions: RuleCondition[]
   action: RuleAction
-  schedule?: string         // cron string, null = manuel seulement
+  schedule?: string | null  // null = manuel seulement
   is_active: boolean
   last_run_at?: string
   created_at: string
@@ -39,7 +39,7 @@ export interface RuleCreateDTO {
   description?: string
   conditions: RuleCondition[]
   action: RuleAction
-  schedule?: string
+  schedule?: string | null
   is_active?: boolean
 }
 

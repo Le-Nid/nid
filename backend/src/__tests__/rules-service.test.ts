@@ -196,8 +196,15 @@ describe('buildGmailQuery', () => {
     expect(buildGmailQuery(conditions)).toBe('from:(test@test.com) older_than:7d has:attachment')
   })
 
-  it('returns empty string for no conditions', () => {
-    expect(buildGmailQuery([])).toBe('')
+  it('refuses no conditions: an empty query would match the whole mailbox', () => {
+    expect(() => buildGmailQuery([])).toThrow()
+  })
+
+  it('refuses a condition it cannot translate instead of dropping it', () => {
+    expect(() => buildGmailQuery([
+      { field: 'from', operator: 'contains', value: 'x@y.z' },
+      { field: 'label', operator: 'contains', value: 'Factures' },
+    ] as any)).toThrow(/Unsupported/)
   })
 })
 
@@ -287,7 +294,7 @@ describe('runRule', () => {
     mockExecute.mockResolvedValue([])
 
     const result = await runRule(
-      { id: 'r1', conditions: [], action: { type: 'archive_nas' } },
+      { id: 'r1', conditions: [{ field: 'from', operator: 'contains', value: 'a@b.c' }], action: { type: 'archive_nas' } },
       'acc-1',
     )
     expect(mockEnqueueJob).toHaveBeenCalledWith('archive_mails', expect.objectContaining({

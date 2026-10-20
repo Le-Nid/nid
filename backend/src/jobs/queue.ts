@@ -44,12 +44,26 @@ export function getQueue(): Queue {
   return _queue
 }
 
+/** Copy of the payload without credentials, for the `jobs` table (readable via /api/jobs and admin). */
+function redactSecrets(payload: JobPayload): JobPayload {
+  const { passphrase, imapConfig, ...rest } = payload as JobPayload & { imapConfig?: Record<string, unknown> }
+  if (imapConfig) {
+    const { pass, ...imapRest } = imapConfig
+    return { ...rest, imapConfig: imapRest }
+  }
+  return rest
+}
+
 /** `dedupId`: while a job with this id is waiting or running, enqueueing it again is a no-op. */
 export async function enqueueJob(type: JobType, payload: JobPayload, opts: { dedupId?: string } = {}) {
   const queue = getQueue()
   const jobId = `${type}-${randomUUID()}`
+  const redacted = redactSecrets(payload)
+  const hasSecrets = JSON.stringify(redacted) !== JSON.stringify(payload)
   const job = await queue.add(type, payload, {
     jobId,
+    // shortcut: credentials still sit in Redis while the job waits/runs; drop them as soon as it ends
+    ...(hasSecrets ? { removeOnComplete: true, removeOnFail: true } : {}),
     ...(opts.dedupId ? { deduplication: { id: opts.dedupId } } : {}),
   })
   // Pre-insert job row so SSE can find it immediately (skipped when BullMQ deduplicated: the row already exists)
@@ -65,7 +79,7 @@ export async function enqueueJob(type: JobType, payload: JobPayload, opts: { ded
         total: 0,
         gmail_account_id: payload.accountId || null, // '' = job not tied to an account
         user_id: payload.userId ?? null,
-        payload: JSON.stringify(payload),
+        payload: JSON.stringify(redacted),
       })
       .onConflict((oc: any) => oc.doNothing())
       .execute()
