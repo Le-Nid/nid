@@ -3,11 +3,9 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
-import { ConfigProvider, theme as antTheme, App as AntApp } from 'antd'
-import frFR from 'antd/locale/fr_FR'
-import enUS from 'antd/locale/en_US'
 import { useTranslation } from 'react-i18next'
 import { useThemeStore } from './store/theme.store'
+import LegacyAntd from './components/LegacyAntd'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { createLogger } from './utils/logger'
 import { registerSW } from 'virtual:pwa-register'
@@ -46,53 +44,30 @@ const queryClient = new QueryClient({
   },
 })
 
-const antLocales = { fr: frFR, en: enUS } as Record<string, typeof frFR>
-
 // Wrapper pour lire le store Zustand DANS l'arbre React
 function ThemedApp() {
   const mode = useThemeStore((s) => s.mode)
   const { i18n } = useTranslation()
   const lang = i18n.language?.startsWith('en') ? 'en' : 'fr'
 
-  // Set <html lang> dynamically
   React.useEffect(() => {
     document.documentElement.lang = lang
   }, [lang])
 
+  // Tailwind/shadcn dark tokens (§4.5) follow the same store as antd's algorithm
+  React.useEffect(() => {
+    document.documentElement.classList.toggle('dark', mode === 'dark')
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', mode === 'dark' ? '#09090b' : '#ffffff')
+  }, [mode])
+
   return (
-    <ConfigProvider
-      locale={antLocales[lang] ?? frFR}
-      theme={{
-        algorithm: mode === 'dark' ? antTheme.darkAlgorithm : antTheme.defaultAlgorithm,
-        token: {
-          colorPrimary:  '#1677ff',
-          borderRadius:  8,
-          // En dark mode, adoucir légèrement le fond des cards
-          ...(mode === 'dark' && {
-            colorBgContainer: '#1e1e1e',
-            colorBgBase:      '#141414',
-          }),
-        },
-        components: {
-          Layout: {
-            siderBg:    mode === 'dark' ? '#141414' : '#fff',
-            headerBg:   mode === 'dark' ? '#141414' : '#fff',
-          },
-          Menu: {
-            darkItemBg: '#141414',
-          },
-        },
-      }}
-    >
-      {/* AntApp injecte les méthodes message/notification/modal dans le contexte */}
-      <AntApp>
-        <QueryClientProvider client={queryClient}>
-          <ErrorBoundary>
-            <AppRouter />
-          </ErrorBoundary>
-        </QueryClientProvider>
-      </AntApp>
-    </ConfigProvider>
+    <LegacyAntd>
+      <QueryClientProvider client={queryClient}>
+        <ErrorBoundary>
+          <AppRouter />
+        </ErrorBoundary>
+      </QueryClientProvider>
+    </LegacyAntd>
   )
 }
 

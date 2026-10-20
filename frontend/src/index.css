@@ -1,19 +1,251 @@
-*, *::before, *::after { box-sizing: border-box; }
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  -webkit-tap-highlight-color: transparent;
+/* Cascade order (O14, design/ui-redesign.md §9.1): antd's CSS-in-JS is injected into @layer antd
+   (StyleProvider layer in LegacyAntd), after Tailwind's preflight (base) and before utilities.
+   Legacy pages therefore keep antd winning over preflight, and the new UI keeps utilities winning. */
+@layer theme, base, antd, components, utilities;
+
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "./styles/shadcn-tailwind.css";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Tokens §4.1 (hex, traceable to the prototype). Shadcn names first, app roles after. */
+:root {
+  --radius: 0.625rem;
+  --background: #ffffff;
+  --foreground: #09090b;
+  --card: #ffffff;
+  --card-foreground: #09090b;
+  --popover: #ffffff;
+  --popover-foreground: #09090b;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #09090b;
+  --muted: #f4f4f5;
+  --muted-foreground: #52525b;
+  --accent: #f4f4f5;
+  --accent-foreground: #09090b;
+  --destructive: #b91c1c;
+  --border: #e4e4e7;
+  --input: #71717a; /* R1: 4.83:1, the prototype's --border (1.27:1) fails 1.4.11 on controls */
+  --ring: #2563eb;
+  --chart-1: #2563eb;
+  --sidebar: #f4f4f5;
+  --sidebar-foreground: #09090b;
+  --sidebar-primary: #2563eb;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eff6ff;
+  --sidebar-accent-foreground: #1d4ed8;
+  --sidebar-border: #e4e4e7;
+  --sidebar-ring: #2563eb;
+
+  --primary-hover: #1d4ed8;
+  --primary-soft: #eff6ff;
+  --primary-text: #1d4ed8;
+  --destructive-solid: #b91c1c;
+  --destructive-solid-hover: #991b1b;
+  --destructive-soft: #fef2f2;
+  --success: #15803d;
+  --success-soft: #f0fdf4;
+  --warning: #a16207;
+  --warning-soft: #fefce8;
+  --warning-badge: #fef9c3;
+  --warning-border: #fde68a;
+  --toast: #18181b;
+  --toast-foreground: #fafafa;
+  --toast-progress: #60a5fa;
+  --highlight: #fef08a;
+  --highlight-foreground: #09090b;
+  --scrim: rgba(9, 9, 11, 0.45);
+  --progress: #2563eb;
+  --avatar: #dbeafe;
+  --avatar-foreground: #1e3a8a;
+  --cat-promotions-bg: #dcfce7;
+  --cat-promotions-fg: #166534;
+  --cat-social-bg: #dbeafe;
+  --cat-social-fg: #1e40af;
+  --cat-updates-bg: #ffedd5;
+  --cat-updates-fg: #9a3412;
+  --cat-forums-bg: #f3e8ff;
+  --cat-forums-fg: #6b21a8;
+
+  --shadow-toast: 0 10px 30px rgba(0, 0, 0, 0.18);
+  --shadow-dialog: 0 24px 60px rgba(0, 0, 0, 0.25);
+  --shadow-tab: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-actionbar: 0 -4px 16px rgba(0, 0, 0, 0.06);
 }
 
-/* Safe area insets for notched devices (PWA standalone) */
-@supports (padding: env(safe-area-inset-top)) {
-  .app-header {
-    padding-top: env(safe-area-inset-top) !important;
+.dark {
+  --background: #09090b;
+  --foreground: #fafafa;
+  --card: #111113;
+  --card-foreground: #fafafa;
+  --popover: #111113;
+  --popover-foreground: #fafafa;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #1c1c1f;
+  --secondary-foreground: #fafafa;
+  --muted: #1c1c1f;
+  --muted-foreground: #a1a1aa;
+  --accent: #1c1c1f;
+  --accent-foreground: #fafafa;
+  --destructive: #f87171;
+  --border: #27272a;
+  --input: #71717a;
+  --ring: #60a5fa;
+  --chart-1: #2563eb;
+  --sidebar: #1c1c1f;
+  --sidebar-foreground: #fafafa;
+  --sidebar-primary: #2563eb;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #172554;
+  --sidebar-accent-foreground: #93c5fd;
+  --sidebar-border: #27272a;
+  --sidebar-ring: #60a5fa;
+
+  --primary-hover: #1d4ed8;
+  --primary-soft: #172554;
+  --primary-text: #93c5fd;
+  --destructive-solid: #b91c1c;
+  --destructive-solid-hover: #991b1b;
+  --destructive-soft: #450a0a;
+  --success: #4ade80;
+  --success-soft: #052e16;
+  --warning: #facc15;
+  --warning-soft: #422006;
+  --warning-badge: #713f12;
+  --warning-border: #854d0e;
+  --toast: #fafafa;
+  --toast-foreground: #09090b;
+  --toast-progress: #2563eb;
+  --highlight: #854d0e;
+  --highlight-foreground: #fafafa;
+  --scrim: rgba(0, 0, 0, 0.6);
+  --progress: #60a5fa;
+  --avatar: #1e3a8a;
+  --avatar-foreground: #dbeafe;
+  --cat-promotions-bg: #052e16;
+  --cat-promotions-fg: #86efac;
+  --cat-social-bg: #172554;
+  --cat-social-fg: #93c5fd;
+  --cat-updates-bg: #431407;
+  --cat-updates-fg: #fdba74;
+  --cat-forums-bg: #3b0764;
+  --cat-forums-fg: #d8b4fe;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-text: var(--primary-text);
+  --color-destructive-solid: var(--destructive-solid);
+  --color-destructive-solid-hover: var(--destructive-solid-hover);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-badge: var(--warning-badge);
+  --color-warning-border: var(--warning-border);
+  --color-toast: var(--toast);
+  --color-toast-foreground: var(--toast-foreground);
+  --color-toast-progress: var(--toast-progress);
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
+  --color-scrim: var(--scrim);
+  --color-progress: var(--progress);
+  --color-avatar: var(--avatar);
+  --color-avatar-foreground: var(--avatar-foreground);
+  --color-cat-promotions-bg: var(--cat-promotions-bg);
+  --color-cat-promotions-fg: var(--cat-promotions-fg);
+  --color-cat-social-bg: var(--cat-social-bg);
+  --color-cat-social-fg: var(--cat-social-fg);
+  --color-cat-updates-bg: var(--cat-updates-bg);
+  --color-cat-updates-fg: var(--cat-updates-fg);
+  --color-cat-forums-bg: var(--cat-forums-bg);
+  --color-cat-forums-fg: var(--cat-forums-fg);
+
+  --shadow-toast: var(--shadow-toast);
+  --shadow-dialog: var(--shadow-dialog);
+  --shadow-tab: var(--shadow-tab);
+  --shadow-actionbar: var(--shadow-actionbar);
+
+  /* shadcn multipliers give 6/8/10/14/18; the prototype wants xl=12, 2xl=16 */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, monospace;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
-  #main-content {
-    padding-bottom: env(safe-area-inset-bottom) !important;
+  html {
+    @apply font-sans;
+  }
+  body {
+    @apply bg-background text-foreground;
+    -webkit-tap-highlight-color: transparent;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  /* Legacy antd subtrees (pages, portals) keep browser defaults: undo preflight and the rules above for raw
+     elements there (unstyled <button>, <h*>, <img>…), so legacy pages render as before L0 (O14).
+     Class specificity beats preflight's element selectors; antd and unlayered CSS still win.
+     shortcut: relies on antd class prefixes, removed with antd in L10. */
+  :is(.ant-app, [class^="ant-"], [class*=" ant-"]),
+  :is(.ant-app, [class^="ant-"], [class*=" ant-"]) * {
+    all: revert-layer;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+      animation-duration: 1ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 1ms !important;
+    }
   }
 }
+
+/* ─── Legacy (antd pages, until L10). Unlayered on purpose: these overrides must keep beating @layer antd. ─── */
 
 /* Lucide spin animation (replaces antd LoadingOutlined spin) */
 @keyframes lucide-spin {
@@ -22,31 +254,6 @@ body {
 }
 .lucide-spin {
   animation: lucide-spin 1s linear infinite;
-}
-
-/* Sidebar — sticky with internal scroll */
-.app-sider {
-  height: 100vh !important;
-  position: sticky !important;
-  top: 0;
-}
-.app-sider .ant-layout-sider-children {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-}
-.app-sider .sider-menu-scroll {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-/* Drawer mobile — menu scroll */
-.ant-drawer-body .sider-menu-scroll {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
 }
 
 /* ─── Mobile responsive (< 768px) ─── */
@@ -87,12 +294,6 @@ body {
     width: 100vw !important;
   }
 
-  /* Header height réduit */
-  .ant-layout-header {
-    height: 52px !important;
-    line-height: 52px !important;
-  }
-
   /* Touch-friendly : targets plus larges */
   .ant-menu-item,
   .ant-menu-submenu-title {
@@ -126,4 +327,44 @@ body {
 }
 .skip-link:focus {
   top: 0;
+}
+/* Safe area insets for notched devices (PWA standalone) */
+@supports (padding: env(safe-area-inset-top)) {
+  .app-header {
+    padding-top: env(safe-area-inset-top) !important;
+  }
+  #main-content {
+    padding-bottom: env(safe-area-inset-bottom) !important;
+  }
+}
+/* Sidebar — sticky with internal scroll */
+.app-sider {
+  height: 100vh !important;
+  position: sticky !important;
+  top: 0;
+}
+.app-sider .ant-layout-sider-children {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+.app-sider .sider-menu-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Drawer mobile — menu scroll */
+.ant-drawer-body .sider-menu-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+@media (max-width: 767px) {
+  .ant-layout-header {
+    height: 52px !important;
+    line-height: 52px !important;
+  }
 }

@@ -1,10 +1,17 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
+import { fileURLToPath } from 'node:url'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  resolve: {
+    alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
+  },
+
   plugins: [
     react(),
+    tailwindcss(),
     VitePWA({
       // autoUpdate + registerSW() in main.tsx: a new build activates and reloads the tab, nobody stays on a stale bundle
       registerType: 'autoUpdate',
@@ -15,7 +22,7 @@ export default defineConfig({
         description: 'Gérez vos emails Gmail depuis votre propre serveur',
         start_url: '/',
         display: 'standalone',
-        theme_color: '#1677ff', // antd colorPrimary (main.tsx)
+        theme_color: '#ffffff', // light --background (§4.5); main.tsx switches the meta tag in dark mode
         background_color: '#ffffff', // antd light layout background
         icons: [
           { src: '/nid-pwa-192.png', sizes: '192x192', type: 'image/png' },

@@ -23,4 +23,10 @@ describe('useThemeStore', () => {
     expect(useThemeStore.getState().mode).toBe('light')
     expect(localStorage.setItem).toHaveBeenCalledWith('theme', 'light')
   })
+  it('follows prefers-color-scheme when no theme is stored', async () => {
+    vi.resetModules()
+    vi.mocked(window.matchMedia).mockImplementationOnce((query: string) => ({ matches: true, media: query, addEventListener: vi.fn() }) as any)
+    const { useThemeStore: fresh } = await import('../store/theme.store')
+    expect(fresh.getState().mode).toBe('dark')
+  })
 })

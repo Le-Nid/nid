@@ -7,8 +7,12 @@ interface ThemeState {
   toggle: () => void
 }
 
+const systemDark = window.matchMedia?.('(prefers-color-scheme: dark)')
+const systemMode = (): ThemeMode => (systemDark?.matches ? 'dark' : 'light')
+
 export const useThemeStore = create<ThemeState>((set, get) => ({
-  mode: (localStorage.getItem('theme') as ThemeMode) ?? 'light',
+  // No stored choice = follow the OS (prefers-color-scheme)
+  mode: (localStorage.getItem('theme') as ThemeMode) ?? systemMode(),
 
   toggle: () => {
     const next = get().mode === 'light' ? 'dark' : 'light'
@@ -16,3 +20,7 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     set({ mode: next })
   },
 }))
+
+systemDark?.addEventListener?.('change', () => {
+  if (!localStorage.getItem('theme')) useThemeStore.setState({ mode: systemMode() })
+})
