@@ -1,8 +1,35 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    VitePWA({
+      // autoUpdate + registerSW() in main.tsx: a new build activates and reloads the tab, nobody stays on a stale bundle
+      registerType: 'autoUpdate',
+      manifest: {
+        name: 'Nid',
+        lang: 'fr',
+        short_name: 'Nid',
+        description: 'Gérez vos emails Gmail depuis votre propre serveur',
+        start_url: '/',
+        display: 'standalone',
+        theme_color: '#1677ff', // antd colorPrimary (main.tsx)
+        background_color: '#ffffff', // antd light layout background
+        icons: [
+          { src: '/nid-pwa-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/nid-pwa-512.png', sizes: '512x512', type: 'image/png' },
+          { src: '/nid-pwa-maskable-192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
+          { src: '/nid-pwa-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        ],
+      },
+      workbox: {
+        // App shell only (default js/css/html glob); /api is never served from the SW, and no runtimeCaching
+        navigateFallbackDenylist: [/^\/api\//],
+      },
+    }),
+  ],
 
   server: {
     port: 3000,

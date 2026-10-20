@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next'
 import { useThemeStore } from './store/theme.store'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { createLogger } from './utils/logger'
+import { registerSW } from 'virtual:pwa-register'
 import AppRouter from './App'
 import './i18n'
 import './index.css'
@@ -32,14 +33,7 @@ window.addEventListener('unhandledrejection', (event) => {
   })
 })
 
-// Service Worker registration (PWA)
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {
-      // SW registration failed — app works fine without it
-    })
-  })
-}
+registerSW({ immediate: true })
 
 const queryClient = new QueryClient({
   defaultOptions: {

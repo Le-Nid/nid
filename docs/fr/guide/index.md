@@ -18,7 +18,6 @@ Nid est une application de gestion et d'archivage de boîtes Gmail, installée c
 | [**Règles automatiques**](rules.md) | Créez des règles pour automatiser le nettoyage |
 | [**Newsletters**](newsletters.md) | Identifiez et nettoyez les newsletters en un clic |
 | [**Pièces jointes**](attachments.md) | Gérez et téléchargez vos pièces jointes |
-| [**Doublons**](duplicates.md) | Détectez et supprimez les mails en double |
 | [**Analytics**](analytics.md) | Analysez vos habitudes email avec des graphiques |
 | [**Vie privée**](privacy.md) | Détectez les pixels espions et protégez vos données |
 | [**Boîte unifiée**](unified-inbox.md) | Consultez tous vos comptes Gmail en une seule vue |

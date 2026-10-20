@@ -1,0 +1,9 @@
+{
+  "mails": [
+    {
+      "id": "a1", "sender": "News <news@paper.test>", "subject": "Édition du matin archivée", "snippet": "Les titres du jour",
+      "size_bytes": 8192, "date": "2026-08-01T07:00:00Z", "archived_at": "2026-08-02T07:00:00Z", "has_attachments": false
+    }
+  ],
+  "total": 1
+}

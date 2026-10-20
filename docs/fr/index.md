@@ -19,7 +19,6 @@ Elle remplace des outils comme Gmail Cleaner et OpenArchiver, sans envoyer vos d
 | 🔐 **Auth** | JWT local + Google SSO + multi-providers, 2FA/TOTP, multi-utilisateurs |
 | 📧 **Newsletters** | Scan des headers List-Unsubscribe, nettoyage en masse |
 | 📎 **Pièces jointes** | Gestionnaire dédié (live Gmail + archives), tri par taille |
-| 🔁 **Doublons** | Détection et suppression des mails archivés en double |
 | 📋 **Templates** | Bibliothèque de règles pré-configurées, activation en un clic |
 | 📈 **Analytics** | Heatmap, scores d'encombrement, suggestions de nettoyage, Inbox Zero |
 | 📝 **Audit log** | Journal d'activité traçant les actions sensibles |

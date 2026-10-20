@@ -18,7 +18,6 @@ Nid is a Gmail mailbox management and archiving application, installed on your o
 | [**Automatic rules**](rules.md) | Create rules to automate cleanup |
 | [**Newsletters**](newsletters.md) | Identify and clean up newsletters in one click |
 | [**Attachments**](attachments.md) | Manage and download your attachments |
-| [**Duplicates**](duplicates.md) | Detect and delete duplicate emails |
 | [**Analytics**](analytics.md) | Analyze your email habits with charts |
 | [**Privacy**](privacy.md) | Detect tracking pixels and protect your data |
 | [**Unified inbox**](unified-inbox.md) | View all your Gmail accounts in a single view |

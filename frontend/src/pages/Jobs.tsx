@@ -80,7 +80,7 @@ export default function JobsPage() {
       title: t('jobs.type'),
       dataIndex: "type",
       width: 160,
-      render: (v: string) => <Text strong>{t(`jobs.${v === 'bulk_operation' ? 'bulkOperation' : v === 'archive_mails' ? 'archiveMails' : v === 'run_rule' ? 'runRule' : 'syncDashboard'}`, { defaultValue: v })}</Text>,
+      render: (v: string) => <Text strong>{t(`jobs.${v === 'bulk_operation' ? 'bulkOperation' : v === 'archive_mails' ? 'archiveMails' : v === 'run_rule' ? 'runRule' : v}`, { defaultValue: v })}</Text>,
     },
     {
       title: t('jobs.status'),

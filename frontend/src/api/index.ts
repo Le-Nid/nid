@@ -181,15 +181,6 @@ export const reportsApi = {
     api.get('/api/reports/weekly').then((r) => r.data),
 }
 
-// ─── Duplicates ───────────────────────────────────────────
-export const duplicatesApi = {
-  detectArchived: (accountId: string, params: Record<string, any> = {}) =>
-    api.get(`/api/duplicates/${accountId}/archived`, { params }).then((r) => r.data),
-
-  deleteArchived: (accountId: string, mailIds: string[]) =>
-    api.post(`/api/duplicates/${accountId}/archived/delete`, { mailIds }).then((r) => r.data),
-}
-
 // ─── Notifications ────────────────────────────────────────
 export const notificationsApi = {
   list: (params: Record<string, any> = {}) =>

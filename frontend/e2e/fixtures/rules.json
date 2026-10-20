@@ -1,0 +1,7 @@
+[
+  {
+    "id": "r1", "name": "Nettoyer les promos", "description": "Supprime les promotions anciennes", "is_active": true,
+    "conditions": [{ "field": "from", "operator": "contains", "value": "promo" }],
+    "action": { "type": "trash" }, "schedule": null, "last_run_at": null
+  }
+]

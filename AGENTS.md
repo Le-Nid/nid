@@ -29,8 +29,8 @@ Le script CI (`.github/workflows/ci.yml`) exécute : `npm ci` → `typecheck` �
 
 - **Routes** : un fichier par module dans `backend/src/routes/`, enregistré comme plugin Fastify dans `routes/index.ts` sous le préfixe `/api/`. Validation des entrées avec **Zod** (schémas dans le fichier route).
 - **Auth** : JWT en httpOnly cookie. Décorateurs Fastify `app.authenticate`, `requireAdmin()`, `requireAccountOwnership()`. Rate limiting par route.
-- **Services** : logique métier dans `backend/src/{module}/{module}.service.ts`. Les routes appellent les services, jamais de logique DB directe dans les routes.
-- **Base de données** : requêtes Kysely typées. Migrations in-code dans `backend/src/db/migrations/` (numérotées 001, 004–007). Types DB dans `backend/src/db/types.ts` avec `Generated<>` et `ColumnType<>`.
+- **Services** : logique métier dans `backend/src/{module}/{module}.service.ts`. La logique va dans un service dès qu'elle a plus d'un consommateur (route, MCP, scheduler, worker) ou qu'elle nécessite une transaction ; un CRUD trivial à consommateur unique peut rester dans la route.
+- **Base de données** : requêtes Kysely typées. Migrations in-code dans `backend/src/db/migrations/` (numérotées 001–003). Types DB dans `backend/src/db/types.ts` avec `Generated<>` et `ColumnType<>`.
 - **Jobs** : un seul worker BullMQ unifié (`backend/src/jobs/workers/unified.worker.ts`, concurrence 3). Enqueue via `enqueueJob()` dans `backend/src/jobs/queue.ts`. Chaque job type a un handler dédié. Progress tracké en DB + SSE.
 - **Gmail API** : throttling dans `backend/src/gmail/gmail-throttle.ts` (semaphore par compte, 5 concurrent max, retry exponentiel sur 429/500/503 et 403 rateLimitExceeded).
 - **ESM obligatoire** : `"type": "module"` dans package.json, Vite build en format `es` uniquement. Ne jamais utiliser `require()`.
@@ -40,7 +40,7 @@ Le script CI (`.github/workflows/ci.yml`) exécute : `npm ci` → `typecheck` �
 - **Pages** : composants dans `frontend/src/pages/`, une page par route définie dans `App.tsx`.
 - **API** : client Axios centralisé (`frontend/src/api/client.ts`, `withCredentials: true`). Endpoints groupés par module dans `frontend/src/api/index.ts`. Intercepteur 401 → redirect `/login`.
 - **React Query** : hooks dans `frontend/src/hooks/queries.ts` avec query key factories (`queryKeys.dashboard(accountId)`, etc.). staleTime 5min, retry 1.
-- **Stores Zustand** : un store par domaine dans `frontend/src/store/` (auth, mail, theme, notifications). Le auth store fait `fetchMe()` au mount.
+- **Stores Zustand** : un store par domaine dans `frontend/src/store/` (auth, theme ; les données serveur passent par React Query). Le auth store fait `fetchMe()` au mount.
 - **SSE** : hook `useJobSSE(jobId)` dans `frontend/src/hooks/useJobSSE.ts` pour le suivi temps réel des jobs via EventSource.
 - **i18n** : fichiers `fr.json`/`en.json` dans `frontend/src/i18n/`. Fallback français. Toujours utiliser `t('key')`.
 
@@ -57,7 +57,7 @@ Le script CI (`.github/workflows/ci.yml`) exécute : `npm ci` → `typecheck` �
 - Le backend doit builder en ESM (`build.lib.formats: ['es']` dans `backend/vite.config.ts`). Un format CommonJS cause `require is not defined` au runtime.
 - Les tests frontend avec Ant Design nécessitent les stubs jsdom (`matchMedia`, `getComputedStyle`) dans `frontend/src/__tests__/setup.ts`.
 - En dev local (hors Docker), `backend/.env` pointe vers `localhost` pour DATABASE_URL/REDIS_URL. En Docker, utiliser les noms de service `postgres`/`redis`.
-- Les lockfiles générés sur le host peuvent manquer des dépendances musl pour `node:24-alpine`. Regénérer dans le conteneur si `npm ci` échoue en Docker.
+- Les lockfiles générés sur le host peuvent manquer des dépendances musl pour `node:26-alpine`. Regénérer dans le conteneur si `npm ci` échoue en Docker.
 
 ## Workflow agent
 

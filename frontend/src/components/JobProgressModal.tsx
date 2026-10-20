@@ -35,7 +35,6 @@ export default function JobProgressModal({ jobId, onClose }: Props) {
             const typeKeyMap: Record<string, string> = {
               bulk_operation: 'bulkOperation', archive_mails: 'archiveMails',
               run_rule: 'runRule', scan_unsubscribe: 'scanUnsubscribe',
-              scan_attachments: 'scanAttachments', generate_report: 'generateReport',
             };
             return t('jobs.' + (typeKeyMap[job.type] || job.type), { defaultValue: job.type });
           })() : t('common.loading')}

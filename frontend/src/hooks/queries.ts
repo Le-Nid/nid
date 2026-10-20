@@ -1,8 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   dashboardApi, gmailApi, archiveApi, rulesApi, jobsApi,
   adminApi, unsubscribeApi, attachmentsApi, reportsApi,
-  duplicatesApi, analyticsApi, privacyApi, notificationsApi,
+  analyticsApi, privacyApi, notificationsApi,
   auditApi, webhooksApi, savedSearchesApi, unifiedApi, archiveThreadsApi,
   retentionApi, quotaApi, importApi,
   expirationApi, sharingApi,
@@ -46,7 +46,6 @@ export const queryKeys = {
     dedupStats: () => ['attachments', 'dedup-stats'] as const,
   },
   insights: () => ['insights'] as const,
-  duplicates: (accountId: string) => ['duplicates', accountId] as const,
   analytics: {
     heatmap: (accountId: string) => ['analytics', accountId, 'heatmap'] as const,
     senderScores: (accountId: string) => ['analytics', accountId, 'senderScores'] as const,
@@ -98,6 +97,24 @@ export function useGmailLabels(accountId: string | null) {
   return useQuery({
     queryKey: queryKeys.gmailLabels(accountId!),
     queryFn: () => gmailApi.listLabels(accountId!),
+    enabled: !!accountId,
+  })
+}
+
+// Each page = one Gmail list call (20 ids) + one batchGet of those ids; pageParam is Gmail's nextPageToken
+export function useGmailMessages(accountId: string | null, query: string, quickFilter: string) {
+  return useInfiniteQuery({
+    queryKey: queryKeys.gmailMessages(accountId!, query, quickFilter),
+    queryFn: async ({ pageParam }) => {
+      const q = [quickFilter, query].filter(Boolean).join(' ')
+      const res = await gmailApi.listMessages(accountId!, { q: q || undefined, maxResults: 20, pageToken: pageParam })
+      const ids: string[] = (res.messages ?? []).map((m: { id: string }) => m.id)
+      // The batch endpoint rejects an empty id list
+      const mails: any[] = ids.length ? await gmailApi.batchGetMessages(accountId!, ids) : []
+      return { mails, total: (res.resultSizeEstimate ?? 0) as number, nextPageToken: res.nextPageToken as string | undefined }
+    },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextPageToken || undefined,
     enabled: !!accountId,
   })
 }
@@ -274,24 +291,6 @@ export function useWeeklyReport() {
   return useQuery({
     queryKey: queryKeys.insights(),
     queryFn: () => reportsApi.getWeekly(),
-  })
-}
-
-// ─── Duplicates ───────────────────────────────────────────
-
-export function useDuplicates(accountId: string | null) {
-  return useQuery({
-    queryKey: queryKeys.duplicates(accountId!),
-    queryFn: () => duplicatesApi.detectArchived(accountId!),
-    enabled: !!accountId,
-  })
-}
-
-export function useDeleteDuplicates(accountId: string) {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (mailIds: string[]) => duplicatesApi.deleteArchived(accountId, mailIds),
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.duplicates(accountId) }),
   })
 }
 

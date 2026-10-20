@@ -1,0 +1,18 @@
+{
+  "labels": [
+    { "id": "INBOX", "name": "INBOX", "type": "system" },
+    { "id": "Label_1", "name": "Factures", "type": "user" }
+  ],
+  "mails": [
+    {
+      "id": "m1", "threadId": "t1", "subject": "Facture d'octobre", "from": "Billing <billing@shop.test>",
+      "date": "2026-10-01T10:00:00Z", "sizeEstimate": 20480, "snippet": "Votre facture est disponible",
+      "labelIds": ["INBOX", "UNREAD"], "hasAttachments": true
+    },
+    {
+      "id": "m2", "threadId": "t2", "subject": "Réunion de lundi", "from": "Bob <bob@example.com>",
+      "date": "2026-10-02T09:00:00Z", "sizeEstimate": 4096, "snippet": "On se voit à 10h",
+      "labelIds": ["INBOX"], "hasAttachments": false
+    }
+  ]
+}
