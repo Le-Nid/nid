@@ -905,5 +905,14 @@
     "darkMode": "Mode sombre",
     "logout": "Se déconnecter",
     "loading": "Chargement"
+  },
+
+  "dataList": {
+    "selectAll": "Sélectionner toutes les lignes de la page",
+    "selectRow": "Sélectionner {{label}}",
+    "selected_one": "{{count}} ligne sélectionnée",
+    "selected_other": "{{count}} lignes sélectionnées",
+    "columns": "Colonnes",
+    "loading": "Chargement de la liste"
   }
 }

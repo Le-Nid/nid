@@ -905,5 +905,14 @@
     "darkMode": "Dark mode",
     "logout": "Log out",
     "loading": "Loading"
+  },
+
+  "dataList": {
+    "selectAll": "Select all rows on this page",
+    "selectRow": "Select {{label}}",
+    "selected_one": "{{count}} row selected",
+    "selected_other": "{{count}} rows selected",
+    "columns": "Columns",
+    "loading": "Loading list"
   }
 }
