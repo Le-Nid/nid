@@ -59,6 +59,11 @@ Le script CI (`.github/workflows/ci.yml`) exécute : `npm ci` → `typecheck` �
 - En dev local (hors Docker), `backend/.env` pointe vers `localhost` pour DATABASE_URL/REDIS_URL. En Docker, utiliser les noms de service `postgres`/`redis`.
 - Les lockfiles générés sur le host peuvent manquer des dépendances musl pour `node:24-alpine`. Regénérer dans le conteneur si `npm ci` échoue en Docker.
 
+## Workflow agent
+
+- Une fois le travail terminé : commit, push sur la branche de travail, puis **ouvrir une Pull Request** vers `main` pour validation par le tech lead. Ne jamais merger soi-même.
+- Si la PR précédente de la branche est déjà mergée, repartir de `main` et ouvrir une nouvelle PR.
+
 ## Outils agent (`.claude/`)
 
 Vendorisés dans le repo pour fonctionner à l'identique en local et en cloud (les plugins Claude Code ne sont pas installés en session cloud).
