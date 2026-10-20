@@ -37,6 +37,7 @@ Le script CI (`.github/workflows/ci.yml`) exécute : `npm ci` → `typecheck` �
 
 ### Frontend
 
+- **Refonte UI** : voir `design/ui-redesign.md`, source de vérité de la phase 2.
 - **Pages** : composants dans `frontend/src/pages/`, une page par route définie dans `App.tsx`.
 - **API** : client Axios centralisé (`frontend/src/api/client.ts`, `withCredentials: true`). Endpoints groupés par module dans `frontend/src/api/index.ts`. Intercepteur 401 → redirect `/login`.
 - **React Query** : hooks dans `frontend/src/hooks/queries.ts` avec query key factories (`queryKeys.dashboard(accountId)`, etc.). staleTime 5min, retry 1.
