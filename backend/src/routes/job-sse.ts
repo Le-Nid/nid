@@ -3,6 +3,7 @@ import { QueueEvents } from "bullmq";
 import { getRedis } from "../plugins/redis";
 import { getDb } from "../db";
 import { createLogger } from '../logger'
+import { UUID_RE } from '../utils/db'
 import type { ServerResponse } from 'http'
 
 const logger = createLogger('job-sse')
@@ -10,8 +11,6 @@ const logger = createLogger('job-sse')
 // Map des connexions SSE actives : jobId → Set<reply>
 const subscribers = new Map<string, Set<ServerResponse>>();
 
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 export async function jobSseRoutes(app: FastifyInstance) {
   // ─── SSE stream pour un job précis ────────────────────────
   // GET /api/jobs/:jobId/events → text/event-stream

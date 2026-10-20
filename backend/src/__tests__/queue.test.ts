@@ -54,4 +54,16 @@ describe('enqueueJob', () => {
     expect(stored).toContain('"host":"h"')
     expect(mockAdd).toHaveBeenCalledWith('import_imap', expect.anything(), expect.objectContaining({ removeOnComplete: true, removeOnFail: true }))
   })
+
+  it('delays the BullMQ job and stores the row as scheduled', async () => {
+    await enqueueJob('bulk_operation', { accountId: 'acc-1' }, { delay: 10_000 })
+    expect(mockAdd).toHaveBeenCalledWith('bulk_operation', expect.anything(), expect.objectContaining({ delay: 10_000 }))
+    expect(mockValues).toHaveBeenCalledWith(expect.objectContaining({ status: 'scheduled' }))
+  })
+
+  it('keeps immediate jobs pending without a BullMQ delay', async () => {
+    await enqueueJob('bulk_operation', { accountId: 'acc-1' }, { delay: 0 })
+    expect(mockAdd.mock.calls[0][2]).not.toHaveProperty('delay')
+    expect(mockValues).toHaveBeenCalledWith(expect.objectContaining({ status: 'pending' }))
+  })
 })

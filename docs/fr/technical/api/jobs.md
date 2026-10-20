@@ -10,7 +10,7 @@
 
 | Param | Description |
 |---|---|
-| `status` | Filtrer par statut (`pending`, `active`, `completed`, `failed`, `cancelled`) |
+| `status` | Filtrer par statut (`pending`, `scheduled`, `active`, `completed`, `failed`, `cancelled`) |
 | `accountId` | Filtrer par compte Gmail |
 
 **Réponse**
@@ -54,9 +54,10 @@ Retourne le job avec son état BullMQ live en plus.
 
 ### DELETE /api/jobs/:jobId
 
-Annule le job dans BullMQ et met à jour le statut en `cancelled`.
+Retire le job de BullMQ et met à jour le statut en `cancelled`. `:jobId` est l'`id` de la ligne ou l'id BullMQ renvoyé par les endpoints d'enfilement (`jobId`) : un job `scheduled` (différé) peut ainsi être annulé avant `runAt` (annuler).
 
 **Réponse 204** — No content
 
-!!! note
-    Un job `active` (déjà en cours d'exécution dans le worker) ne peut pas être stoppé immédiatement. L'annulation prend effet entre deux batches.
+**Réponse 409** — le job est déjà `active` (en cours dans le worker) et ne peut pas être annulé.
+
+**Réponse 404** — job inconnu ou appartenant à un autre utilisateur.

@@ -60,14 +60,15 @@ Bulk deletes all emails from a newsletter sender (via BullMQ job).
 
 **Body**
 ```json
-{ "permanent": false }
+{ "permanent": false, "delayMs": 10000 }
 ```
 
 | Field | Default | Description |
 |---|---|---|
+| `delayMs` | `10000` | Delay before the job runs (0–60000 ms, default `10000`). While it waits the job is `scheduled` and can be cancelled with `DELETE /api/jobs/:jobId` (undo). Send `0` to run immediately.
 | `permanent` | `false` | `false` = trash, `true` = permanent deletion |
 
 **Response 202**
 ```json
-{ "jobId": "bulk_operation-456", "count": 42 }
+{ "jobId": "bulk_operation-456", "runAt": "2026-10-20T12:00:10.000Z", "count": 42 }
 ```

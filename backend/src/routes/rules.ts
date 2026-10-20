@@ -156,10 +156,15 @@ export async function rulesRoutes(app: FastifyInstance) {
     const userId = request.user.sub;
     const rule = await getRule(ruleId, accountId);
     if (!rule) return notFound(reply, "Rule not found");
-    const job = await enqueueJob("run_rule", { accountId, userId, ruleId });
+    // D1 undo window, cancellable via DELETE /api/jobs/:jobId
+    const { delayMs } = z
+      .object({ delayMs: z.number().int().min(0).max(60_000).default(10_000) })
+      .parse(request.body ?? {});
+    const job = await enqueueJob("run_rule", { accountId, userId, ruleId }, { delay: delayMs });
+    const runAt = new Date(Date.now() + delayMs).toISOString();
     return reply
       .code(202)
-      .send({ jobId: job.id, message: "Rule execution enqueued" });
+      .send({ jobId: job.id, runAt, message: "Rule execution enqueued" });
   });
 
   app.post("/:accountId/preview", accountAuth, async (request) => {

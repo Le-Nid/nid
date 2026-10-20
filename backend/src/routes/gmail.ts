@@ -70,12 +70,14 @@ export async function gmailRoutes(app: FastifyInstance) {
     action: z.enum(['trash', 'label', 'unlabel', 'mark_read', 'mark_unread', 'archive']),
     messageIds: z.array(z.string()).min(1, 'No messageIds provided').max(5000),
     labelId: z.string().optional(),
+    // D1 undo window: the job waits this long in BullMQ and can be cancelled via DELETE /api/jobs/:jobId
+    delayMs: z.number().int().min(0).max(60_000).default(10_000),
   })
 
   app.post('/:accountId/messages/bulk', accountAuth, async (request, reply) => {
     const { accountId } = request.params as { accountId: string }
     const userId = request.user.sub
-    const { action, messageIds, labelId } = bulkSchema.parse(request.body)
+    const { action, messageIds, labelId, delayMs } = bulkSchema.parse(request.body)
 
     const job = await enqueueJob('bulk_operation', {
       accountId,
@@ -83,14 +85,15 @@ export async function gmailRoutes(app: FastifyInstance) {
       action,
       messageIds,
       labelId,
-    })
+    }, { delay: delayMs })
+    const runAt = new Date(Date.now() + delayMs).toISOString()
 
     await logAudit(userId, `bulk.${action === 'trash' ? 'trash' : action === 'archive' ? 'archive' : 'label'}` as any, {
       targetType: 'messages', targetId: accountId,
       details: { action, count: messageIds.length, jobId: job.id },
     })
 
-    return reply.code(202).send({ jobId: job.id, message: 'Job enqueued' })
+    return reply.code(202).send({ jobId: job.id, runAt, message: 'Job enqueued' })
   })
 
   // ─── Labels ───────────────────────────────────────────

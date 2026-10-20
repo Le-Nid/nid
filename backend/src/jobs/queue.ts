@@ -51,8 +51,11 @@ function redactSecrets(payload: JobPayload): JobPayload {
   return rest
 }
 
-/** `dedupId`: while a job with this id is waiting or running, enqueueing it again is a no-op. */
-export async function enqueueJob(type: JobType, payload: JobPayload, opts: { dedupId?: string } = {}) {
+/**
+ * `dedupId`: while a job with this id is waiting or running, enqueueing it again is a no-op.
+ * `delay` (ms): the job stays 'scheduled' (BullMQ 'delayed') until then, so it can still be cancelled (undo, D1).
+ */
+export async function enqueueJob(type: JobType, payload: JobPayload, opts: { dedupId?: string; delay?: number } = {}) {
   const queue = getQueue()
   const jobId = `${type}-${randomUUID()}`
   const redacted = redactSecrets(payload)
@@ -62,6 +65,7 @@ export async function enqueueJob(type: JobType, payload: JobPayload, opts: { ded
     // shortcut: credentials still sit in Redis while the job waits/runs; drop them as soon as it ends
     ...(hasSecrets ? { removeOnComplete: true, removeOnFail: true } : {}),
     ...(opts.dedupId ? { deduplication: { id: opts.dedupId } } : {}),
+    ...(opts.delay ? { delay: opts.delay } : {}),
   })
   // Pre-insert job row so SSE can find it immediately (skipped when BullMQ deduplicated: the row already exists)
   if (job.id === jobId) {
@@ -70,7 +74,7 @@ export async function enqueueJob(type: JobType, payload: JobPayload, opts: { ded
       .values({
         bullmq_id: String(job.id),
         type,
-        status: 'pending',
+        status: opts.delay ? 'scheduled' : 'pending',
         progress: 0,
         processed: 0,
         total: 0,

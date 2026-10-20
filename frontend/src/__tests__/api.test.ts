@@ -81,7 +81,7 @@ describe('API modules', () => {
       mockPost({ jobId: 'j1' })
       await gmailApi.bulkOperation('acc-1', 'trash', ['m1'], 'l1')
       expect(api.post).toHaveBeenCalledWith('/api/gmail/acc-1/messages/bulk', {
-        action: 'trash', messageIds: ['m1'], labelId: 'l1',
+        action: 'trash', messageIds: ['m1'], labelId: 'l1', delayMs: 0,
       })
     })
   })
@@ -187,7 +187,7 @@ describe('API modules', () => {
     it('run', async () => {
       mockPost({ jobId: 'j1' })
       await rulesApi.run('acc-1', 'r1')
-      expect(api.post).toHaveBeenCalledWith('/api/rules/acc-1/r1/run')
+      expect(api.post).toHaveBeenCalledWith('/api/rules/acc-1/r1/run', { delayMs: 0 })
     })
 
     it('preview', async () => {
@@ -294,7 +294,7 @@ describe('API modules', () => {
     it('deleteSender', async () => {
       mockPost({})
       await unsubscribeApi.deleteSender('acc-1', 'news@test.com', true)
-      expect(api.post).toHaveBeenCalledWith('/api/unsubscribe/acc-1/newsletters/news%40test.com/delete', { permanent: true })
+      expect(api.post).toHaveBeenCalledWith('/api/unsubscribe/acc-1/newsletters/news%40test.com/delete', { permanent: true, delayMs: 0 })
     })
   })
 

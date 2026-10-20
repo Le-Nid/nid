@@ -69,10 +69,12 @@ The `enqueueJob()` function immediately inserts a row in the `jobs` table with `
 Workers then perform an `UPDATE` (not an `INSERT`) to move the job to `active`, then `completed` or `failed`.
 
 ```
-pending → active → completed
-                → failed
-         → cancelled (annulation manuelle)
+pending   → active → completed
+scheduled ↗        → failed
+pending / scheduled → cancelled (annulation manuelle ; 409 une fois active)
 ```
+
+Jobs enqueued with a `delay` (undo window of bulk actions) start as `scheduled` instead of `pending`.
 
 ---
 
