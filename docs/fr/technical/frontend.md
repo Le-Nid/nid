@@ -183,12 +183,11 @@ Toutes les pages et composants de l'application sont traduits :
 
 ## PWA (Progressive Web App)
 
-Nid est une PWA installable : l'application peut être ajoutée à l'écran d'accueil sur mobile et desktop, et fonctionne partiellement hors-ligne grâce au service worker.
+Nid est une PWA installable : l'application peut être ajoutée à l'écran d'accueil sur mobile et desktop, avec un service worker qui précache l'app shell (pas de fonctionnalités hors-ligne).
 
 ### Configuration
 
-- **Manifest** : `public/manifest.json` — définit le nom, les icônes, les couleurs et le mode `standalone`.
-- **Service Worker** : `public/sw.js` — enregistré au chargement dans `main.tsx`.
+- **Manifest + Service Worker** : générés par `vite-plugin-pwa` (config dans `vite.config.ts`) sous `manifest.webmanifest` et `sw.js` (Workbox), enregistrés par `registerSW()` dans `main.tsx`. `registerType: 'autoUpdate'` : un nouveau déploiement s'active immédiatement et recharge les onglets ouverts.
 - **Icônes** : 192×192 et 512×512 en standard + maskable dans `public/`.
 - **Meta tags** : `theme-color`, `apple-mobile-web-app-capable`, `apple-touch-icon` dans `index.html`.
 
@@ -196,10 +195,11 @@ Nid est une PWA installable : l'application peut être ajoutée à l'écran d'ac
 
 | Type de requête | Stratégie | Détail |
 |---|---|---|
-| API (`/api/*`) | Network-only | Pas de cache pour les données dynamiques |
-| SSE | Ignorée | Les flux temps réel ne sont pas interceptés |
-| Assets statiques (JS, CSS, images) | Cache-first | Mise en cache automatique après premier chargement |
-| Navigation (HTML) | Network-first | Fallback sur le cache si hors-ligne (app shell) |
+| API (`/api/*`) | Non interceptée | Exclue du fallback de navigation, aucun cache runtime |
+| App shell (JS, CSS, HTML du build) | Precache | Versionné par build, entrées obsolètes nettoyées |
+| Navigation (HTML) | `index.html` précaché | Fallback SPA, sauf `/api/*` |
+
+nginx sert `sw.js` et `manifest.webmanifest` avec `Cache-Control: no-cache` pour que les mises à jour soient prises en compte.
 
 ### Installation depuis le navigateur
 
