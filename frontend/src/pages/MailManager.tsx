@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Table,
   Space,
@@ -25,8 +25,8 @@ import GmailSearchInput from "../components/GmailSearchInput";
 import JobProgressModal from "../components/JobProgressModal";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { useTranslation } from 'react-i18next';
-import { useMailCache, cacheKey } from '../store/mail.store';
-import { useGmailLabels } from '../hooks/queries';
+import { useQueryClient } from '@tanstack/react-query';
+import { useGmailLabels, useGmailMessages, queryKeys } from '../hooks/queries';
 import dayjs from "dayjs";
 
 const { Text, Title } = Typography;
@@ -58,34 +58,47 @@ interface MailRow {
 export default function MailManagerPage() {
   const { t } = useTranslation();
   const { accountId } = useAccount();
-  const mailCache = useMailCache();
   const [searchParams] = useSearchParams();
   const urlQuery = searchParams.get('q') ?? '';
 
-  // Restaurer l'état depuis le cache Zustand au montage (évite le flash vide)
-  const initialKey = accountId ? cacheKey(accountId, urlQuery, '') : '';
-  const initialCache = initialKey ? mailCache.getEntry(initialKey) : null;
-
-  const [mails, setMails] = useState<MailRow[]>(initialCache?.mails ?? []);
   const { data: labels = [] } = useGmailLabels(accountId);
-  const [loading, setLoading] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [bulkLoading, setBulkLoading] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
+  // query = search box draft; searchQuery = submitted search that drives the list
   const [query, setQuery] = useState(urlQuery);
+  const [searchQuery, setSearchQuery] = useState(urlQuery);
   const [quickFilter, setQuickFilter] = useState("");
-  const [pageToken, setPageToken] = useState<string | null>(initialCache?.pageToken ?? null);
-  const [hasMore, setHasMore] = useState(initialCache?.hasMore ?? false);
-  const [total, setTotal] = useState(initialCache?.total ?? 0);
   const [viewingId, setViewingId] = useState<string | null>(null);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const [archiveAllLoading, setArchiveAllLoading] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
   const { notification } = App.useApp();
-  const loadIdRef = useRef(0);
+  const queryClient = useQueryClient();
 
-  const PROGRESSIVE_BATCH = 5;
+  const {
+    data, error, isLoading, isFetching, isFetchingNextPage, hasNextPage, fetchNextPage, refetch,
+  } = useGmailMessages(accountId, searchQuery, quickFilter);
+  const mails: MailRow[] = useMemo(() => data?.pages.flatMap((p) => p.mails) ?? [], [data]);
+  const total = data?.pages[0]?.total ?? 0;
+  const invalidateMails = () =>
+    queryClient.invalidateQueries({ queryKey: queryKeys.gmailMessages(accountId!, searchQuery, quickFilter) });
+
+  // Follow ?q= when it changes while the page stays mounted (e.g. opening a saved search)
+  useEffect(() => {
+    setQuery(urlQuery);
+    setSearchQuery(urlQuery);
+  }, [urlQuery]);
+
+  // Selection belongs to one list: drop it when the account or the search changes
+  useEffect(() => {
+    setSelected([]);
+    setFocusedIndex(-1);
+  }, [accountId, searchQuery, quickFilter]);
+
+  useEffect(() => {
+    if (error) messageApi.error(t('mailManager.loadError'));
+  }, [error]);
 
   // ─── Raccourcis clavier ───────────────────────────────────
   useKeyboardShortcuts({
@@ -110,130 +123,12 @@ export default function MailManagerPage() {
     enabled: !viewingId,
   });
 
-  // ─── Chargement initial (progressif + cache) ─────────────
-  const loadFresh = useCallback(async (forceRefresh = false) => {
-    if (!accountId) return;
-
-    const currentLoadId = ++loadIdRef.current;
-    const key = cacheKey(accountId, query, quickFilter);
-    const cached = mailCache.getEntry(key);
-
-    // Restaurer le cache immédiatement
-    if (cached && !forceRefresh) {
-      setMails(cached.mails);
-      setTotal(cached.total);
-      setPageToken(cached.pageToken);
-      setHasMore(cached.hasMore);
-      return;
-    }
-
-    setLoading(true);
-    if (!cached) setMails([]);
-    setSelected([]);
-    setPageToken(null);
-    try {
-      const fullQuery = [quickFilter, query].filter(Boolean).join(" ");
-      const res = await gmailApi.listMessages(accountId, {
-        q: fullQuery || undefined,
-        maxResults: 20,
-      });
-
-      if (currentLoadId !== loadIdRef.current) return;
-
-      const ids: string[] = (res.messages ?? []).map((m: any) => m.id);
-      setTotal(res.resultSizeEstimate ?? 0);
-
-      // Chargement en une seule requête (le backend gère la concurrence)
-      const allMails: MailRow[] = [];
-      if (!cached) setMails([]);
-
-      for (let i = 0; i < ids.length; i += PROGRESSIVE_BATCH) {
-        const chunk = ids.slice(i, i + PROGRESSIVE_BATCH);
-        const enriched = await gmailApi.batchGetMessages(accountId, chunk);
-
-        if (currentLoadId !== loadIdRef.current) return;
-
-        allMails.push(...enriched);
-        setMails([...allMails]);
-        if (i === 0) setLoading(false);
-      }
-
-      setPageToken(res.nextPageToken ?? null);
-      setHasMore(!!res.nextPageToken);
-
-      // Mettre en cache
-      mailCache.setEntry(key, {
-        mails: allMails,
-        total: res.resultSizeEstimate ?? 0,
-        pageToken: res.nextPageToken ?? null,
-        hasMore: !!res.nextPageToken,
-      });
-    } catch {
-      if (currentLoadId === loadIdRef.current) {
-        messageApi.error(t('mailManager.loadError'));
-      }
-    } finally {
-      if (currentLoadId === loadIdRef.current) {
-        setLoading(false);
-      }
-    }
-  }, [accountId, query, quickFilter]);
-
-  // ─── Charger la page suivante (infinite scroll, progressif) ─
-  const loadMore = useCallback(async () => {
-    if (!accountId || !pageToken || loadingMore) return;
-    setLoadingMore(true);
-    try {
-      const fullQuery = [quickFilter, query].filter(Boolean).join(" ");
-      const res = await gmailApi.listMessages(accountId, {
-        q: fullQuery || undefined,
-        maxResults: 20,
-        pageToken,
-      });
-
-      const ids: string[] = (res.messages ?? []).map((m: any) => m.id);
-
-      // Chargement séquentiel par lots
-      for (let i = 0; i < ids.length; i += PROGRESSIVE_BATCH) {
-        const chunk = ids.slice(i, i + PROGRESSIVE_BATCH);
-        const enriched = await gmailApi.batchGetMessages(accountId, chunk);
-        setMails((prev) => [...prev, ...enriched]);
-      }
-
-      setPageToken(res.nextPageToken ?? null);
-      setHasMore(!!res.nextPageToken);
-
-      // Mettre à jour le cache avec les nouvelles données
-      const key = cacheKey(accountId, query, quickFilter);
-      setMails((currentMails) => {
-        mailCache.setEntry(key, {
-          mails: currentMails,
-          total,
-          pageToken: res.nextPageToken ?? null,
-          hasMore: !!res.nextPageToken,
-        });
-        return currentMails;
-      });
-    } catch {
-      messageApi.error(t('dashboard.loadError'));
-    } finally {
-      setLoadingMore(false);
-    }
-  }, [accountId, pageToken, query, quickFilter, loadingMore, total]);
-
   // Sentinel div en bas de liste → IntersectionObserver
   const sentinelRef = useInfiniteScroll({
-    onLoadMore: loadMore,
-    hasMore,
-    loading: loadingMore,
+    onLoadMore: () => void fetchNextPage(),
+    hasMore: !!hasNextPage,
+    loading: isFetchingNextPage,
   });
-
-  useEffect(() => {
-    // Increment loadId — any in-flight loadFresh from a previous mount
-    // will see the mismatch and bail out before processing results.
-    loadIdRef.current++;
-    loadFresh();
-  }, [accountId, quickFilter]);
 
   // ─── Archive all (differential) ────────────────────────
   const handleArchiveAll = async () => {
@@ -308,8 +203,6 @@ export default function MailManagerPage() {
         description: t('mailManager.bulkStartedDesc', { count: ids.length }),
       });
       setSelected([]);
-      // forceRefresh: otherwise the cached page brings the trashed mails back
-      setTimeout(() => loadFresh(true), 3000);
     } catch {
       messageApi.error(t('mailManager.bulkError'));
     } finally {
@@ -449,13 +342,13 @@ export default function MailManagerPage() {
           <GmailSearchInput
             value={query}
             onChange={setQuery}
-            onSearch={() => loadFresh(true)}
+            onSearch={(v) => (v === searchQuery ? void refetch() : setSearchQuery(v))}
             style={{ flex: '1 1 200px', minWidth: 0, maxWidth: 400 }}
           />
           <Button
             icon={<RefreshCw size={14} />}
-            onClick={() => loadFresh(true)}
-            loading={loading}
+            onClick={() => void refetch()}
+            loading={isFetching && !isFetchingNextPage}
           />
           <Button
             icon={<Save size={14} />}
@@ -494,7 +387,7 @@ export default function MailManagerPage() {
         dataSource={mails}
         columns={columns}
         rowKey="id"
-        loading={loading}
+        loading={isLoading}
         size="small"
         pagination={false}
         scroll={{ x: 800 }}
@@ -523,8 +416,8 @@ export default function MailManagerPage() {
           justifyContent: "center",
         }}
       >
-        {loadingMore && <Spin size="small" />}
-        {!hasMore && mails.length > 0 && (
+        {isFetchingNextPage && <Spin size="small" />}
+        {!hasNextPage && mails.length > 0 && (
           <Text type="secondary" style={{ fontSize: 12 }}>
             — {t('mailManager.allLoaded')} —
           </Text>
@@ -541,7 +434,11 @@ export default function MailManagerPage() {
       {/* Job progress SSE */}
       <JobProgressModal
         jobId={activeJobId}
-        onClose={() => setActiveJobId(null)}
+        onClose={() => {
+          setActiveJobId(null);
+          // Bulk/archive jobs run in the background: by the time the progress modal closes they have changed the list
+          void invalidateMails();
+        }}
       />
 
       {/* Keyboard shortcuts hint */}

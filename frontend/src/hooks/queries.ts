@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   dashboardApi, gmailApi, archiveApi, rulesApi, jobsApi,
   adminApi, unsubscribeApi, attachmentsApi, reportsApi,
@@ -97,6 +97,24 @@ export function useGmailLabels(accountId: string | null) {
   return useQuery({
     queryKey: queryKeys.gmailLabels(accountId!),
     queryFn: () => gmailApi.listLabels(accountId!),
+    enabled: !!accountId,
+  })
+}
+
+// Each page = one Gmail list call (20 ids) + one batchGet of those ids; pageParam is Gmail's nextPageToken
+export function useGmailMessages(accountId: string | null, query: string, quickFilter: string) {
+  return useInfiniteQuery({
+    queryKey: queryKeys.gmailMessages(accountId!, query, quickFilter),
+    queryFn: async ({ pageParam }) => {
+      const q = [quickFilter, query].filter(Boolean).join(' ')
+      const res = await gmailApi.listMessages(accountId!, { q: q || undefined, maxResults: 20, pageToken: pageParam })
+      const ids: string[] = (res.messages ?? []).map((m: { id: string }) => m.id)
+      // The batch endpoint rejects an empty id list
+      const mails: any[] = ids.length ? await gmailApi.batchGetMessages(accountId!, ids) : []
+      return { mails, total: (res.resultSizeEstimate ?? 0) as number, nextPageToken: res.nextPageToken as string | undefined }
+    },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextPageToken || undefined,
     enabled: !!accountId,
   })
 }
