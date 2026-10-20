@@ -366,7 +366,7 @@ function ImportExportTab({ accountId }: { accountId: string }) {
             accept=".mbox,.mbx"
             maxCount={1}
             beforeUpload={(file) => {
-              handleMboxUpload(file)
+              void handleMboxUpload(file) // handles its own errors
               return false
             }}
             showUploadList={false}

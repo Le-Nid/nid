@@ -155,9 +155,9 @@ export async function withAccountLimit<T>(
     const result = await fn()
     // Fire-and-forget quota tracking
     if (endpoint) {
-      import('./quota.service').then(({ trackApiCall }) =>
-        trackApiCall(accountId, endpoint).catch(() => {}),
-      )
+      import('./quota.service')
+        .then(({ trackApiCall }) => trackApiCall(accountId, endpoint))
+        .catch(() => {}) // a failed import or insert must not become an unhandled rejection
     }
     return result
   } finally {
