@@ -40,7 +40,7 @@ Le script CI (`.github/workflows/ci.yml`) exécute : `npm ci` → `typecheck` �
 - **Pages** : composants dans `frontend/src/pages/`, une page par route définie dans `App.tsx`.
 - **API** : client Axios centralisé (`frontend/src/api/client.ts`, `withCredentials: true`). Endpoints groupés par module dans `frontend/src/api/index.ts`. Intercepteur 401 → redirect `/login`.
 - **React Query** : hooks dans `frontend/src/hooks/queries.ts` avec query key factories (`queryKeys.dashboard(accountId)`, etc.). staleTime 5min, retry 1.
-- **Stores Zustand** : un store par domaine dans `frontend/src/store/` (auth, mail, theme). Le auth store fait `fetchMe()` au mount.
+- **Stores Zustand** : un store par domaine dans `frontend/src/store/` (auth, theme ; les données serveur passent par React Query). Le auth store fait `fetchMe()` au mount.
 - **SSE** : hook `useJobSSE(jobId)` dans `frontend/src/hooks/useJobSSE.ts` pour le suivi temps réel des jobs via EventSource.
 - **i18n** : fichiers `fr.json`/`en.json` dans `frontend/src/i18n/`. Fallback français. Toujours utiliser `t('key')`.
 
