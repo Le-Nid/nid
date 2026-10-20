@@ -68,6 +68,17 @@ updates:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
 
+  # ─── Docs (VitePress, racine) — mises à jour de sécurité uniquement ─
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
+    ignore:
+      # vitepress-plugin-mermaid@2 n'accepte que mermaid 10 || 11 (cf. #133)
+      - dependency-name: "mermaid"
+        update-types: ["version-update:semver-major"]
+
   # ─── GitHub Actions ─────────────────────────────────────
   - package-ecosystem: github-actions
     directory: /
