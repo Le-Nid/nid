@@ -1,4 +1,5 @@
-import { Kysely, PostgresDialect, Migrator, MigrationProvider, Migration } from 'kysely'
+import { Kysely, PostgresDialect } from 'kysely'
+import { Migrator, type MigrationProvider, type Migration } from 'kysely/migration'
 import pg from 'pg'
 import { Database } from './types'
 import { config } from '../config'
