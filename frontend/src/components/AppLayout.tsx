@@ -2,7 +2,7 @@ import { Outlet, useNavigate, useLocation } from 'react-router'
 import { Layout, Menu, Select, Avatar, Dropdown, Typography, Switch, Tooltip, Tag, Drawer, Grid } from 'antd'
 import {
   LayoutDashboard, Mail, Database, Settings, LogOut, User, CalendarClock, Bot,
-  Crown, Ban, Paperclip, LineChart, Copy, Globe, ShieldCheck, Activity,
+  Crown, Ban, Paperclip, LineChart, Globe, ShieldCheck, Activity,
   PanelLeftClose, PanelLeftOpen, Inbox, LayoutGrid, TrendingUp, SlidersHorizontal,
   FolderOpen, Merge, Server, Clock, Share2, Moon, Sun, MenuIcon,
 } from 'lucide-react'
@@ -63,7 +63,6 @@ export default function AppLayout() {
         { key: '/rules',        icon: <Bot size={16} />,       label: t('nav.rules') },
         { key: '/unsubscribe',  icon: <Ban size={16} />,        label: t('nav.newsletters') },
         { key: '/attachments',  icon: <Paperclip size={16} />,   label: t('nav.attachments') },
-        { key: '/duplicates',   icon: <Copy size={16} />,        label: t('nav.duplicates') },
         { key: '/expiration',   icon: <Clock size={16} />, label: t('nav.expiration') },
         { key: '/sharing',      icon: <Share2 size={16} />,    label: t('nav.sharing') },
       ],

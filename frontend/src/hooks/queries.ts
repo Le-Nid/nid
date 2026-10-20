@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   dashboardApi, gmailApi, archiveApi, rulesApi, jobsApi,
   adminApi, unsubscribeApi, attachmentsApi, reportsApi,
-  duplicatesApi, analyticsApi, privacyApi, notificationsApi,
+  analyticsApi, privacyApi, notificationsApi,
   auditApi, webhooksApi, savedSearchesApi, unifiedApi, archiveThreadsApi,
   retentionApi, quotaApi, importApi,
   expirationApi, sharingApi,
@@ -46,7 +46,6 @@ export const queryKeys = {
     dedupStats: () => ['attachments', 'dedup-stats'] as const,
   },
   insights: () => ['insights'] as const,
-  duplicates: (accountId: string) => ['duplicates', accountId] as const,
   analytics: {
     heatmap: (accountId: string) => ['analytics', accountId, 'heatmap'] as const,
     senderScores: (accountId: string) => ['analytics', accountId, 'senderScores'] as const,
@@ -274,24 +273,6 @@ export function useWeeklyReport() {
   return useQuery({
     queryKey: queryKeys.insights(),
     queryFn: () => reportsApi.getWeekly(),
-  })
-}
-
-// ─── Duplicates ───────────────────────────────────────────
-
-export function useDuplicates(accountId: string | null) {
-  return useQuery({
-    queryKey: queryKeys.duplicates(accountId!),
-    queryFn: () => duplicatesApi.detectArchived(accountId!),
-    enabled: !!accountId,
-  })
-}
-
-export function useDeleteDuplicates(accountId: string) {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (mailIds: string[]) => duplicatesApi.deleteArchived(accountId, mailIds),
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.duplicates(accountId) }),
   })
 }
 

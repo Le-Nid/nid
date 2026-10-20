@@ -9,7 +9,6 @@ const TYPE_LABEL_KEYS: Record<string, string> = {
   bulk_operation: "notifier.typeBulk",
   archive_mails: "notifier.typeArchive",
   run_rule: "notifier.typeRule",
-  sync_dashboard: "notifier.typeSync",
 };
 
 /**

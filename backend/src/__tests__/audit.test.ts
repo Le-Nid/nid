@@ -79,7 +79,7 @@ describe('logAudit', () => {
       'rule.create', 'rule.update', 'rule.delete', 'rule.run', 'rule.create_from_template',
       'bulk.trash', 'bulk.delete', 'bulk.label', 'bulk.archive',
       'archive.trigger', 'archive.export_zip',
-      'duplicates.delete', 'newsletter.delete',
+      'newsletter.delete',
       'admin.update_user', 'user.2fa_enable', 'user.2fa_disable',
     ] as const
     for (const action of actions) {

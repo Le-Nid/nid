@@ -11,7 +11,6 @@ import { unsubscribeRoutes } from './unsubscribe'
 import { attachmentsRoutes } from './attachments'
 import { reportsRoutes } from './reports'
 import { notificationsRoutes } from './notifications'
-import { duplicatesRoutes } from './duplicates'
 import { auditRoutes } from './audit'
 import { twoFactorRoutes } from './2fa'
 import { integrityRoutes } from './integrity'
@@ -48,7 +47,6 @@ export async function registerRoutes(app: FastifyInstance) {
   await app.register(attachmentsRoutes,  { prefix: '/api/attachments' })
   await app.register(reportsRoutes,      { prefix: '/api/reports' })
   await app.register(notificationsRoutes, { prefix: '/api/notifications' })
-  await app.register(duplicatesRoutes,    { prefix: '/api/duplicates' })
   await app.register(auditRoutes,         { prefix: '/api/audit' })
   await app.register(twoFactorRoutes,     { prefix: '/api/auth/2fa' })
   await app.register(integrityRoutes,     { prefix: '/api/integrity' })

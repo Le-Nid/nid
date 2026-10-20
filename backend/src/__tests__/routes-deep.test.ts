@@ -148,7 +148,6 @@ import { adminRoutes } from '../routes/admin'
 import { attachmentsRoutes } from '../routes/attachments'
 import { configRoutes } from '../routes/config'
 import { dashboardRoutes } from '../routes/dashboard'
-import { duplicatesRoutes } from '../routes/duplicates'
 import { gmailRoutes } from '../routes/gmail'
 import { rulesRoutes } from '../routes/rules'
 import { unifiedRoutes } from '../routes/unified'
@@ -706,54 +705,6 @@ describe('dashboardRoutes deep', () => {
     mockExecute.mockResolvedValueOnce([{ sender: 'test@test.com', count: 3, total_size: 5000 }])
     const res = await app.inject({ method: 'GET', url: '/acc-1/archive-stats' })
     expect(res.statusCode).toBe(200)
-    await app.close()
-  })
-})
-
-// ═══════════════════════════════════════════════════════════
-// DUPLICATES ROUTES - deep coverage
-// ═══════════════════════════════════════════════════════════
-describe('duplicatesRoutes deep', () => {
-  it('GET /:accountId/archived returns duplicates with counts', async () => {
-    const app = await buildTestApp()
-    await app.register(duplicatesRoutes)
-    await app.ready()
-    mockExecute.mockResolvedValueOnce([
-      { subject: 'Test', sender: 'a@b.com', date_group: '2024-01-01', count: '3', total_size: '9000', mail_ids: ['m1', 'm2', 'm3'] },
-    ])
-    const res = await app.inject({ method: 'GET', url: '/acc-1/archived' })
-    expect(res.statusCode).toBe(200)
-    const body = res.json()
-    expect(body.groups).toBeDefined()
-    await app.close()
-  })
-
-  it('POST /:accountId/archived/delete deletes duplicates', async () => {
-    const app = await buildTestApp()
-    await app.register(duplicatesRoutes)
-    await app.ready()
-    mockExecute
-      .mockResolvedValueOnce([]) // delete attachments
-      .mockResolvedValueOnce([{ numDeletedRows: BigInt(2) }]) // delete mails
-    const res = await app.inject({
-      method: 'POST',
-      url: '/acc-1/archived/delete',
-      payload: { mailIds: ['mail-1', 'mail-2'] },
-    })
-    expect(res.statusCode).toBe(200)
-    await app.close()
-  })
-
-  it('POST /:accountId/archived/delete returns 400 without mailIds', async () => {
-    const app = await buildTestApp()
-    await app.register(duplicatesRoutes)
-    await app.ready()
-    const res = await app.inject({
-      method: 'POST',
-      url: '/acc-1/archived/delete',
-      payload: { mailIds: [] },
-    })
-    expect(res.statusCode).toBe(400)
     await app.close()
   })
 })

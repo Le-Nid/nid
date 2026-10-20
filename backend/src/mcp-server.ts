@@ -81,6 +81,7 @@ server.registerTool(
       .selectFrom('archived_mails')
       .select(['id', 'subject', 'sender', 'recipient', 'date', 'size_bytes', 'has_attachments', 'snippet'])
       .where('gmail_account_id', '=', accountId)
+      .where('deleted_at', 'is', null)
 
     if (query) {
       q = q.where('search_vector', '@@', (eb: any) =>

@@ -3,7 +3,7 @@ import api from '../api/client'
 import {
   dashboardApi, gmailApi, archiveApi, rulesApi, jobsApi,
   authApi, adminApi, unsubscribeApi, attachmentsApi, reportsApi,
-  duplicatesApi, notificationsApi, auditApi, twoFactorApi,
+  notificationsApi, auditApi, twoFactorApi,
   webhooksApi, integrityApi, configApi, privacyApi, analyticsApi,
   savedSearchesApi, unifiedApi, archiveThreadsApi,
   expirationApi, sharingApi, importApi,
@@ -349,20 +349,6 @@ describe('API modules', () => {
       mockGet({ stats: {} })
       await reportsApi.getWeekly()
       expect(api.get).toHaveBeenCalledWith('/api/reports/weekly')
-    })
-  })
-
-  describe('duplicatesApi', () => {
-    it('detectArchived', async () => {
-      mockGet({ groups: [] })
-      await duplicatesApi.detectArchived('acc-1', {})
-      expect(api.get).toHaveBeenCalledWith('/api/duplicates/acc-1/archived', { params: {} })
-    })
-
-    it('deleteArchived', async () => {
-      mockPost({ deleted: 3 })
-      await duplicatesApi.deleteArchived('acc-1', ['m1', 'm2'])
-      expect(api.post).toHaveBeenCalledWith('/api/duplicates/acc-1/archived/delete', { mailIds: ['m1', 'm2'] })
     })
   })
 

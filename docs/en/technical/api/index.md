@@ -28,7 +28,6 @@ All routes (except `/api/auth/config`, `/api/auth/register`, `/api/auth/login` a
 | Audit | `/api/audit` | [audit.md](audit.md) |
 | Newsletters | `/api/unsubscribe` | [unsubscribe.md](unsubscribe.md) |
 | Attachments | `/api/attachments` | [attachments.md](attachments.md) |
-| Duplicates | `/api/duplicates` | [duplicates.md](duplicates.md) |
 | Reports | `/api/reports` | [reports.md](reports.md) |
 | Integrity | `/api/integrity` | [integrity.md](integrity.md) |
 | Configuration | `/api/config` | [config.md](config.md) |

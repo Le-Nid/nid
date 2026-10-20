@@ -157,7 +157,6 @@ import { unsubscribeRoutes } from '../routes/unsubscribe'
 import { webhookRoutes } from '../routes/webhooks'
 import { configRoutes } from '../routes/config'
 import { privacyRoutes } from '../routes/privacy'
-import { duplicatesRoutes } from '../routes/duplicates'
 import { gmailRoutes } from '../routes/gmail'
 import { archiveRoutes } from '../routes/archive'
 import { adminRoutes } from '../routes/admin'
@@ -571,23 +570,6 @@ describe('privacyRoutes', () => {
     await app.ready()
 
     const res = await app.inject({ method: 'GET', url: '/acc-1/encryption/status' })
-    expect(res.statusCode).toBe(200)
-    await app.close()
-  })
-})
-
-// ═══════════════════════════════════════════════════════════
-// Duplicates routes
-// ═══════════════════════════════════════════════════════════
-describe('duplicatesRoutes', () => {
-  it('GET /:accountId/archived returns duplicates', async () => {
-    const app = await buildTestApp()
-    await app.register(duplicatesRoutes)
-    await app.ready()
-
-    mockExecute.mockResolvedValueOnce([])
-
-    const res = await app.inject({ method: 'GET', url: '/acc-1/archived' })
     expect(res.statusCode).toBe(200)
     await app.close()
   })
@@ -1052,20 +1034,6 @@ describe('dashboardRoutes - additional', () => {
     mockExecute.mockResolvedValue([])
 
     const res = await app.inject({ method: 'GET', url: '/acc-1/archive-stats' })
-    expect(res.statusCode).toBe(200)
-    await app.close()
-  })
-})
-
-describe('duplicatesRoutes - additional', () => {
-  it('GET /:accountId/live returns live duplicates', async () => {
-    const app = await buildTestApp()
-    await app.register(duplicatesRoutes)
-    await app.ready()
-
-    mockExecute.mockResolvedValueOnce([])
-
-    const res = await app.inject({ method: 'GET', url: '/acc-1/live' })
     expect(res.statusCode).toBe(200)
     await app.close()
   })

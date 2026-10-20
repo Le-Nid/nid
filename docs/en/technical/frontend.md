@@ -53,7 +53,6 @@ const { token, user, gmailAccounts, activeAccountId } = useAuthStore()
 /admin              → AdminPage 🔒🛡️ (admin only)
 /unsubscribe        → UnsubscribePage 🔒
 /attachments        → AttachmentsPage 🔒
-/duplicates         → DuplicatesPage 🔒
 /insights           → InsightsPage 🔒
 /privacy            → PrivacyPage 🔒 (tracking pixels, PII, encryption)
 ```
@@ -179,7 +178,7 @@ function MaPage() {
 
 All application pages and components are translated:
 
-- **Pages**: Login, Dashboard, MailManager, Jobs, Archive, Rules, Settings, Admin, Unsubscribe, Attachments, Insights, Duplicates, Privacy
+- **Pages**: Login, Dashboard, MailManager, Jobs, Archive, Rules, Settings, Admin, Unsubscribe, Attachments, Insights, Privacy
 - **Components**: AppLayout, BulkActionBar, NotificationBell, MailViewer, GmailSearchInput, RuleFormModal, JobProgressModal
 
 ## PWA (Progressive Web App)

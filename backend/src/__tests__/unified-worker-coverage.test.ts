@@ -595,4 +595,38 @@ describe('unified worker handlers', () => {
     await expect(processJob(job)).rejects.toThrow('Encrypt fail')
     expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ category: 'job_failed' }))
   })
+
+  // Ported from the deleted per-type worker tests
+  it('fails label/unlabel without labelId', async () => {
+    for (const action of ['label', 'unlabel']) {
+      const job = makeJob('bulk_operation', { accountId: 'acc-1', action, messageIds: ['msg-1'] })
+      await expect(processJob(job)).rejects.toThrow('labelId required')
+    }
+    expect(mockModifyMessages).not.toHaveBeenCalled()
+  })
+
+  it('reports privacy scan progress through onProgress', async () => {
+    mockScanTrackingPixels.mockImplementationOnce(async (_acc: string, opts: any) => {
+      await opts.onProgress(20, 100)
+      await opts.onProgress(40, 100)
+      return { scanned: 100, tracked: 3 }
+    })
+    const job = makeJob('scan_tracking', { accountId: 'acc-1', action: 'scan_tracking' })
+    await processJob(job)
+    expect(job.updateProgress).toHaveBeenCalledWith(20)
+    expect(job.updateProgress).toHaveBeenCalledWith(40)
+  })
+
+  it('reports newsletter scan progress through onProgress', async () => {
+    mockScanNewsletters.mockImplementationOnce(async (_acc: string, onProgress: any) => {
+      await onProgress(5, 50)
+      await onProgress(25, 50)
+      return [{ id: 'n1' }, { id: 'n2' }]
+    })
+    const job = makeJob('scan_unsubscribe', { accountId: 'acc-1' })
+    const result = await processJob(job)
+    expect(job.updateProgress).toHaveBeenCalledWith(10)
+    expect(job.updateProgress).toHaveBeenCalledWith(50)
+    expect(result).toHaveLength(2)
+  })
 })

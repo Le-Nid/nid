@@ -21,7 +21,6 @@ export type AuditAction =
   | 'bulk.archive'
   | 'archive.trigger'
   | 'archive.export_zip'
-  | 'duplicates.delete'
   | 'newsletter.delete'
   | 'admin.update_user'
   | 'user.2fa_enable'

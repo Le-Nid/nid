@@ -15,7 +15,6 @@ const AdminPage = lazy(() => import("./pages/Admin"));
 const UnsubscribePage = lazy(() => import("./pages/Unsubscribe"));
 const AttachmentsPage = lazy(() => import("./pages/Attachments"));
 const InsightsPage = lazy(() => import("./pages/Insights"));
-const DuplicatesPage = lazy(() => import("./pages/Duplicates"));
 const PrivacyPage = lazy(() => import("./pages/Privacy"));
 const AnalyticsPage = lazy(() => import("./pages/Analytics"));
 const SavedSearchesPage = lazy(() => import("./pages/SavedSearches"));
@@ -78,7 +77,6 @@ export default function App() {
           <Route path="unsubscribe" element={<UnsubscribePage />} />
           <Route path="attachments" element={<AttachmentsPage />} />
           <Route path="insights" element={<InsightsPage />} />
-          <Route path="duplicates" element={<DuplicatesPage />} />
           <Route path="privacy" element={<PrivacyPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="saved-searches" element={<SavedSearchesPage />} />

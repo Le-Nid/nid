@@ -45,7 +45,7 @@ const failedJob = {
 
 const pendingJob = {
   id: "job-4",
-  type: "sync_dashboard",
+  type: "scan_unsubscribe",
   status: "pending",
   progress: 0,
   processed: 0,
@@ -156,7 +156,7 @@ describe("JobsPage", () => {
     expect(screen.getByText("bulk_operation")).toBeInTheDocument();
     expect(screen.getByText("archive_mails")).toBeInTheDocument();
     expect(screen.getByText("run_rule")).toBeInTheDocument();
-    expect(screen.getByText("sync_dashboard")).toBeInTheDocument();
+    expect(screen.getByText("scan_unsubscribe")).toBeInTheDocument();
   });
 
   it("shows error tag for failed jobs", () => {

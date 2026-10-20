@@ -44,9 +44,6 @@ logger.warn('something unusual happened')
 | Module | File | Logged Operations |
 |--------|------|-------------------|
 | `archive` | `archive/archive.service.ts` | Email archiving, attachment extraction |
-| `archive-worker` | `jobs/workers/archive.worker.ts` | Batch archiving progress |
-| `bulk-worker` | `jobs/workers/bulk.worker.ts` | Bulk operations (trash, delete, modify) |
-| `rule-worker` | `jobs/workers/rule.worker.ts` | Rule execution |
 | `rules` | `rules/rules.service.ts` | Rules CRUD, execution |
 | `oauth` | `auth/oauth.service.ts` | Token exchange, refresh |
 | `social-auth` | `auth/social.service.ts` | Multi-provider auth |

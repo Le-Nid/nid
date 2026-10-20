@@ -29,7 +29,6 @@ Your data stays where it always should have been: **at home**.
 - 🤖 **Automatic rules** — rule engine (Gmail conditions + actions), schedulable (hourly/daily/weekly/monthly)
 - 📰 **Newsletters** — scan `List-Unsubscribe` headers, one-click unsubscribe, bulk delete
 - 📎 **Attachments** — dedicated view of all attachments (live + archived), sort by size
-- 🔍 **Duplicates** — grouped detection and deletion of duplicate emails
 - 📈 **Insights** — automatic weekly report with statistics + notifications
 - ⚙️ **Jobs** — real-time tracking via SSE (Server-Sent Events) + BullMQ
 - 🔐 **Multi-user** — admin/user roles, quotas, data isolation
@@ -124,7 +123,6 @@ Vos données restent là où elles ont toujours dû être : **chez vous**.
 - 🤖 **Règles automatiques** — moteur de règles (conditions Gmail + actions), planifiables (hourly/daily/weekly/monthly)
 - 📰 **Newsletters** — scanner les headers `List-Unsubscribe`, désabonnement en un clic, suppression en masse
 - 📎 **Pièces jointes** — vue dédiée de toutes les PJ (live + archives), tri par taille
-- 🔍 **Doublons** — détection et suppression groupée des mails en double
 - 📈 **Insights** — rapport hebdomadaire automatique avec statistiques + notifications
 - ⚙️ **Jobs** — suivi en temps réel via SSE (Server-Sent Events) + BullMQ
 - 🔐 **Multi-utilisateurs** — rôles admin/user, quotas, isolation des données
