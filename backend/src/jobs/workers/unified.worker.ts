@@ -60,25 +60,27 @@ export function startUnifiedWorker() {
 }
 
 // ─── Archive ────────────────────────────────────────────────
+async function listAllMessageIds(accountId: string, query?: string): Promise<string[]> {
+  const ids: string[] = []
+  let pageToken: string | null = null
+  do {
+    const res: any = await listMessages(accountId, {
+      query: query || undefined,
+      maxResults: 500,
+      pageToken: pageToken ?? undefined,
+    })
+    ids.push(...(res.messages ?? []).map((m: any) => m.id))
+    pageToken = res.nextPageToken
+  } while (pageToken)
+  return ids
+}
+
 async function handleArchive(job: Job) {
   const { accountId, messageIds, query, differential = true } = job.data
   const db = getDb()
 
   try {
-    let ids: string[] = messageIds ?? []
-
-    if (!ids.length) {
-      let pageToken: string | null = null
-      do {
-        const res: any = await listMessages(accountId, {
-          query: query || undefined,
-          maxResults: 500,
-          pageToken: pageToken ?? undefined,
-        })
-        ids.push(...(res.messages ?? []).map((m: any) => m.id))
-        pageToken = res.nextPageToken
-      } while (pageToken)
-    }
+    let ids: string[] = messageIds?.length ? messageIds : await listAllMessageIds(accountId, query)
 
     if (differential) {
       const archived = await getArchivedIds(accountId)
@@ -130,11 +132,12 @@ async function handleArchive(job: Job) {
       .execute()
 
     if (job.data.userId) {
+      const failedNote = failed ? `, ${failed} en échec` : ''
       await notify({
         userId: job.data.userId,
         category: allFailed ? 'job_failed' : 'job_completed',
         title: allFailed ? 'Archivage échoué' : 'Archivage terminé',
-        body: `${total - failed} mail(s) archivé(s) sur le NAS${failed ? `, ${failed} en échec` : ''}.`,
+        body: `${total - failed} mail(s) archivé(s) sur le NAS${failedNote}.`,
         data: { jobId: String(job.id), count: total - failed, failed },
       })
     }
@@ -713,15 +716,10 @@ async function handleIntegrity(job: Job) {
 
     if (!result.healthy) {
       const admins = await db.selectFrom('users').select('id').where('role', '=', 'admin').execute()
-      for (const { id } of admins) {
-        await notify({
-          userId: id,
-          category: 'integrity_alert',
-          title: 'Intégrité des archives',
-          body: `${result.missingFiles.length} fichier(s) manquant(s), ${result.corruptedFiles.length} corrompu(s), ${result.orphanedFiles.length} orphelin(s).`,
-          data: { jobId: String(job.id) },
-        })
-      }
+      const body = `${result.missingFiles.length} fichier(s) manquant(s), ${result.corruptedFiles.length} corrompu(s), ${result.orphanedFiles.length} orphelin(s).`
+      await Promise.all(admins.map(({ id }) =>
+        notify({ userId: id, category: 'integrity_alert', title: 'Intégrité des archives', body, data: { jobId: String(job.id) } }),
+      ))
     }
     return result
   } catch (err) {

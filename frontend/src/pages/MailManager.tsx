@@ -415,7 +415,7 @@ export default function MailManagerPage() {
             onClick: ({ key, domEvent }) => {
               domEvent.stopPropagation();
               if (key === "read") setViewingId(row.id);
-              else handleBulkAction(key, undefined, [row.id]);
+              else void handleBulkAction(key, undefined, [row.id]);
             },
           }}
         >
