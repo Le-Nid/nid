@@ -1,0 +1,10 @@
+{
+  "stats": {
+    "totalMessages": 1234, "unreadCount": 56, "totalSizeBytes": 104857600,
+    "bySender": [], "byLabel": [], "timeline": [],
+    "biggestMails": [
+      { "id": "b1", "from": "Photos <photos@cloud.test>", "subject": "Album vacances", "sizeEstimate": 15728640, "date": "2026-09-15T08:00:00Z" }
+    ]
+  },
+  "archiveStats": { "total_mails": 42 }
+}

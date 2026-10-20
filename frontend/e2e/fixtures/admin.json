@@ -1,0 +1,11 @@
+{
+  "stats": { "users": 2, "gmailAccounts": 3, "jobs": { "total": 5, "active": 1 }, "archives": { "totalMails": 100, "totalSizeBytes": 1048576 } },
+  "users": {
+    "users": [
+      { "id": "u2", "email": "bob@example.com", "role": "user", "is_active": true, "gmail_accounts_count": 1, "max_gmail_accounts": 3,
+        "storage_used_bytes": 1024, "storage_quota_bytes": 5368709120, "last_login_at": null, "avatar_url": null }
+    ],
+    "total": 1
+  },
+  "jobs": { "jobs": [], "total": 0 }
+}

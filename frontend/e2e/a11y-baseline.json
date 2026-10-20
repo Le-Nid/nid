@@ -1,0 +1,26 @@
+{
+  "desktop": {
+    "login": 3,
+    "dashboard": 15,
+    "mails": 20,
+    "archive": 17,
+    "rules": 11,
+    "jobs": 14,
+    "settings": 52,
+    "unsubscribe": 10,
+    "attachments": 11,
+    "admin": 11
+  },
+  "mobile": {
+    "login": 3,
+    "dashboard": 10,
+    "mails": 11,
+    "archive": 11,
+    "rules": 8,
+    "jobs": 8,
+    "settings": 44,
+    "unsubscribe": 6,
+    "attachments": 7,
+    "admin": 8
+  }
+}

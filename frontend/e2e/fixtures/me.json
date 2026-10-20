@@ -1,0 +1,13 @@
+{
+  "user": {
+    "id": "user-1",
+    "email": "alice@example.com",
+    "role": "admin",
+    "display_name": "Alice",
+    "avatar_url": null,
+    "max_gmail_accounts": 3,
+    "storage_quota_bytes": 5368709120
+  },
+  "gmailAccounts": [{ "id": "acc-1", "email": "alice@gmail.com", "is_active": true }],
+  "storageUsedBytes": 1048576
+}

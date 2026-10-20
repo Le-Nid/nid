@@ -1,0 +1,11 @@
+{
+  "archived": {
+    "attachments": [
+      { "id": "att1", "filename": "contrat-signe.pdf", "mime_type": "application/pdf", "size_bytes": 102400,
+        "mail_subject": "Votre contrat", "mail_sender": "rh@company.test", "mail_date": "2026-09-01T10:00:00Z" }
+    ],
+    "total": 1,
+    "totalSizeBytes": 102400
+  },
+  "dedupStats": { "savedBytes": 0, "duplicateFiles": 0, "hashCoverage": 1 }
+}
