@@ -116,6 +116,9 @@ jobs:
 
       - name: E2E tests
         run: npm run e2e
+        env:
+          # Ratchet: fail when a page gets more axe violations than e2e/a11y-baseline.json
+          E2E_A11Y_STRICT: 1
 
       - name: Upload Playwright report
         if: failure()
