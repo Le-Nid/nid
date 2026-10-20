@@ -19,7 +19,7 @@ export default defineConfig({
         'googleapis',
         'bullmq',
         'ioredis',
-        'kysely',
+        /^kysely(\/.*)?$/,
         'pg',
         'bcrypt',
         'mailparser',
