@@ -220,19 +220,20 @@ describe('rules.service - additional branch coverage', () => {
       .toBe('to:(me@t.com)')
   })
 
-  it('runRule with pagination (multi-page results)', async () => {
-    mockListMessages
-      .mockResolvedValueOnce({ messages: [{ id: 'm1' }], nextPageToken: 'token2' })
-      .mockResolvedValueOnce({ messages: [{ id: 'm2' }], nextPageToken: null })
+  it('runRule hands the Gmail query to the job instead of listing every id', async () => {
+    mockListMessages.mockResolvedValueOnce({ messages: [{ id: 'm1' }], resultSizeEstimate: 80000, nextPageToken: 'token2' })
     mockEnqueueJob.mockResolvedValueOnce({ id: 'job-1' })
     mockExecute.mockResolvedValue([])
 
     const result = await runRule(
       { id: 'r1', conditions: [{ field: 'from', operator: 'contains', value: 'x' }], action: { type: 'trash' } },
       'acc-1',
+      'user-1',
     )
-    expect(result.matched).toBe(2)
-    expect(mockListMessages).toHaveBeenCalledTimes(2)
+    expect(result.matched).toBe(80000)
+    expect(mockListMessages).toHaveBeenCalledTimes(1)
+    expect(mockEnqueueJob).toHaveBeenCalledWith('bulk_operation', expect.objectContaining({ query: 'from:(x)', userId: 'user-1' }))
+    expect(mockEnqueueJob.mock.calls[0][1]).not.toHaveProperty('messageIds')
   })
 })
 

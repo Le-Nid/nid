@@ -335,7 +335,7 @@ async function handleRule(job: Job) {
     if (!rule) throw new Error(`Rule ${ruleId} not found`)
     if (!rule.is_active) throw new Error(`Rule ${ruleId} is disabled`)
 
-    const result = await runRule(rule, accountId)
+    const result = await runRule(rule, accountId, job.data.userId)
 
     await db
       .updateTable('jobs')

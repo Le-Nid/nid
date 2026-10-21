@@ -332,7 +332,7 @@
       "pickLabel": "Pick a label",
       "schedule": "Runs",
       "applyExisting": "Also apply to mails already received",
-      "needCondition": "Enter a sender or an age to see the matching mails.",
+      "needCondition": "Enter a sender: a rule based on age alone would target the whole mailbox.",
       "preview_one": "{{count, number}} matching mail · {{size}}",
       "preview_other": "{{count, number}} matching mails · {{size}}",
       "previewLoading": "Computing preview…",

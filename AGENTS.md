@@ -62,6 +62,7 @@ Le script CI (`.github/workflows/ci.yml`) exécute : `npm ci` → `typecheck` �
 
 ## Workflow agent
 
+- Avant chaque ouverture de PR : `/ponytail-review` sur le diff complet de la branche, constats « Must fix » / « Should fix » traités (ou justifiés dans la PR) avant le push.
 - Une fois le travail terminé : commit, push sur la branche de travail, puis **ouvrir une Pull Request** vers `main` pour validation par le tech lead. Ne jamais merger soi-même.
 - Si la PR précédente de la branche est déjà mergée, repartir de `main` et ouvrir une nouvelle PR.
 

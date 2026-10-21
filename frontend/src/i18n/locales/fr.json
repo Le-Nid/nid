@@ -332,7 +332,7 @@
       "pickLabel": "Choisir un libellé",
       "schedule": "Exécution",
       "applyExisting": "Appliquer aussi aux mails déjà reçus",
-      "needCondition": "Indiquez un expéditeur ou une durée pour voir les mails concernés.",
+      "needCondition": "Indiquez un expéditeur : une règle basée sur la seule durée viserait toute la boîte.",
       "preview_one": "{{count, number}} mail concerné · {{size}}",
       "preview_other": "{{count, number}} mails concernés · {{size}}",
       "previewLoading": "Calcul de l'aperçu…",

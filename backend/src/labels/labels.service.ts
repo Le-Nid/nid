@@ -45,17 +45,27 @@ export async function upsertLabels(accountId: string, labels: gmail_v1.Schema$La
 
 /** Id of the user label with this exact name, created in Gmail (and mirrored) when missing. */
 export async function findOrCreateLabel(accountId: string, name: string): Promise<string> {
-  const existing = await getDb()
+  const find = () => getDb()
     .selectFrom('gmail_labels')
     .select('id')
     .where('gmail_account_id', '=', accountId)
     .where('name', '=', name)
     .where('deleted_at', 'is', null)
     .executeTakeFirst()
+  const existing = await find()
   if (existing) return existing.id
-  const label = await createLabel(accountId, name)
-  await upsertLabels(accountId, [label])
-  return label.id!
+  try {
+    const label = await createLabel(accountId, name)
+    await upsertLabels(accountId, [label])
+    return label.id!
+  } catch (err: any) {
+    // 409: created in Gmail since the last sync; resync and use it
+    if ((err?.code ?? err?.response?.status ?? err?.status) !== 409) throw err
+    await syncLabels(accountId)
+    const synced = await find()
+    if (!synced) throw err
+    return synced.id
+  }
 }
 
 /** Soft delete only: archives keep resolving the name of a label deleted in Gmail. */

@@ -181,7 +181,7 @@ describe('Rules page', () => {
     const empty = (await screen.findByText('Aucune règle')).closest('[data-slot="empty"]') as HTMLElement
     await user().click(within(empty).getByRole('button', { name: 'Nouvelle règle' }))
     const sheet = await screen.findByRole('dialog', { name: 'Nouvelle règle' })
-    expect(within(sheet).getByText('Indiquez un expéditeur ou une durée pour voir les mails concernés.')).toBeInTheDocument()
+    expect(within(sheet).getByText('Indiquez un expéditeur : une règle basée sur la seule durée viserait toute la boîte.')).toBeInTheDocument()
     expect(within(sheet).getByRole('button', { name: 'Créer la règle' })).toBeDisabled()
   })
 

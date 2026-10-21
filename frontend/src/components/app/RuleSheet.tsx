@@ -179,14 +179,16 @@ function RuleForm({ accountId, target, onClose }: Readonly<{ accountId: string; 
     const timer = setTimeout(() => setDebounced(key), 400)
     return () => clearTimeout(timer)
   }, [key])
-  const preview = useRulePreview(accountId, conditions.length ? JSON.parse(debounced) : null)
+  // An age alone would target the whole mailbox (« tout supprimer de plus de 7 jours »): a sender or a kept condition is required
+  const targeted = !!from.trim() || extras.length > 0
+  const preview = useRulePreview(accountId, targeted ? JSON.parse(debounced) : null)
 
   // A rule made elsewhere may use an action or schedule this form does not offer: keep it selectable
   const actions = ACTIONS.includes(action as ActionType) ? ACTIONS : [...ACTIONS, action]
   const schedules = SCHEDULES.includes(schedule) ? SCHEDULES : [...SCHEDULES, schedule]
   const needsLabel = action === 'label' || action === 'unlabel'
   const pending = create.isPending || update.isPending
-  const valid = !!name.trim() && conditions.length > 0 && (!needsLabel || !!labelId)
+  const valid = !!name.trim() && targeted && (!needsLabel || !!labelId)
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
@@ -285,7 +287,7 @@ function RuleForm({ accountId, target, onClose }: Readonly<{ accountId: string; 
           <Checkbox id={`${id}-apply`} checked={applyExisting} onCheckedChange={(v) => setApplyExisting(!!v)} />
           <label htmlFor={`${id}-apply`}>{t('rules.sheet.applyExisting')}</label>
         </div>
-        <Preview preview={preview} empty={!conditions.length} onNavigate={onClose} />
+        <Preview preview={preview} empty={!targeted} onNavigate={onClose} />
       </div>
       <SheetFooter className="pb-[max(16px,env(safe-area-inset-bottom))]">
         <Button type="submit" className="h-11 md:h-9" disabled={pending || !valid}>{t(rule ? 'rules.sheet.save' : 'rules.sheet.create')}</Button>

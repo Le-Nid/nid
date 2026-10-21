@@ -164,6 +164,26 @@ describe('POST /:accountId/from-template (B8)', () => {
     expect(JSON.parse(inserts[1][1].action)).toEqual({ type: 'label', labelId: 'Label_9' })
   })
 
+  it('label created in Gmail since the last sync (409): resyncs and uses it', async () => {
+    results.executeTakeFirst.push(undefined, undefined, { id: 'Label_5' }) // no rule, not mirrored, found after sync
+    results.executeTakeFirstOrThrow.push({ id: 'rule-3' })
+    gmail.createLabel.mockRejectedValue(Object.assign(new Error('Label name exists'), { code: 409 }))
+    gmail.listLabels.mockResolvedValue([{ id: 'Label_5', name: 'Banque', type: 'user' }])
+    const res = await post('label-bank')
+    expect(res.statusCode).toBe(201)
+    expect(gmail.listLabels).toHaveBeenCalledWith(ACC)
+    const inserts = calls.filter((c) => c[0] === 'values')
+    expect(JSON.parse(inserts.at(-1)![1].action)).toEqual({ type: 'label', labelId: 'Label_5' })
+  })
+
+  it('other Gmail errors on label creation propagate', async () => {
+    results.executeTakeFirst.push(undefined, undefined)
+    gmail.createLabel.mockRejectedValue(Object.assign(new Error('boom'), { code: 500 }))
+    const res = await post('label-bank')
+    expect(res.statusCode).toBe(500)
+    expect(gmail.listLabels).not.toHaveBeenCalled()
+  })
+
   it('is idempotent: returns the existing rule with 200', async () => {
     results.executeTakeFirst.push({ id: 'rule-1', template_id: 'label-bank' })
     const res = await post('label-bank')

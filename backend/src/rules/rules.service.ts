@@ -1,7 +1,6 @@
 import { getDb } from '../db'
 import { listMessages } from '../gmail/gmail.service'
 import { enqueueJob } from '../jobs/queue'
-import { config } from '../config'
 import { createLogger } from '../logger'
 import {
   RuleCondition, RuleAction, RuleCreateDTO, RuleRunResult,
@@ -132,7 +131,7 @@ export function buildGmailQuery(conditions: RuleCondition[]): string {
 
 // ─── Exécution d'une règle ────────────────────────────────
 
-export async function runRule(rule: any, accountId: string): Promise<RuleRunResult> {
+export async function runRule(rule: any, accountId: string, userId?: string): Promise<RuleRunResult> {
   const conditions: RuleCondition[] = Array.isArray(rule.conditions)
     ? rule.conditions
     : JSON.parse(rule.conditions as string)
@@ -143,44 +142,15 @@ export async function runRule(rule: any, accountId: string): Promise<RuleRunResu
 
   const gmailQuery = buildGmailQuery(conditions)
   logger.info({ ruleId: rule.id, accountId, gmailQuery, action: action.type }, 'executing rule')
-  const messageIds: string[] = []
-  let pageToken: string | null = null
-
-  do {
-    const res = await listMessages(accountId, {
-      query:    gmailQuery,
-      maxResults: 500,
-      pageToken:  pageToken ?? undefined,
-    })
-    messageIds.push(...(res.messages ?? []).map((m: any) => m.id))
-    pageToken = res.nextPageToken
-    if (pageToken) await new Promise((r) => setTimeout(r, config.GMAIL_THROTTLE_MS))
-  } while (pageToken)
-
-  const matched = messageIds.length
-
-  if (matched === 0) {
-    logger.info({ ruleId: rule.id }, 'rule matched 0 messages')
-    await getDb()
-      .updateTable('rules')
-      .set({ last_run_at: new Date() })
-      .where('id', '=', rule.id)
-      .execute()
-    return { ruleId: rule.id, matched: 0, processed: 0, errors: [] }
-  }
+  // B5: the job pages the query itself under BULK_QUERY_MAX; listing every id here made 80k-id payloads
+  const res = await listMessages(accountId, { query: gmailQuery, maxResults: 1 })
+  const matched = res.resultSizeEstimate ?? 0
 
   let jobId: string | undefined
-
-  if (action.type === 'archive_nas') {
-    const job = await enqueueJob('archive_mails', { accountId, messageIds, differential: true })
-    jobId = job.id as string
-  } else {
-    const job = await enqueueJob('bulk_operation', {
-      accountId,
-      action:   action.type,
-      messageIds,
-      labelId:  action.labelId,
-    })
+  if (res.messages.length > 0) {
+    const job = action.type === 'archive_nas'
+      ? await enqueueJob('archive_mails', { accountId, userId, query: gmailQuery, differential: true })
+      : await enqueueJob('bulk_operation', { accountId, userId, action: action.type, query: gmailQuery, labelId: action.labelId })
     jobId = job.id as string
   }
 
@@ -190,6 +160,6 @@ export async function runRule(rule: any, accountId: string): Promise<RuleRunResu
     .where('id', '=', rule.id)
     .execute()
 
-  logger.info({ ruleId: rule.id, matched, jobId }, 'rule executed, job enqueued')
-  return { ruleId: rule.id, matched, processed: matched, jobId, errors: [] }
+  logger.info({ ruleId: rule.id, matched, jobId }, jobId ? 'rule executed, job enqueued' : 'rule matched 0 messages')
+  return { ruleId: rule.id, matched, processed: jobId ? matched : 0, jobId, errors: [] }
 }
