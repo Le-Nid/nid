@@ -35,6 +35,7 @@ Toutes les routes (sauf `/api/auth/config`, `/api/auth/register`, `/api/auth/log
 | Vie privée | `/api/privacy` | [privacy.md](privacy.md) |
 | Analytics | `/api/analytics` | [analytics.md](analytics.md) |
 | Recherches sauvegardées | `/api/saved-searches` | [saved-searches.md](saved-searches.md) |
+| Libellés | `/api/labels` | [labels.md](labels.md) |
 | Boîte unifiée | `/api/unified` | [unified.md](unified.md) |
 
 ---

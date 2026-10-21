@@ -260,6 +260,20 @@ export interface SystemConfigTable {
   updated_at: Generated<Date>
 }
 
+export type GmailLabelType = 'system' | 'user' | 'category' | 'imported'
+
+export interface GmailLabelsTable {
+  gmail_account_id: string
+  id:               string   // Gmail label id, or `imported:<name>` for labels only seen in an mbox import
+  name:             string
+  color_bg:         string | null
+  color_text:       string | null
+  type:             GmailLabelType
+  messages_total:   number | null
+  deleted_at:       Date | null
+  updated_at:       Generated<Date>
+}
+
 export interface RetentionPoliciesTable {
   id:               Generated<string>
   user_id:          string
@@ -330,6 +344,7 @@ export interface Database {
   user_social_accounts: UserSocialAccountsTable
   saved_searches:       SavedSearchesTable
   retention_policies:   RetentionPoliciesTable
+  gmail_labels:         GmailLabelsTable
   system_config:        SystemConfigTable
   gmail_api_usage:      GmailApiUsageTable
   email_expirations:    EmailExpirationsTable

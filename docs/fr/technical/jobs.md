@@ -99,6 +99,7 @@ Le fichier `scheduler.ts` exécute des vérifications périodiques (toutes les 6
 |---|---|---|
 | `apply_retention` | Quotidien (3h) | Applique les politiques de rétention actives |
 | `purge_archive_trash` | Quotidien (4h) | Supprime définitivement les archives en corbeille expirées |
+| Synchro des libellés Gmail (dans le processus, sans job) | Quotidien (premier tick après le démarrage) | `syncAllLabels()` : un appel `labels.list` par compte actif vers `gmail_labels` — voir [API — Libellés](api/labels.md) |
 
 ### Purge de la corbeille archives
 

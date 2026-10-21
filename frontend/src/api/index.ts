@@ -36,6 +36,11 @@ export const gmailApi = {
   ) => api.post(`/api/gmail/${accountId}/messages/bulk`, body).then((r) => r.data),
 }
 
+// ─── Labels (synced `gmail_labels`, B4) ───────────────────
+export const labelsApi = {
+  list: (accountId: string) => api.get(`/api/labels/${accountId}`).then((r) => r.data),
+}
+
 // ─── Archive ──────────────────────────────────────────────
 export const archiveApi = {
   listMails: (accountId: string, params: Record<string, any> = {}) =>

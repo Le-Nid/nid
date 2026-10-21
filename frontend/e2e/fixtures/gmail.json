@@ -3,6 +3,11 @@
     { "id": "INBOX", "name": "INBOX", "type": "system" },
     { "id": "Label_1", "name": "Factures", "type": "user" }
   ],
+  "synced": [
+    { "id": "INBOX", "name": "INBOX", "type": "system", "color_bg": null, "deleted_at": null, "archived_count": 0 },
+    { "id": "CATEGORY_PROMOTIONS", "name": "CATEGORY_PROMOTIONS", "type": "category", "color_bg": null, "deleted_at": null, "archived_count": 0 },
+    { "id": "Label_1", "name": "Factures", "type": "user", "color_bg": "#16a765", "deleted_at": null, "archived_count": 2 }
+  ],
   "mails": [
     {
       "id": "m1", "threadId": "t1", "subject": "Facture d'octobre", "from": "Billing <billing@shop.test>",

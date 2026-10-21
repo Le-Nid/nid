@@ -130,6 +130,36 @@ export async function updateRetentionPolicy(
     .executeTakeFirstOrThrow()
 }
 
+/**
+ * A policy label must be a Gmail label id synced for the policy's account
+ * (any of the user's accounts when the policy targets all of them, or `policyId`'s account on update).
+ */
+export async function isKnownPolicyLabel(
+  userId: string,
+  label: string,
+  scope: { accountId?: string; policyId?: string },
+): Promise<boolean> {
+  const db = getDb()
+  let accountId = scope.accountId
+  if (scope.policyId) {
+    const policy = await db
+      .selectFrom('retention_policies')
+      .select('gmail_account_id')
+      .where('id', '=', scope.policyId)
+      .where('user_id', '=', userId)
+      .executeTakeFirst()
+    accountId = policy?.gmail_account_id ?? undefined
+  }
+  let query = db
+    .selectFrom('gmail_labels')
+    .innerJoin('gmail_accounts', 'gmail_accounts.id', 'gmail_labels.gmail_account_id')
+    .select('gmail_labels.id')
+    .where('gmail_accounts.user_id', '=', userId)
+    .where('gmail_labels.id', '=', label)
+  if (accountId) query = query.where('gmail_labels.gmail_account_id', '=', accountId)
+  return (await query.executeTakeFirst()) !== undefined
+}
+
 export async function deleteRetentionPolicy(policyId: string, userId: string) {
   const db = getDb()
   await db

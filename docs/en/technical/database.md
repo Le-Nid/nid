@@ -91,6 +91,7 @@ erDiagram
 
     users ||--o{ gmail_accounts : "possède"
     gmail_accounts ||--o{ archived_mails : "archive"
+    gmail_accounts ||--o{ gmail_labels : "synced labels"
     archived_mails ||--o{ archived_attachments : "contient"
     gmail_accounts ||--o{ rules : "définit"
     gmail_accounts ||--o{ jobs : "génère"
@@ -199,6 +200,18 @@ erDiagram
         timestamptz last_run_at "nullable"
         integer deleted_count "default 0"
         timestamptz created_at
+        timestamptz updated_at
+    }
+
+    gmail_labels {
+        uuid gmail_account_id PK,FK
+        varchar id PK "Gmail id or imported:<name>"
+        text name
+        varchar color_bg "nullable"
+        varchar color_text "nullable"
+        varchar type "system | user | category | imported"
+        integer messages_total "nullable"
+        timestamptz deleted_at "nullable, soft-delete"
         timestamptz updated_at
     }
 

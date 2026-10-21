@@ -31,6 +31,7 @@ const ROUTES: [string, RegExp, Handler][] = [
   ['GET', /^\/api\/dashboard\/[^/]+\/stats$/, dashboard.stats],
   ['GET', /^\/api\/dashboard\/[^/]+\/archive-stats$/, dashboard.archiveStats],
   ['GET', /^\/api\/gmail\/[^/]+\/labels$/, gmail.labels],
+  ['GET', /^\/api\/labels\/[^/]+$/, gmail.synced],
   ['GET', /^\/api\/gmail\/[^/]+\/messages$/, {
     messages: gmail.mails.map((m: { id: string; threadId: string }) => ({ id: m.id, threadId: m.threadId })),
     resultSizeEstimate: gmail.mails.length,

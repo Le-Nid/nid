@@ -5,6 +5,7 @@ import crypto from 'node:crypto'
 import { verifySync as otpVerify } from 'otplib'
 import { getDb } from '../db'
 import { getGmailAuthUrl, exchangeGmailCode } from '../auth/oauth.service'
+import { syncLabels } from '../labels/labels.service'
 import { getEnabledProviders, isProviderEnabled, createAuthorizationUrl, exchangeSocialCode } from '../auth/social.service'
 import { config } from '../config'
 import { logAudit } from '../audit/audit.service'
@@ -243,6 +244,8 @@ export async function authRoutes(app: FastifyInstance) {
       const decoded = app.jwt.verify(state)
       if ((decoded as any).purpose !== 'gmail_oauth') throw new Error('Invalid state')
       const account = await exchangeGmailCode(code, (decoded as any).userId)
+      // Not awaited: the redirect must not wait on Gmail; the daily scheduler retries on failure
+      syncLabels(account.id).catch((err) => app.log.warn({ err, accountId: account.id }, 'initial label sync failed'))
       return reply.redirect(`${config.FRONTEND_URL}/settings?gmail=connected&account=${account.email}`)
     } catch (err) {
       app.log.error(err)

@@ -18,10 +18,12 @@ const useGmailMessages = vi.hoisted(() => vi.fn())
 const createSaved = vi.hoisted(() => vi.fn())
 vi.mock('../hooks/queries', () => ({
   useGmailMessages,
-  useGmailLabels: () => ({
+  useLabels: () => ({
     data: [
       { id: 'INBOX', name: 'INBOX', type: 'system' },
-      { id: 'Label_1', name: 'Factures', type: 'user', color: { backgroundColor: '#16a765' } },
+      { id: 'CATEGORY_PROMOTIONS', name: 'CATEGORY_PROMOTIONS', type: 'category' },
+      { id: 'Label_1', name: 'Factures', type: 'user', color_bg: '#16a765' },
+      { id: 'Label_old', name: 'Ancien', type: 'user', color_bg: null, deleted_at: '2026-01-01T00:00:00Z' },
     ],
   }),
   useSavedSearches: () => ({ data: [{ id: 's1', name: 'Mes factures', query: 'label:factures' }] }),
@@ -60,7 +62,7 @@ const mail = (id: string, subject: string, patch = {}) => ({
   id, threadId: `t-${id}`, subject, from: `Sender ${id} <${id}@x.test>`, date: '2026-10-01T10:00:00Z',
   sizeEstimate: 2048, snippet: `snippet ${id}`, labelIds: ['INBOX', 'Label_1'], hasAttachments: false, ...patch,
 })
-const MAILS = [mail('m1', 'Bulletin', { labelIds: ['UNREAD', 'CATEGORY_PROMOTIONS'], hasAttachments: true }), mail('m2', 'Réunion', { date: '2020-01-02T00:00:00Z' })]
+const MAILS = [mail('m1', 'Bulletin', { labelIds: ['UNREAD', 'CATEGORY_PROMOTIONS', 'Label_old'], hasAttachments: true }), mail('m2', 'Réunion', { date: '2020-01-02T00:00:00Z' })]
 
 function setMessages(patch: Record<string, unknown> = {}, mails = MAILS, total = 2) {
   messages.current = {
@@ -104,7 +106,10 @@ describe('MailsPage', () => {
     expect(within(row).getByText('(non lu)')).toBeInTheDocument()
     expect(within(row).getByRole('img', { name: 'pièce jointe' })).toBeInTheDocument()
     expect(within(row).getByText('Promotions')).toBeInTheDocument()
-    expect(within(screen.getByRole('row', { name: /Réunion/ })).getByText('Factures')).toBeInTheDocument()
+    // B4: synced user label = Gmail color dot + name; a label deleted in Gmail keeps its name
+    const factures = within(screen.getByRole('row', { name: /Réunion/ })).getByText('Factures')
+    expect((factures.previousElementSibling as HTMLElement).style.backgroundColor).toBe('rgb(22, 167, 101)')
+    expect(within(row).getByText('Ancien')).toBeInTheDocument()
     expect(within(screen.getByRole('row', { name: /Réunion/ })).getByText(/2020/)).toBeInTheDocument()
     expect(screen.getByText('Tous les mails sont chargés')).toBeInTheDocument()
   })
@@ -222,6 +227,7 @@ describe('MailsPage', () => {
     await user().click(checkbox('Réunion'))
     await user().click(within(bar()).getByRole('button', { name: 'Ajouter un libellé' }))
     const dialog = await screen.findByRole('dialog', { name: 'Ajouter un libellé' })
+    expect(within(dialog).queryByRole('button', { name: 'Ancien' })).not.toBeInTheDocument()
     await user().click(within(dialog).getByRole('button', { name: 'Factures' }))
     expect(gmailApi.bulkOperation).toHaveBeenCalledWith('acc-1', { action: 'label', labelId: 'Label_1', messageIds: ['m2'], delayMs: 0 })
   })

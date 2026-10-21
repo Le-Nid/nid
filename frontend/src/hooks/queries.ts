@@ -5,7 +5,7 @@ import {
   analyticsApi, privacyApi, notificationsApi,
   auditApi, webhooksApi, savedSearchesApi, unifiedApi, archiveThreadsApi,
   retentionApi, quotaApi, importApi,
-  expirationApi, sharingApi,
+  expirationApi, sharingApi, labelsApi,
 } from '../api'
 
 // ─── Query key factories ──────────────────────────────────
@@ -17,6 +17,7 @@ export const queryKeys = {
     ['gmail', accountId, 'messages', query, filter] as const,
   gmailMessage: (accountId: string, messageId: string) => ['gmail', accountId, 'message', messageId] as const,
   gmailLabels: (accountId: string) => ['gmail', accountId, 'labels'] as const,
+  labels: (accountId: string) => ['labels', accountId] as const,
   archiveMails: (accountId: string, params?: Record<string, any>) =>
     ['archive', accountId, 'mails', params] as const,
   archiveMail: (accountId: string, mailId: string) =>
@@ -98,6 +99,15 @@ export function useGmailLabels(accountId: string | null) {
   return useQuery({
     queryKey: queryKeys.gmailLabels(accountId!),
     queryFn: () => gmailApi.listLabels(accountId!),
+    enabled: !!accountId,
+  })
+}
+
+/** Synced labels (`GET /api/labels/:id`): Gmail colors, deleted ones kept so archives still show their names. */
+export function useLabels(accountId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.labels(accountId!),
+    queryFn: () => labelsApi.list(accountId!),
     enabled: !!accountId,
   })
 }

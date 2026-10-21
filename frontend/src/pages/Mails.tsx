@@ -24,7 +24,7 @@ import { MailViewer, type ViewerAction } from '@/components/app/MailViewer'
 import { showUndoToast } from '@/components/app/UndoToast'
 import { archiveApi, gmailApi, jobsApi } from '@/api'
 import { useAccount } from '@/hooks/useAccount'
-import { useCreateSavedSearch, useGmailLabels, useGmailMessages, useSavedSearches } from '@/hooks/queries'
+import { useCreateSavedSearch, useGmailMessages, useLabels, useSavedSearches } from '@/hooks/queries'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import type { JobState } from '@/hooks/useJobSSE'
 import { formatBytes, formatSender } from '@/utils/format'
@@ -245,7 +245,7 @@ export default function MailsPage() {
   const { accountId } = useAccount()
   const [params, setParams] = useSearchParams()
   const q = params.get('q') ?? ''
-  const { data: labels = [] } = useGmailLabels(accountId)
+  const { data: labels = [] } = useLabels(accountId)
   const { data: savedSearches = [] } = useSavedSearches()
   const createSaved = useCreateSavedSearch()
   const messages = useGmailMessages(accountId, q, '')
@@ -273,7 +273,8 @@ export default function MailsPage() {
     [messages.data, hidden],
   )
   const total = messages.data?.pages[0]?.total ?? 0
-  const userLabels = (labels as ApiLabel[]).filter((l) => l.type === 'user')
+  // Only labels still in Gmail can be applied
+  const userLabels = (labels as ApiLabel[]).filter((l) => l.type === 'user' && !l.deleted_at)
 
   const act = (action: MailAction, target: Target, hiddenIds: string[], labelId?: string) =>
     void run(action, target, { count: 'ids' in target ? target.ids.length : total, hidden: hiddenIds, labelId })

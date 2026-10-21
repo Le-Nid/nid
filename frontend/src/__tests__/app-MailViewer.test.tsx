@@ -28,7 +28,7 @@ const MAIL = {
 }
 const query = (patch: Record<string, unknown>) =>
   vi.mocked(useGmailMessage).mockReturnValue({ data: undefined, isLoading: false, isError: false, refetch: vi.fn(), ...patch } as never)
-const LABELS = [{ id: 'Label_1', name: 'Factures', type: 'user' }]
+const LABELS = [{ id: 'Label_1', name: 'Factures', type: 'user' as const }]
 
 function renderViewer(props: Partial<Parameters<typeof MailViewer>[0]> = {}) {
   const handlers = { onClose: vi.fn(), onAction: vi.fn() }

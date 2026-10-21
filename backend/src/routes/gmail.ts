@@ -7,6 +7,7 @@ import {
   getGmailClient,
 } from '../gmail/gmail.service'
 import { trackApiCall } from '../gmail/quota.service'
+import { upsertLabels, markLabelsDeleted } from '../labels/labels.service'
 import { enqueueJob } from '../jobs/queue'
 import { logAudit } from '../audit/audit.service'
 import { authPresets } from '../utils/auth'
@@ -112,12 +113,14 @@ export async function gmailRoutes(app: FastifyInstance) {
     const { accountId } = request.params as { accountId: string }
     const { name } = request.body as { name: string }
     const label = await createLabel(accountId, name)
+    await upsertLabels(accountId, [label])
     return reply.code(201).send(label)
   })
 
   app.delete('/:accountId/labels/:labelId', accountAuth, async (request, reply) => {
     const { accountId, labelId } = request.params as { accountId: string; labelId: string }
     await deleteLabel(accountId, labelId)
+    await markLabelsDeleted(accountId, { only: labelId })
     return reply.code(204).send()
   })
 }

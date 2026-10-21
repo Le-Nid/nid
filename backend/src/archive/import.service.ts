@@ -7,6 +7,7 @@ import { getDb } from '../db'
 import { getLocalStorage, type StorageBackend } from '../storage/storage.service'
 import { config } from '../config'
 import { createLogger } from '../logger'
+import { resolveImportedLabelIds } from '../labels/labels.service'
 
 const logger = createLogger('import')
 
@@ -37,6 +38,25 @@ export function parseMbox(content: string): string[] {
   }
 
   return messages
+}
+
+/**
+ * Decode RFC 2047 encoded words (`=?UTF-8?Q?Cat=C3=A9gorie?=`): mailparser only decodes
+ * well-known headers, not `X-Gmail-Labels`.
+ */
+export function decodeMimeWords(value: string): string {
+  return value
+    .replaceAll(/\?=\s+=\?/g, '?==?') // whitespace between adjacent encoded words is not part of the text
+    .replaceAll(/=\?([^?]+)\?([BbQq])\?([^?]*)\?=/g, (word, charset: string, enc: string, text: string) => {
+      const bytes = enc.toUpperCase() === 'B'
+        ? Buffer.from(text, 'base64')
+        : Buffer.from(text.replaceAll('_', ' ').replaceAll(/=([0-9A-Fa-f]{2})/g, (_h, hex: string) => String.fromCodePoint(Number.parseInt(hex, 16))), 'latin1')
+      try {
+        return new TextDecoder(charset).decode(bytes)
+      } catch {
+        return word // unknown charset: keep the raw word rather than failing the whole message
+      }
+    })
 }
 
 /**
@@ -133,6 +153,11 @@ async function importSingleEml(
   }
 
   const attachmentNames = attachments.map((a) => a.filename).join(' ')
+  // Takeout mbox: `X-Gmail-Labels: Inbox,Category Promotions,Factures`
+  const labelHeader = parsed.headers.get('x-gmail-labels')
+  const labelNames = typeof labelHeader === 'string'
+    ? [...new Set(decodeMimeWords(labelHeader).split(',').map((n) => n.trim()).filter(Boolean))]
+    : []
 
   const archived = await db
     .insertInto('archived_mails')
@@ -148,7 +173,7 @@ async function importSingleEml(
       date,
       size_bytes: BigInt(Buffer.byteLength(rawEml)),
       has_attachments: attachments.length > 0,
-      label_ids: [],
+      label_ids: await resolveImportedLabelIds(accountId, labelNames),
       eml_path: emlPath,
       snippet: parsed.text?.slice(0, 200) ?? null,
       attachment_names: attachmentNames || null,
