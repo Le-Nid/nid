@@ -12,8 +12,10 @@ const asNonAdmin = (page: Page) =>
 
 test.describe('redirects (§3.3)', () => {
   const REDIRECTS: [from: string, to: string, heading: string][] = [
-    ['/', '/overview', 'dashboard.title'],
-    ['/dashboard', '/overview', 'dashboard.title'],
+    ['/', '/overview', 'overview.top.title'],
+    ['/dashboard', '/overview', 'overview.top.title'],
+    ['/analytics', '/overview', 'overview.top.title'],
+    ['/insights', '/overview', 'overview.top.title'],
     ['/archive', '/archives', 'archives.title'],
     ['/jobs', '/activity', 'jobs.title'],
     ['/settings', '/settings/account', 'settings.title'],
@@ -135,7 +137,7 @@ test.describe('command palette', () => {
 
   test('opens with Ctrl+K and navigates', async ({ page }) => {
     await page.goto('/overview')
-    await expect(page.getByRole('heading', { name: t('dashboard.title') })).toBeVisible()
+    await expect(page.getByRole('heading', { name: t('overview.top.title') })).toBeVisible()
     await page.keyboard.press('Control+K')
 
     const palette = page.getByRole('dialog', { name: t('shell.palette') })

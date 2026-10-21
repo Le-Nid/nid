@@ -101,7 +101,8 @@ export default function AppShell() {
           </header>
           {/* id kept for the skip link in index.html */}
           <main id="main-content" tabIndex={-1} className="flex flex-1 flex-col pb-[calc(52px+max(22px,env(safe-area-inset-bottom)))] md:pb-0">
-            <Outlet />
+            {/* Pages read the live counters from here: one SSE connection per tab */}
+            <Outlet context={counters} />
           </main>
         </div>
         {isMobile && <BottomNav counters={counters} />}

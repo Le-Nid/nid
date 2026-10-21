@@ -1,7 +1,7 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   dashboardApi, gmailApi, archiveApi, rulesApi, jobsApi,
-  adminApi, unsubscribeApi, attachmentsApi, reportsApi,
+  adminApi, unsubscribeApi, attachmentsApi,
   analyticsApi, privacyApi, notificationsApi,
   auditApi, webhooksApi, savedSearchesApi, unifiedApi, archiveThreadsApi,
   retentionApi, quotaApi, importApi,
@@ -30,6 +30,8 @@ export const queryKeys = {
   unified: (params?: Record<string, any>) => ['unified', params] as const,
   rules: (accountId: string) => ['rules', accountId] as const,
   ruleTemplates: () => ['rules', 'templates'] as const,
+  // Under rules(accountId): a rule change refreshes the stats too
+  ruleStats: (accountId: string) => ['rules', accountId, 'stats'] as const,
   jobs: (params?: Record<string, any>) => ['jobs', params] as const,
   admin: {
     stats: () => ['admin', 'stats'] as const,
@@ -44,12 +46,8 @@ export const queryKeys = {
       ['attachments', accountId, 'live', params] as const,
     dedupStats: () => ['attachments', 'dedup-stats'] as const,
   },
-  insights: () => ['insights'] as const,
   analytics: {
-    heatmap: (accountId: string) => ['analytics', accountId, 'heatmap'] as const,
-    senderScores: (accountId: string) => ['analytics', accountId, 'senderScores'] as const,
     suggestions: (accountId: string) => ['analytics', accountId, 'suggestions'] as const,
-    inboxZero: (accountId: string) => ['analytics', accountId, 'inboxZero'] as const,
   },
   privacy: {
     trackingStats: (accountId: string) => ['privacy', accountId, 'tracking', 'stats'] as const,
@@ -218,6 +216,15 @@ export function useRules(accountId: string | null) {
   })
 }
 
+/** « Règles actives » KPI: active rules and mails their runs processed over 30 days. */
+export function useRuleStats(accountId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.ruleStats(accountId!),
+    queryFn: () => rulesApi.getStats(accountId!) as Promise<{ active: number; processed30d: number }>,
+    enabled: !!accountId,
+  })
+}
+
 export function useRuleTemplates() {
   return useQuery({
     queryKey: queryKeys.ruleTemplates(),
@@ -377,39 +384,14 @@ export function useDedupBackfill() {
   })
 }
 
-// ─── Insights ─────────────────────────────────────────────
-
-export function useWeeklyReport() {
-  return useQuery({
-    queryKey: queryKeys.insights(),
-    queryFn: () => reportsApi.getWeekly(),
-  })
-}
-
 // ─── Analytics ────────────────────────────────────────────
 
-export function useAnalytics(accountId: string | null, refresh = false) {
-  const heatmap = useQuery({
-    queryKey: queryKeys.analytics.heatmap(accountId!),
-    queryFn: () => analyticsApi.getHeatmap(accountId!, refresh),
-    enabled: !!accountId,
-  })
-  const senderScores = useQuery({
-    queryKey: queryKeys.analytics.senderScores(accountId!),
-    queryFn: () => analyticsApi.getSenderScores(accountId!, refresh),
-    enabled: !!accountId,
-  })
-  const suggestions = useQuery({
+export function useCleanupSuggestions(accountId: string | null) {
+  return useQuery({
     queryKey: queryKeys.analytics.suggestions(accountId!),
-    queryFn: () => analyticsApi.getCleanupSuggestions(accountId!, refresh),
+    queryFn: () => analyticsApi.getCleanupSuggestions(accountId!),
     enabled: !!accountId,
   })
-  const inboxZero = useQuery({
-    queryKey: queryKeys.analytics.inboxZero(accountId!),
-    queryFn: () => analyticsApi.getInboxZero(accountId!, refresh),
-    enabled: !!accountId,
-  })
-  return { heatmap, senderScores, suggestions, inboxZero }
 }
 
 export function useDismissSuggestion() {

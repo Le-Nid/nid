@@ -1,7 +1,7 @@
 {
   "desktop": {
     "login": 3,
-    "overview": 10,
+    "overview": 0,
     "mails": 0,
     "archives": 0,
     "rules": 0,
@@ -14,7 +14,7 @@
   },
   "mobile": {
     "login": 3,
-    "overview": 9,
+    "overview": 0,
     "mails": 0,
     "archives": 0,
     "rules": 0,

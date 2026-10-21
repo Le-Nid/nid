@@ -70,10 +70,6 @@ export default defineConfig({
             return 'antd-vendor'
           }
 
-          if (id.includes('/@ant-design/charts/') || id.includes('/@antv/')) {
-            return 'charts'
-          }
-
           if (id.includes('/axios/') || id.includes('/dayjs/') || id.includes('/zustand/')) {
             return 'utils'
           }

@@ -15,6 +15,7 @@ export const ACCOUNT = 'acc-1'
 const me = load('me')
 const gmail = load('gmail')
 const dashboard = load('dashboard')
+const jobs = load('jobs')
 const attachments = load('attachments')
 const admin = load('admin')
 const settings = load('settings')
@@ -42,7 +43,10 @@ const ROUTES: [string, RegExp, Handler][] = [
   ['GET', /^\/api\/auth\/config$/, { allowRegistration: true, socialProviders: [] }],
   ['GET', /^\/api\/notifications\/preferences$/, {}],
   ['GET', /^\/api\/notifications$/, { notifications: [], unreadCount: 0 }],
-  ['GET', /^\/api\/jobs$/, load('jobs')],
+  ['GET', /^\/api\/jobs$/, (req: Request) => {
+    const status = new URL(req.url()).searchParams.get('status')
+    return jobs.filter((j: { status: string }) => !status || j.status === status)
+  }],
   ['GET', /^\/api\/dashboard\/[^/]+\/stats$/, dashboard.stats],
   ['GET', /^\/api\/dashboard\/[^/]+\/archive-stats$/, dashboard.archiveStats],
   ['GET', /^\/api\/gmail\/[^/]+\/labels$/, gmail.labels],
@@ -79,7 +83,10 @@ const ROUTES: [string, RegExp, Handler][] = [
   ['POST', /^\/api\/retention$/, (req: Request) => ({ id: 'pol-new', ...req.postDataJSON() })],
   ['PUT', /^\/api\/retention\/[^/]+$/, {}],
   ['DELETE', /^\/api\/retention\/[^/]+$/, {}],
+  ['GET', /^\/api\/analytics\/[^/]+\/cleanup-suggestions$/, dashboard.suggestions],
+  ['PATCH', /^\/api\/analytics\/suggestions\/[^/]+\/dismiss$/, { ok: true }],
   ['GET', /^\/api\/rules\/templates$/, load('templates')],
+  ['GET', /^\/api\/rules\/[^/]+\/stats$/, dashboard.ruleStats],
   ['GET', /^\/api\/rules\/[^/]+$/, load('rules')],
   ['GET', /^\/api\/unsubscribe\/[^/]+\/newsletters$/, load('newsletters')],
   ['GET', /^\/api\/attachments\/dedup-stats$/, attachments.dedupStats],
