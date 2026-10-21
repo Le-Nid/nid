@@ -11,6 +11,7 @@ import { escapeIlike, notFound } from "../utils/db";
 import { extractPagination } from "../utils/pagination";
 import { authPresets } from "../utils/auth";
 import { createLogger } from "../logger";
+import { HEADLINE_OPTIONS, highlightToHtml } from "../archive/body-text";
 
 /** Sanitize filename for Content-Disposition header (Point 17) */
 function sanitizeFilename(name: string): string {
@@ -19,93 +20,70 @@ function sanitizeFilename(name: string): string {
 
 const logger = createLogger('archive-routes')
 
+const positiveInt = z.string().regex(/^[1-9]\d*$/).optional();
+const mailsQuerySchema = z.object({
+  q: z.string().optional(),
+  sender: z.string().max(500).optional(),
+  from_date: z.coerce.date().optional(),
+  to_date: z.coerce.date().optional(),
+  has_attachments: z.enum(["true", "false"]).optional(),
+  label: z.string().min(1).max(200).optional(),
+  page: positiveInt,
+  limit: positiveInt,
+});
+
+/** List rows: everything but body_text (heavy, derived) and search_vector. */
+const MAIL_LIST_COLUMNS = [
+  "id", "gmail_account_id", "gmail_message_id", "thread_id", "in_reply_to", "references_header",
+  "subject", "sender", "recipient", "date", "size_bytes", "has_attachments", "label_ids", "eml_path",
+  "snippet", "attachment_names", "is_encrypted", "archived_at", "deleted_at",
+] as const;
+
 export async function archiveRoutes(app: FastifyInstance) {
   const { accountAuth, adminAuth } = authPresets(app);
   const db = getDb();
 
-  // ─── Liste mails archivés ─────────────────────────────────
+  // ─── Liste / recherche mails archivés ────────────────────
   app.get("/:accountId/mails", accountAuth, async (request) => {
     const { accountId } = request.params as { accountId: string };
-    const {
-      q,
-      sender,
-      from_date,
-      to_date,
-      has_attachments,
-      page: pageStr,
-      limit: limitStr,
-    } = request.query as Record<string, string>;
+    const { q, sender, from_date, to_date, has_attachments, label, ...pagination } =
+      mailsQuerySchema.parse(request.query);
+    const { page, limit: lim, offset } = extractPagination(pagination);
+    const searchTerm = q?.trim().slice(0, 200);
+    const started = performance.now();
 
-    const { page, limit: lim, offset } = extractPagination({ page: pageStr, limit: limitStr });
-
-    let query = db
+    let base = db
       .selectFrom("archived_mails")
-      .selectAll()
       .where("gmail_account_id", "=", accountId)
       .where("deleted_at", "is", null);
+    if (sender) base = base.where("sender", "ilike", `%${escapeIlike(sender)}%`);
+    if (from_date) base = base.where("date", ">=", from_date);
+    if (to_date) base = base.where("date", "<=", to_date);
+    if (has_attachments) base = base.where("has_attachments", "=", has_attachments === "true");
+    if (label) base = base.where(sql<boolean>`label_ids @> ARRAY[${label}]::text[]`);
+    // plainto_tsquery: safe against operator injection (Point 11)
+    const tsQuery = sql`plainto_tsquery('french', ${searchTerm})`;
+    if (searchTerm) base = base.where(sql<boolean>`search_vector @@ ${tsQuery}`);
 
-    if (sender) {
-      query = query.where("sender", "ilike", `%${escapeIlike(sender)}%`);
-    }
-    if (from_date) {
-      query = query.where("date", ">=", new Date(from_date));
-    }
-    if (to_date) {
-      query = query.where("date", "<=", new Date(to_date));
-    }
-    if (has_attachments === "true" || has_attachments === "false") {
-      query = query.where("has_attachments", "=", has_attachments === "true");
-    }
-
-    let mails;
-    if (q) {
-      // Full-text search via plainto_tsquery (Point 11: safe against operator injection)
-      const searchTerm = q.trim().slice(0, 200);
-      let fsQuery = db
-        .selectFrom("archived_mails")
-        .selectAll()
-        .where("gmail_account_id", "=", accountId)
-        .where("deleted_at", "is", null);
-
-      if (sender) {
-        fsQuery = fsQuery.where("sender", "ilike", `%${escapeIlike(sender)}%`);
-      }
-      if (from_date) {
-        fsQuery = fsQuery.where("date", ">=", new Date(from_date));
-      }
-      if (to_date) {
-        fsQuery = fsQuery.where("date", "<=", new Date(to_date));
-      }
-      if (has_attachments === "true" || has_attachments === "false") {
-        fsQuery = fsQuery.where("has_attachments", "=", has_attachments === "true");
-      }
-
-      mails = await (fsQuery as any)
-        .where(sql`search_vector @@ plainto_tsquery('french', ${searchTerm})`)
-        .orderBy(
-          sql`ts_rank(search_vector, plainto_tsquery('french', ${searchTerm}))`,
-          "desc",
+    const [rows, { count }] = await Promise.all([
+      base
+        .select(MAIL_LIST_COLUMNS)
+        .$if(!!searchTerm, (qb) =>
+          qb
+            .select(sql<string>`ts_headline('french', COALESCE(body_text, snippet, ''), ${tsQuery}, ${HEADLINE_OPTIONS})`.as("highlight"))
+            .orderBy(sql`ts_rank(search_vector, ${tsQuery})`, "desc"),
         )
         .orderBy("date", "desc")
         .limit(lim)
         .offset(offset)
-        .execute();
-    } else {
-      mails = await query
-        .orderBy("date", "desc")
-        .limit(lim)
-        .offset(offset)
-        .execute();
-    }
+        .execute(),
+      base.select((eb) => eb.fn.countAll<number>().as("count")).executeTakeFirstOrThrow(),
+    ]);
 
-    const { count } = await db
-      .selectFrom("archived_mails")
-      .select((eb) => eb.fn.countAll<number>().as("count"))
-      .where("gmail_account_id", "=", accountId)
-      .where("deleted_at", "is", null)
-      .executeTakeFirstOrThrow();
-
-    return { mails, total: Number(count), page, limit: lim };
+    const mails = searchTerm
+      ? rows.map((m) => ({ ...m, highlight: highlightToHtml((m as { highlight?: string }).highlight ?? "") }))
+      : rows;
+    return { mails, total: Number(count), page, limit: lim, tookMs: Math.round(performance.now() - started) };
   });
 
   // ─── Mail archivé + pièces jointes ───────────────────────
@@ -131,8 +109,9 @@ export async function archiveRoutes(app: FastifyInstance) {
       .execute();
 
     const emlContent = await fs.promises.readFile(mail.eml_path, "utf-8").catch(() => null);
+    const { body_text: _bodyText, ...rest } = mail; // derived from the EML returned below
 
-    return { ...mail, emlContent, attachments };
+    return { ...rest, emlContent, attachments };
   });
 
   // ─── Download pièce jointe ───────────────────────────────
@@ -341,7 +320,7 @@ export async function archiveRoutes(app: FastifyInstance) {
       attMap.set(att.archived_mail_id, list);
     }
 
-    return mails.map((m) => ({
+    return mails.map(({ body_text: _bodyText, ...m }) => ({
       ...m,
       attachments: attMap.get(m.id) ?? [],
     }));
@@ -396,7 +375,7 @@ export async function archiveRoutes(app: FastifyInstance) {
 
     let query = db
       .selectFrom("archived_mails")
-      .selectAll()
+      .select(MAIL_LIST_COLUMNS)
       .where("gmail_account_id", "=", accountId)
       .where("deleted_at", "is not", null);
 

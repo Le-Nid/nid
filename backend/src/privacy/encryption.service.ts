@@ -198,7 +198,7 @@ export async function encryptArchives(
 
       await db
         .updateTable('archived_mails')
-        .set({ is_encrypted: true })
+        .set({ is_encrypted: true, body_text: null }) // never keep plaintext of an encrypted archive
         .where('id', '=', mails[i].id)
         .execute()
 

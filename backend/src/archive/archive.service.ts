@@ -1,7 +1,8 @@
 import fs from 'fs/promises'
 import path from 'path'
 import { createHash } from 'crypto'
-import { simpleParser } from 'mailparser'
+import { simpleParser, type ParsedMail } from 'mailparser'
+import { bodyTextFromParsed } from './body-text'
 import { getDb } from '../db'
 import { getGmailClient } from '../gmail/gmail.service'
 import { gmailRetry } from '../gmail/gmail-throttle'
@@ -93,7 +94,8 @@ export async function archiveMail(accountId: string, messageId: string): Promise
   await fs.mkdir(mailDir, { recursive: true })
   await fs.writeFile(emlPath, rawBuf)
 
-  const attachments = await extractAttachments(rawBuf, attachDir, accountId)
+  const parsed = await simpleParser(rawBuf)
+  const attachments = await extractAttachments(parsed, attachDir, accountId)
 
   const attachmentNames = attachments.map((a) => a.filename).join(' ')
 
@@ -115,6 +117,7 @@ export async function archiveMail(accountId: string, messageId: string): Promise
       eml_path:         emlPath,
       snippet:          msg.snippet ?? null,
       attachment_names: attachmentNames || null,
+      body_text:        bodyTextFromParsed(parsed),
     })
     .returning('id')
     .executeTakeFirstOrThrow()
@@ -139,14 +142,13 @@ export async function archiveMail(accountId: string, messageId: string): Promise
 }
 
 async function extractAttachments(
-  rawEml: Buffer,
+  parsed: ParsedMail,
   attachDir: string,
   accountId: string
 ): Promise<{ filename: string; mimeType: string; size: number; filePath: string; contentHash: string }[]> {
   const results: { filename: string; mimeType: string; size: number; filePath: string; contentHash: string }[] = []
   const db = getDb()
 
-  const parsed = await simpleParser(rawEml)
   const attachments = parsed.attachments ?? []
 
   for (const [i, att] of attachments.entries()) {

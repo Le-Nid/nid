@@ -4,6 +4,7 @@ import { recordInboxSnapshot } from "../analytics/analytics.service";
 import { processExpiredEmails } from "../expiration/expiration.service";
 import { cleanupExpiredShares } from "../archive/sharing.service";
 import { syncAllLabels } from "../labels/labels.service";
+import { countPendingBodyText } from "../archive/body-text";
 import { createLogger } from '../logger'
 
 const logger = createLogger('scheduler')
@@ -135,8 +136,20 @@ export function startRuleScheduler() {
   }
 
   // Démarrer la boucle
+  enqueueBodyTextBackfill();
   setInterval(tick, INTERVAL_MS);
   logger.info('Rule scheduler started (1min interval)');
+}
+
+/** B2: once at startup, fill body_text of mails archived before migration 007 (fixed dedupId: one backfill at a time). */
+export async function enqueueBodyTextBackfill() {
+  try {
+    if ((await countPendingBodyText()) === 0) return;
+    await enqueueJob('backfill_body_text', { accountId: '' }, { dedupId: 'backfill_body_text' });
+    logger.info('Enqueued body_text backfill');
+  } catch (err) {
+    logger.error({ err }, 'body_text backfill enqueue failed');
+  }
 }
 
 // ─── Vérification simplifiée de schedule ──────────────────
