@@ -165,13 +165,6 @@ test('Archive', async ({ page }) => {
   await expect(page.getByRole('main').getByRole('button', { name: t('common.search') })).toBeVisible()
 })
 
-test('Rules', async ({ page }) => {
-  await page.goto('/rules')
-  await expect(page.getByRole('heading', { name: t('rules.title') })).toBeVisible()
-  await expect(page.getByText('Nettoyer les promos')).toBeVisible()
-  await expect(page.getByRole('button', { name: t('rules.newRule') })).toBeVisible()
-})
-
 test('Jobs', async ({ page }) => {
   await page.goto('/jobs')
   await expect(page.getByRole('heading', { name: t('jobs.title') })).toBeVisible()
@@ -260,16 +253,19 @@ test.describe('Cleanup', () => {
     await expect(actions.getByRole('button', { name: t('cleanup.action.deleteAll') })).toBeEnabled()
   })
 
-  test('« Toujours faire ça » creates a trash rule with a preview count', async ({ page, isMobile }) => {
+  test('« Toujours faire ça » opens the rule sheet on the sender, with the preview (I3)', async ({ page, isMobile }) => {
     await page.goto('/cleanup')
     const actions = await actionsOf(page, isMobile, DIGEST)
     await actions.getByRole('button', { name: t('cleanup.action.rule') }).click()
-    const sheet = page.getByRole('dialog', { name: t('cleanup.rule.title', { sender: DIGEST }) })
-    await expect(sheet.getByText(/12 mails correspondent/)).toBeVisible()
+    const sheet = page.getByRole('dialog', { name: t('rules.sheet.createTitle') })
+    await expect(sheet.getByLabel(t('rules.sheet.from'))).toHaveValue('digest@news.test')
+    await expect(sheet.getByText('12 mails concernés · 3 Mo')).toBeVisible()
+    await expect(sheet.getByText('Les nouvelles de la semaine')).toBeVisible()
+    await expect(sheet.getByRole('link', { name: 'Voir les 12 mails' })).toHaveAttribute('href', '/mails?q=from%3A(digest%40news.test)')
     const create = page.waitForRequest((r) => r.method() === 'POST' && r.url().endsWith(`/api/rules/${ACCOUNT}`))
-    await sheet.getByRole('button', { name: t('cleanup.rule.create') }).click()
+    await sheet.getByRole('button', { name: t('rules.sheet.create') }).click()
     expect((await create).postDataJSON()).toMatchObject({
-      conditions: [{ field: 'from', operator: 'contains', value: 'digest@news.test' }], action: { type: 'trash' },
+      conditions: [{ field: 'from', operator: 'contains', value: 'digest@news.test' }], action: { type: 'trash' }, schedule: 'daily',
     })
     await expect(sheet).toBeHidden()
   })

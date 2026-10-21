@@ -1,0 +1,6 @@
+[
+  { "id": "label-invoices", "name": "Factures", "description": "Range les factures dans le libellé Factures", "category": "label", "label": { "name": "Factures" } },
+  { "id": "label-bank", "name": "Banque", "description": "Range les relevés et alertes bancaires", "category": "label", "label": { "name": "Banque" } },
+  { "id": "expire-otp", "name": "Codes OTP", "description": "Supprime les codes à usage unique après 1 jour", "category": "expire" },
+  { "id": "cleanup-github-notifications", "name": "Nettoyer les notifications GitHub", "description": "Supprime les notifications GitHub de plus de 7 jours", "category": "cleanup" }
+]
