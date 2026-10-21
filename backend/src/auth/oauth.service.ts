@@ -59,6 +59,7 @@ export async function exchangeGmailCode(code: string, userId: string) {
             eb.ref('gmail_accounts.refresh_token'),
           ]) as any,
         token_expiry:  (eb) => eb.ref('excluded.token_expiry'),
+        auth_error_at: null, // reconnected: « Action requise » cleared
         updated_at:    new Date(),
       })
     )
@@ -95,6 +96,7 @@ export async function getAuthenticatedClient(accountId: string) {
         .set({
           access_token: tokens.access_token,
           token_expiry: new Date(tokens.expiry_date!),
+          auth_error_at: null,
           updated_at:   new Date(),
         })
         .where('id', '=', accountId)
@@ -102,7 +104,27 @@ export async function getAuthenticatedClient(accountId: string) {
     }
   })
 
+  // « Action requise » (§7.7): an expired token is refreshed here rather than inside the first Gmail call,
+  // so a revoked or expired grant is recorded on the account whichever caller hits it
+  if (new Date(account.token_expiry).getTime() <= Date.now()) {
+    try {
+      await oauth2Client.getAccessToken()
+    } catch (err) {
+      if (isInvalidGrant(err)) {
+        logger.warn({ accountId }, 'Google refused the refresh token: reconnection required')
+        await db.updateTable('gmail_accounts').set({ auth_error_at: new Date() }).where('id', '=', accountId).execute()
+      }
+      throw err
+    }
+  }
+
   return oauth2Client
+}
+
+/** Google's answer when the refresh token is revoked, expired or the consent was withdrawn. */
+export function isInvalidGrant(err: unknown): boolean {
+  const e = err as { response?: { data?: { error?: string } }; message?: string } | null
+  return e?.response?.data?.error === 'invalid_grant' || !!e?.message?.includes('invalid_grant')
 }
 
 

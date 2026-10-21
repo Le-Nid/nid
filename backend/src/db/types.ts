@@ -28,6 +28,8 @@ export interface UsersTable {
   updated_at:          Generated<Date>
 }
 
+export type BackupInterval = '1h' | '6h' | '24h'
+
 export interface GmailAccountsTable {
   id:            Generated<string>
   user_id:       string
@@ -36,6 +38,10 @@ export interface GmailAccountsTable {
   refresh_token: string
   token_expiry:  Timestamp
   is_active:     Generated<boolean>
+  backup_enabled:  Generated<boolean>
+  backup_interval: Generated<BackupInterval>
+  last_backup_at:  Date | null
+  auth_error_at:   Date | null   // Google refused the refresh token: reconnect needed
   created_at:    Generated<Date>
   updated_at:    Generated<Date>
 }
@@ -169,6 +175,7 @@ export interface NotificationPreferencesTable {
   rule_executed_toast:   Generated<boolean>
   quota_warning_toast:   Generated<boolean>
   integrity_alert_toast: Generated<boolean>
+  remote_images:   Generated<'block' | 'allow'>
   updated_at:      Generated<Date>
 }
 

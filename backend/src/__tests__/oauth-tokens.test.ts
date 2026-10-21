@@ -27,6 +27,7 @@ vi.mock('googleapis', () => ({
         setCredentials = vi.fn()
         getToken = vi.fn().mockResolvedValue({ tokens: { access_token: 'at', refresh_token: 'rt', expiry_date: Date.now() + 3600000 } })
         on = vi.fn()
+        getAccessToken = vi.fn().mockResolvedValue({ token: 'at' })
       },
     },
     oauth2: () => ({ userinfo: { get: vi.fn().mockResolvedValue({ data: { email: 'test@gmail.com' } }) } }),

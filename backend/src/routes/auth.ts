@@ -16,6 +16,12 @@ const registerSchema = z.object({
   email:    z.string().email(),
   password: z.string().min(8).max(128),
 })
+// B12: automatic NAS backup of one Gmail account
+const accountSettingsSchema = z.object({
+  backup_enabled:  z.boolean().optional(),
+  backup_interval: z.enum(['1h', '6h', '24h']).optional(),
+}).strict().refine((b) => Object.keys(b).length > 0, { message: 'Nothing to update' })
+
 const loginSchema = z.object({
   email:    z.string().email(),
   password: z.string().min(8).max(128),
@@ -196,7 +202,16 @@ export async function authRoutes(app: FastifyInstance) {
 
     const accounts = await db
       .selectFrom('gmail_accounts')
-      .select(['id', 'email', 'is_active', 'created_at'])
+      .select((eb) => [
+        'id', 'email', 'is_active', 'created_at', 'backup_enabled', 'backup_interval',
+        // « Action requise » (§7.7): Google refused the refresh token
+        eb('auth_error_at', 'is not', null).as('needs_reauth'),
+        // Last label sync (daily, or « Synchroniser maintenant »)
+        eb.selectFrom('gmail_labels')
+          .select((l) => l.fn.max('gmail_labels.updated_at').as('at'))
+          .whereRef('gmail_labels.gmail_account_id', '=', 'gmail_accounts.id')
+          .as('last_sync_at'),
+      ])
       .where('user_id', '=', userId)
       .execute()
 
@@ -246,10 +261,10 @@ export async function authRoutes(app: FastifyInstance) {
       const account = await exchangeGmailCode(code, (decoded as any).userId)
       // Not awaited: the redirect must not wait on Gmail; the daily scheduler retries on failure
       syncLabels(account.id).catch((err) => app.log.warn({ err, accountId: account.id }, 'initial label sync failed'))
-      return reply.redirect(`${config.FRONTEND_URL}/settings?gmail=connected&account=${account.email}`)
+      return reply.redirect(`${config.FRONTEND_URL}/settings/gmail?gmail=connected&account=${encodeURIComponent(account.email)}`)
     } catch (err) {
       app.log.error(err)
-      return reply.redirect(`${config.FRONTEND_URL}/settings?gmail=error`)
+      return reply.redirect(`${config.FRONTEND_URL}/settings/gmail?gmail=error`)
     }
   })
 
@@ -290,6 +305,25 @@ export async function authRoutes(app: FastifyInstance) {
       .execute()
 
     return { id: accountId, is_active: newStatus }
+  })
+
+  // ─── Gmail account settings (B12) ──────────────────────────
+  app.patch('/gmail/:accountId', { preHandler: [app.authenticate] }, async (request, reply) => {
+    const accountId = z.string().uuid().safeParse((request.params as { accountId: string }).accountId)
+    if (!accountId.success) return reply.code(404).send({ error: 'Account not found' })
+    const parsed = accountSettingsSchema.safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? 'Invalid body' })
+
+    const account = await db
+      .updateTable('gmail_accounts')
+      .set({ ...parsed.data, updated_at: new Date() })
+      .where('id', '=', accountId.data)
+      .where('user_id', '=', request.user.sub)
+      .returning(['id', 'backup_enabled', 'backup_interval'])
+      .executeTakeFirst()
+
+    if (!account) return reply.code(404).send({ error: 'Account not found' })
+    return account
   })
 
   // ─── Social OAuth (Arctic — server-side callback) ──────────
