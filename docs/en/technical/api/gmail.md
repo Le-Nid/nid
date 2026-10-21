@@ -134,7 +134,7 @@ Triggers an asynchronous bulk operation. Returns a `jobId` immediately.
 { "action": "trash", "query": "from:news@example.com", "delayMs": 10000 }
 ```
 
-The route does not list the messages: the job pages through Gmail search results (500 per page) and processes them page by page, so `total` and `progress` grow as pages are discovered. It stops after `BULK_QUERY_MAX` mails (default `50000`, see configuration): the job then ends `completed` with an `error` note saying the cap was reached, and the notification says so too. The audit log entry is written when the job ends, with the query and the real number of processed mails (`details.count`, `details.capped`); with `messageIds` it is written at enqueue time.
+The route does not list the messages: the job pages through Gmail search results (500 per page) and processes them page by page, so `total` and `progress` grow as pages are discovered. It stops after `BULK_QUERY_MAX` mails (default `50000`, see configuration): the job then ends `completed` with an `error` note saying the cap was reached, and notifies "Plafond atteint — N mails traités sur ~M — relancez l'action pour traiter la suite" with `data: { capped: true, jobId, query, action, labelId, processed, remainingEstimate }`. It is never relaunched automatically (label/mark actions would keep matching the query); `POST /api/jobs/:jobId/retry` runs it again. The audit log entry is written when the job ends, with the query and the real number of processed mails (`details.count`, `details.capped`); with `messageIds` it is written at enqueue time.
 
 **Available actions**
 

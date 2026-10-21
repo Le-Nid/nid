@@ -22,6 +22,8 @@ vi.mock('../config', () => ({
     GMAIL_THROTTLE_MS: 1000,
     GMAIL_CONCURRENCY: 10,
     BULK_QUERY_MAX: 50000,
+    ARCHIVE_CONTINUE_DELAY_MIN: 15,
+    ARCHIVE_CHAIN_MAX: 20,
   },
 }))
 

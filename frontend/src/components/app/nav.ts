@@ -1,6 +1,8 @@
 import {
   Activity, Archive, BrushCleaning, Inbox, LayoutDashboard, Shield, SlidersHorizontal, Zap, type LucideIcon,
 } from 'lucide-react'
+import type { TFunction } from 'i18next'
+import type { LiveCounters } from '@/hooks/useLiveCounters'
 
 export interface NavEntry {
   key: string
@@ -40,4 +42,19 @@ export const LEGACY_PAGES: { to: string; labelKey: string }[] = [
 export const isActive = (entry: NavEntry, pathname: string) =>
   entry.match.some((p) => pathname === p || pathname.startsWith(p + '/'))
 
-export const visibleNav = (role: string | undefined) => NAV.filter((e) => !e.adminOnly || role === 'admin')
+/** Live counter shown next to a nav entry (§3.1, D6). shortcut: no Nettoyage badge, the server does not send cleanupBytes yet. */
+export function navBadge(
+  key: string, counters: LiveCounters | null, accountId: string | null, t: TFunction, locale: string,
+): { text: string; accent?: boolean } | null {
+  if (!counters) return null
+  const mails = accountId ? counters.mails[accountId] : null
+  if (key === 'mails' && typeof mails === 'number') return { text: mails.toLocaleString(locale) }
+  if (key === 'rules' && counters.activeRules > 0) return { text: String(counters.activeRules) }
+  if (key === 'activity' && counters.activeJobs > 0) return { text: t('shell.activeJobs', { count: counters.activeJobs }), accent: true }
+  return null
+}
+
+export const badgeClass = (accent?: boolean) =>
+  `ml-auto rounded-md px-1.5 text-xs font-medium tabular-nums ${accent ? 'bg-primary-soft text-primary-text' : 'text-muted-foreground'}`
+
+export const visibleNav =(role: string | undefined) => NAV.filter((e) => !e.adminOnly || role === 'admin')

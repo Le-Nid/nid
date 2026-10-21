@@ -61,3 +61,37 @@ Removes the job from BullMQ and updates its status to `cancelled`. `:jobId` is t
 **Response 409** — the job is already `active` (running in the worker) and cannot be cancelled.
 
 **Response 404** — unknown job or job owned by another user.
+
+---
+
+## Retry a job
+
+### POST /api/jobs/:jobId/retry
+
+Enqueues the job's stored payload again under a **new** job id (the "Relancer" button, e.g. after a bulk action stopped at `BULK_QUERY_MAX`). `:jobId` is the row `id` or the BullMQ id. The new job belongs to the caller and its payload carries `retryOf` (row id of the original job). It runs immediately (no undo delay).
+
+**Response 202**
+```json
+{ "jobId": "bulk_operation-<uuid>", "retryOf": "<row uuid>" }
+```
+
+**Response 404** — unknown job or job owned by another user.
+
+**Response 409** — `import_imap` and `encrypt_archives`: their credentials are redacted from the stored payload, so they must be started again from their page.
+
+---
+
+## Live events
+
+### GET /api/events
+
+Authenticated `text/event-stream` for the signed-in user (sidebar counters, D6). Events:
+
+| Event | When | Data |
+|---|---|---|
+| `counters` | on connect, after each job of the user starts or ends, after a rule is created/changed/deleted | `{ "mails": { "<accountId>": 48212 }, "activeRules": 3, "activeJobs": 1 }` |
+| `job` | a job of the user starts or ends (before the matching `counters`) | `{ "jobId", "type", "accountId", "phase": "started" \| "finished", "failed" }` |
+
+`mails` is Gmail's `messagesTotal` per active account (`null` if Gmail did not answer). `activeJobs` counts jobs with status `active`. There is no `cleanupBytes` yet: it needs a size scan of the mailbox. A `: heartbeat` comment is sent every 30 s. Events are published on Redis pub/sub (channel `nid:events:<userId>`), so the worker and the API may run in different processes; nothing is computed while the user has no open stream.
+
+**Response 401** — no valid session.

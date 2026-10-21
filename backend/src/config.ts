@@ -53,6 +53,10 @@ export const config = {
 
   // Plafond d'une action de masse par requête Gmail (« sélectionner tous les résultats ») : le job s'arrête là
   BULK_QUERY_MAX: parseInt(process.env.BULK_QUERY_MAX ?? '50000', 10),
+  // Sauvegarde NAS par requête plafonnée à BULK_QUERY_MAX : la suite est remise en file après ce délai (minutes),
+  // au plus ARCHIVE_CHAIN_MAX fois d'affilée
+  ARCHIVE_CONTINUE_DELAY_MIN: parseInt(process.env.ARCHIVE_CONTINUE_DELAY_MIN ?? '15', 10),
+  ARCHIVE_CHAIN_MAX: parseInt(process.env.ARCHIVE_CHAIN_MAX ?? '20', 10),
 
   // Gmail API throttle — stay under 250 quota units/user/sec
   // Most endpoints = 5 units → max ~50 concurrent requests/sec

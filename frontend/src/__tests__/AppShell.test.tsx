@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { Empty } from 'antd'
@@ -233,6 +233,57 @@ describe('user menu', () => {
     await userEvent.click(await screen.findByRole('menuitemradio', { name: 'English' }))
     expect(i18n.language).toBe('en')
     await i18n.changeLanguage('fr')
+  })
+})
+
+describe('live counters (B3, D6)', () => {
+  class FakeEventSource {
+    static last: FakeEventSource
+    listeners: Record<string, (e: { data: string }) => void> = {}
+    constructor(public url: string) { FakeEventSource.last = this }
+    addEventListener(type: string, fn: (e: { data: string }) => void) { this.listeners[type] = fn }
+    close = vi.fn()
+  }
+  const push = (data: object) => act(() => FakeEventSource.last.listeners.counters({ data: JSON.stringify(data) }))
+
+  beforeEach(() => { (globalThis as any).EventSource = FakeEventSource })
+  afterEach(() => { delete (globalThis as any).EventSource })
+
+  it('shows the badges inside the sidebar links and announces running jobs only', async () => {
+    renderAt('/overview')
+    await landedOn('/overview')
+    expect(FakeEventSource.last.url).toBe('/api/events')
+    const status = document.querySelector('[aria-live="polite"]')!
+    expect(status).toHaveTextContent('')
+
+    await push({ mails: { a1: 48212, a2: 5 }, activeRules: 3, activeJobs: 2 })
+    expect(screen.getByRole('link', { name: /^Mails 48\s212$/ })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Règles & libellés 3' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Activité 2 en cours' })).toBeInTheDocument()
+    expect(status).toHaveTextContent('Activité : 2 en cours')
+
+    await push({ mails: { a1: null }, activeRules: 0, activeJobs: 0 })
+    expect(screen.getByRole('link', { name: 'Mails' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Activité' })).toBeInTheDocument()
+    expect(status).toHaveTextContent('')
+  })
+
+  it('shows the badges in the mobile Plus sheet', async () => {
+    mobile = true
+    renderAt('/overview')
+    await landedOn('/overview')
+    await push({ mails: {}, activeRules: 1, activeJobs: 1 })
+    await userEvent.click(screen.getByRole('button', { name: 'Plus' }))
+    const sheet = await screen.findByRole('dialog')
+    expect(within(sheet).getByRole('link', { name: 'Activité 1 en cours' })).toBeInTheDocument()
+    expect(within(sheet).getByRole('link', { name: 'Règles & libellés 1' })).toBeInTheDocument()
+  })
+
+  it('closes the stream when the shell unmounts', async () => {
+    const { unmount } = renderAt('/overview')
+    await landedOn('/overview')
+    unmount()
+    expect(FakeEventSource.last.close).toHaveBeenCalled()
   })
 })
 

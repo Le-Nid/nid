@@ -9,12 +9,13 @@ import { Button } from '@/components/ui/button'
 import { Kbd } from '@/components/ui/kbd'
 import { useAuthStore } from '@/store/auth.store'
 import { useThemeStore } from '@/store/theme.store'
-import { isActive, visibleNav, type NavEntry } from './nav'
+import type { LiveCounters } from '@/hooks/useLiveCounters'
+import { badgeClass, isActive, navBadge, visibleNav, type NavEntry } from './nav'
 
 const isMac = /Mac|iPhone|iPad/.test(navigator.userAgent)
 
-export default function AppSidebar({ onSearch }: Readonly<{ onSearch: () => void }>) {
-  const { t } = useTranslation()
+export default function AppSidebar({ onSearch, counters }: Readonly<{ onSearch: () => void; counters: LiveCounters | null }>) {
+  const { t, i18n } = useTranslation()
   const { pathname } = useLocation()
   const { state, toggleSidebar } = useSidebar()
   const { user, gmailAccounts, activeAccountId, setActiveAccount } = useAuthStore()
@@ -25,12 +26,15 @@ export default function AppSidebar({ onSearch }: Readonly<{ onSearch: () => void
   const item = (e: NavEntry) => {
     const label = t(`shell.${e.key}`)
     const active = isActive(e, pathname)
+    const badge = navBadge(e.key, counters, activeAccountId, t, i18n.language)
     return (
       <SidebarMenuItem key={e.key}>
         <SidebarMenuButton asChild isActive={active} tooltip={label}>
           <Link to={e.to} aria-current={active ? 'page' : undefined}>
             <e.icon aria-hidden="true" />
             <span>{label}</span>
+            {/* Inside the link so it is read with the entry name ("Mails 48 212") */}
+            {badge && <span className={`${badgeClass(badge.accent)} group-data-[collapsible=icon]:hidden`}>{badge.text}</span>}
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>

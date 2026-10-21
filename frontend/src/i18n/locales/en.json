@@ -898,6 +898,7 @@
     "palette": "Command palette",
     "paletteDescription": "Go to a Nid page",
     "palettePlaceholder": "Go to…",
+    "activeJobs": "{{count}} running",
     "noResults": "No results",
     "goTo": "Go to",
     "legacyPages": "Other pages (being migrated)",

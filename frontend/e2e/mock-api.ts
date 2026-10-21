@@ -70,6 +70,8 @@ export const test = base.extend<{ api: ApiMock }>({
       const req = route.request()
       requests.push(req)
       const { pathname } = new URL(req.url())
+      // Live counters SSE (B3): 204 tells EventSource to stop without reconnecting, so no badge and no retry noise
+      if (pathname === '/api/events') return route.fulfill({ status: 204 })
       const hit = ROUTES.find(([method, re]) => method === req.method() && re.test(pathname))
       if (!hit) {
         console.warn(`[e2e] unmocked ${req.method()} ${pathname}`)

@@ -22,6 +22,7 @@ Toutes les routes (sauf `/api/auth/config`, `/api/auth/register`, `/api/auth/log
 | Dashboard | `/api/dashboard` | [dashboard.md](dashboard.md) |
 | Règles | `/api/rules` | [rules.md](rules.md) |
 | Jobs | `/api/jobs` | [jobs.md](jobs.md) |
+| Événements en direct (SSE) | `/api/events` | [jobs.md](jobs.md#evenements-en-direct) |
 | Notifications | `/api/notifications` | [notifications.md](notifications.md) |
 | Webhooks | `/api/webhooks` | [webhooks.md](webhooks.md) |
 | Admin | `/api/admin` | [admin.md](admin.md) |

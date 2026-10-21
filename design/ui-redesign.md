@@ -559,7 +559,7 @@ Chaque lot : CI verte (`typecheck`, `test --coverage`, `build`, e2e), captures m
 | O9 | Tokens sombres success/warning/danger-soft/badge/progress/catégories | Définis §4.1 (AA vérifié), absents du prototype : à valider visuellement. |
 | O10 | Lecteur desktop | Prototype mobile seulement : sheet latérale proposée vs volet scindé permanent. |
 | O12 | Undo hors ligne (PWA) | Comportement si le réseau tombe pendant les 10 s (job déjà en file côté serveur : l'annulation échoue → message explicite). |
-| O13 | Plafond du select-all serveur (B5) | Valeur par défaut (ex. 50 000) et comportement au-delà. |
+| O13 | Plafond du select-all serveur (B5) | **Tranché** : `BULK_QUERY_MAX` = 50 000. Au-delà, action de masse = notification « Plafond atteint » + bouton « Relancer » (`POST /api/jobs/:id/retry`, pas de relance auto) ; sauvegarde NAS par requête = reprise différentielle automatique (15 min, 20 fois max). |
 | O14 | Préflight Tailwind vs antd | Stratégie exacte de cascade validée en L0. |
 | O15 | Admin : jobs de tous les utilisateurs, dédup PJ | Non dessinés dans l'artboard 18 : section Système ou 4e onglet. |
 | O16 | Compte Gmail « Partagé avec Julien Martin » (artboard 16) | Partage d'un compte entre utilisateurs Nid : n'existe pas au backend ; hors périmètre sauf décision. |

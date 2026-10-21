@@ -6,7 +6,8 @@ import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger 
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
-import { NAV, isActive, visibleNav, type NavEntry } from './nav'
+import type { LiveCounters } from '@/hooks/useLiveCounters'
+import { NAV, badgeClass, isActive, navBadge, visibleNav, type NavEntry } from './nav'
 
 // N2: 4 destinations + "Plus" (§3.1). Labels at 12 px rather than 11 (O8).
 const BAR = new Set(['overview', 'mails', 'cleanup', 'archives'])
@@ -16,18 +17,20 @@ const MORE_GROUPS = [
   { titleKey: 'shell.administration', keys: ['admin'] },
 ]
 
-export default function BottomNav() {
-  const { t } = useTranslation()
+export default function BottomNav({ counters }: Readonly<{ counters: LiveCounters | null }>) {
+  const { t, i18n } = useTranslation()
   const { pathname } = useLocation()
   const navigate = useNavigate()
-  const { user, logout } = useAuthStore()
+  const { user, logout, activeAccountId } = useAuthStore()
   const [moreOpen, setMoreOpen] = useState(false)
   const entries = visibleNav(user?.role)
   const moreActive = entries.some((e) => !BAR.has(e.key) && isActive(e, pathname))
 
   const tab = 'flex min-h-[52px] flex-col items-center justify-center gap-0.5 text-xs font-medium'
+  // Badges in the "Plus" sheet only: the 5-tab bar has no room for them
   const linkRow = (e: NavEntry) => {
     const active = isActive(e, pathname)
+    const badge = navBadge(e.key, counters, activeAccountId, t, i18n.language)
     return (
       <li key={e.key}>
         <Link
@@ -38,6 +41,7 @@ export default function BottomNav() {
         >
           <e.icon className="size-5" aria-hidden="true" />
           {t(`shell.${e.key}`)}
+          {badge && <span className={badgeClass(badge.accent)}>{badge.text}</span>}
         </Link>
       </li>
     )

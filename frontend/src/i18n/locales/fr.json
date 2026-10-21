@@ -898,6 +898,7 @@
     "palette": "Palette de commandes",
     "paletteDescription": "Aller à une page de Nid",
     "palettePlaceholder": "Aller à…",
+    "activeJobs": "{{count}} en cours",
     "noResults": "Aucun résultat",
     "goTo": "Aller à",
     "legacyPages": "Autres pages (en cours de migration)",

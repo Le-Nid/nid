@@ -61,3 +61,37 @@ Retire le job de BullMQ et met à jour le statut en `cancelled`. `:jobId` est l'
 **Réponse 409** — le job est déjà `active` (en cours dans le worker) et ne peut pas être annulé.
 
 **Réponse 404** — job inconnu ou appartenant à un autre utilisateur.
+
+---
+
+## Relancer un job
+
+### POST /api/jobs/:jobId/retry
+
+Remet en file le payload enregistré du job sous un **nouvel** id (bouton « Relancer », par exemple après une action de masse arrêtée à `BULK_QUERY_MAX`). `:jobId` est l'`id` de la ligne ou l'id BullMQ. Le nouveau job appartient à l'appelant et son payload porte `retryOf` (id de ligne du job d'origine). Il s'exécute immédiatement (pas de délai d'annulation).
+
+**Réponse 202**
+```json
+{ "jobId": "bulk_operation-<uuid>", "retryOf": "<uuid de ligne>" }
+```
+
+**Réponse 404** — job inconnu ou appartenant à un autre utilisateur.
+
+**Réponse 409** — `import_imap` et `encrypt_archives` : leurs identifiants sont retirés du payload enregistré, il faut les relancer depuis leur page.
+
+---
+
+## Événements en direct
+
+### GET /api/events
+
+Flux `text/event-stream` authentifié de l'utilisateur connecté (compteurs de la sidebar, D6). Événements :
+
+| Événement | Quand | Données |
+|---|---|---|
+| `counters` | à la connexion, au début et à la fin de chaque job de l'utilisateur, après création/modification/suppression d'une règle | `{ "mails": { "<accountId>": 48212 }, "activeRules": 3, "activeJobs": 1 }` |
+| `job` | un job de l'utilisateur démarre ou se termine (avant le `counters` correspondant) | `{ "jobId", "type", "accountId", "phase": "started" \| "finished", "failed" }` |
+
+`mails` = `messagesTotal` Gmail par compte actif (`null` si Gmail n'a pas répondu). `activeJobs` compte les jobs au statut `active`. Pas encore de `cleanupBytes` : il demande un scan des tailles de la boîte. Un commentaire `: heartbeat` est envoyé toutes les 30 s. Les événements passent par Redis pub/sub (canal `nid:events:<userId>`) : worker et API peuvent tourner dans des processus distincts ; rien n'est calculé tant que l'utilisateur n'a aucun flux ouvert.
+
+**Réponse 401** — pas de session valide.

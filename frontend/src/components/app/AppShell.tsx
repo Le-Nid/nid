@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useGlobalJobNotifier } from '@/hooks/useGlobalJobNotifier'
+import { useLiveCounters } from '@/hooks/useLiveCounters'
 import { useAuthStore } from '@/store/auth.store'
 import { useThemeStore } from '@/store/theme.store'
 import LegacyAntd from '../LegacyAntd'
@@ -79,11 +80,15 @@ export default function AppShell() {
   const isMobile = useIsMobile()
   const dark = useThemeStore((s) => s.mode) === 'dark'
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const counters = useLiveCounters()
+  const activeJobs = counters?.activeJobs ?? 0
 
   return (
     <TooltipProvider>
       <SidebarProvider style={{ '--sidebar-width': '15rem' } as CSSProperties}>
-        {!isMobile && <AppSidebar onSearch={() => setPaletteOpen(true)} />}
+        {/* Only the running-jobs count is announced; the other counters change too often to be useful */}
+        <p aria-live="polite" className="sr-only">{activeJobs ? `${t('shell.activity')} : ${t('shell.activeJobs', { count: activeJobs })}` : ''}</p>
+        {!isMobile && <AppSidebar onSearch={() => setPaletteOpen(true)} counters={counters} />}
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-20 flex min-h-14 items-center gap-2 border-b bg-background px-3 pt-[env(safe-area-inset-top)] md:px-6">
             {isMobile && <img src={dark ? '/nid-logo-full-dark.svg' : '/nid-logo-full-light.svg'} alt="Nid" className="h-7 w-auto" />}
@@ -97,7 +102,7 @@ export default function AppShell() {
             <Outlet />
           </main>
         </div>
-        {isMobile && <BottomNav />}
+        {isMobile && <BottomNav counters={counters} />}
         <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
         {/* Mobile: above the bottom bar (52 px + safe area) */}
         <Toaster containerAriaLabel={t('undoToast.region')} mobileOffset={{ bottom: 'calc(60px + max(22px, env(safe-area-inset-bottom)))' }} />

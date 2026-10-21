@@ -134,7 +134,7 @@ Déclenche une opération bulk asynchrone. Retourne immédiatement un `jobId`.
 { "action": "trash", "query": "from:news@example.com", "delayMs": 10000 }
 ```
 
-La route ne liste pas les messages : le job parcourt les résultats de la recherche Gmail (500 par page) et les traite page par page ; `total` et `progress` évoluent au fil des pages découvertes. Il s'arrête après `BULK_QUERY_MAX` mails (défaut `50000`, voir la configuration) : le job se termine alors `completed` avec une note dans `error` indiquant que le plafond est atteint, reprise dans la notification. L'entrée du journal d'audit est écrite à la fin du job, avec la requête et le nombre réel de mails traités (`details.count`, `details.capped`) ; avec `messageIds` elle est écrite à la mise en file.
+La route ne liste pas les messages : le job parcourt les résultats de la recherche Gmail (500 par page) et les traite page par page ; `total` et `progress` évoluent au fil des pages découvertes. Il s'arrête après `BULK_QUERY_MAX` mails (défaut `50000`, voir la configuration) : le job se termine alors `completed` avec une note dans `error` indiquant que le plafond est atteint, et notifie « Plafond atteint — N mails traités sur ~M — relancez l'action pour traiter la suite » avec `data: { capped: true, jobId, query, action, labelId, processed, remainingEstimate }`. Il n'est jamais relancé automatiquement (les actions libellé/lu continueraient de correspondre à la requête) ; `POST /api/jobs/:jobId/retry` le relance. L'entrée du journal d'audit est écrite à la fin du job, avec la requête et le nombre réel de mails traités (`details.count`, `details.capped`) ; avec `messageIds` elle est écrite à la mise en file.
 
 **Actions disponibles**
 
