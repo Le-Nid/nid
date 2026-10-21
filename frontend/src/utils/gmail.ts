@@ -73,6 +73,7 @@ export type ApiLabel = {
   type: 'system' | 'user' | 'category' | 'imported'
   color_bg?: string | null
   deleted_at?: string | null
+  archived_count?: number
 }
 
 /** Label of a mail as `LabelBadge` takes it. */

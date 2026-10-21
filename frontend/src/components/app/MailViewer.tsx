@@ -2,12 +2,12 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
-import { Archive, Download, HardDriveDownload, ImageOff, Paperclip, Trash2, X } from 'lucide-react'
+import { Archive, Download, HardDriveDownload, ImageOff, Paperclip, Trash2, X, Zap } from 'lucide-react'
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { gmailApi } from '@/api'
 import { useGmailMessage } from '@/hooks/queries'
-import { formatBytes } from '@/utils/format'
+import { formatBytes, formatEmail } from '@/utils/format'
 import {
   base64UrlToBytes, extractAttachments, extractBody, hasRemoteContent, mailSrcDoc, toBadge,
   type ApiLabel, type Attachment,
@@ -23,6 +23,9 @@ const ACTIONS: { action: ViewerAction; icon: typeof Trash2 }[] = [
 ]
 
 type Header = { name?: string; value?: string }
+
+// Toolbar buttons: icon over text, 52 px tall <md; inline ≥md
+const TOOL = 'h-auto min-h-[52px] flex-1 flex-col gap-1 px-1 text-xs whitespace-normal md:min-h-9 md:flex-none md:flex-row md:px-3 md:text-sm'
 
 async function download(accountId: string, messageId: string, att: Attachment) {
   const { data } = await gmailApi.getAttachment(accountId, messageId, att.attachmentId)
@@ -61,12 +64,14 @@ function MailBody({ html, text }: Readonly<{ html: string; text: string }>) {
 }
 
 /** Gmail mail reader (§5.2): right sheet ≥md, full screen <md (artboard 4); actions in a bottom toolbar. */
-export function MailViewer({ accountId, messageId, labels, onClose, onAction }: Readonly<{
+export function MailViewer({ accountId, messageId, labels, onClose, onAction, onCreateRule }: Readonly<{
   accountId: string
   messageId: string | null
   labels: ApiLabel[]
   onClose: () => void
   onAction: (action: ViewerAction) => void
+  /** « Créer une règle » for the sender's address (I3). */
+  onCreateRule?: (from: string) => void
 }>) {
   const { t, i18n } = useTranslation()
   const { data: mail, isLoading, isError, refetch } = useGmailMessage(accountId, messageId)
@@ -157,12 +162,22 @@ export function MailViewer({ accountId, messageId, labels, onClose, onAction }: 
               key={action}
               variant="ghost"
               disabled={!mail}
-              className={cn('h-auto min-h-[52px] flex-1 flex-col gap-1 px-1 text-xs whitespace-normal md:min-h-9 md:flex-none md:flex-row md:px-3 md:text-sm', action === 'trash' && 'text-destructive')}
+              className={cn(TOOL, action === 'trash' && 'text-destructive')}
               onClick={() => onAction(action)}
             >
               <Icon aria-hidden="true" />{t(`mails.action.${action}`)}
             </Button>
           ))}
+          {onCreateRule && (
+            <Button
+              variant="ghost"
+              disabled={!mail}
+              className={TOOL}
+              onClick={() => onCreateRule(formatEmail(header('from')))}
+            >
+              <Zap aria-hidden="true" />{t('mails.createRule')}
+            </Button>
+          )}
         </div>
       </SheetContent>
     </Sheet>

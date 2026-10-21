@@ -46,11 +46,16 @@ vi.mock('../components/app/JobProgressInline', () => ({
     </div>
   ),
 }))
+vi.mock('../components/app/RuleSheet', () => ({
+  RuleSheet: ({ target, onClose }: { target: { from?: string } | null; onClose: () => void }) =>
+    target && <div role="dialog" aria-label="rule sheet">from={target.from ?? 'none'}<button type="button" onClick={onClose}>close rule</button></div>,
+}))
 vi.mock('../components/app/MailViewer', () => ({
-  MailViewer: ({ messageId, onAction, onClose }: { messageId: string | null; onAction: (a: string) => void; onClose: () => void }) =>
+  MailViewer: ({ messageId, onAction, onClose, onCreateRule }: { messageId: string | null; onAction: (a: string) => void; onClose: () => void; onCreateRule: (from: string) => void }) =>
     messageId && (
       <div role="dialog" aria-label={`viewer ${messageId}`}>
         <button type="button" onClick={() => onAction('trash')}>viewer trash</button>
+        <button type="button" onClick={() => onCreateRule('v@x.test')}>viewer rule</button>
         <button type="button" onClick={onClose}>viewer close</button>
       </div>
     ),
@@ -230,6 +235,30 @@ describe('MailsPage', () => {
     expect(within(dialog).queryByRole('button', { name: 'Ancien' })).not.toBeInTheDocument()
     await user().click(within(dialog).getByRole('button', { name: 'Factures' }))
     expect(gmailApi.bulkOperation).toHaveBeenCalledWith('acc-1', { action: 'label', labelId: 'Label_1', messageIds: ['m2'], delayMs: 0 })
+  })
+
+  it('« Créer une règle »: from the search, the selection or the reader (I3)', async () => {
+    setup('/mails?q=from:billing@x.test')
+    await user().click(screen.getByRole('button', { name: 'Créer une règle' }))
+    expect(screen.getByRole('dialog', { name: 'rule sheet' })).toHaveTextContent('from=billing@x.test')
+    await user().click(screen.getByRole('button', { name: 'close rule' }))
+
+    await user().click(checkbox('Réunion'))
+    await user().click(within(bar()).getByRole('button', { name: 'Créer une règle' }))
+    expect(screen.getByRole('dialog', { name: 'rule sheet' })).toHaveTextContent('from=m2@x.test')
+    await user().click(screen.getByRole('button', { name: 'close rule' }))
+
+    // Two senders, and a search that is not one sender: nothing to prefill
+    await user().click(checkbox('Bulletin'))
+    await user().click(within(bar()).getByRole('button', { name: 'Créer une règle' }))
+    expect(screen.getByRole('dialog', { name: 'rule sheet' })).toHaveTextContent('from=billing@x.test')
+    await user().click(screen.getByRole('button', { name: 'close rule' }))
+
+    await user().click(rowMenu('Réunion'))
+    await user().click(await screen.findByRole('menuitem', { name: 'Ouvrir' }))
+    await user().click(screen.getByRole('button', { name: 'viewer rule' }))
+    expect(screen.queryByRole('dialog', { name: 'viewer m2' })).not.toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: 'rule sheet' })).toHaveTextContent('from=v@x.test')
   })
 
   it('row menu opens the reader, whose actions target its mail', async () => {

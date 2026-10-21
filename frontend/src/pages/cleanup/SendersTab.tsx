@@ -21,7 +21,7 @@ import { useIsMobile } from '@/hooks/use-mobile'
 import type { JobState } from '@/hooks/useJobSSE'
 import { formatBytes, formatSender } from '@/utils/format'
 import { cn } from '@/lib/utils'
-import { SenderRuleSheet } from './SenderRuleSheet'
+import { RuleSheet } from '@/components/app/RuleSheet'
 
 export type NewsletterSender = {
   sender: string
@@ -394,7 +394,7 @@ export function SendersTab({ accountId }: Readonly<{ accountId: string }>) {
         </SheetContent>
       </Sheet>
 
-      <SenderRuleSheet accountId={accountId} sender={ruleFor} onClose={() => setRuleFor(null)} />
+      <RuleSheet accountId={accountId} target={ruleFor && { from: ruleFor.email }} onClose={() => setRuleFor(null)} />
     </div>
   )
 }

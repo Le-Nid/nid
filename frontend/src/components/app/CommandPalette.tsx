@@ -1,14 +1,14 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { CornerDownRight } from 'lucide-react'
+import { CornerDownRight, Plus } from 'lucide-react'
 import {
   Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from '@/components/ui/command'
 import { useAuthStore } from '@/store/auth.store'
 import { LEGACY_PAGES, visibleNav } from './nav'
 
-/** ⌘K / Ctrl+K — navigation only in L0 (contextual actions come with their pages). */
+/** ⌘K / Ctrl+K — navigation, plus « Nouvelle règle » (I3). */
 export default function CommandPalette({ open, onOpenChange }: Readonly<{ open: boolean; onOpenChange: (open: boolean) => void }>) {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -43,6 +43,12 @@ export default function CommandPalette({ open, onOpenChange }: Readonly<{ open: 
                 {t(`shell.${e.key}`)}
               </CommandItem>
             ))}
+          </CommandGroup>
+          <CommandGroup heading={t('shell.actions')}>
+            <CommandItem onSelect={() => go('/rules?new=1')}>
+              <Plus aria-hidden="true" />
+              {t('rules.newRule')}
+            </CommandItem>
           </CommandGroup>
           <CommandGroup heading={t('shell.legacyPages')}>
             {LEGACY_PAGES.map((p) => (

@@ -5,7 +5,7 @@ import type { TFunction } from 'i18next'
 import { createColumnHelper, useTable, type RowSelectionState, type Updater } from '@tanstack/react-table'
 import { toast } from 'sonner'
 import {
-  Archive, Ellipsis, HardDriveDownload, Inbox, MailCheck, MailOpen, Paperclip, RefreshCw, Tag, Trash2,
+  Archive, Ellipsis, HardDriveDownload, Inbox, MailCheck, MailOpen, Paperclip, RefreshCw, Tag, Trash2, Zap,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -20,11 +20,12 @@ import { EmptyState } from '@/components/app/EmptyState'
 import { JobProgressInline } from '@/components/app/JobProgressInline'
 import { LabelBadge } from '@/components/app/LabelBadge'
 import { MailViewer, type ViewerAction } from '@/components/app/MailViewer'
+import { RuleSheet, type RuleSheetTarget } from '@/components/app/RuleSheet'
 import { useAccount } from '@/hooks/useAccount'
 import { useCreateSavedSearch, useGmailMessages, useLabels, useSavedSearches } from '@/hooks/queries'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { useMailActions, type MailAction, type Target } from '@/hooks/useMailActions'
-import { formatBytes, formatSender } from '@/utils/format'
+import { formatBytes, formatEmail, formatSender } from '@/utils/format'
 import { toBadge, type ApiLabel } from '@/utils/gmail'
 import { cn } from '@/lib/utils'
 
@@ -48,6 +49,8 @@ const QUICK: [key: string, query: string][] = [
   ['spam', 'in:spam'], ['trash', 'in:trash'],
 ]
 const SHORTCUTS_KEY = 'nid.mailShortcuts'
+// A search that is just one sender (« from:x@y.fr ») prefills « Créer une règle »
+const searchSender = (q: string) => /^from:(\S+)$/.exec(q.trim())?.[1]
 
 function readShortcutsPref() {
   try {
@@ -199,6 +202,7 @@ export default function MailsPage() {
   const [allResults, setAllResults] = useState(false)
   const [viewing, setViewing] = useState<string | null>(null)
   const [pickingLabel, setPickingLabel] = useState(false)
+  const [ruleTarget, setRuleTarget] = useState<RuleSheetTarget | null>(null)
   const [shortcutsOn, setShortcutsOn] = useState(readShortcutsPref)
   const pageRef = useRef<HTMLDivElement>(null)
 
@@ -251,6 +255,11 @@ export default function MailsPage() {
     setRowSelection({})
     setAllResults(false)
   }
+  // The selection's sender when it has only one, else the search's
+  const selectionSender = () => {
+    const senders = new Set(mails.filter((m) => rowSelection[m.id]).map((m) => formatEmail(m.from)))
+    return !allResults && senders.size === 1 ? [...senders][0] : searchSender(q)
+  }
   const onSelection = (action: MailAction, labelId?: string) => {
     if (allResults) act(action, { query: q }, mails.map((m) => m.id), labelId)
     else act(action, { ids: selectedIds }, selectedIds, labelId)
@@ -264,6 +273,7 @@ export default function MailsPage() {
     { label: t('mails.action.trash'), icon: <Trash2 aria-hidden="true" />, onSelect: () => onSelection('trash'), destructive: true },
     { label: t('mails.action.mark_unread'), icon: <MailOpen aria-hidden="true" />, onSelect: () => onSelection('mark_unread') },
     ...(userLabels.length ? [{ label: t('mails.action.label'), icon: <Tag aria-hidden="true" />, onSelect: () => setPickingLabel(true) }] : []),
+    { label: t('mails.createRule'), icon: <Zap aria-hidden="true" />, onSelect: () => setRuleTarget({ from: selectionSender() }) },
   ]
 
   const search = (next: string) => {
@@ -311,7 +321,7 @@ export default function MailsPage() {
     u: shortcutAction('mark_unread'),
     '/': () => pageRef.current?.querySelector<HTMLInputElement>('input[type="search"]')?.focus(),
     Escape: clearSelection,
-  }, shortcutsOn && !viewing && !pickingLabel)
+  }, shortcutsOn && !viewing && !pickingLabel && !ruleTarget)
   const toggleShortcuts = () => {
     setShortcutsOn(!shortcutsOn)
     try {
@@ -338,6 +348,11 @@ export default function MailsPage() {
             >
               <HardDriveDownload aria-hidden="true" />{t('mails.saveAllNas')}
             </Button>
+            {q && (
+              <Button variant="outline" className="h-11 md:h-9" onClick={() => setRuleTarget({ from: searchSender(q) })}>
+                <Zap aria-hidden="true" />{t('mails.createRule')}
+              </Button>
+            )}
           </>
         )}
       />
@@ -398,8 +413,13 @@ export default function MailsPage() {
             setViewing(null)
             if (viewing) act(action, { ids: [viewing] }, [viewing])
           }}
+          onCreateRule={(from) => {
+            setViewing(null)
+            setRuleTarget({ from })
+          }}
         />
       )}
+      {accountId && <RuleSheet accountId={accountId} target={ruleTarget} onClose={() => setRuleTarget(null)} />}
       <LabelPicker
         open={pickingLabel}
         onOpenChange={setPickingLabel}

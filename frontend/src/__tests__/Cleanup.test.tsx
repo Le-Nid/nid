@@ -5,7 +5,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router'
 import { toast } from 'sonner'
 import i18n from '../i18n'
 import { TooltipProvider } from '../components/ui/tooltip'
-import { archiveApi, attachmentsApi, gmailApi, jobsApi, rulesApi, unsubscribeApi } from '../api'
+import { archiveApi, attachmentsApi, gmailApi, jobsApi, labelsApi, rulesApi, unsubscribeApi } from '../api'
 import { showUndoToast } from '../components/app/UndoToast'
 import type { JobState } from '../hooks/useJobSSE'
 
@@ -19,6 +19,7 @@ vi.mock('../api', () => ({
     downloadArchivedUrl: (a: string, id: string) => `/archived/${a}/${id}`,
   },
   rulesApi: { preview: vi.fn(), create: vi.fn() },
+  labelsApi: { list: vi.fn() },
   gmailApi: { bulkOperation: vi.fn() },
   archiveApi: { triggerArchive: vi.fn() },
   jobsApi: { cancel: vi.fn() },
@@ -71,7 +72,8 @@ beforeEach(() => {
   vi.mocked(unsubscribeApi.getNewsletters).mockResolvedValue(SCAN)
   vi.mocked(unsubscribeApi.deleteSender).mockResolvedValue({ jobId: 'job-s', runAt: '', count: 12 })
   vi.mocked(jobsApi.cancel).mockResolvedValue({})
-  vi.mocked(rulesApi.preview).mockResolvedValue({ query: 'from:x', estimatedCount: 7 })
+  vi.mocked(rulesApi.preview).mockResolvedValue({ query: 'from:x', estimatedCount: 7, sizeBytes: 2 * 1024 * 1024, samples: [] })
+  vi.mocked(labelsApi.list).mockResolvedValue([])
   vi.mocked(rulesApi.create).mockResolvedValue({ id: 'r1' })
   vi.mocked(attachmentsApi.listLive).mockResolvedValue({
     attachments: [
@@ -228,11 +230,12 @@ describe('Cleanup — senders', () => {
   it('« Toujours faire ça »: rule sheet with preview, creates a daily trash rule', async () => {
     const { invalidate } = setup()
     await user().click(within(await rowOf('digest')).getByRole('button', { name: 'Toujours faire ça' }))
-    const sheet = screen.getByRole('dialog', { name: 'Toujours supprimer les mails de digest' })
-    expect(await within(sheet).findByText(/7 mails correspondent/)).toBeInTheDocument()
+    const sheet = screen.getByRole('dialog', { name: 'Nouvelle règle' })
+    expect(await within(sheet).findByText('7 mails concernés · 2 Mo')).toBeInTheDocument()
     expect(rulesApi.preview).toHaveBeenCalledWith('acc-1', [{ field: 'from', operator: 'contains', value: 'digest@news.test' }])
-    const name = within(sheet).getByLabelText('Nom de la règle')
-    expect(name).toHaveValue('Corbeille : digest')
+    expect(within(sheet).getByLabelText('Quand un mail arrive de')).toHaveValue('digest@news.test')
+    const name = within(sheet).getByLabelText('Nom')
+    expect(name).toHaveValue('Mails de digest@news.test')
     await user().clear(name)
     expect(within(sheet).getByRole('button', { name: 'Créer la règle' })).toBeDisabled()
     await user().type(name, 'Stop digest')
@@ -254,7 +257,7 @@ describe('Cleanup — senders', () => {
     const sheet = screen.getByRole('dialog')
     expect(await within(sheet).findByText('Aperçu indisponible')).toBeInTheDocument()
     await user().click(within(sheet).getByRole('button', { name: 'Créer la règle' }))
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Impossible de créer la règle'))
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Impossible d'enregistrer la règle."))
     await user().click(within(sheet).getByRole('button', { name: 'Annuler' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   })

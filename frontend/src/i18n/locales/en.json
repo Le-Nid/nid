@@ -28,7 +28,6 @@
     "test": "Test",
     "actions": "Actions"
   },
-
   "nav": {
     "group_email": "Email",
     "group_tools": "Tools",
@@ -49,10 +48,8 @@
     "ops": "Ops & Resilience",
     "settings": "Settings",
     "admin": "Administration",
-    "expiration": "Expiration",
     "sharing": "Sharing"
   },
-
   "layout": {
     "appName": "Nid",
     "gmailAccount": "Gmail Account",
@@ -65,7 +62,6 @@
     "userMenu": "User menu",
     "logout": "Log out"
   },
-
   "login": {
     "title": "Nid",
     "subtitle": "Your emails. Your server. Your nid.",
@@ -99,7 +95,6 @@
     "social_linkedin": "Sign in with LinkedIn",
     "social_keycloak": "Sign in via SSO"
   },
-
   "dashboard": {
     "title": "Dashboard",
     "noAccount": "No Gmail account connected.",
@@ -123,7 +118,6 @@
     "noMail": "No email",
     "mails": "Emails"
   },
-
   "labels": {
     "INBOX": "Inbox",
     "UNREAD": "Unread",
@@ -138,7 +132,6 @@
     "CATEGORY_UPDATES": "Updates",
     "CATEGORY_FORUMS": "Forums"
   },
-
   "mailManager": {
     "title": "My Emails",
     "searchPlaceholder": "from:, has:attachment, larger:5m…",
@@ -174,7 +167,6 @@
     "bulkStartedDesc": "{{count}} email(s) — track in Jobs.",
     "bulkError": "Operation failed"
   },
-
   "archive": {
     "title": "Archives",
     "searchPlaceholder": "Full-text search (subject, sender…)",
@@ -234,96 +226,178 @@
     "emptyTrashError": "Error emptying trash",
     "totalTrash": "{{total}} emails in trash"
   },
-
   "rules": {
-    "title": "Auto Rules",
-    "newRule": "New rule",
-    "templates": "Templates",
-    "description": "Rules analyze your Gmail inbox and apply actions automatically. Use <strong>Preview</strong> to see how many emails will be affected before saving. Bulk actions are always executed via <strong>async jobs</strong>.",
+    "title": "Rules & labels",
+    "description": "Automate your mailbox: each rule applies an action to the mails it matches.",
+    "tabsLabel": "Sections",
+    "tab": {
+      "rules": "Rules",
+      "labels": "Labels"
+    },
     "noAccount": "No Gmail account connected",
-    "noRules": "No rules",
-    "createFirst": "Create my first rule",
-    "status": "Status",
-    "rule": "Rule",
-    "conditions": "Conditions",
-    "action": "Action",
-    "schedule": "Schedule",
-    "copies": "{{count}} copies",
-    "runNow": "Run now",
-    "deleteRule": "Delete",
-    "lastRun": "Last run",
-    "loadError": "Error loading rules",
-    "toggleError": "Error toggling status",
-    "runSuccess": "Rule \"{{name}}\" started",
-    "runJobCreated": "Job #{{jobId}} created. Track progress in Jobs.",
-    "runError": "Error running rule",
-    "deleteSuccess": "Rule deleted",
-    "deleteError": "Error deleting rule",
-    "templateDrawerTitle": "Rule Templates",
-    "templateHint": "Click a template to create a pre-configured rule. You can edit it afterwards.",
-    "templateLoadError": "Error loading templates",
-    "templateApplied": "Rule created from template",
-    "categoryCleanup": "Cleanup",
-    "categoryArchive": "Archive",
-    "categoryOrganize": "Organize"
+    "newRule": "New rule",
+    "loadError": "Could not load the rules.",
+    "col": {
+      "name": "Name",
+      "conditions": "Conditions",
+      "action": "Action",
+      "lastRun": "Last run",
+      "active": "Active"
+    },
+    "never": "Never run",
+    "toggle": "Rule “{{name}}” active",
+    "toggleFailed": "Could not change the rule's state.",
+    "rowActions": "Actions for rule {{name}}",
+    "menu": {
+      "run": "Run",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "confirmDelete": {
+      "title": "Delete rule “{{name}}”?",
+      "description": "The rule will not run anymore. Mails it already handled stay as they are.",
+      "action": "Delete rule"
+    },
+    "deleted": "Rule deleted",
+    "deleteFailed": "Could not delete the rule.",
+    "run": {
+      "toast": "Running “{{name}}”",
+      "description": "On mails already received · tracked in Activity",
+      "failed": "Could not run the rule."
+    },
+    "empty": {
+      "title": "No rules",
+      "description": "Create a rule, or start from a template in the Labels tab."
+    },
+    "action": {
+      "archive_nas": "Save to the NAS then delete",
+      "archive": "Archive (remove from inbox)",
+      "trash": "Delete",
+      "label": "Apply a label",
+      "delete": "Delete permanently",
+      "unlabel": "Remove a label",
+      "mark_read": "Mark as read",
+      "mark_unread": "Mark as unread"
+    },
+    "actionWithLabel": "{{action}} “{{label}}”",
+    "schedule": {
+      "manual": "Manual",
+      "hourly": "Hourly",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly"
+    },
+    "cond": {
+      "from": "from {{value}}",
+      "fromNot": "not from {{value}}",
+      "to": "sent to {{value}}",
+      "toNot": "not sent to {{value}}",
+      "subject": "subject containing “{{value}}”",
+      "subjectNot": "subject without “{{value}}”",
+      "attachment": "with an attachment",
+      "noAttachment": "without attachments",
+      "size_gt": "larger than {{value}}",
+      "size_lt": "smaller than {{value}}",
+      "older_than": "older than {{value}}",
+      "newer_than": "newer than {{value}}",
+      "label": "labelled {{value}}",
+      "labelNot": "not labelled {{value}}"
+    },
+    "duration": {
+      "d_one": "{{count}} day",
+      "d_other": "{{count}} days",
+      "m_one": "{{count}} month",
+      "m_other": "{{count}} months",
+      "y_one": "{{count}} year",
+      "y_other": "{{count}} years"
+    },
+    "sheet": {
+      "createTitle": "New rule",
+      "editTitle": "Edit rule",
+      "description": "The rule acts on new mails each time it runs.",
+      "name": "Name",
+      "defaultName": "Mails from {{from}}",
+      "from": "When a mail comes from",
+      "fromHint": "Address or domain, e.g. news@example.com",
+      "extra": "Other conditions (kept)",
+      "age": "And is older than",
+      "ages": {
+        "none": "No limit",
+        "7d": "7 days",
+        "30d": "30 days",
+        "180d": "6 months"
+      },
+      "then": "Then",
+      "label": "Label",
+      "pickLabel": "Pick a label",
+      "schedule": "Runs",
+      "applyExisting": "Also apply to mails already received",
+      "needCondition": "Enter a sender or an age to see the matching mails.",
+      "preview_one": "{{count, number}} matching mail · {{size}}",
+      "preview_other": "{{count, number}} matching mails · {{size}}",
+      "previewLoading": "Computing preview…",
+      "previewError": "Preview unavailable",
+      "samples": "Examples",
+      "seeMails_one": "See the mail",
+      "seeMails_other": "See the {{count, number}} mails",
+      "create": "Create rule",
+      "save": "Save",
+      "created": "Rule created",
+      "saved": "Rule saved",
+      "failed": "Could not save the rule."
+    },
+    "labelsTab": {
+      "description": "Your Gmail labels, synced with their colors, and ready-made templates.",
+      "gmail": "Gmail labels",
+      "new": "New label",
+      "newTitle": "New label",
+      "empty": "No labels",
+      "loadError": "Could not load the labels.",
+      "count_one": "{{count, number}} archived mail",
+      "count_other": "{{count, number}} archived mails",
+      "menu": "Actions for label {{name}}",
+      "rename": "Rename",
+      "renameTitle": "Rename “{{name}}”",
+      "name": "Name",
+      "nameHint": "Use “/” to nest it, e.g. Invoices/Power.",
+      "color": "Color",
+      "colorTitle": "Color of “{{name}}”",
+      "colorHint": "Colors from the Gmail palette.",
+      "colors": {
+        "red": "Red",
+        "orange": "Orange",
+        "yellow": "Yellow",
+        "green": "Green",
+        "teal": "Teal",
+        "blue": "Blue",
+        "purple": "Purple",
+        "pink": "Pink",
+        "gray": "Gray"
+      },
+      "createRule": "Create a rule",
+      "viewMails": "See mails",
+      "delete": "Delete",
+      "deleteTitle": "Delete label “{{name}}”?",
+      "deleteDescription": "The label is removed from Gmail and from the mails that have it. The mails are not deleted.",
+      "deleteAction": "Delete label",
+      "created": "Label created",
+      "renamed": "Label renamed",
+      "colored": "Color changed",
+      "deleted": "Label deleted",
+      "failed": "Gmail refused the label change.",
+      "categories": "Gmail categories",
+      "categoriesHint": "Assigned by Gmail, cannot be changed.",
+      "templates": "Templates",
+      "templatesHint": "One click creates the Gmail label and the rule that fills it.",
+      "otherTemplates": "Other templates",
+      "active": "Already active",
+      "editRule": "Edit rule",
+      "createBoth": "Create label and rule",
+      "activate": "Activate",
+      "templateApplied": "“{{name}}” is active",
+      "templateFailed": "Could not activate the template."
+    }
   },
-
-  "ruleForm": {
-    "editTitle": "Edit: {{name}}",
-    "createTitle": "New rule",
-    "ruleName": "Rule name",
-    "ruleNamePlaceholder": "E.g.: Newsletters → trash",
-    "active": "Active",
-    "descriptionLabel": "Description (optional)",
-    "descriptionPlaceholder": "What this rule does…",
-    "conditionsDivider": "Conditions",
-    "conditionsHint": "(all must be true)",
-    "deleteCondition": "Delete condition",
-    "addCondition": "+ Add condition",
-    "actionDivider": "Action",
-    "selectLabel": "Select a label",
-    "scheduleDivider": "Schedule",
-    "scheduleAuto": "The rule will run automatically ({{schedule}})",
-    "scheduleManual": "Manual execution only",
-    "previewQuery": "Query: {{query}}",
-    "previewCount": "~ {{count}} matching emails",
-    "preview": "Preview",
-    "createRule": "Create rule",
-    "updateRule": "Update"
-  },
-
-  "ruleLabels": {
-    "from": "Sender",
-    "to": "Recipient",
-    "subject": "Subject",
-    "has_attachment": "Attachment",
-    "size_gt": "Size greater than",
-    "size_lt": "Size less than",
-    "label": "Label",
-    "older_than": "Older than",
-    "newer_than": "Newer than",
-    "contains": "contains",
-    "not_contains": "does not contain",
-    "equals": "is exactly",
-    "not_equals": "is not",
-    "gt": "greater than",
-    "lt": "less than",
-    "is_true": "is true",
-    "trash": "Move to trash",
-    "permanentDelete": "Permanently delete",
-    "addLabel": "Add label",
-    "removeLabel": "Remove label",
-    "archiveGmail": "Archive (remove from INBOX)",
-    "archiveNas": "Archive to NAS",
-    "markRead": "Mark as read",
-    "markUnread": "Mark as unread",
-    "manualOnly": "Manual only",
-    "hourly": "Every hour",
-    "daily": "Every day",
-    "weekly": "Every week",
-    "monthly": "Every month"
-  },
-
   "jobs": {
     "title": "Jobs",
     "filterStatus": "Filter by status",
@@ -356,13 +430,11 @@
     "trashConfigSaved": "Trash configuration saved",
     "trashConfigError": "Error saving configuration"
   },
-
   "jobModal": {
     "reconnecting": "Reconnecting…",
     "done": "Done — {{count}} items processed",
     "connecting": "Connecting to real-time stream…"
   },
-
   "settings": {
     "title": "Settings",
     "profile": "Profile",
@@ -448,7 +520,6 @@
     "gmailLimitReached": "Gmail accounts limit reached",
     "deleteWebhookConfirm": "Delete this webhook?"
   },
-
   "admin": {
     "title": "Administration",
     "users": "Users",
@@ -479,7 +550,6 @@
     "jobCreated": "Created",
     "jobError": "Error"
   },
-
   "attachments": {
     "title": "Attachments",
     "archived": "Archives",
@@ -507,7 +577,6 @@
     "dedupDetails": "{{duplicates}} duplicate file(s), {{saved}} saved",
     "dedupBackfill": "Analyze"
   },
-
   "insights": {
     "title": "Weekly Report",
     "jobsCompleted": "Jobs completed",
@@ -520,7 +589,6 @@
     "noData": "No data available for this week",
     "noActivity": "No activity this week. Reports will grow as you use the app."
   },
-
   "bulk": {
     "selected": "{{count}} email(s) selected",
     "trash": "Trash",
@@ -537,7 +605,6 @@
     "markUnread": "Unread",
     "addLabel": "Add a label"
   },
-
   "viewer": {
     "loading": "Loading…",
     "from": "From:",
@@ -545,7 +612,6 @@
     "date": "Date:",
     "attachments": "Attachments ({{count}})"
   },
-
   "notifications": {
     "title": "Notifications",
     "markAllRead": "Mark all as read",
@@ -553,7 +619,6 @@
     "clearReadConfirm": "Delete all read notifications?",
     "empty": "No notifications"
   },
-
   "operators": {
     "from": "Sender",
     "to": "Recipient",
@@ -581,7 +646,6 @@
     "after": "After date (e.g. after:2024/01/01)",
     "before": "Before date"
   },
-
   "privacy": {
     "title": "Privacy & Security",
     "tracking": {
@@ -636,7 +700,6 @@
       "allEncrypted": "All archives are encrypted"
     }
   },
-
   "analytics": {
     "title": "Intelligence & Analytics",
     "loadError": "Failed to load analytics",
@@ -659,7 +722,6 @@
     "dismiss": "Dismiss",
     "dismissed": "Suggestion dismissed"
   },
-
   "savedSearches": {
     "title": "Saved Searches",
     "newSearch": "New search",
@@ -683,7 +745,6 @@
     "deleted": "Search deleted",
     "deleteConfirm": "Delete this search?"
   },
-
   "unified": {
     "title": "Unified Inbox",
     "allAccounts": "All accounts",
@@ -696,7 +757,6 @@
     "noMail": "No email",
     "needMultipleAccounts": "Connect at least 2 Gmail accounts to use the unified inbox."
   },
-
   "ops": {
     "title": "Ops & Resilience",
     "description": "Remote storage, retention policies, Gmail API quota monitoring, mail import/export.",
@@ -760,48 +820,6 @@
       "exportSuccess": "Mbox export downloaded"
     }
   },
-
-  "expiration": {
-    "title": "Email Expiration",
-    "description": "Mark emails as temporary (OTP codes, delivery confirmations, promos). They will be automatically deleted after expiration.",
-    "subject": "Subject",
-    "sender": "Sender",
-    "category": "Category",
-    "categoryLabel": "Category",
-    "expiresAt": "Expires",
-    "expiresInDays": "Expires in (days)",
-    "status": "Status",
-    "active": "Active",
-    "expired": "Expired",
-    "deleted": "Deleted",
-    "messageId": "Gmail message ID",
-    "cat_manual": "Manual",
-    "cat_otp": "OTP Code",
-    "cat_delivery": "Delivery",
-    "cat_promo": "Promotion",
-    "detect": "Auto-detect",
-    "detectTitle": "Detected temporary emails",
-    "detectInfo": "{{count}} temporary email(s) detected by heuristic analysis.",
-    "applySelected": "Apply selection",
-    "suggestedDays": "Suggested duration",
-    "nDays": "{{count}} day(s)",
-    "addManual": "Add manually",
-    "addTitle": "Add expiration",
-    "confirmDelete": "Remove this expiration?",
-    "createSuccess": "Expiration created",
-    "createError": "Error creating expiration",
-    "deleteSuccess": "Expiration removed",
-    "deleteError": "Error removing expiration",
-    "batchSuccess": "{{count}} expiration(s) created",
-    "noMessages": "No recent messages found",
-    "noneDetected": "No temporary emails detected",
-    "detectError": "Error during detection",
-    "statPending": "Pending",
-    "statExpiringSoon": "Expiring soon",
-    "statDeleted": "Deleted",
-    "statTotal": "Total"
-  },
-
   "sharing": {
     "title": "Archive Sharing",
     "description": "Generate temporary links to share an archived email with someone without an account.",
@@ -840,7 +858,6 @@
     "shareTooltip": "Generate a temporary share link",
     "createShare": "Create share link"
   },
-
   "notifier": {
     "typeBulk": "Bulk operation",
     "typeArchive": "NAS archiving",
@@ -850,7 +867,6 @@
     "processedCount": "{{count}} items processed successfully.",
     "genericError": "An error occurred."
   },
-
   "shell": {
     "mainNav": "Main navigation",
     "overview": "Overview",
@@ -878,9 +894,9 @@
     "language": "Language",
     "darkMode": "Dark mode",
     "logout": "Log out",
-    "loading": "Loading"
+    "loading": "Loading",
+    "actions": "Actions"
   },
-
   "dataList": {
     "selectAll": "Select all rows on this page",
     "selectRow": "Select {{label}}",
@@ -889,7 +905,6 @@
     "columns": "Columns",
     "loading": "Loading list"
   },
-
   "bulkBar": {
     "label": "Actions on selection",
     "selected_one": "{{count, number}} selected",
@@ -903,7 +918,6 @@
     "clear": "Clear selection",
     "more": "More"
   },
-
   "undoToast": {
     "message": "{{message}} in {{seconds}} s",
     "undo": "Undo",
@@ -912,7 +926,6 @@
     "trash_other": "Deleting {{count, number}} emails",
     "trashDescription": "To Gmail trash · tracked in Activity"
   },
-
   "jobProgress": {
     "stop": "Stop",
     "waiting": "Waiting…",
@@ -922,7 +935,6 @@
     "failed": "Failed: {{error}}",
     "cancelled": "Stopped"
   },
-
   "searchBar": {
     "label": "Search emails",
     "placeholder": "Keywords or operator: from:, has:attachment, larger:10M…",
@@ -930,7 +942,6 @@
     "saved": "Saved searches",
     "save": "Save search"
   },
-
   "mails": {
     "title": "Mail",
     "results_one": "~{{count, number}} result",
@@ -1019,9 +1030,9 @@
       "attachments_other": "{{count}} attachments",
       "download": "Download {{name}}",
       "downloadFailed": "Download failed"
-    }
+    },
+    "createRule": "Create a rule"
   },
-
   "cleanup": {
     "title": "Cleanup",
     "noAccount": "No Gmail account connected",
@@ -1083,23 +1094,6 @@
       "unsubscribed_other": "Unsubscribed · deleting {{count, number}} mails from {{sender}}",
       "deleteAll_one": "Deleting {{count, number}} mail from {{sender}}",
       "deleteAll_other": "Deleting {{count, number}} mails from {{sender}}"
-    },
-    "rule": {
-      "title": "Always delete mails from {{sender}}",
-      "description": "A rule moves this sender's mails, new and old, to the trash every day.",
-      "name": "Rule name",
-      "defaultName": "Trash: {{sender}}",
-      "if": "If",
-      "condition": "the sender contains {{email}}",
-      "then": "Then",
-      "action": "move to trash, every day",
-      "preview_one": "{{count, number}} mail matches today",
-      "preview_other": "{{count, number}} mails match today",
-      "previewLoading": "Computing the preview…",
-      "previewError": "Preview unavailable",
-      "create": "Create the rule",
-      "created": "Rule created",
-      "failed": "Could not create the rule"
     },
     "large": {
       "source": "Source",

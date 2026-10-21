@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatBytes, formatSender, formatEmail } from '../utils/format'
+import { formatBytes, formatSender, formatEmail, formatRelative } from '../utils/format'
 
 describe('formatBytes', () => {
   it('retourne 0 B pour 0', () => {
@@ -44,5 +44,14 @@ describe('formatEmail', () => {
 
   it('retourne la valeur brute si pas de <>',  () => {
     expect(formatEmail('john@example.com')).toBe('john@example.com')
+  })
+})
+
+describe('formatRelative', () => {
+  it('picks the largest unit', () => {
+    const ago = (s: number) => new Date(Date.now() - s * 1000).toISOString()
+    expect(formatRelative(ago(3 * 3600), 'fr')).toBe('il y a 3 heures')
+    expect(formatRelative(ago(86_400), 'fr')).toBe('hier')
+    expect(formatRelative(ago(10), 'en')).toBe('10 seconds ago')
   })
 })

@@ -26,6 +26,13 @@ export const gmailApi = {
   createLabel: (accountId: string, name: string) =>
     api.post(`/api/gmail/${accountId}/labels`, { name }).then((r) => r.data),
 
+  /** `color`: Gmail accepts only its own palette. */
+  updateLabel: (accountId: string, labelId: string, body: { name?: string; color?: { backgroundColor: string; textColor: string } }) =>
+    api.patch(`/api/gmail/${accountId}/labels/${labelId}`, body).then((r) => r.data),
+
+  deleteLabel: (accountId: string, labelId: string) =>
+    api.delete(`/api/gmail/${accountId}/labels/${labelId}`).then((r) => r.data),
+
   getAttachment: (accountId: string, messageId: string, attachmentId: string) =>
     api.get(`/api/gmail/${accountId}/messages/${messageId}/attachments/${attachmentId}`).then((r) => r.data),
 
@@ -94,8 +101,9 @@ export const rulesApi = {
   delete: (accountId: string, ruleId: string) =>
     api.delete(`/api/rules/${accountId}/${ruleId}`).then((r) => r.data),
 
+  /** No `delayMs` = the server's 10 s undo window (D1). */
   run: (accountId: string, ruleId: string) =>
-    api.post(`/api/rules/${accountId}/${ruleId}/run`, { delayMs: 0 }).then((r) => r.data),
+    api.post(`/api/rules/${accountId}/${ruleId}/run`, {}).then((r) => r.data),
 
   preview: (accountId: string, conditions: any[]) =>
     api.post(`/api/rules/${accountId}/preview`, { conditions }).then((r) => r.data),
@@ -405,47 +413,6 @@ export const importApi = {
 
   exportMbox: (accountId: string, mailIds?: string[]) =>
     api.post(`/api/import/${accountId}/export-mbox`, { mailIds }, { responseType: 'blob' }).then((r) => r.data),
-}
-
-// ─── Email Expiration ─────────────────────────────────────
-export const expirationApi = {
-  list: (accountId: string) =>
-    api.get(`/api/expiration/${accountId}`).then((r) => r.data),
-
-  stats: (accountId: string) =>
-    api.get(`/api/expiration/${accountId}/stats`).then((r) => r.data),
-
-  create: (accountId: string, data: {
-    gmailMessageId: string
-    subject?: string
-    sender?: string
-    expiresAt?: string
-    expiresInDays?: number
-    category?: string
-  }) =>
-    api.post(`/api/expiration/${accountId}`, data).then((r) => r.data),
-
-  createBatch: (accountId: string, items: Array<{
-    gmailMessageId: string
-    subject?: string
-    sender?: string
-    expiresInDays?: number
-    category?: string
-  }>) =>
-    api.post(`/api/expiration/${accountId}/batch`, { items }).then((r) => r.data),
-
-  detect: (accountId: string, messages: Array<{
-    gmailMessageId: string
-    subject?: string | null
-    sender?: string | null
-  }>) =>
-    api.post(`/api/expiration/${accountId}/detect`, { messages }).then((r) => r.data),
-
-  update: (accountId: string, expirationId: string, expiresAt: string) =>
-    api.patch(`/api/expiration/${accountId}/${expirationId}`, { expiresAt }).then((r) => r.data),
-
-  remove: (accountId: string, expirationId: string) =>
-    api.delete(`/api/expiration/${accountId}/${expirationId}`).then((r) => r.data),
 }
 
 // ─── Archive Sharing ──────────────────────────────────────

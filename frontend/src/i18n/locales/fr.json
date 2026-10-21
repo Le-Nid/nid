@@ -28,7 +28,6 @@
     "test": "Test",
     "actions": "Actions"
   },
-
   "nav": {
     "group_email": "Email",
     "group_tools": "Outils",
@@ -49,10 +48,8 @@
     "ops": "Ops & Résilience",
     "settings": "Paramètres",
     "admin": "Administration",
-    "expiration": "Expiration",
     "sharing": "Partage"
   },
-
   "layout": {
     "appName": "Nid",
     "gmailAccount": "Compte Gmail",
@@ -65,7 +62,6 @@
     "userMenu": "Menu utilisateur",
     "logout": "Déconnexion"
   },
-
   "login": {
     "title": "Nid",
     "subtitle": "Vos mails. Votre serveur. Votre nid.",
@@ -99,7 +95,6 @@
     "social_linkedin": "Se connecter avec LinkedIn",
     "social_keycloak": "Se connecter via SSO"
   },
-
   "dashboard": {
     "title": "Dashboard",
     "noAccount": "Aucun compte Gmail connecté.",
@@ -123,7 +118,6 @@
     "noMail": "Aucun mail",
     "mails": "Mails"
   },
-
   "labels": {
     "INBOX": "Boîte de réception",
     "UNREAD": "Non lus",
@@ -138,7 +132,6 @@
     "CATEGORY_UPDATES": "Mises à jour",
     "CATEGORY_FORUMS": "Forums"
   },
-
   "mailManager": {
     "title": "Mes mails",
     "searchPlaceholder": "from:, has:attachment, larger:5m…",
@@ -174,7 +167,6 @@
     "bulkStartedDesc": "{{count}} mail(s) — suivi dans Jobs.",
     "bulkError": "Erreur lors de l'opération"
   },
-
   "archive": {
     "title": "Archives",
     "searchPlaceholder": "Recherche full-text (sujet, expéditeur…)",
@@ -234,96 +226,178 @@
     "emptyTrashError": "Erreur lors du vidage de la corbeille",
     "totalTrash": "{{total}} mails dans la corbeille"
   },
-
   "rules": {
-    "title": "Règles automatiques",
-    "newRule": "Nouvelle règle",
-    "templates": "Templates",
-    "description": "Les règles analysent votre boîte Gmail et appliquent des actions automatiquement. Utilisez <strong>Prévisualiser</strong> pour voir combien de mails seront affectés avant de sauvegarder. Les actions bulk sont toujours exécutées via des <strong>jobs asynchrones</strong>.",
+    "title": "Règles & libellés",
+    "description": "Automatisez votre boîte : chaque règle applique une action aux mails qui lui correspondent.",
+    "tabsLabel": "Sections",
+    "tab": {
+      "rules": "Règles",
+      "labels": "Libellés"
+    },
     "noAccount": "Aucun compte Gmail connecté",
-    "noRules": "Aucune règle",
-    "createFirst": "Créer ma première règle",
-    "status": "Statut",
-    "rule": "Règle",
-    "conditions": "Conditions",
-    "action": "Action",
-    "schedule": "Planification",
-    "copies": "{{count}} copies",
-    "runNow": "Exécuter maintenant",
-    "deleteRule": "Supprimer",
-    "lastRun": "Dernière exécution",
-    "loadError": "Erreur lors du chargement des règles",
-    "toggleError": "Erreur lors du changement de statut",
-    "runSuccess": "Règle \"{{name}}\" lancée",
-    "runJobCreated": "Job #{{jobId}} créé. Suivez la progression dans Jobs.",
-    "runError": "Erreur lors de l'exécution de la règle",
-    "deleteSuccess": "Règle supprimée",
-    "deleteError": "Erreur lors de la suppression",
-    "templateDrawerTitle": "Templates de règles",
-    "templateHint": "Cliquez sur un template pour créer une règle pré-configurée. Vous pourrez la modifier ensuite.",
-    "templateLoadError": "Erreur lors du chargement des templates",
-    "templateApplied": "Règle créée depuis le template",
-    "categoryCleanup": "Nettoyage",
-    "categoryArchive": "Archivage",
-    "categoryOrganize": "Organisation"
+    "newRule": "Nouvelle règle",
+    "loadError": "Impossible de charger les règles.",
+    "col": {
+      "name": "Nom",
+      "conditions": "Conditions",
+      "action": "Action",
+      "lastRun": "Dernière exécution",
+      "active": "Active"
+    },
+    "never": "Jamais exécutée",
+    "toggle": "Règle « {{name}} » active",
+    "toggleFailed": "Impossible de changer l'état de la règle.",
+    "rowActions": "Actions pour la règle {{name}}",
+    "menu": {
+      "run": "Exécuter",
+      "edit": "Modifier",
+      "delete": "Supprimer"
+    },
+    "confirmDelete": {
+      "title": "Supprimer la règle « {{name}} » ?",
+      "description": "La règle ne s'exécutera plus. Les mails déjà traités restent tels quels.",
+      "action": "Supprimer la règle"
+    },
+    "deleted": "Règle supprimée",
+    "deleteFailed": "Impossible de supprimer la règle.",
+    "run": {
+      "toast": "Exécution de « {{name}} »",
+      "description": "Sur les mails déjà reçus · suivi dans Activité",
+      "failed": "Impossible d'exécuter la règle."
+    },
+    "empty": {
+      "title": "Aucune règle",
+      "description": "Créez une règle, ou partez d'un modèle dans l'onglet Libellés."
+    },
+    "action": {
+      "archive_nas": "Sauvegarder sur le NAS puis supprimer",
+      "archive": "Archiver (retirer de la boîte)",
+      "trash": "Supprimer",
+      "label": "Appliquer un libellé",
+      "delete": "Supprimer définitivement",
+      "unlabel": "Retirer un libellé",
+      "mark_read": "Marquer comme lu",
+      "mark_unread": "Marquer comme non lu"
+    },
+    "actionWithLabel": "{{action}} « {{label}} »",
+    "schedule": {
+      "manual": "Manuelle",
+      "hourly": "Toutes les heures",
+      "daily": "Quotidienne",
+      "weekly": "Hebdomadaire",
+      "monthly": "Mensuelle"
+    },
+    "cond": {
+      "from": "de {{value}}",
+      "fromNot": "pas de {{value}}",
+      "to": "envoyé à {{value}}",
+      "toNot": "pas envoyé à {{value}}",
+      "subject": "objet contenant « {{value}} »",
+      "subjectNot": "objet sans « {{value}} »",
+      "attachment": "avec pièce jointe",
+      "noAttachment": "sans pièce jointe",
+      "size_gt": "plus gros que {{value}}",
+      "size_lt": "plus petit que {{value}}",
+      "older_than": "de plus de {{value}}",
+      "newer_than": "de moins de {{value}}",
+      "label": "avec le libellé {{value}}",
+      "labelNot": "sans le libellé {{value}}"
+    },
+    "duration": {
+      "d_one": "{{count}} jour",
+      "d_other": "{{count}} jours",
+      "m_one": "{{count}} mois",
+      "m_other": "{{count}} mois",
+      "y_one": "{{count}} an",
+      "y_other": "{{count}} ans"
+    },
+    "sheet": {
+      "createTitle": "Nouvelle règle",
+      "editTitle": "Modifier la règle",
+      "description": "La règle agit sur les nouveaux mails à chaque exécution.",
+      "name": "Nom",
+      "defaultName": "Mails de {{from}}",
+      "from": "Quand un mail arrive de",
+      "fromHint": "Adresse ou domaine, par exemple news@exemple.fr",
+      "extra": "Autres conditions (conservées)",
+      "age": "Et qu'il a plus de",
+      "ages": {
+        "none": "Aucune limite",
+        "7d": "7 jours",
+        "30d": "30 jours",
+        "180d": "6 mois"
+      },
+      "then": "Alors",
+      "label": "Libellé",
+      "pickLabel": "Choisir un libellé",
+      "schedule": "Exécution",
+      "applyExisting": "Appliquer aussi aux mails déjà reçus",
+      "needCondition": "Indiquez un expéditeur ou une durée pour voir les mails concernés.",
+      "preview_one": "{{count, number}} mail concerné · {{size}}",
+      "preview_other": "{{count, number}} mails concernés · {{size}}",
+      "previewLoading": "Calcul de l'aperçu…",
+      "previewError": "Aperçu indisponible",
+      "samples": "Exemples",
+      "seeMails_one": "Voir le mail",
+      "seeMails_other": "Voir les {{count, number}} mails",
+      "create": "Créer la règle",
+      "save": "Enregistrer",
+      "created": "Règle créée",
+      "saved": "Règle enregistrée",
+      "failed": "Impossible d'enregistrer la règle."
+    },
+    "labelsTab": {
+      "description": "Vos libellés Gmail, synchronisés avec leurs couleurs, et des modèles prêts à l'emploi.",
+      "gmail": "Libellés Gmail",
+      "new": "Nouveau libellé",
+      "newTitle": "Nouveau libellé",
+      "empty": "Aucun libellé",
+      "loadError": "Impossible de charger les libellés.",
+      "count_one": "{{count, number}} mail archivé",
+      "count_other": "{{count, number}} mails archivés",
+      "menu": "Actions pour le libellé {{name}}",
+      "rename": "Renommer",
+      "renameTitle": "Renommer « {{name}} »",
+      "name": "Nom",
+      "nameHint": "Utilisez « / » pour l'imbriquer, par exemple Factures/EDF.",
+      "color": "Couleur",
+      "colorTitle": "Couleur de « {{name}} »",
+      "colorHint": "Couleurs de la palette Gmail.",
+      "colors": {
+        "red": "Rouge",
+        "orange": "Orange",
+        "yellow": "Jaune",
+        "green": "Vert",
+        "teal": "Turquoise",
+        "blue": "Bleu",
+        "purple": "Violet",
+        "pink": "Rose",
+        "gray": "Gris"
+      },
+      "createRule": "Créer une règle",
+      "viewMails": "Voir les mails",
+      "delete": "Supprimer",
+      "deleteTitle": "Supprimer le libellé « {{name}} » ?",
+      "deleteDescription": "Le libellé est retiré de Gmail et des mails qui le portent. Les mails ne sont pas supprimés.",
+      "deleteAction": "Supprimer le libellé",
+      "created": "Libellé créé",
+      "renamed": "Libellé renommé",
+      "colored": "Couleur modifiée",
+      "deleted": "Libellé supprimé",
+      "failed": "Gmail a refusé la modification du libellé.",
+      "categories": "Catégories Gmail",
+      "categoriesHint": "Attribuées par Gmail, non modifiables.",
+      "templates": "Modèles",
+      "templatesHint": "Un clic crée le libellé Gmail et la règle qui le remplit.",
+      "otherTemplates": "Autres modèles",
+      "active": "Déjà actif",
+      "editRule": "Modifier la règle",
+      "createBoth": "Créer le libellé et la règle",
+      "activate": "Activer",
+      "templateApplied": "« {{name}} » est actif",
+      "templateFailed": "Impossible d'activer le modèle."
+    }
   },
-
-  "ruleForm": {
-    "editTitle": "Modifier : {{name}}",
-    "createTitle": "Nouvelle règle",
-    "ruleName": "Nom de la règle",
-    "ruleNamePlaceholder": "Ex : Newsletters → corbeille",
-    "active": "Active",
-    "descriptionLabel": "Description (optionnelle)",
-    "descriptionPlaceholder": "Ce que fait cette règle…",
-    "conditionsDivider": "Conditions",
-    "conditionsHint": "(toutes doivent être vraies)",
-    "deleteCondition": "Supprimer condition",
-    "addCondition": "+ Ajouter une condition",
-    "actionDivider": "Action",
-    "selectLabel": "Sélectionner un label",
-    "scheduleDivider": "Planification",
-    "scheduleAuto": "La règle s'exécutera automatiquement ({{schedule}})",
-    "scheduleManual": "Exécution manuelle uniquement",
-    "previewQuery": "Requête : {{query}}",
-    "previewCount": "~ {{count}} mails correspondants",
-    "preview": "Prévisualiser",
-    "createRule": "Créer la règle",
-    "updateRule": "Mettre à jour"
-  },
-
-  "ruleLabels": {
-    "from": "Expéditeur",
-    "to": "Destinataire",
-    "subject": "Sujet",
-    "has_attachment": "Pièce jointe",
-    "size_gt": "Taille supérieure à",
-    "size_lt": "Taille inférieure à",
-    "label": "Label",
-    "older_than": "Plus ancien que",
-    "newer_than": "Plus récent que",
-    "contains": "contient",
-    "not_contains": "ne contient pas",
-    "equals": "est exactement",
-    "not_equals": "n'est pas",
-    "gt": "supérieur à",
-    "lt": "inférieur à",
-    "is_true": "est vrai",
-    "trash": "Mettre à la corbeille",
-    "permanentDelete": "Supprimer définitivement",
-    "addLabel": "Ajouter un label",
-    "removeLabel": "Retirer un label",
-    "archiveGmail": "Archiver (retirer de INBOX)",
-    "archiveNas": "Archiver sur le NAS",
-    "markRead": "Marquer comme lu",
-    "markUnread": "Marquer comme non lu",
-    "manualOnly": "Manuel uniquement",
-    "hourly": "Toutes les heures",
-    "daily": "Chaque jour",
-    "weekly": "Chaque semaine",
-    "monthly": "Chaque mois"
-  },
-
   "jobs": {
     "title": "Jobs",
     "filterStatus": "Filtrer par statut",
@@ -356,13 +430,11 @@
     "trashConfigSaved": "Configuration de la corbeille sauvegardée",
     "trashConfigError": "Erreur lors de la sauvegarde"
   },
-
   "jobModal": {
     "reconnecting": "Reconnexion…",
     "done": "Terminé — {{count}} éléments traités",
     "connecting": "Connexion au flux temps réel…"
   },
-
   "settings": {
     "title": "Paramètres",
     "profile": "Profil",
@@ -448,7 +520,6 @@
     "gmailLimitReached": "Limite de comptes Gmail atteinte",
     "deleteWebhookConfirm": "Supprimer ce webhook ?"
   },
-
   "admin": {
     "title": "Administration",
     "users": "Utilisateurs",
@@ -479,7 +550,6 @@
     "jobCreated": "Créé",
     "jobError": "Erreur"
   },
-
   "attachments": {
     "title": "Pièces jointes",
     "archived": "Archives",
@@ -507,7 +577,6 @@
     "dedupDetails": "{{duplicates}} fichier(s) dupliqué(s), {{saved}} économisés",
     "dedupBackfill": "Analyser"
   },
-
   "insights": {
     "title": "Rapport hebdomadaire",
     "jobsCompleted": "Jobs terminés",
@@ -520,7 +589,6 @@
     "noData": "Aucune donnée disponible pour cette semaine",
     "noActivity": "Aucune activité cette semaine. Les rapports s'enrichissent au fil de votre utilisation."
   },
-
   "bulk": {
     "selected": "{{count}} mail(s) sélectionné(s)",
     "trash": "Corbeille",
@@ -537,7 +605,6 @@
     "markUnread": "Non lu",
     "addLabel": "Ajouter un label"
   },
-
   "viewer": {
     "loading": "Chargement…",
     "from": "De :",
@@ -545,7 +612,6 @@
     "date": "Date :",
     "attachments": "Pièces jointes ({{count}})"
   },
-
   "notifications": {
     "title": "Notifications",
     "markAllRead": "Tout marquer lu",
@@ -553,7 +619,6 @@
     "clearReadConfirm": "Supprimer toutes les notifications lues ?",
     "empty": "Aucune notification"
   },
-
   "operators": {
     "from": "Expéditeur",
     "to": "Destinataire",
@@ -581,7 +646,6 @@
     "after": "Après date (ex: after:2024/01/01)",
     "before": "Avant date"
   },
-
   "privacy": {
     "title": "Vie privée & Sécurité",
     "tracking": {
@@ -636,7 +700,6 @@
       "allEncrypted": "Toutes les archives sont chiffrées"
     }
   },
-
   "analytics": {
     "title": "Intelligence & Analytics",
     "loadError": "Erreur lors du chargement des analytics",
@@ -659,7 +722,6 @@
     "dismiss": "Ignorer",
     "dismissed": "Suggestion ignorée"
   },
-
   "savedSearches": {
     "title": "Recherches sauvegardées",
     "newSearch": "Nouvelle recherche",
@@ -683,7 +745,6 @@
     "deleted": "Recherche supprimée",
     "deleteConfirm": "Supprimer cette recherche ?"
   },
-
   "unified": {
     "title": "Boîte unifiée",
     "allAccounts": "Tous les comptes",
@@ -696,7 +757,6 @@
     "noMail": "Aucun mail",
     "needMultipleAccounts": "Connectez au moins 2 comptes Gmail pour utiliser la boîte unifiée."
   },
-
   "ops": {
     "title": "Ops & Résilience",
     "description": "Stockage distant, politiques de rétention, suivi quota Gmail API, import/export de mails.",
@@ -760,48 +820,6 @@
       "exportSuccess": "Export mbox téléchargé"
     }
   },
-
-  "expiration": {
-    "title": "Expiration des emails",
-    "description": "Marquez des emails comme temporaires (codes OTP, confirmations de livraison, promos). Ils seront automatiquement supprimés après expiration.",
-    "subject": "Sujet",
-    "sender": "Expéditeur",
-    "category": "Catégorie",
-    "categoryLabel": "Catégorie",
-    "expiresAt": "Expire",
-    "expiresInDays": "Expire dans (jours)",
-    "status": "Statut",
-    "active": "Actif",
-    "expired": "Expiré",
-    "deleted": "Supprimé",
-    "messageId": "ID du message Gmail",
-    "cat_manual": "Manuel",
-    "cat_otp": "Code OTP",
-    "cat_delivery": "Livraison",
-    "cat_promo": "Promotion",
-    "detect": "Détecter automatiquement",
-    "detectTitle": "Emails temporaires détectés",
-    "detectInfo": "{{count}} email(s) temporaire(s) détecté(s) par analyse heuristique.",
-    "applySelected": "Appliquer la sélection",
-    "suggestedDays": "Durée suggérée",
-    "nDays": "{{count}} jour(s)",
-    "addManual": "Ajouter manuellement",
-    "addTitle": "Ajouter une expiration",
-    "confirmDelete": "Retirer cette expiration ?",
-    "createSuccess": "Expiration créée",
-    "createError": "Erreur lors de la création",
-    "deleteSuccess": "Expiration retirée",
-    "deleteError": "Erreur lors de la suppression",
-    "batchSuccess": "{{count}} expiration(s) créée(s)",
-    "noMessages": "Aucun message récent trouvé",
-    "noneDetected": "Aucun email temporaire détecté",
-    "detectError": "Erreur lors de la détection",
-    "statPending": "En attente",
-    "statExpiringSoon": "Expire bientôt",
-    "statDeleted": "Supprimés",
-    "statTotal": "Total"
-  },
-
   "sharing": {
     "title": "Partage d'archives",
     "description": "Générez des liens temporaires pour partager un mail archivé avec quelqu'un sans compte.",
@@ -840,7 +858,6 @@
     "shareTooltip": "Générer un lien de partage temporaire",
     "createShare": "Créer un lien de partage"
   },
-
   "notifier": {
     "typeBulk": "Opération bulk",
     "typeArchive": "Archivage NAS",
@@ -850,7 +867,6 @@
     "processedCount": "{{count}} éléments traités avec succès.",
     "genericError": "Une erreur est survenue."
   },
-
   "shell": {
     "mainNav": "Navigation principale",
     "overview": "Vue d'ensemble",
@@ -878,9 +894,9 @@
     "language": "Langue",
     "darkMode": "Mode sombre",
     "logout": "Se déconnecter",
-    "loading": "Chargement"
+    "loading": "Chargement",
+    "actions": "Actions"
   },
-
   "dataList": {
     "selectAll": "Sélectionner toutes les lignes de la page",
     "selectRow": "Sélectionner {{label}}",
@@ -889,7 +905,6 @@
     "columns": "Colonnes",
     "loading": "Chargement de la liste"
   },
-
   "bulkBar": {
     "label": "Actions sur la sélection",
     "selected_one": "{{count, number}} sélectionné",
@@ -903,7 +918,6 @@
     "clear": "Annuler la sélection",
     "more": "Plus"
   },
-
   "undoToast": {
     "message": "{{message}} dans {{seconds}} s",
     "undo": "Annuler",
@@ -912,7 +926,6 @@
     "trash_other": "Suppression de {{count, number}} mails",
     "trashDescription": "Vers la corbeille Gmail · suivi dans Activité"
   },
-
   "jobProgress": {
     "stop": "Arrêter",
     "waiting": "En attente…",
@@ -922,7 +935,6 @@
     "failed": "Échec : {{error}}",
     "cancelled": "Arrêté"
   },
-
   "searchBar": {
     "label": "Rechercher dans les mails",
     "placeholder": "Mots-clés ou opérateur : from:, has:attachment, larger:10M…",
@@ -930,7 +942,6 @@
     "saved": "Recherches enregistrées",
     "save": "Enregistrer la recherche"
   },
-
   "mails": {
     "title": "Mails",
     "results_one": "~{{count, number}} résultat",
@@ -1019,9 +1030,9 @@
       "attachments_other": "{{count}} pièces jointes",
       "download": "Télécharger {{name}}",
       "downloadFailed": "Téléchargement impossible"
-    }
+    },
+    "createRule": "Créer une règle"
   },
-
   "cleanup": {
     "title": "Nettoyage",
     "noAccount": "Aucun compte Gmail connecté",
@@ -1083,23 +1094,6 @@
       "unsubscribed_other": "Désabonné · suppression de {{count, number}} mails de {{sender}}",
       "deleteAll_one": "Suppression de {{count, number}} mail de {{sender}}",
       "deleteAll_other": "Suppression de {{count, number}} mails de {{sender}}"
-    },
-    "rule": {
-      "title": "Toujours supprimer les mails de {{sender}}",
-      "description": "Une règle met chaque jour à la corbeille les mails de cet expéditeur, nouveaux comme anciens.",
-      "name": "Nom de la règle",
-      "defaultName": "Corbeille : {{sender}}",
-      "if": "Si",
-      "condition": "l'expéditeur contient {{email}}",
-      "then": "Alors",
-      "action": "mettre à la corbeille, chaque jour",
-      "preview_one": "{{count, number}} mail correspond aujourd'hui",
-      "preview_other": "{{count, number}} mails correspondent aujourd'hui",
-      "previewLoading": "Calcul de l'aperçu…",
-      "previewError": "Aperçu indisponible",
-      "create": "Créer la règle",
-      "created": "Règle créée",
-      "failed": "Impossible de créer la règle"
     },
     "large": {
       "source": "Source",

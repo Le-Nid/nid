@@ -10,9 +10,12 @@ import { cn } from '@/lib/utils'
  * D2 only: confirmation of a definitive action (permanent deletion, unsubscribe, account disconnection).
  * Reversible actions use UndoToast instead. Radix focuses « Annuler » on open and returns focus to `trigger`.
  * `confirmLabel` is an explicit verb: « Supprimer définitivement 12 archives ».
+ * Without `trigger` (opened from a menu item), the caller drives it with `open`/`onOpenChange`.
  */
-export function ConfirmDialog({ trigger, title, description, confirmLabel, onConfirm, destructive }: Readonly<{
-  trigger: ReactElement
+export function ConfirmDialog({ trigger, open, onOpenChange, title, description, confirmLabel, onConfirm, destructive }: Readonly<{
+  trigger?: ReactElement
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
   title: string
   description: ReactNode
   confirmLabel: string
@@ -21,8 +24,8 @@ export function ConfirmDialog({ trigger, title, description, confirmLabel, onCon
 }>) {
   const { t } = useTranslation()
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      {trigger && <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>

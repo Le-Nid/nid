@@ -73,6 +73,7 @@ describe('routes', () => {
     ['/jobs?status=failed', '/activity?status=failed'],
     ['/settings?gmail=connected', '/settings/account?gmail=connected'],
     ['/unsubscribe', '/cleanup?tab=senders'],
+    ['/expiration', '/rules?tab=labels'],
   ])('redirects %s to %s, keeping the query string', async (from, to) => {
     renderAt(from)
     expect(await landedOn(to)).toBeInTheDocument()
@@ -155,6 +156,15 @@ describe('command palette', () => {
     await userEvent.click(within(palette).getByRole('option', { name: 'Activité' }))
     expect(await landedOn('/activity')).toBeInTheDocument()
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('« Nouvelle règle » opens /rules?new=1', async () => {
+    renderAt('/overview')
+    await landedOn('/overview')
+    await userEvent.keyboard('{Control>}k{/Control}')
+    const palette = await screen.findByRole('dialog', { name: 'Palette de commandes' })
+    await userEvent.click(within(palette).getByRole('option', { name: 'Nouvelle règle' }))
+    expect(await landedOn('/rules?new=1')).toBeInTheDocument()
   })
 
   it('opens from the sidebar search button and lists legacy pages', async () => {
