@@ -62,6 +62,7 @@ Le script CI (`.github/workflows/ci.yml`) exécute : `npm ci` → `typecheck` �
 
 ## Workflow agent
 
+- Avant chaque ouverture de PR : `/ponytail-review` sur le diff complet de la branche, constats « Must fix » / « Should fix » traités (ou justifiés dans la PR) avant le push.
 - Une fois le travail terminé : commit, push sur la branche de travail, puis **ouvrir une Pull Request** vers `main` pour validation par le tech lead. Ne jamais merger soi-même.
 - Si la PR précédente de la branche est déjà mergée, repartir de `main` et ouvrir une nouvelle PR.
 
@@ -79,3 +80,23 @@ Rules:
 - When graphify-out/graph.json exists, run `graphify query "<question>"` before your first grep, search or source-file read for a codebase question, and put this rule in every subagent prompt that explores code. Read raw files only for lines the graph or an earlier read already located. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts.
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+
+### ponytail + graphify
+
+Les deux outils travaillent ensemble : ponytail décide quoi chercher, graphify trouve où. But : recherche rapide et peu de tokens.
+
+**Pendant une feature**
+
+- Étape ponytail « Already in this codebase? » = `graphify query "<besoin>"` (helper, composant, hook, service) avant d'écrire quoi que ce soit.
+- Étape ponytail « list every place your change must reach » = `graphify explain "<symbole>()"` sur chaque fonction/composant touché (liens entrants = appelants, tests, MCP, worker).
+- Lire uniquement les lignes que le graphe a localisées (`sed -n 'L1,L2p'` / Read avec offset+limit), jamais un fichier entier « pour voir ». Imposé par le hook `.claude/hooks/read-guard.js` : Read sans offset/limit ou `cat` seul d'un fichier du projet de plus de 300 lignes est refusé (Read avec `limit` explicite si la lecture complète est vraiment nécessaire). `GRAPH_REPORT.md` seulement pour une question d'architecture.
+- `graphify update .` après chaque lot de modifications, pour que la recherche suivante voie le nouveau code.
+- Prompts de sous-agents : y recopier ces règles et demander un rapport court (fichiers, sha, tests, écarts).
+
+**Pendant une revue**
+
+- `/ponytail-review` et `/ponytail-audit` commencent par `graphify update .` puis s'appuient sur le graphe avant toute lecture de fichier.
+- « Callers of every changed function » : `graphify explain "<fonction>()"` (liens entrants `<--`) pour chaque fonction modifiée du diff, au lieu d'un grep ; `grep` seulement pour confirmer une ligne précise.
+- « Trace the real flow » : `graphify path "<entrée>" "<stockage>"` (route → service → DB/worker).
+- « reuse: the repo already has this helper » : `graphify query "<ce que fait le code ajouté>"` avant de signaler ou d'écrire un helper.
+- Le rapport de revue indique, dans « Not checked », ce que le graphe ne couvre pas (SQL brut, appels dynamiques par nom de job, i18n).

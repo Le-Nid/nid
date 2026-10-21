@@ -124,6 +124,16 @@ describe('RuleSheet', () => {
     expect(rulesApi.run).not.toHaveBeenCalled()
   })
 
+  it('an age alone cannot be saved: it would target the whole mailbox', async () => {
+    setup({})
+    const sheet = screen.getByRole('dialog')
+    await user().type(within(sheet).getByLabelText('Nom'), 'Tout')
+    await user().click(within(sheet).getByRole('radio', { name: '7 jours' }))
+    expect(within(sheet).getByRole('button', { name: 'Créer la règle' })).toBeDisabled()
+    expect(within(sheet).getByText(/une règle basée sur la seule durée viserait toute la boîte/)).toBeInTheDocument()
+    expect(rulesApi.preview).not.toHaveBeenCalled()
+  })
+
   it('edit keeps conditions and an action it does not offer', async () => {
     const rule = {
       id: 'r1', name: 'Lus', is_active: false, schedule: 'monthly', action: { type: 'mark_read' },

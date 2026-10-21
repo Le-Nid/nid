@@ -16,7 +16,7 @@ const probe = vi.hoisted(() => async () => {
 vi.mock('../pages/Login', probe)
 vi.mock('../pages/Dashboard', probe)
 vi.mock('../pages/Mails', probe)
-vi.mock('../pages/Archive', probe)
+vi.mock('../pages/Archives', probe)
 vi.mock('../pages/Settings', probe)
 vi.mock('../pages/Jobs', probe)
 vi.mock('../pages/Rules', probe)
@@ -74,6 +74,7 @@ describe('routes', () => {
     ['/settings?gmail=connected', '/settings/account?gmail=connected'],
     ['/unsubscribe', '/cleanup?tab=senders'],
     ['/expiration', '/rules?tab=labels'],
+    ['/sharing', '/archives?tab=shares'],
   ])('redirects %s to %s, keeping the query string', async (from, to) => {
     renderAt(from)
     expect(await landedOn(to)).toBeInTheDocument()

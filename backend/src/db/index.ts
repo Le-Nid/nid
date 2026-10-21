@@ -9,6 +9,7 @@ import * as migration003 from './migrations/003_archive_trash'
 import * as migration004 from './migrations/004_gmail_labels'
 import * as migration005 from './migrations/005_newsletter_scans'
 import * as migration006 from './migrations/006_rule_templates'
+import * as migration007 from './migrations/007_archive_body_text'
 import { createLogger } from '../logger'
 
 const logger = createLogger('db')
@@ -39,6 +40,7 @@ const migrations: Record<string, Migration> = {
   '004_gmail_labels': migration004,
   '005_newsletter_scans': migration005,
   '006_rule_templates': migration006,
+  '007_archive_body_text': migration007,
 }
 
 class InCodeMigrationProvider implements MigrationProvider {

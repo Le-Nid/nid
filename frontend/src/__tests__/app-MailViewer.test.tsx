@@ -3,11 +3,14 @@ import userEvent from '@testing-library/user-event'
 import { toast } from 'sonner'
 import i18n from '../i18n'
 import { MailViewer } from '../components/app/MailViewer'
-import { useGmailMessage } from '../hooks/queries'
+import { useArchiveMail, useArchiveThread, useGmailMessage } from '../hooks/queries'
 import { gmailApi } from '../api'
 
-vi.mock('../hooks/queries', () => ({ useGmailMessage: vi.fn() }))
-vi.mock('../api', () => ({ gmailApi: { getAttachment: vi.fn() } }))
+vi.mock('../hooks/queries', () => ({ useGmailMessage: vi.fn(), useArchiveMail: vi.fn(), useArchiveThread: vi.fn() }))
+vi.mock('../api', () => ({
+  gmailApi: { getAttachment: vi.fn() },
+  archiveApi: { downloadAttachment: (acc: string, id: string) => `/api/archive/${acc}/attachments/${id}/download` },
+}))
 vi.mock('sonner', () => ({ toast: { error: vi.fn() } }))
 
 const b64 = (s: string) => btoa(String.fromCodePoint(...new TextEncoder().encode(s))).replace(/\+/g, '-').replace(/\//g, '_')
@@ -30,14 +33,18 @@ const query = (patch: Record<string, unknown>) =>
   vi.mocked(useGmailMessage).mockReturnValue({ data: undefined, isLoading: false, isError: false, refetch: vi.fn(), ...patch } as never)
 const LABELS = [{ id: 'Label_1', name: 'Factures', type: 'user' as const }]
 
-function renderViewer(props: Partial<Parameters<typeof MailViewer>[0]> = {}) {
+function renderViewer(props: { messageId?: string | null; onCreateRule?: (from: string) => void } = {}) {
   const handlers = { onClose: vi.fn(), onAction: vi.fn() }
   render(<MailViewer accountId="acc-1" messageId="m1" labels={LABELS} {...handlers} {...props} />)
   return handlers
 }
 
 beforeAll(() => i18n.changeLanguage('fr'))
-beforeEach(() => vi.clearAllMocks())
+beforeEach(() => {
+  vi.clearAllMocks()
+  vi.mocked(useArchiveMail).mockReturnValue({ data: undefined } as never)
+  vi.mocked(useArchiveThread).mockReturnValue({ data: undefined } as never)
+})
 
 describe('MailViewer', () => {
   it('shows headers, labels, attachments and a sandboxed body with remote content blocked (I4)', async () => {
@@ -116,5 +123,43 @@ describe('MailViewer', () => {
     query({})
     renderViewer({ messageId: null })
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('archive source: EML body, thread, attachment links, Partager / Supprimer', async () => {
+    query({})
+    vi.mocked(useArchiveMail).mockReturnValue({
+      data: {
+        subject: 'Facture EDF', sender: 'EDF <edf@edf.test>', recipient: 'ana@gmail.com', date: '2026-08-01T07:00:00Z',
+        size_bytes: '4096', label_ids: ['Label_1'], html: '<p>été</p>', text: 'texte', thread_id: 't1',
+        attachments: [{ id: 'att1', filename: 'facture.pdf', size_bytes: '52000' }],
+      },
+      isLoading: false, isError: false, refetch: vi.fn(),
+    } as never)
+    vi.mocked(useArchiveThread).mockReturnValue({ data: [{ id: 'a1', sender: 'EDF <edf@edf.test>', date: '2026-08-01T07:00:00Z' }, { id: 'a2', sender: 'Ana <ana@gmail.com>', date: null }] } as never)
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    const onAction = vi.fn()
+    const onOpenMail = vi.fn()
+    render(<MailViewer source="archive" accountId="acc-1" messageId="a1" labels={LABELS} onClose={vi.fn()} onAction={onAction} onOpenMail={onOpenMail} />)
+
+    expect(useGmailMessage).toHaveBeenCalledWith('acc-1', null)
+    expect(useArchiveMail).toHaveBeenCalledWith('acc-1', 'a1')
+    expect(useArchiveThread).toHaveBeenCalledWith('acc-1', 't1')
+    const dialog = screen.getByRole('dialog', { name: 'Facture EDF' })
+    expect(within(dialog).getByText('Factures')).toBeInTheDocument()
+    expect(within(dialog).getByTitle('Contenu du mail').getAttribute('srcdoc')).toContain('<p>été</p>')
+
+    const thread = within(dialog).getByRole('region', { name: 'Conversation (2 messages)' })
+    expect(within(thread).getByRole('button', { name: /EDF/ })).toHaveAttribute('aria-current', 'true')
+    await userEvent.click(within(thread).getByRole('button', { name: /Ana/ }))
+    expect(onOpenMail).toHaveBeenCalledWith('a2')
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Télécharger facture.pdf' }))
+    expect(click.mock.contexts[0]).toHaveProperty('href', expect.stringContaining('/api/archive/acc-1/attachments/att1/download'))
+
+    const toolbar = within(dialog).getByRole('toolbar')
+    await userEvent.click(within(toolbar).getByRole('button', { name: 'Partager' }))
+    expect(onAction).toHaveBeenCalledWith('share')
+    await userEvent.click(within(toolbar).getByRole('button', { name: 'Supprimer' }))
+    expect(onAction).toHaveBeenCalledWith('trash')
   })
 })

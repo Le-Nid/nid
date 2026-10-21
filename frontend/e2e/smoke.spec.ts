@@ -160,9 +160,8 @@ test.describe('Mails', () => {
 
 test('Archive', async ({ page }) => {
   await page.goto('/archive')
-  await expect(page.getByRole('heading', { name: t('archive.title') })).toBeVisible()
+  await expect(page.getByRole('heading', { name: t('archives.title') })).toBeVisible()
   await expect(page.getByText('Édition du matin archivée')).toBeVisible()
-  await expect(page.getByRole('main').getByRole('button', { name: t('common.search') })).toBeVisible()
 })
 
 test('Jobs', async ({ page }) => {

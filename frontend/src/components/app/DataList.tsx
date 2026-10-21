@@ -19,6 +19,8 @@ import { cn } from '@/lib/utils'
 export type NidColumnMeta = {
   mobile: 'title' | 'subtitle' | 'meta' | 'hidden' | 'leading' | 'menu'
   align?: 'start' | 'end'
+  /** Subtitle lines on a card (2 by default; 3 for a search extract, §7.5). */
+  lines?: 3
 }
 
 /** Features every DataList table is built with: `useTable({ features: dataListFeatures, ... })`. */
@@ -119,7 +121,7 @@ export function DataList<TData extends RowData>({ table, rowLabel, onRowOpen, em
                         {firstMeta && <span className="shrink-0 text-xs text-muted-foreground"><table.FlexRender cell={firstMeta} /></span>}
                       </div>
                       {by('subtitle').map((c) => (
-                        <div key={c.id} className="line-clamp-2 text-sm text-muted-foreground"><table.FlexRender cell={c} /></div>
+                        <div key={c.id} className={cn('text-sm text-muted-foreground', c.column.columnDef.meta?.lines === 3 ? 'line-clamp-3' : 'line-clamp-2')}><table.FlexRender cell={c} /></div>
                       ))}
                       {otherMeta.length > 0 && (
                         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">

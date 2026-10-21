@@ -69,6 +69,13 @@ vi.mock('../privacy/encryption.service', () => ({
   encryptArchives: (...args: any[]) => mockEncryptArchives(...args),
 }))
 
+const mockBackfillBodyText = vi.fn()
+const mockCountPendingBodyText = vi.fn()
+vi.mock('../archive/body-text', () => ({
+  backfillBodyText: (...args: any[]) => mockBackfillBodyText(...args),
+  countPendingBodyText: (...args: any[]) => mockCountPendingBodyText(...args),
+}))
+
 // Capture worker handler
 let capturedHandler: (job: any) => Promise<any>
 vi.mock('bullmq', () => {
@@ -376,5 +383,29 @@ describe('unified worker handlers', () => {
     // Only msg-2 should be archived (msg-1 is already archived)
     expect(mockArchiveMail).toHaveBeenCalledTimes(1)
     expect(mockArchiveMail).toHaveBeenCalledWith('acc-1', 'msg-2')
+  })
+
+  it('handles backfill_body_text: progress per batch, then completed', async () => {
+    const { startUnifiedWorker } = await import('../jobs/workers/unified.worker')
+    startUnifiedWorker()
+    mockCountPendingBodyText.mockResolvedValue(400)
+    mockBackfillBodyText.mockImplementation(async (onProgress: (n: number) => Promise<void>) => {
+      await onProgress(200)
+      await onProgress(400)
+      return 400
+    })
+
+    const result = await capturedHandler(createMockJob('backfill_body_text', { accountId: '' }))
+    expect(result).toEqual({ processed: 400 })
+    expect(mockBackfillBodyText).toHaveBeenCalledTimes(1)
+  })
+
+  it('handles backfill_body_text failure', async () => {
+    const { startUnifiedWorker } = await import('../jobs/workers/unified.worker')
+    startUnifiedWorker()
+    mockCountPendingBodyText.mockResolvedValue(0)
+    mockBackfillBodyText.mockRejectedValue(new Error('db down'))
+
+    await expect(capturedHandler(createMockJob('backfill_body_text', { accountId: '' }))).rejects.toThrow('db down')
   })
 })

@@ -13,6 +13,7 @@ import { importMbox, importImap } from '../../archive/import.service'
 import { applyRetentionPolicies } from '../../archive/retention.service'
 import { purgeArchiveTrash } from '../../archive/trash.service'
 import { checkArchiveIntegrity } from '../../archive/integrity.service'
+import { backfillBodyText, countPendingBodyText } from '../../archive/body-text'
 import { createLogger } from '../../logger'
 import { config } from '../../config'
 import { logAudit, type AuditAction } from '../../audit/audit.service'
@@ -48,6 +49,8 @@ export function startUnifiedWorker() {
           return handlePurgeTrash(job)
         case 'integrity_check':
           return handleIntegrity(job)
+        case 'backfill_body_text':
+          return handleBackfillBodyText(job)
         default:
           // Fail loudly: a silent no-op left the job row pending forever
           throw new Error(`Unknown job type: ${job.name}`)
@@ -335,7 +338,7 @@ async function handleRule(job: Job) {
     if (!rule) throw new Error(`Rule ${ruleId} not found`)
     if (!rule.is_active) throw new Error(`Rule ${ruleId} is disabled`)
 
-    const result = await runRule(rule, accountId)
+    const result = await runRule(rule, accountId, job.data.userId)
 
     await db
       .updateTable('jobs')
@@ -801,6 +804,26 @@ async function handleIntegrity(job: Job) {
     return result
   } catch (err) {
     await db.updateTable('jobs').set({ status: 'failed', error: String(err) }).where('bullmq_id', '=', String(job.id)).execute()
+    throw err
+  }
+}
+
+// ─── Backfill body_text (B2) ────────────────────────────────
+async function handleBackfillBodyText(job: Job) {
+  const db = getDb()
+  const setJob = (values: Record<string, unknown>) =>
+    db.updateTable('jobs').set(values).where('bullmq_id', '=', String(job.id)).execute()
+
+  const total = await countPendingBodyText()
+  await setJob({ status: 'active', total })
+  try {
+    const processed = await backfillBodyText((done) =>
+      setJob({ processed: done, progress: total ? Math.min(99, Math.round((done / total) * 100)) : 0 }).then(() => undefined),
+    )
+    await setJob({ status: 'completed', progress: 100, processed, completed_at: new Date() })
+    return { processed }
+  } catch (err) {
+    await setJob({ status: 'failed', error: String(err) })
     throw err
   }
 }

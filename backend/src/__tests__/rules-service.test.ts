@@ -272,7 +272,7 @@ describe('runRule', () => {
   })
 
   it('enqueues bulk_operation job for trash action', async () => {
-    mockListMessages.mockResolvedValue({ messages: [{ id: 'm1' }, { id: 'm2' }], nextPageToken: null })
+    mockListMessages.mockResolvedValue({ messages: [{ id: 'm1' }], resultSizeEstimate: 2, nextPageToken: 'more' })
     mockEnqueueJob.mockResolvedValue({ id: 'job-1' })
     mockExecute.mockResolvedValue([])
 
@@ -284,8 +284,9 @@ describe('runRule', () => {
     expect(mockEnqueueJob).toHaveBeenCalledWith('bulk_operation', expect.objectContaining({
       accountId: 'acc-1',
       action: 'trash',
-      messageIds: ['m1', 'm2'],
+      query: 'from:(test)',
     }))
+    expect(mockListMessages).toHaveBeenCalledTimes(1)
   })
 
   it('enqueues archive_mails job for archive_nas action', async () => {
@@ -299,7 +300,7 @@ describe('runRule', () => {
     )
     expect(mockEnqueueJob).toHaveBeenCalledWith('archive_mails', expect.objectContaining({
       accountId: 'acc-1',
-      messageIds: ['m1'],
+      query: 'from:(a@b.c)',
       differential: true,
     }))
     expect(result.jobId).toBe('job-2')

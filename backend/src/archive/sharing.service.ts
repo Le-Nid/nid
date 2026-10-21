@@ -105,8 +105,7 @@ export async function getSharedMail(token: string) {
   let textBody: string | null = null
 
   try {
-    const emlContent = await fs.readFile(share.eml_path, 'utf-8')
-    const parsed = await simpleParser(emlContent)
+    const parsed = await simpleParser(await fs.readFile(share.eml_path)) // bytes: 8bit mails keep their charset
     htmlBody = parsed.html || null
     textBody = parsed.text || null
   } catch (err) {
@@ -132,6 +131,7 @@ export async function getUserShares(userId: string) {
     .innerJoin('archived_mails', 'archive_shares.archived_mail_id', 'archived_mails.id')
     .select([
       'archive_shares.id',
+      'archive_shares.archived_mail_id',
       'archive_shares.token',
       'archive_shares.expires_at',
       'archive_shares.access_count',

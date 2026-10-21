@@ -8,6 +8,7 @@ import { getLocalStorage, type StorageBackend } from '../storage/storage.service
 import { config } from '../config'
 import { createLogger } from '../logger'
 import { resolveImportedLabelIds } from '../labels/labels.service'
+import { bodyTextFromParsed } from './body-text'
 
 const logger = createLogger('import')
 
@@ -177,6 +178,7 @@ async function importSingleEml(
       eml_path: emlPath,
       snippet: parsed.text?.slice(0, 200) ?? null,
       attachment_names: attachmentNames || null,
+      body_text: bodyTextFromParsed(parsed),
     })
     .returning('id')
     .executeTakeFirstOrThrow()

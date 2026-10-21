@@ -17,6 +17,7 @@ export type JobType =
   | 'import_imap'
   | 'apply_retention'
   | 'purge_archive_trash'
+  | 'backfill_body_text'
 
 export interface JobPayload {
   accountId: string

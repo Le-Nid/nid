@@ -19,6 +19,21 @@ const attachments = load('attachments')
 const admin = load('admin')
 const settings = load('settings')
 
+const archive = load('archive')
+
+/** Archive search contract (B2): `label` filters, `q` adds a `highlight` whose only markup is <mark>. */
+function archiveSearch(req: Request) {
+  const params = new URL(req.url()).searchParams
+  const q = params.get('q')?.toLowerCase()
+  const label = params.get('label')
+  const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const mails = archive.mails
+    .filter((m: { label_ids: string[] }) => !label || m.label_ids.includes(label))
+    .filter((m: { subject: string; snippet: string }) => !q || `${m.subject} ${m.snippet}`.toLowerCase().includes(q))
+    .map((m: { snippet: string }) => (q ? { ...m, highlight: escape(m.snippet).replace(new RegExp(q, 'i'), (w) => `<mark>${w}</mark>`) } : m))
+  return { mails, total: mails.length, page: 1, limit: 50, tookMs: 120 }
+}
+
 type Handler = unknown | ((req: Request) => unknown)
 
 // First match wins: "METHOD regex on pathname" → JSON body (or a function of the request).
@@ -45,7 +60,25 @@ const ROUTES: [string, RegExp, Handler][] = [
   ['POST', /^\/api\/archive\/[^/]+\/archive$/, { jobId: 'job-nas' }],
   ['DELETE', /^\/api\/jobs\/[^/]+$/, { ok: true }],
   ['GET', /^\/api\/archive\/config\/trash$/, { retentionDays: 30, purgeEnabled: true }],
-  ['GET', /^\/api\/archive\/[^/]+\/mails$/, load('archive')],
+  ['GET', /^\/api\/archive\/[^/]+\/mails$/, archiveSearch],
+  ['GET', /^\/api\/archive\/[^/]+\/mails\/[^/]+$/, (req: Request) => {
+    const mail = archive.mails.find((m: { id: string }) => req.url().endsWith(m.id)) ?? archive.mails[0]
+    return { ...mail, recipient: 'ana@gmail.com', html: '', text: mail.snippet, attachments: [] }
+  }],
+  ['GET', /^\/api\/archive\/[^/]+\/threads\/[^/]+$/, []],
+  ['POST', /^\/api\/archive\/[^/]+\/mails\/trash$/, (req: Request) => ({ trashed: req.postDataJSON().mailIds.length })],
+  ['POST', /^\/api\/archive\/[^/]+\/mails\/restore$/, (req: Request) => ({ restored: req.postDataJSON().mailIds.length })],
+  ['GET', /^\/api\/archive\/[^/]+\/trash$/, { mails: archive.trash, total: archive.trash.length, page: 1, limit: 100, retentionDays: 30 }],
+  ['DELETE', /^\/api\/archive\/[^/]+\/trash$/, { deleted: archive.trash.length }],
+  ['POST', /^\/api\/import\/[^/]+\/export-mbox$/, {}],
+  ['GET', /^\/api\/shares$/, archive.shares],
+  ['POST', /^\/api\/shares$/, (req: Request) => ({ ...archive.shares[0], id: 'share-new', token: 'bbbb', archived_mail_id: req.postDataJSON().archivedMailId })],
+  ['DELETE', /^\/api\/shares\/[^/]+$/, {}],
+  ['GET', /^\/api\/retention$/, archive.retention],
+  ['POST', /^\/api\/retention\/run$/, { policiesRun: 1, totalDeleted: 3 }],
+  ['POST', /^\/api\/retention$/, (req: Request) => ({ id: 'pol-new', ...req.postDataJSON() })],
+  ['PUT', /^\/api\/retention\/[^/]+$/, {}],
+  ['DELETE', /^\/api\/retention\/[^/]+$/, {}],
   ['GET', /^\/api\/rules\/templates$/, load('templates')],
   ['GET', /^\/api\/rules\/[^/]+$/, load('rules')],
   ['GET', /^\/api\/unsubscribe\/[^/]+\/newsletters$/, load('newsletters')],

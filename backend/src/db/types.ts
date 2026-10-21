@@ -57,6 +57,8 @@ export interface ArchivedMailsTable {
   eml_path:         string
   snippet:          string | null
   attachment_names: string | null
+  // texte brut extrait de l'EML (B2) ; NULL si chiffré ou pas encore backfillé
+  body_text:        string | null
   is_encrypted:     Generated<boolean>
   // tsvector — généré par trigger, jamais écrit directement
   search_vector:    ColumnType<string, never, never> | null

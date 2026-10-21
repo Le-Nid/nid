@@ -6,5 +6,5 @@
       { "id": "b1", "from": "Photos <photos@cloud.test>", "subject": "Album vacances", "sizeEstimate": 15728640, "date": "2026-09-15T08:00:00Z" }
     ]
   },
-  "archiveStats": { "total_mails": 42 }
+  "archiveStats": { "total_mails": 42, "total_size": 5368709120, "last_archived_at": "2026-10-21T06:00:00Z" }
 }
