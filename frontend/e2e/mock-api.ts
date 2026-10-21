@@ -40,6 +40,9 @@ const ROUTES: [string, RegExp, Handler][] = [
     return gmail.mails.filter((m: { id: string }) => ids.includes(m.id))
   }],
   ['POST', /^\/api\/gmail\/[^/]+\/messages\/bulk$/, { jobId: 'job-bulk' }],
+  ['GET', /^\/api\/gmail\/[^/]+\/messages\/[^/]+\/full$/, gmail.full],
+  ['POST', /^\/api\/archive\/[^/]+\/archive$/, { jobId: 'job-nas' }],
+  ['DELETE', /^\/api\/jobs\/[^/]+$/, { ok: true }],
   ['GET', /^\/api\/archive\/config\/trash$/, { retentionDays: 30, purgeEnabled: true }],
   ['GET', /^\/api\/archive\/[^/]+\/mails$/, load('archive')],
   ['GET', /^\/api\/rules\/templates$/, []],
@@ -70,6 +73,8 @@ export const test = base.extend<{ api: ApiMock }>({
       const req = route.request()
       requests.push(req)
       const { pathname } = new URL(req.url())
+      // Live counters SSE (B3): 204 tells EventSource to stop without reconnecting, so no badge and no retry noise
+      if (pathname === '/api/events') return route.fulfill({ status: 204 })
       const hit = ROUTES.find(([method, re]) => method === req.method() && re.test(pathname))
       if (!hit) {
         console.warn(`[e2e] unmocked ${req.method()} ${pathname}`)

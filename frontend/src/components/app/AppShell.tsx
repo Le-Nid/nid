@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useGlobalJobNotifier } from '@/hooks/useGlobalJobNotifier'
+import { useLiveCounters } from '@/hooks/useLiveCounters'
 import { useAuthStore } from '@/store/auth.store'
 import { useThemeStore } from '@/store/theme.store'
 import LegacyAntd from '../LegacyAntd'
@@ -35,7 +36,9 @@ function UserMenu({ withAccounts }: Readonly<{ withAccounts: boolean }>) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-11 gap-2 px-2 md:h-9" aria-label={t('layout.userMenu')}>
+        {/* Name from content, not aria-label: it must contain the visible user name (WCAG 2.5.3) */}
+        <Button variant="ghost" className="h-11 gap-2 px-2 md:h-9">
+          <span className="sr-only">{t('layout.userMenu')}</span>
           <span className="grid size-8 place-items-center overflow-hidden rounded-full bg-avatar text-avatar-foreground">
             {user?.avatar_url
               ? <img src={user.avatar_url} alt="" crossOrigin="anonymous" className="size-full object-cover" />
@@ -79,11 +82,15 @@ export default function AppShell() {
   const isMobile = useIsMobile()
   const dark = useThemeStore((s) => s.mode) === 'dark'
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const counters = useLiveCounters()
+  const activeJobs = counters?.activeJobs ?? 0
 
   return (
     <TooltipProvider>
       <SidebarProvider style={{ '--sidebar-width': '15rem' } as CSSProperties}>
-        {!isMobile && <AppSidebar onSearch={() => setPaletteOpen(true)} />}
+        {/* Only the running-jobs count is announced; the other counters change too often to be useful */}
+        <p aria-live="polite" className="sr-only">{activeJobs ? `${t('shell.activity')} : ${t('shell.activeJobs', { count: activeJobs })}` : ''}</p>
+        {!isMobile && <AppSidebar onSearch={() => setPaletteOpen(true)} counters={counters} />}
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-20 flex min-h-14 items-center gap-2 border-b bg-background px-3 pt-[env(safe-area-inset-top)] md:px-6">
             {isMobile && <img src={dark ? '/nid-logo-full-dark.svg' : '/nid-logo-full-light.svg'} alt="Nid" className="h-7 w-auto" />}
@@ -97,7 +104,7 @@ export default function AppShell() {
             <Outlet />
           </main>
         </div>
-        {isMobile && <BottomNav />}
+        {isMobile && <BottomNav counters={counters} />}
         <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
         {/* Mobile: above the bottom bar (52 px + safe area) */}
         <Toaster containerAriaLabel={t('undoToast.region')} mobileOffset={{ bottom: 'calc(60px + max(22px, env(safe-area-inset-bottom)))' }} />

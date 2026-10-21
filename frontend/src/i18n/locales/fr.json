@@ -898,6 +898,7 @@
     "palette": "Palette de commandes",
     "paletteDescription": "Aller à une page de Nid",
     "palettePlaceholder": "Aller à…",
+    "activeJobs": "{{count}} en cours",
     "noResults": "Aucun résultat",
     "goTo": "Aller à",
     "legacyPages": "Autres pages (en cours de migration)",
@@ -941,6 +942,7 @@
 
   "jobProgress": {
     "stop": "Arrêter",
+    "waiting": "En attente…",
     "stopFailed": "Impossible d'arrêter la tâche",
     "completed_one": "Terminé · {{count, number}} mail traité",
     "completed_other": "Terminé · {{count, number}} mails traités",
@@ -954,5 +956,96 @@
     "removeFilter": "Retirer le filtre {{filter}}",
     "saved": "Recherches enregistrées",
     "save": "Enregistrer la recherche"
+  },
+
+  "mails": {
+    "title": "Mails",
+    "results_one": "~{{count, number}} résultat",
+    "results_other": "~{{count, number}} résultats",
+    "refresh": "Actualiser",
+    "saveAllNas": "Tout sauvegarder sur le NAS",
+    "loadError": "Impossible de charger les mails.",
+    "retry": "Réessayer",
+    "empty": "Aucun mail ne correspond",
+    "emptyDescription": "Essayez une autre recherche ou un autre filtre.",
+    "clearSearch": "Effacer la recherche",
+    "loadMore": "Afficher plus",
+    "allLoaded": "Tous les mails sont chargés",
+    "unread": "non lu",
+    "attachment": "pièce jointe",
+    "noSubject": "(sans objet)",
+    "rowActions": "Actions pour {{subject}}",
+    "col": {
+      "from": "Expéditeur",
+      "subject": "Objet",
+      "date": "Date",
+      "labels": "Libellés",
+      "size": "Taille"
+    },
+    "quick": {
+      "all": "Tous",
+      "unread": "Non lus",
+      "attachments": "Avec PJ",
+      "large": "Gros mails > 10 Mo",
+      "promotions": "Promotions > 6 mois",
+      "social": "Réseaux sociaux",
+      "old": "Plus d'un an",
+      "spam": "Spam",
+      "trash": "Corbeille"
+    },
+    "action": {
+      "open": "Ouvrir",
+      "archive": "Archiver (retirer de la boîte)",
+      "archive_nas": "Sauvegarder sur le NAS",
+      "mark_read": "Marquer comme lu",
+      "mark_unread": "Marquer comme non lu",
+      "label": "Ajouter un libellé",
+      "trash": "Supprimer"
+    },
+    "job": {
+      "trash_one": "Suppression de {{count, number}} mail",
+      "trash_other": "Suppression de {{count, number}} mails",
+      "archive_one": "Archivage de {{count, number}} mail",
+      "archive_other": "Archivage de {{count, number}} mails",
+      "archive_nas_one": "Sauvegarde de {{count, number}} mail sur le NAS",
+      "archive_nas_other": "Sauvegarde de {{count, number}} mails sur le NAS",
+      "mark_read_one": "{{count, number}} mail marqué comme lu",
+      "mark_read_other": "{{count, number}} mails marqués comme lus",
+      "mark_unread_one": "{{count, number}} mail marqué comme non lu",
+      "mark_unread_other": "{{count, number}} mails marqués comme non lus",
+      "label_one": "Libellé ajouté à {{count, number}} mail",
+      "label_other": "Libellé ajouté à {{count, number}} mails",
+      "saveAll": "Sauvegarde des résultats sur le NAS"
+    },
+    "undoDescription": {
+      "trash": "Vers la corbeille Gmail · suivi dans Activité",
+      "archive": "Retirés de la boîte de réception · suivi dans Activité"
+    },
+    "actionFailed": "L'action n'a pas pu être lancée.",
+    "jobFailed": "L'action sur les mails a échoué.",
+    "undoFailed": "Trop tard pour annuler : l'action est déjà en cours.",
+    "labelPicker": "Ajouter un libellé",
+    "labelPickerDescription": "Libellé Gmail à ajouter aux mails sélectionnés.",
+    "searchSaved": "Recherche enregistrée",
+    "saveFailed": "Impossible d'enregistrer la recherche",
+    "shortcutsHint": "Raccourcis : j/k naviguer · o ouvrir · e archiver · # supprimer · r lu · u non lu · / rechercher · Échap désélectionner",
+    "shortcutsOff": "Raccourcis clavier désactivés.",
+    "shortcutsDisable": "Désactiver",
+    "shortcutsEnable": "Activer les raccourcis",
+    "viewer": {
+      "close": "Fermer le mail",
+      "actions": "Actions sur ce mail",
+      "from": "De",
+      "to": "À",
+      "body": "Contenu du mail",
+      "empty": "(Corps vide)",
+      "loadError": "Impossible d'ouvrir ce mail.",
+      "remoteBlocked": "Images distantes bloquées pour protéger votre vie privée.",
+      "showRemote": "Afficher",
+      "attachments_one": "{{count}} pièce jointe",
+      "attachments_other": "{{count}} pièces jointes",
+      "download": "Télécharger {{name}}",
+      "downloadFailed": "Téléchargement impossible"
+    }
   }
 }

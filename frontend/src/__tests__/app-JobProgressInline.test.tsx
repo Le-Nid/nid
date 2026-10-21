@@ -34,6 +34,13 @@ describe('JobProgressInline', () => {
     expect(screen.queryByRole('button', { name: 'Arrêter' })).not.toBeInTheDocument()
   })
 
+  it('says "En attente" instead of 0 / 0 while the job is delayed or queued', () => {
+    sse({ status: 'pending', progress: 0, processed: 0, total: 0 } as JobState)
+    render(<JobProgressInline jobId="job-1" label="Archivage" />)
+    expect(screen.getByText('En attente…')).toBeInTheDocument()
+    expect(screen.queryByText('0 / 0')).not.toBeInTheDocument()
+  })
+
   it('stops the job with DELETE /api/jobs/:id, and says so when it fails', async () => {
     sse(job({}))
     vi.mocked(jobsApi.cancel).mockRejectedValueOnce(new Error('offline'))

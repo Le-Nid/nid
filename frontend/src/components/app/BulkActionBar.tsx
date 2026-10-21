@@ -8,6 +8,18 @@ import { cn } from '@/lib/utils'
 
 export type BulkAction = { label: string; icon?: ReactNode; onSelect: () => void; destructive?: boolean }
 
+/** Publishes the bar's real height (labels may wrap, fonts vary) so toasts and the page padding sit above it. */
+function trackBarHeight(el: HTMLDivElement | null) {
+  if (!el) return
+  const root = document.documentElement
+  const observer = new ResizeObserver(() => root.style.setProperty('--bulk-bar-h', `${el.offsetHeight}px`))
+  observer.observe(el)
+  return () => {
+    observer.disconnect()
+    root.style.removeProperty('--bulk-bar-h')
+  }
+}
+
 const MOBILE_SLOTS = 4 // prototype 3: four actions in the bottom bar, the rest under « Plus »
 
 /**
@@ -71,6 +83,8 @@ export function BulkActionBar({ count, total, mode, actions, onSelectAll, onClea
       <div
         role="toolbar"
         aria-label={t('bulkBar.label')}
+        data-bulk-bar
+        ref={trackBarHeight}
         className="fixed inset-x-0 bottom-0 z-30 flex flex-col border-t bg-background px-2 pb-[max(22px,env(safe-area-inset-bottom))] shadow-actionbar"
       >
         <div className="flex items-center justify-between px-2">
@@ -82,10 +96,10 @@ export function BulkActionBar({ count, total, mode, actions, onSelectAll, onClea
             <Button
               key={a.label}
               variant="ghost"
-              className={cn('h-auto min-h-[52px] flex-1 flex-col gap-1 px-1 text-[12px] whitespace-normal', a.destructive && 'text-destructive')}
+              className={cn('h-auto min-h-[52px] flex-1 flex-col gap-1 px-1 text-[12px] leading-4 whitespace-normal', a.destructive && 'text-destructive')}
               onClick={a.onSelect}
             >
-              {a.icon}{a.label}
+              {a.icon}<span className="line-clamp-2">{a.label}</span>
             </Button>
           ))}
           {overflow.length > 0 && (

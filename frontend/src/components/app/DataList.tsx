@@ -110,7 +110,7 @@ export function DataList<TData extends RowData>({ table, rowLabel, onRowOpen, em
                       <div className="flex items-baseline justify-between gap-2">
                         {onRowOpen ? (
                           // Stretched button: the whole card opens the row; checkbox and menu sit above it (z-10)
-                          <button type="button" onClick={() => onRowOpen(row)} className="min-w-0 truncate text-left font-medium after:absolute after:inset-0 after:rounded-xl">
+                          <button type="button" data-row-open onClick={() => onRowOpen(row)} className="min-w-0 truncate text-left font-medium after:absolute after:inset-0 after:rounded-xl">
                             {title}
                           </button>
                         ) : (
@@ -213,7 +213,7 @@ export function DataList<TData extends RowData>({ table, rowLabel, onRowOpen, em
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className={cn(cell.column.columnDef.meta?.align === 'end' && 'text-right')}>
                       {onRowOpen && role(cell) === 'title' ? (
-                        <button type="button" onClick={() => onRowOpen(row)} className="text-left font-medium hover:underline">
+                        <button type="button" data-row-open onClick={() => onRowOpen(row)} className="text-left font-medium hover:underline">
                           <table.FlexRender cell={cell} />
                         </button>
                       ) : (

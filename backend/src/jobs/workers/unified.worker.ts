@@ -16,6 +16,8 @@ import { checkArchiveIntegrity } from '../../archive/integrity.service'
 import { createLogger } from '../../logger'
 import { config } from '../../config'
 import { logAudit, type AuditAction } from '../../audit/audit.service'
+import { publishUserEvents } from '../../events/events.service'
+import { enqueueJob } from '../queue'
 
 const logger = createLogger('worker')
 
@@ -58,7 +60,21 @@ export function startUnifiedWorker() {
     logger.error({ jobName: job?.name, jobId: job?.id, err: err.message }, 'Job failed'),
   )
 
+  // B3: one central hook for every job type instead of each handler
+  worker.on('active', (job) => publishJobEvent(job, 'started'))
+  worker.on('completed', (job) => publishJobEvent(job, 'finished'))
+  worker.on('failed', (job) => job && publishJobEvent(job, 'finished'))
+
   return worker
+}
+
+function publishJobEvent(job: Job, phase: 'started' | 'finished') {
+  const { userId, accountId } = job.data ?? {}
+  if (!userId) return
+  publishUserEvents(userId, {
+    event: 'job',
+    data: { jobId: String(job.id), type: job.name, accountId: accountId || null, phase, failed: !!job.failedReason },
+  }).catch((err) => logger.warn({ err, jobId: job.id }, 'publish job event failed'))
 }
 
 // ─── Archive ────────────────────────────────────────────────
@@ -78,16 +94,21 @@ async function listAllMessageIds(accountId: string, query?: string): Promise<str
 }
 
 async function handleArchive(job: Job) {
-  const { accountId, messageIds, query, differential = true } = job.data
+  const { accountId, messageIds, query, differential = true, userId, chain = 0 } = job.data
   const db = getDb()
 
   try {
+    const byQuery = !messageIds?.length && !!query
     let ids: string[] = messageIds?.length ? messageIds : await listAllMessageIds(accountId, query)
 
     if (differential) {
       const archived = await getArchivedIds(accountId)
       ids = ids.filter((id) => !archived.has(id))
     }
+
+    // Same cap as bulk-by-query; the rest is picked up by a differential continuation (see below)
+    const capped = byQuery && ids.length > config.BULK_QUERY_MAX
+    if (capped) ids = ids.slice(0, config.BULK_QUERY_MAX)
 
     const total = ids.length
 
@@ -133,14 +154,34 @@ async function handleArchive(job: Job) {
       .where('bullmq_id', '=', String(job.id))
       .execute()
 
-    if (job.data.userId) {
+    const archivedCount = total - failed
+    // Chain stops when a run saved nothing new (it would loop on the same failures) or after ARCHIVE_CHAIN_MAX runs
+    const continues = capped && archivedCount > 0 && chain < config.ARCHIVE_CHAIN_MAX
+    let continuationId: string | undefined
+    if (continues) {
+      const next = await enqueueJob(
+        'archive_mails',
+        { accountId, userId, query, differential: true, chain: chain + 1 },
+        { delay: config.ARCHIVE_CONTINUE_DELAY_MIN * 60_000 },
+      )
+      continuationId = String(next.id)
+    }
+
+    if (userId) {
       const failedNote = failed ? `, ${failed} en échec` : ''
+      const delay = config.ARCHIVE_CONTINUE_DELAY_MIN
       await notify({
-        userId: job.data.userId,
+        userId,
         category: allFailed ? 'job_failed' : 'job_completed',
-        title: allFailed ? 'Archivage échoué' : 'Archivage terminé',
-        body: `${total - failed} mail(s) archivé(s) sur le NAS${failedNote}.`,
-        data: { jobId: String(job.id), count: total - failed, failed },
+        ...(continues
+          ? { title: 'Sauvegarde partielle', body: `Sauvegarde partielle : ${archivedCount} mails sauvegardés${failedNote}, la suite reprend automatiquement dans ${delay} min.` }
+          : capped
+            ? { title: 'Sauvegarde partielle', body: `Sauvegarde partielle : ${archivedCount} mails sauvegardés${failedNote}. Plafond atteint et reprise automatique arrêtée : relancez la sauvegarde pour la suite.` }
+            : { title: allFailed ? 'Archivage échoué' : 'Archivage terminé', body: `${archivedCount} mail(s) archivé(s) sur le NAS${failedNote}.` }),
+        data: {
+          jobId: String(job.id), count: archivedCount, failed,
+          ...(capped ? { capped: true, query, continuationJobId: continuationId ?? null } : {}),
+        },
       })
     }
   } catch (err) {
@@ -202,7 +243,7 @@ async function handleBulk(job: Job) {
   const db = getDb()
   const jobRow = () => db.updateTable('jobs').where('bullmq_id', '=', String(job.id))
   const cap = query ? config.BULK_QUERY_MAX : Infinity
-  const state = { processed: 0, capped: false }
+  const state = { processed: 0, capped: false, estimate: 0 }
 
   await jobRow().set({ status: 'active', total: messageIds?.length ?? 0 }).execute()
 
@@ -211,6 +252,7 @@ async function handleBulk(job: Job) {
     for await (const page of bulkPages(accountId, messageIds, query)) {
       const ids = page.ids.slice(0, cap - state.processed)
       seen += page.ids.length
+      state.estimate = Math.max(seen, page.estimate ?? 0)
       if (ids.length) await applyBulkAction(accountId, action, labelId, ids)
       state.processed += ids.length
       // Query mode discovers the total page by page; Gmail's estimate keeps the bar honest meanwhile
@@ -231,13 +273,23 @@ async function handleBulk(job: Job) {
       })
       .execute()
 
-    if (userId) {
+    if (userId && state.capped) {
+      // No auto-relaunch: label/mark actions keep matching the query and would loop. The UI offers "Relancer" (B11).
+      const remainingEstimate = Math.max(state.estimate - state.processed, 0)
+      await notify({
+        userId,
+        category: 'job_completed',
+        title: 'Plafond atteint',
+        body: `${state.processed} mails traités sur ~${Math.max(state.estimate, state.processed)} — relancez l'action pour traiter la suite.`,
+        data: { capped: true, jobId: String(job.id), query, action, labelId: labelId ?? null, processed: state.processed, remainingEstimate },
+      })
+    } else if (userId) {
       await notify({
         userId,
         category: 'job_completed',
         title: 'Opération bulk terminée',
-        body: `${state.processed} élément(s) traité(s) (${action}). ${capNote}`.trim(),
-        data: { jobId: String(job.id), action, count: state.processed, capped: state.capped },
+        body: `${state.processed} élément(s) traité(s) (${action}).`,
+        data: { jobId: String(job.id), action, count: state.processed, capped: false },
       })
     }
   } catch (err) {

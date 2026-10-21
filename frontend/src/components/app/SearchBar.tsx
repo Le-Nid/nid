@@ -41,13 +41,13 @@ export function SearchBar({ value, onChange, saved = [], onSave }: Readonly<{
   return (
     <div className="flex flex-col gap-2">
       {(saved.length > 0 || onSave) && (
-        <div role="group" aria-label={t('searchBar.saved')} className="flex flex-wrap items-center gap-2">
+        <div role="group" aria-label={t('searchBar.saved')} className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 md:mx-0 md:flex-wrap md:px-0">
           {saved.map((s) => (
             <Button
               key={s.id}
               variant="outline"
               aria-pressed={s === active}
-              className="h-9 rounded-full px-3 aria-pressed:border-primary aria-pressed:bg-primary-soft aria-pressed:text-primary-text md:h-8"
+              className="h-9 shrink-0 rounded-full px-3 aria-pressed:border-primary aria-pressed:bg-primary-soft aria-pressed:text-primary-text md:h-8"
               onClick={() => onChange(s.query)}
             >
               {s.name}

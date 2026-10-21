@@ -898,6 +898,7 @@
     "palette": "Command palette",
     "paletteDescription": "Go to a Nid page",
     "palettePlaceholder": "Go to…",
+    "activeJobs": "{{count}} running",
     "noResults": "No results",
     "goTo": "Go to",
     "legacyPages": "Other pages (being migrated)",
@@ -941,6 +942,7 @@
 
   "jobProgress": {
     "stop": "Stop",
+    "waiting": "Waiting…",
     "stopFailed": "Could not stop the task",
     "completed_one": "Done · {{count, number}} email processed",
     "completed_other": "Done · {{count, number}} emails processed",
@@ -954,5 +956,96 @@
     "removeFilter": "Remove filter {{filter}}",
     "saved": "Saved searches",
     "save": "Save search"
+  },
+
+  "mails": {
+    "title": "Mail",
+    "results_one": "~{{count, number}} result",
+    "results_other": "~{{count, number}} results",
+    "refresh": "Refresh",
+    "saveAllNas": "Save all to the NAS",
+    "loadError": "Could not load mail.",
+    "retry": "Retry",
+    "empty": "No mail matches",
+    "emptyDescription": "Try another search or filter.",
+    "clearSearch": "Clear search",
+    "loadMore": "Show more",
+    "allLoaded": "All mail loaded",
+    "unread": "unread",
+    "attachment": "attachment",
+    "noSubject": "(no subject)",
+    "rowActions": "Actions for {{subject}}",
+    "col": {
+      "from": "From",
+      "subject": "Subject",
+      "date": "Date",
+      "labels": "Labels",
+      "size": "Size"
+    },
+    "quick": {
+      "all": "All",
+      "unread": "Unread",
+      "attachments": "With attachments",
+      "large": "Large > 10 MB",
+      "promotions": "Promotions > 6 months",
+      "social": "Social",
+      "old": "Older than a year",
+      "spam": "Spam",
+      "trash": "Trash"
+    },
+    "action": {
+      "open": "Open",
+      "archive": "Archive (remove from inbox)",
+      "archive_nas": "Save to the NAS",
+      "mark_read": "Mark as read",
+      "mark_unread": "Mark as unread",
+      "label": "Add a label",
+      "trash": "Delete"
+    },
+    "job": {
+      "trash_one": "Deleting {{count, number}} email",
+      "trash_other": "Deleting {{count, number}} emails",
+      "archive_one": "Archiving {{count, number}} email",
+      "archive_other": "Archiving {{count, number}} emails",
+      "archive_nas_one": "Saving {{count, number}} email to the NAS",
+      "archive_nas_other": "Saving {{count, number}} emails to the NAS",
+      "mark_read_one": "{{count, number}} email marked as read",
+      "mark_read_other": "{{count, number}} emails marked as read",
+      "mark_unread_one": "{{count, number}} email marked as unread",
+      "mark_unread_other": "{{count, number}} emails marked as unread",
+      "label_one": "Label added to {{count, number}} email",
+      "label_other": "Label added to {{count, number}} emails",
+      "saveAll": "Saving results to the NAS"
+    },
+    "undoDescription": {
+      "trash": "To the Gmail trash · tracked in Activity",
+      "archive": "Removed from the inbox · tracked in Activity"
+    },
+    "actionFailed": "The action could not be started.",
+    "jobFailed": "The action on your mail failed.",
+    "undoFailed": "Too late to undo: the action is already running.",
+    "labelPicker": "Add a label",
+    "labelPickerDescription": "Gmail label to add to the selected emails.",
+    "searchSaved": "Search saved",
+    "saveFailed": "Could not save the search",
+    "shortcutsHint": "Shortcuts: j/k move · o open · e archive · # delete · r read · u unread · / search · Esc deselect",
+    "shortcutsOff": "Keyboard shortcuts are off.",
+    "shortcutsDisable": "Turn off",
+    "shortcutsEnable": "Turn on shortcuts",
+    "viewer": {
+      "close": "Close email",
+      "actions": "Actions on this email",
+      "from": "From",
+      "to": "To",
+      "body": "Email content",
+      "empty": "(Empty body)",
+      "loadError": "Could not open this email.",
+      "remoteBlocked": "Remote images blocked to protect your privacy.",
+      "showRemote": "Show",
+      "attachments_one": "{{count}} attachment",
+      "attachments_other": "{{count}} attachments",
+      "download": "Download {{name}}",
+      "downloadFailed": "Download failed"
+    }
   }
 }

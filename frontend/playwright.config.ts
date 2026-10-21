@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
-const PORT = 3100
+// PW_PORT: run beside another checkout's e2e server (reuseExistingServer would otherwise test that one)
+const PORT = Number(process.env.PW_PORT ?? 3100)
 
 // PW_CHROMIUM_PATH: use a preinstalled Chromium when the bundled one is absent (sandboxed dev envs).
 const launchOptions = process.env.PW_CHROMIUM_PATH ? { executablePath: process.env.PW_CHROMIUM_PATH } : {}

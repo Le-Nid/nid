@@ -15,6 +15,7 @@ export const queryKeys = {
   dashboardArchive: (accountId: string) => ['dashboard', accountId, 'archive'] as const,
   gmailMessages: (accountId: string, query?: string, filter?: string) =>
     ['gmail', accountId, 'messages', query, filter] as const,
+  gmailMessage: (accountId: string, messageId: string) => ['gmail', accountId, 'message', messageId] as const,
   gmailLabels: (accountId: string) => ['gmail', accountId, 'labels'] as const,
   archiveMails: (accountId: string, params?: Record<string, any>) =>
     ['archive', accountId, 'mails', params] as const,
@@ -116,6 +117,14 @@ export function useGmailMessages(accountId: string | null, query: string, quickF
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextPageToken || undefined,
     enabled: !!accountId,
+  })
+}
+
+export function useGmailMessage(accountId: string | null, messageId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.gmailMessage(accountId!, messageId!),
+    queryFn: () => gmailApi.getMessageFull(accountId!, messageId!),
+    enabled: !!accountId && !!messageId,
   })
 }
 

@@ -147,7 +147,7 @@ server {
     }
 
     # SSE (Server-Sent Events) — high timeout
-    location /api/jobs/ {
+    location ~ ^/api/(jobs/.+/)?events$ {
         proxy_pass http://localhost:3000;
         proxy_set_header Host $host;
         proxy_buffering off;

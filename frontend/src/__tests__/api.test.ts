@@ -79,10 +79,14 @@ describe('API modules', () => {
 
     it('bulkOperation', async () => {
       mockPost({ jobId: 'j1' })
-      await gmailApi.bulkOperation('acc-1', 'trash', ['m1'], 'l1')
-      expect(api.post).toHaveBeenCalledWith('/api/gmail/acc-1/messages/bulk', {
-        action: 'trash', messageIds: ['m1'], labelId: 'l1', delayMs: 0,
-      })
+      await gmailApi.bulkOperation('acc-1', { action: 'trash', query: 'from:a' })
+      expect(api.post).toHaveBeenCalledWith('/api/gmail/acc-1/messages/bulk', { action: 'trash', query: 'from:a' })
+    })
+
+    it('getAttachment', async () => {
+      mockGet({ data: 'AA' })
+      await gmailApi.getAttachment('acc-1', 'm1', 'a1')
+      expect(api.get).toHaveBeenCalledWith('/api/gmail/acc-1/messages/m1/attachments/a1')
     })
   })
 

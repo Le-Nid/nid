@@ -98,6 +98,8 @@ Ou via requête Gmail :
 }
 ```
 
+Avec une `query`, un job sauvegarde au plus `BULK_QUERY_MAX` nouveaux mails (les mails déjà archivés sont écartés avant). S'il s'arrête là, il met en file une suite différentielle (même compte, même requête) différée de `ARCHIVE_CONTINUE_DELAY_MIN` minutes (statut `scheduled`, annulable) et notifie « Sauvegarde partielle : N mails sauvegardés, la suite reprend automatiquement dans 15 min » (`data.capped`, `data.continuationJobId`). La chaîne s'arrête quand une exécution n'a rien sauvegardé de nouveau ou après `ARCHIVE_CHAIN_MAX` suites ; la notification invite alors à relancer la sauvegarde.
+
 | Champ | Description |
 |---|---|
 | `messageIds` | Liste d'IDs Gmail à archiver (optionnel si `query` fourni) |

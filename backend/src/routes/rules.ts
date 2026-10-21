@@ -15,6 +15,7 @@ import { RULE_TEMPLATES } from "../rules/rule-templates";
 import { logAudit } from "../audit/audit.service";
 import { notFound } from "../utils/db";
 import { authPresets } from "../utils/auth";
+import { publishUserEvents } from "../events/events.service";
 
 const conditionSchema = z.object({
   field: z.enum([
@@ -74,6 +75,12 @@ const ruleCreateSchema = z.object({
 
 export async function rulesRoutes(app: FastifyInstance) {
   const { auth, accountAuth } = authPresets(app);
+
+  // B3: create/update/toggle/delete change the sidebar's active-rules counter (preview/run publish harmlessly)
+  app.addHook("onResponse", async (request, reply) => {
+    if (request.method !== "GET" && reply.statusCode < 300 && request.user?.sub)
+      publishUserEvents(request.user.sub).catch((err) => request.log.warn({ err }, "rules: publish counters failed"));
+  });
 
   // ─── Templates ────────────────────────────────────────
   app.get("/templates", auth, async () => {

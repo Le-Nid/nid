@@ -243,6 +243,18 @@
   :is(.ant-app, [class^="ant-"], [class*=" ant-"]) * {
     all: revert-layer;
   }
+  /* Mobile selection mode (§6.1): the bulk action bar takes the bottom nav's place, the page keeps room for
+     it, and toasts sit above it. --bulk-bar-h is the bar's measured height (safe area included), set by
+     BulkActionBar. !important: beats main's pb utility and the offset sonner sets inline. */
+  body:has([data-bulk-bar]) [data-bottom-nav] {
+    display: none;
+  }
+  body:has([data-bulk-bar]) main {
+    padding-bottom: calc(var(--bulk-bar-h, 142px) + 8px) !important;
+  }
+  body:has([data-bulk-bar]) [data-sonner-toaster] {
+    --mobile-offset-bottom: calc(var(--bulk-bar-h, 142px) + 8px) !important;
+  }
   @media (prefers-reduced-motion: reduce) {
     /* !important needed to override inline/library animations */
     *, ::before, ::after {

@@ -90,6 +90,12 @@ vi.mock('../archive/integrity.service', () => ({
 const mockLogAudit = vi.fn()
 vi.mock('../audit/audit.service', () => ({ logAudit: (...args: any[]) => mockLogAudit(...args) }))
 
+const mockEnqueueJob = vi.fn().mockResolvedValue({ id: 'archive_mails-next' })
+vi.mock('../jobs/queue', () => ({ enqueueJob: (...args: any[]) => mockEnqueueJob(...args) }))
+
+const mockPublishUserEvents = vi.fn().mockResolvedValue(undefined)
+vi.mock('../events/events.service', () => ({ publishUserEvents: (...args: any[]) => mockPublishUserEvents(...args) }))
+
 vi.mock('bullmq', () => {
   return {
     Worker: class MockWorker {
@@ -683,9 +689,14 @@ describe('bulk_operation by query (B5)', () => {
     expect(mockListMessages).toHaveBeenCalledTimes(2) // never fetches p3
     expect(mockTrashMessages).toHaveBeenNthCalledWith(1, 'acc-1', ['a', 'b', 'c'])
     expect(mockTrashMessages).toHaveBeenNthCalledWith(2, 'acc-1', ['d'])
-    expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({
-      body: expect.stringContaining('Plafond de 4'), data: expect.objectContaining({ count: 4, capped: true }),
-    }))
+    expect(mockNotify).toHaveBeenCalledWith({
+      userId: 'user-1',
+      category: 'job_completed',
+      title: 'Plafond atteint',
+      body: "4 mails traités sur ~6 — relancez l'action pour traiter la suite.",
+      data: { capped: true, jobId: 'job-1', query: 'older_than:1y', action: 'trash', labelId: null, processed: 4, remainingEstimate: 2 },
+    })
+    expect(mockEnqueueJob).not.toHaveBeenCalled() // never auto-relaunched
     expect(mockLogAudit).toHaveBeenCalledWith('user-1', 'bulk.trash', expect.objectContaining({
       details: expect.objectContaining({ count: 4, capped: true }),
     }))
@@ -736,5 +747,88 @@ describe('bulk_operation by query (B5)', () => {
   it('does not audit id-based jobs (the route already did)', async () => {
     await processJob(makeJob('bulk_operation', { accountId: 'acc-1', userId: 'user-1', action: 'trash', messageIds: ['m1'] }))
     expect(mockLogAudit).not.toHaveBeenCalled()
+  })
+})
+
+describe('archive_mails by query: cap and continuation', () => {
+  let processJob: (job: any) => Promise<any>
+  const withCap = async (cap: number, fn: () => Promise<void>) => {
+    const saved = config.BULK_QUERY_MAX
+    ;(config as any).BULK_QUERY_MAX = cap
+    try { await fn() } finally { (config as any).BULK_QUERY_MAX = saved }
+  }
+  const listing = (ids: string[]) => mockListMessages.mockResolvedValueOnce({ messages: ids.map((id) => ({ id })), nextPageToken: null })
+
+  beforeEach(() => {
+    processJob = (startUnifiedWorker() as any).processor
+  })
+
+  it('archives up to the cap, enqueues a delayed differential continuation and tells the user', () => withCap(2, async () => {
+    listing(['a', 'b', 'c', 'd'])
+    mockGetArchivedIds.mockResolvedValueOnce(new Set(['a']))
+    await processJob(makeJob('archive_mails', { accountId: 'acc-1', userId: 'user-1', query: 'label:x' }))
+
+    expect(mockArchiveMail.mock.calls.map((c) => c[1])).toEqual(['b', 'c'])
+    expect(mockEnqueueJob).toHaveBeenCalledWith(
+      'archive_mails',
+      { accountId: 'acc-1', userId: 'user-1', query: 'label:x', differential: true, chain: 1 },
+      { delay: 15 * 60_000 },
+    )
+    expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({
+      category: 'job_completed',
+      title: 'Sauvegarde partielle',
+      body: 'Sauvegarde partielle : 2 mails sauvegardés, la suite reprend automatiquement dans 15 min.',
+      data: expect.objectContaining({ capped: true, count: 2, continuationJobId: 'archive_mails-next' }),
+    }))
+  }))
+
+  it('stops chaining once ARCHIVE_CHAIN_MAX runs are reached', () => withCap(1, async () => {
+    listing(['a', 'b'])
+    await processJob(makeJob('archive_mails', { accountId: 'acc-1', userId: 'user-1', query: 'q', chain: 20 }))
+    expect(mockEnqueueJob).not.toHaveBeenCalled()
+    expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({
+      body: expect.stringContaining('reprise automatique arrêtée'),
+      data: expect.objectContaining({ capped: true, continuationJobId: null }),
+    }))
+  }))
+
+  it('stops chaining when a run saved nothing new', () => withCap(1, async () => {
+    listing(['a', 'b'])
+    mockArchiveMail.mockRejectedValueOnce(new Error('NAS down'))
+    await processJob(makeJob('archive_mails', { accountId: 'acc-1', userId: 'user-1', query: 'q', chain: 3 }))
+    expect(mockEnqueueJob).not.toHaveBeenCalled()
+    expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ category: 'job_failed', title: 'Sauvegarde partielle' }))
+  }))
+
+  it('does not cap an explicit messageIds list', () => withCap(1, async () => {
+    await processJob(makeJob('archive_mails', { accountId: 'acc-1', userId: 'user-1', messageIds: ['a', 'b'], differential: false }))
+    expect(mockArchiveMail).toHaveBeenCalledTimes(2)
+    expect(mockEnqueueJob).not.toHaveBeenCalled()
+  }))
+})
+
+describe('job lifecycle events (B3)', () => {
+  it('publishes started/finished for jobs owned by a user, nothing otherwise', () => {
+    const worker = startUnifiedWorker() as any
+    worker.handlers.active({ id: 'j1', name: 'bulk_operation', data: { userId: 'u1', accountId: 'acc-1' } })
+    worker.handlers.completed({ id: 'j1', name: 'bulk_operation', data: { userId: 'u1', accountId: 'acc-1' } })
+    worker.handlers.failed({ id: 'j2', name: 'integrity_check', data: { userId: 'u1', accountId: '' }, failedReason: 'boom' }, new Error('boom'))
+    worker.handlers.failed(undefined, new Error('stalled'))
+    worker.handlers.active({ id: 'j3', name: 'integrity_check', data: { accountId: '' } })
+
+    expect(mockPublishUserEvents).toHaveBeenCalledTimes(3)
+    expect(mockPublishUserEvents).toHaveBeenNthCalledWith(1, 'u1', {
+      event: 'job', data: { jobId: 'j1', type: 'bulk_operation', accountId: 'acc-1', phase: 'started', failed: false },
+    })
+    expect(mockPublishUserEvents).toHaveBeenNthCalledWith(3, 'u1', {
+      event: 'job', data: { jobId: 'j2', type: 'integrity_check', accountId: null, phase: 'finished', failed: true },
+    })
+  })
+
+  it('logs instead of throwing when publishing fails', async () => {
+    mockPublishUserEvents.mockRejectedValueOnce(new Error('redis down'))
+    const worker = startUnifiedWorker() as any
+    expect(() => worker.handlers.active({ id: 'j1', name: 'x', data: { userId: 'u1' } })).not.toThrow()
+    await new Promise((r) => setTimeout(r, 0))
   })
 })
