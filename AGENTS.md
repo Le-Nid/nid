@@ -89,7 +89,7 @@ Les deux outils travaillent ensemble : ponytail décide quoi chercher, graphify 
 
 - Étape ponytail « Already in this codebase? » = `graphify query "<besoin>"` (helper, composant, hook, service) avant d'écrire quoi que ce soit.
 - Étape ponytail « list every place your change must reach » = `graphify explain "<symbole>()"` sur chaque fonction/composant touché (liens entrants = appelants, tests, MCP, worker).
-- Lire uniquement les lignes que le graphe a localisées (`sed -n 'L1,L2p'` / Read avec offset+limit), jamais un fichier entier « pour voir ». `GRAPH_REPORT.md` seulement pour une question d'architecture.
+- Lire uniquement les lignes que le graphe a localisées (`sed -n 'L1,L2p'` / Read avec offset+limit), jamais un fichier entier « pour voir ». Imposé par le hook `.claude/hooks/read-guard.js` : Read sans offset/limit ou `cat` seul d'un fichier du projet de plus de 300 lignes est refusé (Read avec `limit` explicite si la lecture complète est vraiment nécessaire). `GRAPH_REPORT.md` seulement pour une question d'architecture.
 - `graphify update .` après chaque lot de modifications, pour que la recherche suivante voie le nouveau code.
 - Prompts de sous-agents : y recopier ces règles et demander un rapport court (fichiers, sha, tests, écarts).
 
