@@ -80,7 +80,7 @@ test.describe('mobile bottom bar', () => {
     await expect(nav.getByRole('link', { name: t('shell.home') })).toHaveAttribute('aria-current', 'page')
     await nav.getByRole('link', { name: t('shell.mails') }).click()
     await expect(page).toHaveURL(/\/mails$/)
-    await expect(page.getByRole('heading', { name: t('mailManager.title') })).toBeVisible()
+    await expect(page.getByRole('heading', { name: t('mails.title') })).toBeVisible()
     await expect(nav.getByRole('link', { name: t('shell.mails') })).toHaveAttribute('aria-current', 'page')
   })
 

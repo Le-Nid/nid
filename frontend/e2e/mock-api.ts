@@ -40,6 +40,9 @@ const ROUTES: [string, RegExp, Handler][] = [
     return gmail.mails.filter((m: { id: string }) => ids.includes(m.id))
   }],
   ['POST', /^\/api\/gmail\/[^/]+\/messages\/bulk$/, { jobId: 'job-bulk' }],
+  ['GET', /^\/api\/gmail\/[^/]+\/messages\/[^/]+\/full$/, gmail.full],
+  ['POST', /^\/api\/archive\/[^/]+\/archive$/, { jobId: 'job-nas' }],
+  ['DELETE', /^\/api\/jobs\/[^/]+$/, { ok: true }],
   ['GET', /^\/api\/archive\/config\/trash$/, { retentionDays: 30, purgeEnabled: true }],
   ['GET', /^\/api\/archive\/[^/]+\/mails$/, load('archive')],
   ['GET', /^\/api\/rules\/templates$/, []],

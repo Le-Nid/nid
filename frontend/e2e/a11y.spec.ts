@@ -11,7 +11,7 @@ const readBaseline = (): Record<string, Record<string, number>> => JSON.parse(re
 const PAGES: [name: string, path: string, ready: string][] = [
   ['login', '/login', 'login.submit'],
   ['overview', '/overview', 'dashboard.title'],
-  ['mails', '/mails', 'mailManager.title'],
+  ['mails', '/mails', 'mails.title'],
   ['archives', '/archives', 'archive.title'],
   ['rules', '/rules', 'rules.title'],
   ['activity', '/activity', 'jobs.title'],
