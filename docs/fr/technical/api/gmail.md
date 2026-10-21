@@ -128,6 +128,14 @@ Déclenche une opération bulk asynchrone. Retourne immédiatement un `jobId`.
 
 `delayMs`: Délai avant exécution (0–60000 ms, défaut `10000`). Pendant ce délai le job est `scheduled` et peut être annulé avec `DELETE /api/jobs/:jobId` (annuler). Envoyer `0` pour exécuter immédiatement.
 
+**Sélectionner tous les résultats (`query`)** : envoyer `query` (une recherche Gmail, ex. `"from:news@example.com older_than:1y"`) **à la place de** `messageIds`. Exactement l'un des deux est requis (sinon `400`) ; `query` ne peut pas être vide.
+
+```json
+{ "action": "trash", "query": "from:news@example.com", "delayMs": 10000 }
+```
+
+La route ne liste pas les messages : le job parcourt les résultats de la recherche Gmail (500 par page) et les traite page par page ; `total` et `progress` évoluent au fil des pages découvertes. Il s'arrête après `BULK_QUERY_MAX` mails (défaut `50000`, voir la configuration) : le job se termine alors `completed` avec une note dans `error` indiquant que le plafond est atteint, reprise dans la notification. L'entrée du journal d'audit est écrite à la fin du job, avec la requête et le nombre réel de mails traités (`details.count`, `details.capped`) ; avec `messageIds` elle est écrite à la mise en file.
+
 **Actions disponibles**
 
 | Action | Description |

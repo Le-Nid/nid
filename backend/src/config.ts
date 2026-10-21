@@ -51,6 +51,9 @@ export const config = {
   // Webhooks vers le réseau local (ntfy, Home Assistant…) — désactivé par défaut (SSRF)
   WEBHOOK_ALLOW_PRIVATE_NETWORKS: process.env.WEBHOOK_ALLOW_PRIVATE_NETWORKS === 'true',
 
+  // Plafond d'une action de masse par requête Gmail (« sélectionner tous les résultats ») : le job s'arrête là
+  BULK_QUERY_MAX: parseInt(process.env.BULK_QUERY_MAX ?? '50000', 10),
+
   // Gmail API throttle — stay under 250 quota units/user/sec
   // Most endpoints = 5 units → max ~50 concurrent requests/sec
   GMAIL_BATCH_SIZE: 25,

@@ -14,6 +14,8 @@ import { applyRetentionPolicies } from '../../archive/retention.service'
 import { purgeArchiveTrash } from '../../archive/trash.service'
 import { checkArchiveIntegrity } from '../../archive/integrity.service'
 import { createLogger } from '../../logger'
+import { config } from '../../config'
+import { logAudit, type AuditAction } from '../../audit/audit.service'
 
 const logger = createLogger('worker')
 
@@ -152,87 +154,98 @@ async function handleArchive(job: Job) {
 }
 
 // ─── Bulk ───────────────────────────────────────────────────
-async function handleBulk(job: Job) {
-  const { accountId, action, messageIds, labelId } = job.data
-  const db = getDb()
-  const total = messageIds.length
-  const CHUNK_SIZE = 50
+const BULK_CHUNK_SIZE = 50
 
-  await db
-    .updateTable('jobs')
-    .set({ status: 'active', total })
-    .where('bullmq_id', '=', String(job.id))
-    .execute()
-
-  const updateProgress = async (processed: number) => {
-    const progress = Math.round((processed / total) * 100)
-    await db
-      .updateTable('jobs')
-      .set({ progress, processed })
-      .where('bullmq_id', '=', String(job.id))
-      .execute()
-    await job.updateProgress(progress)
+/** Pages of ids to process: slices of messageIds, or Gmail search pages (B5 select-all by query). */
+async function* bulkPages(accountId: string, messageIds: string[] | undefined, query: string | undefined) {
+  if (!query) {
+    const ids = messageIds ?? []
+    for (let i = 0; i < ids.length; i += BULK_CHUNK_SIZE) {
+      yield { ids: ids.slice(i, i + BULK_CHUNK_SIZE), estimate: ids.length, more: i + BULK_CHUNK_SIZE < ids.length }
+    }
+    return
   }
+  let pageToken: string | undefined
+  do {
+    const res = await listMessages(accountId, { query, maxResults: 500, pageToken })
+    pageToken = res.nextPageToken ?? undefined
+    yield { ids: res.messages.map((m) => m.id!), estimate: res.resultSizeEstimate, more: !!pageToken }
+  } while (pageToken)
+}
+
+async function applyBulkAction(accountId: string, action: string, labelId: string | undefined, ids: string[]) {
+  switch (action) {
+    case 'trash':
+    // shortcut: the gmail.modify scope cannot delete permanently; Gmail empties its trash after 30 days
+    case 'delete':
+      // batchModify adding TRASH is not a documented way to trash: keep messages.trash
+      return trashMessages(accountId, ids)
+    case 'archive':
+      return modifyMessages(accountId, ids, [], ['INBOX'])
+    case 'mark_read':
+      return modifyMessages(accountId, ids, [], ['UNREAD'])
+    case 'mark_unread':
+      return modifyMessages(accountId, ids, ['UNREAD'], [])
+    case 'label':
+      if (!labelId) throw new Error('labelId required')
+      return modifyMessages(accountId, ids, [labelId], [])
+    case 'unlabel':
+      if (!labelId) throw new Error('labelId required')
+      return modifyMessages(accountId, ids, [], [labelId])
+    default:
+      throw new Error(`Unknown bulk action: ${action}`)
+  }
+}
+
+async function handleBulk(job: Job) {
+  const { accountId, action, messageIds, labelId, query, userId } = job.data
+  const db = getDb()
+  const jobRow = () => db.updateTable('jobs').where('bullmq_id', '=', String(job.id))
+  const cap = query ? config.BULK_QUERY_MAX : Infinity
+  const state = { processed: 0, capped: false }
+
+  await jobRow().set({ status: 'active', total: messageIds?.length ?? 0 }).execute()
 
   try {
-    // Process in chunks to report intermediate progress
-    let processed = 0
-    for (let i = 0; i < messageIds.length; i += CHUNK_SIZE) {
-      const chunk = messageIds.slice(i, i + CHUNK_SIZE)
-      switch (action) {
-        case 'trash':
-        // shortcut: the gmail.modify scope cannot delete permanently; Gmail empties its trash after 30 days
-        case 'delete':
-          await trashMessages(accountId, chunk)
-          break
-        case 'archive':
-          await modifyMessages(accountId, chunk, [], ['INBOX'])
-          break
-        case 'mark_read':
-          await modifyMessages(accountId, chunk, [], ['UNREAD'])
-          break
-        case 'mark_unread':
-          await modifyMessages(accountId, chunk, ['UNREAD'], [])
-          break
-        case 'label':
-          if (!labelId) throw new Error('labelId required')
-          await modifyMessages(accountId, chunk, [labelId], [])
-          break
-        case 'unlabel':
-          if (!labelId) throw new Error('labelId required')
-          await modifyMessages(accountId, chunk, [], [labelId])
-          break
-        default:
-          throw new Error(`Unknown bulk action: ${action}`)
+    let seen = 0
+    for await (const page of bulkPages(accountId, messageIds, query)) {
+      const ids = page.ids.slice(0, cap - state.processed)
+      seen += page.ids.length
+      if (ids.length) await applyBulkAction(accountId, action, labelId, ids)
+      state.processed += ids.length
+      // Query mode discovers the total page by page; Gmail's estimate keeps the bar honest meanwhile
+      const total = Math.min(cap, page.more ? Math.max(seen, page.estimate) : seen)
+      const progress = total ? Math.round((state.processed / total) * 100) : 100
+      await jobRow().set({ progress, processed: state.processed, total }).execute()
+      await job.updateProgress(progress)
+      if (state.processed >= cap) {
+        state.capped = seen > state.processed || page.more
+        break
       }
-      processed += chunk.length
-      await updateProgress(processed)
     }
-    await db
-      .updateTable('jobs')
-      .set({ status: 'completed', completed_at: new Date() })
-      .where('bullmq_id', '=', String(job.id))
+    const capNote = state.capped ? `Plafond de ${cap} mail(s) atteint : les résultats suivants n'ont pas été traités.` : ''
+    await jobRow()
+      .set({
+        status: 'completed', progress: 100, processed: state.processed, total: state.processed,
+        completed_at: new Date(), ...(capNote ? { error: capNote } : {}),
+      })
       .execute()
 
-    if (job.data.userId) {
+    if (userId) {
       await notify({
-        userId: job.data.userId,
+        userId,
         category: 'job_completed',
         title: 'Opération bulk terminée',
-        body: `${total} élément(s) traité(s) (${action}).`,
-        data: { jobId: String(job.id), action, count: total },
+        body: `${state.processed} élément(s) traité(s) (${action}). ${capNote}`.trim(),
+        data: { jobId: String(job.id), action, count: state.processed, capped: state.capped },
       })
     }
   } catch (err) {
-    await db
-      .updateTable('jobs')
-      .set({ status: 'failed', error: String(err) })
-      .where('bullmq_id', '=', String(job.id))
-      .execute()
+    await jobRow().set({ status: 'failed', error: String(err) }).execute()
 
-    if (job.data.userId) {
+    if (userId) {
       await notify({
-        userId: job.data.userId,
+        userId,
         category: 'job_failed',
         title: 'Opération bulk échouée',
         body: String(err),
@@ -240,6 +253,15 @@ async function handleBulk(job: Job) {
       })
     }
     throw err
+  } finally {
+    // The route cannot know how many mails a query matches: audit the real count once the job ends
+    if (query && userId) {
+      const auditAction = action === 'trash' || action === 'archive' ? `bulk.${action}` : 'bulk.label'
+      await logAudit(userId, auditAction as AuditAction, {
+        targetType: 'messages', targetId: accountId,
+        details: { action, query, count: state.processed, capped: state.capped, jobId: String(job.id) },
+      })
+    }
   }
 }
 

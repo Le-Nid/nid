@@ -130,6 +130,9 @@ export async function trashMessages(accountId: string, messageIds: string[]) {
   }
 }
 
+/** Gmail limit for users.messages.batchModify. */
+const BATCH_MODIFY_MAX_IDS = 1000
+
 export async function modifyMessages(
   accountId: string,
   messageIds: string[],
@@ -147,12 +150,28 @@ export async function modifyMessages(
       ignoreGone(err)
     }
   }
-  for (const chunk of chunks(messageIds, config.GMAIL_BATCH_SIZE)) {
-    await limitConcurrency(
-      chunk.map((id) => () => modifyOne(id)),
-      config.GMAIL_CONCURRENCY
-    )
-    await sleep(config.GMAIL_THROTTLE_MS)
+  const modifyEach = async (ids: string[]) => {
+    for (const chunk of chunks(ids, config.GMAIL_BATCH_SIZE)) {
+      await limitConcurrency(
+        chunk.map((id) => () => modifyOne(id)),
+        config.GMAIL_CONCURRENCY
+      )
+      await sleep(config.GMAIL_THROTTLE_MS)
+    }
+  }
+  // batchModify: 50 quota units per call for up to 1000 ids, vs 5 units per message with modify
+  for (const chunk of chunks(messageIds, BATCH_MODIFY_MAX_IDS)) {
+    try {
+      await gmailRetry(() =>
+        gmail.users.messages.batchModify({ userId: 'me', requestBody: { ids: chunk, addLabelIds, removeLabelIds } })
+      )
+      trackApiCall(accountId, 'messages.batchModify').catch(() => {})
+    } catch (err: any) {
+      const status = err?.code ?? err?.response?.status ?? err?.status
+      if (status !== 400 && status !== 404) throw err
+      // One id gone from Gmail meanwhile fails the whole call: redo one by one, skipping gone ids
+      await modifyEach(chunk)
+    }
   }
 }
 

@@ -5,6 +5,7 @@ const mockList = vi.fn()
 const mockGet = vi.fn()
 const mockTrash = vi.fn()
 const mockModify = vi.fn()
+const mockBatchModify = vi.fn()
 const mockLabelsList = vi.fn()
 const mockLabelsCreate = vi.fn()
 const mockLabelsDelete = vi.fn()
@@ -28,6 +29,7 @@ vi.mock('googleapis', () => ({
           get: (...args: any[]) => mockGet(...args),
           trash: (...args: any[]) => mockTrash(...args),
           modify: (...args: any[]) => mockModify(...args),
+          batchModify: (...args: any[]) => mockBatchModify(...args),
           attachments: {
             get: (...args: any[]) => mockAttachmentsGet(...args),
           },
@@ -228,17 +230,35 @@ describe('trashMessages', () => {
 
 // ─── modifyMessages ─────────────────────────────────────
 describe('modifyMessages', () => {
-  it('modifies labels and tracks each call', async () => {
-    mockModify.mockResolvedValue({ data: {} })
+  it('modifies labels with batchModify by chunks of 1000 ids', async () => {
+    mockBatchModify.mockResolvedValue({ data: {} })
+    const ids = Array.from({ length: 1001 }, (_, i) => `msg-${i}`)
 
-    await modifyMessages('acc-1', ['msg-1'], ['STARRED'], ['UNREAD'])
+    await modifyMessages('acc-1', ids, ['STARRED'], ['UNREAD'])
 
-    expect(mockModify).toHaveBeenCalledWith(
-      expect.objectContaining({
-        requestBody: { addLabelIds: ['STARRED'], removeLabelIds: ['UNREAD'] },
-      }),
-    )
+    expect(mockBatchModify).toHaveBeenCalledTimes(2)
+    expect(mockBatchModify.mock.calls[0][0].requestBody).toEqual({
+      ids: ids.slice(0, 1000), addLabelIds: ['STARRED'], removeLabelIds: ['UNREAD'],
+    })
+    expect(mockBatchModify.mock.calls[1][0].requestBody.ids).toEqual(['msg-1000'])
+    expect(mockModify).not.toHaveBeenCalled()
+    expect(mockTrackApiCall).toHaveBeenCalledWith('acc-1', 'messages.batchModify')
+  })
+
+  it('falls back to one call per message when an id is gone, skipping it', async () => {
+    mockBatchModify.mockRejectedValueOnce({ code: 400 })
+    mockModify.mockRejectedValueOnce({ code: 404 }).mockResolvedValue({ data: {} })
+
+    await expect(modifyMessages('acc-1', ['gone', 'msg-2'], [], ['INBOX'])).resolves.toBeUndefined()
+
+    expect(mockModify).toHaveBeenCalledTimes(2)
     expect(mockTrackApiCall).toHaveBeenCalledWith('acc-1', 'messages.modify')
+  })
+
+  it('still fails on other batchModify errors', async () => {
+    mockBatchModify.mockRejectedValueOnce({ code: 401 })
+    await expect(modifyMessages('acc-1', ['msg-1'], [], ['INBOX'])).rejects.toEqual({ code: 401 })
+    expect(mockModify).not.toHaveBeenCalled()
   })
 })
 
