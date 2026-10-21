@@ -8,6 +8,18 @@ import { cn } from '@/lib/utils'
 
 export type BulkAction = { label: string; icon?: ReactNode; onSelect: () => void; destructive?: boolean }
 
+/** Publishes the bar's real height (labels may wrap, fonts vary) so toasts and the page padding sit above it. */
+function trackBarHeight(el: HTMLDivElement | null) {
+  if (!el) return
+  const root = document.documentElement
+  const observer = new ResizeObserver(() => root.style.setProperty('--bulk-bar-h', `${el.offsetHeight}px`))
+  observer.observe(el)
+  return () => {
+    observer.disconnect()
+    root.style.removeProperty('--bulk-bar-h')
+  }
+}
+
 const MOBILE_SLOTS = 4 // prototype 3: four actions in the bottom bar, the rest under « Plus »
 
 /**
@@ -72,6 +84,7 @@ export function BulkActionBar({ count, total, mode, actions, onSelectAll, onClea
         role="toolbar"
         aria-label={t('bulkBar.label')}
         data-bulk-bar
+        ref={trackBarHeight}
         className="fixed inset-x-0 bottom-0 z-30 flex flex-col border-t bg-background px-2 pb-[max(22px,env(safe-area-inset-bottom))] shadow-actionbar"
       >
         <div className="flex items-center justify-between px-2">

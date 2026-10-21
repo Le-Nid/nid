@@ -90,4 +90,28 @@ describe('BulkActionBar', () => {
     act(() => listeners.forEach((l) => l()))
     expect(screen.getByRole('toolbar')).toHaveClass('fixed')
   })
+
+  it('publishes its measured height for the page padding and the toast offset, and clears it on unmount', () => {
+    mobile = true
+    let notify = () => {}
+    const disconnect = vi.fn()
+    const Original = globalThis.ResizeObserver
+    globalThis.ResizeObserver = class {
+      constructor(cb: () => void) { notify = cb }
+      observe() {}
+      unobserve() {}
+      disconnect = disconnect
+    } as unknown as typeof ResizeObserver
+    try {
+      const { unmount } = render(<BulkActionBar count={1} mode="ids" actions={makeActions()} onClear={vi.fn()} />)
+      Object.defineProperty(screen.getByRole('toolbar'), 'offsetHeight', { value: 181 })
+      notify()
+      expect(document.documentElement.style.getPropertyValue('--bulk-bar-h')).toBe('181px')
+      unmount()
+      expect(disconnect).toHaveBeenCalled()
+      expect(document.documentElement.style.getPropertyValue('--bulk-bar-h')).toBe('')
+    } finally {
+      globalThis.ResizeObserver = Original
+    }
+  })
 })

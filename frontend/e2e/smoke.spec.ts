@@ -145,9 +145,12 @@ test.describe('Mails', () => {
       await page.getByRole('menuitem', { name: t('mails.action.trash') }).click()
       const undo = page.getByRole('button', { name: t('undoToast.undo'), exact: true })
       await expect(undo).toBeVisible()
-      const toastBox = await undo.boundingBox()
-      const barBox = await bulkBar(page).boundingBox()
-      expect(toastBox!.y + toastBox!.height).toBeLessThanOrEqual(barBox!.y)
+      // poll: the toast slides in, its final position is what matters
+      await expect.poll(async () => {
+        const toastBox = await undo.boundingBox()
+        const barBox = await bulkBar(page).boundingBox()
+        return toastBox!.y + toastBox!.height <= barBox!.y
+      }).toBe(true)
 
       await bulkBar(page).getByRole('button', { name: t('bulkBar.clear') }).click()
       await expect(nav).toBeVisible()
