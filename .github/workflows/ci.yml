@@ -168,5 +168,5 @@ jobs:
             [ "$status" = SUCCESS ] || [ "$status" = FAILED ] && break
             sleep 5
           done
-          curl -fsS -u "$SONAR_TOKEN:" "https://sonarcloud.io/api/issues/search?componentKeys=Le-Nid_nid&pullRequest=$PR&inNewCodePeriod=true&resolved=false&types=BUG,CODE_SMELL&ps=100" \
+          curl -fsS -u "$SONAR_TOKEN:" "https://sonarcloud.io/api/issues/search?componentKeys=Le-Nid_nid&pullRequest=$PR&inNewCodePeriod=true&resolved=false&types=BUG,VULNERABILITY,CODE_SMELL&ps=100" \
             | jq -r '.issues[] | "\(.type) \(.severity) \(.rule) \(.component | sub("^Le-Nid_nid:"; "")):\(.line // "-") \(.message)"'

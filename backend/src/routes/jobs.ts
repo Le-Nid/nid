@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { getDb } from '../db'
 import { getQueue } from '../jobs/queue'
-import { notFound } from '../utils/db'
+import { notFound, UUID_RE } from '../utils/db'
 import { authPresets } from '../utils/auth'
 
 export async function jobRoutes(app: FastifyInstance) {
@@ -47,10 +47,15 @@ export async function jobRoutes(app: FastifyInstance) {
     const userId = request.user.sub
     const { jobId } = request.params as { jobId: string }
 
+    // Enqueue routes return the BullMQ id (undo toast), the jobs list returns the row id: accept both, like the SSE route
     const job = await db
       .selectFrom('jobs')
-      .select('bullmq_id')
-      .where('id', '=', jobId)
+      .select(['id', 'bullmq_id'])
+      .where((eb) =>
+        UUID_RE.test(jobId)
+          ? eb.or([eb('bullmq_id', '=', jobId), eb('id', '=', jobId)])
+          : eb('bullmq_id', '=', jobId)
+      )
       .where('user_id', '=', userId)
       .executeTakeFirst()
 
@@ -59,13 +64,19 @@ export async function jobRoutes(app: FastifyInstance) {
     if (job.bullmq_id) {
       const queue   = getQueue()
       const bullJob = await queue.getJob(job.bullmq_id)
-      await bullJob?.remove()
+      try {
+        await bullJob?.remove()
+      } catch (err) {
+        // BullMQ refuses to remove a locked (active) job; stopping a running job is not supported yet
+        if (await bullJob?.getState() !== 'active') throw err
+        return reply.code(409).send({ error: 'Job is already running and cannot be cancelled' })
+      }
     }
 
     await db
       .updateTable('jobs')
       .set({ status: 'cancelled' })
-      .where('id', '=', jobId)
+      .where('id', '=', job.id)
       .execute()
 
     return reply.code(204).send()

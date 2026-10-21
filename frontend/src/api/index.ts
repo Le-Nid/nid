@@ -33,7 +33,8 @@ export const gmailApi = {
     labelId?: string
   ) =>
     api
-      .post(`/api/gmail/${accountId}/messages/bulk`, { action, messageIds, labelId })
+      // delayMs 0: the current UI follows the job in a progress modal; the undo toast (D1) will send the 10 s delay
+      .post(`/api/gmail/${accountId}/messages/bulk`, { action, messageIds, labelId, delayMs: 0 })
       .then((r) => r.data),
 }
 
@@ -91,7 +92,7 @@ export const rulesApi = {
     api.delete(`/api/rules/${accountId}/${ruleId}`).then((r) => r.data),
 
   run: (accountId: string, ruleId: string) =>
-    api.post(`/api/rules/${accountId}/${ruleId}/run`).then((r) => r.data),
+    api.post(`/api/rules/${accountId}/${ruleId}/run`, { delayMs: 0 }).then((r) => r.data),
 
   preview: (accountId: string, conditions: any[]) =>
     api.post(`/api/rules/${accountId}/preview`, { conditions }).then((r) => r.data),
@@ -151,7 +152,7 @@ export const unsubscribeApi = {
     api.get(`/api/unsubscribe/${accountId}/newsletters/${encodeURIComponent(senderEmail)}/messages`).then((r) => r.data),
 
   deleteSender: (accountId: string, senderEmail: string, permanent = false) =>
-    api.post(`/api/unsubscribe/${accountId}/newsletters/${encodeURIComponent(senderEmail)}/delete`, { permanent }).then((r) => r.data),
+    api.post(`/api/unsubscribe/${accountId}/newsletters/${encodeURIComponent(senderEmail)}/delete`, { permanent, delayMs: 0 }).then((r) => r.data),
 }
 
 // ─── Attachments ──────────────────────────────────────────

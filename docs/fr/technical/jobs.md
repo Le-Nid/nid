@@ -69,10 +69,12 @@ La fonction `enqueueJob()` insère immédiatement une ligne dans la table `jobs`
 Les workers font ensuite un `UPDATE` (et non un `INSERT`) pour passer le job en `active`, puis `completed` ou `failed`.
 
 ```
-pending → active → completed
-                → failed
-         → cancelled (annulation manuelle)
+pending   → active → completed
+scheduled ↗        → failed
+pending / scheduled → cancelled (annulation manuelle ; 409 une fois active)
 ```
+
+Les jobs enfilés avec un `delay` (fenêtre d'annulation des actions de masse) démarrent en `scheduled` au lieu de `pending`.
 
 ---
 

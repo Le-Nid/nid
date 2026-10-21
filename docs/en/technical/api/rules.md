@@ -102,8 +102,10 @@ Triggers rule execution via BullMQ (asynchronous).
 
 **Response 202**
 ```json
-{ "jobId": "run_rule-1234567890", "message": "Rule execution enqueued" }
+{ "jobId": "run_rule-1234567890", "runAt": "2026-10-20T12:00:10.000Z", "message": "Rule execution enqueued" }
 ```
+
+Optional body `{ "delayMs": 10000 }`: Delay before the job runs (0–60000 ms, default `10000`). While it waits the job is `scheduled` and can be cancelled with `DELETE /api/jobs/:jobId` (undo). Send `0` to run immediately.
 
 ---
 

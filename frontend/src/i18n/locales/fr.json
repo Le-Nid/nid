@@ -876,5 +876,43 @@
     "failed": "{{type}} échoué",
     "processedCount": "{{count}} éléments traités avec succès.",
     "genericError": "Une erreur est survenue."
+  },
+
+  "shell": {
+    "mainNav": "Navigation principale",
+    "overview": "Vue d'ensemble",
+    "home": "Accueil",
+    "mails": "Mails",
+    "cleanup": "Nettoyage",
+    "rules": "Règles & libellés",
+    "archives": "Archives",
+    "activity": "Activité",
+    "settings": "Paramètres",
+    "admin": "Admin",
+    "administration": "Administration",
+    "tools": "Outils",
+    "more": "Plus",
+    "collapse": "Réduire la barre latérale",
+    "expand": "Développer la barre latérale",
+    "search": "Rechercher…",
+    "palette": "Palette de commandes",
+    "paletteDescription": "Aller à une page de Nid",
+    "palettePlaceholder": "Aller à…",
+    "noResults": "Aucun résultat",
+    "goTo": "Aller à",
+    "legacyPages": "Autres pages (en cours de migration)",
+    "language": "Langue",
+    "darkMode": "Mode sombre",
+    "logout": "Se déconnecter",
+    "loading": "Chargement"
+  },
+
+  "dataList": {
+    "selectAll": "Sélectionner toutes les lignes de la page",
+    "selectRow": "Sélectionner {{label}}",
+    "selected_one": "{{count}} ligne sélectionnée",
+    "selected_other": "{{count}} lignes sélectionnées",
+    "columns": "Colonnes",
+    "loading": "Chargement de la liste"
   }
 }

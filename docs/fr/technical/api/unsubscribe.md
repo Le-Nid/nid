@@ -60,14 +60,15 @@ Supprime en masse tous les mails d'un expéditeur newsletters (via job BullMQ).
 
 **Body**
 ```json
-{ "permanent": false }
+{ "permanent": false, "delayMs": 10000 }
 ```
 
 | Champ | Défaut | Description |
 |---|---|---|
+| `delayMs` | `10000` | Délai avant exécution (0–60000 ms, défaut `10000`). Pendant ce délai le job est `scheduled` et peut être annulé avec `DELETE /api/jobs/:jobId` (annuler). Envoyer `0` pour exécuter immédiatement.
 | `permanent` | `false` | `false` = corbeille, `true` = suppression définitive |
 
 **Réponse 202**
 ```json
-{ "jobId": "bulk_operation-456", "count": 42 }
+{ "jobId": "bulk_operation-456", "runAt": "2026-10-20T12:00:10.000Z", "count": 42 }
 ```

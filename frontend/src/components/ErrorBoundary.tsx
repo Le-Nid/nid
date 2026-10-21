@@ -1,6 +1,7 @@
 import React from 'react'
 import { Result, Button } from 'antd'
 import { createLogger } from '../utils/logger'
+import LegacyAntd from './LegacyAntd'
 
 const logger = createLogger('error-boundary')
 
@@ -35,6 +36,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
+        <LegacyAntd>
         <Result
           status="error"
           title="Une erreur inattendue s'est produite"
@@ -45,6 +47,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
             </Button>
           }
         />
+        </LegacyAntd>
       )
     }
     return this.props.children

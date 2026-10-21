@@ -121,9 +121,12 @@ Triggers an asynchronous bulk operation. Returns a `jobId` immediately.
 {
   "action": "trash",
   "messageIds": ["id1", "id2", "id3"],
-  "labelId": "Label_123"
+  "labelId": "Label_123",
+  "delayMs": 10000
 }
 ```
+
+`delayMs`: Delay before the job runs (0–60000 ms, default `10000`). While it waits the job is `scheduled` and can be cancelled with `DELETE /api/jobs/:jobId` (undo). Send `0` to run immediately.
 
 **Available actions**
 
@@ -139,7 +142,7 @@ Triggers an asynchronous bulk operation. Returns a `jobId` immediately.
 
 **Response 202**
 ```json
-{ "jobId": "bulk_operation-1234567890", "message": "Job enqueued" }
+{ "jobId": "bulk_operation-1234567890", "runAt": "2026-10-20T12:00:10.000Z", "message": "Job enqueued" }
 ```
 
 ---

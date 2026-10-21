@@ -23,4 +23,35 @@ describe('useThemeStore', () => {
     expect(useThemeStore.getState().mode).toBe('light')
     expect(localStorage.setItem).toHaveBeenCalledWith('theme', 'light')
   })
+  it('follows prefers-color-scheme when no theme is stored', async () => {
+    vi.resetModules()
+    vi.mocked(window.matchMedia).mockImplementationOnce((query: string) => ({ matches: true, media: query, addEventListener: vi.fn() }) as any)
+    const { useThemeStore: fresh } = await import('../store/theme.store')
+    expect(fresh.getState().mode).toBe('dark')
+  })
+
+  it('keeps following prefers-color-scheme until a theme is saved', async () => {
+    vi.resetModules()
+    let onChange = () => {}
+    const mql = { matches: false, addEventListener: (_: string, l: () => void) => { onChange = l } }
+    vi.mocked(window.matchMedia).mockImplementationOnce(() => mql as any)
+    const { useThemeStore: fresh } = await import('../store/theme.store')
+    expect(fresh.getState().mode).toBe('light')
+
+    mql.matches = true
+    onChange()
+    expect(fresh.getState().mode).toBe('dark')
+
+    vi.mocked(localStorage.getItem).mockReturnValue('dark')
+    mql.matches = false
+    onChange()
+    expect(fresh.getState().mode).toBe('dark')
+  })
+
+  it('puts the .dark class on <html> in dark mode', () => {
+    useThemeStore.getState().toggle()
+    expect(document.documentElement).toHaveClass('dark')
+    useThemeStore.getState().toggle()
+    expect(document.documentElement).not.toHaveClass('dark')
+  })
 })

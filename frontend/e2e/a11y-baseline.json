@@ -1,26 +1,26 @@
 {
   "desktop": {
     "login": 3,
-    "dashboard": 15,
-    "mails": 20,
-    "archive": 17,
-    "rules": 11,
-    "jobs": 14,
-    "settings": 52,
-    "unsubscribe": 10,
-    "attachments": 11,
-    "admin": 11
+    "overview": 11,
+    "mails": 15,
+    "archives": 13,
+    "rules": 8,
+    "activity": 11,
+    "settings": 49,
+    "unsubscribe": 7,
+    "attachments": 8,
+    "admin": 8
   },
   "mobile": {
     "login": 3,
-    "dashboard": 10,
-    "mails": 11,
-    "archive": 11,
-    "rules": 8,
-    "jobs": 8,
-    "settings": 44,
-    "unsubscribe": 6,
-    "attachments": 7,
-    "admin": 8
+    "overview": 9,
+    "mails": 9,
+    "archives": 10,
+    "rules": 7,
+    "activity": 7,
+    "settings": 43,
+    "unsubscribe": 5,
+    "attachments": 6,
+    "admin": 7
   }
 }
