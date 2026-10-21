@@ -1,3 +1,7 @@
-[
-  { "sender": "Weekly Digest", "email": "digest@news.test", "count": 12, "totalSizeBytes": 245760, "latestDate": "2026-10-10T06:00:00Z", "unsubscribeUrl": null }
-]
+{
+  "scannedAt": "2026-10-20T08:00:00Z",
+  "senders": [
+    { "sender": "Weekly Digest <digest@news.test>", "email": "digest@news.test", "count": 12, "totalSizeBytes": 245760, "unreadCount": 10, "latestDate": "2026-10-10T06:00:00Z", "unsubscribeUrl": "https://news.test/unsub", "unsubscribeMailto": null, "sampleMessageIds": [] },
+    { "sender": "Equipe Projet <list@groups.test>", "email": "list@groups.test", "count": 40, "totalSizeBytes": 81920, "unreadCount": 3, "latestDate": "2026-10-12T06:00:00Z", "unsubscribeUrl": null, "unsubscribeMailto": null, "sampleMessageIds": [] }
+  ]
+}

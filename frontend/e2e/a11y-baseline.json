@@ -7,7 +7,7 @@
     "rules": 7,
     "activity": 10,
     "settings": 48,
-    "unsubscribe": 6,
+    "cleanup": 0,
     "attachments": 7,
     "admin": 7
   },
@@ -19,7 +19,7 @@
     "rules": 7,
     "activity": 7,
     "settings": 43,
-    "unsubscribe": 5,
+    "cleanup": 0,
     "attachments": 6,
     "admin": 7
   }

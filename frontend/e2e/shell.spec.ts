@@ -26,6 +26,12 @@ test.describe('redirects (§3.3)', () => {
     })
   }
 
+  test('/unsubscribe → /cleanup?tab=senders', async ({ page }) => {
+    await page.goto('/unsubscribe')
+    await expect(page).toHaveURL((url) => url.pathname === '/cleanup' && url.search === '?tab=senders')
+    await expect(page.getByRole('tab', { name: t('cleanup.tab.senders') })).toHaveAttribute('aria-selected', 'true')
+  })
+
   test('keeps the query string (OAuth callback lands on /settings?gmail=…)', async ({ page }) => {
     await page.goto('/settings?gmail=connected')
     await expect(page).toHaveURL((url) => url.pathname === '/settings/account' && url.search === '?gmail=connected')
@@ -48,11 +54,11 @@ test.describe('desktop sidebar', () => {
     await expect(nav.getByRole('link', { name: t('shell.overview') })).not.toHaveAttribute('aria-current', 'page')
   })
 
-  test('entries without a new page yet point to the legacy page', async ({ page }) => {
+  test('Nettoyage opens /cleanup', async ({ page }) => {
     await page.goto('/overview')
     await mainNav(page).getByRole('link', { name: t('shell.cleanup') }).click()
-    await expect(page).toHaveURL(/\/unsubscribe$/)
-    await expect(page.getByRole('heading', { name: t('unsubscribe.title') })).toBeVisible()
+    await expect(page).toHaveURL(/\/cleanup$/)
+    await expect(page.getByRole('heading', { name: t('cleanup.title') })).toBeVisible()
   })
 
   test('collapses to icons and keeps named links', async ({ page }) => {

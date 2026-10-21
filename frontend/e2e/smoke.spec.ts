@@ -186,11 +186,111 @@ test('Settings', async ({ page }) => {
   await expect(page.getByRole('button', { name: t('settings.connectGmail') })).toBeVisible()
 })
 
-test('Unsubscribe / Newsletters', async ({ page }) => {
-  await page.goto('/unsubscribe')
-  await expect(page.getByRole('heading', { name: t('unsubscribe.title') })).toBeVisible()
-  await expect(page.getByText('Weekly Digest')).toBeVisible()
-  await expect(page.getByRole('button', { name: t('unsubscribe.scan') })).toBeVisible()
+test.describe('Cleanup', () => {
+  const DIGEST = 'Weekly Digest'
+  const isSenderDelete = (r: Request) => r.method() === 'POST' && r.url().endsWith(`/api/unsubscribe/${ACCOUNT}/newsletters/digest%40news.test/delete`)
+  /** The sender's actions: inline in its row ≥md, in the action sheet <md. */
+  const actionsOf = async (page: Page, isMobile: boolean, sender: string) => {
+    if (!isMobile) return page.getByRole('row').filter({ hasText: sender })
+    await page.getByRole('button', { name: t('cleanup.senderActions', { sender }) }).click()
+    return page.getByRole('dialog', { name: sender })
+  }
+
+  test('lists senders from the cached scan, sorted, with both tabs', async ({ page, api }) => {
+    await page.goto('/cleanup')
+    await expect(page.getByRole('heading', { name: t('cleanup.title') })).toBeVisible()
+    await expect(page.getByRole('tab', { name: t('cleanup.tab.senders') })).toHaveAttribute('aria-selected', 'true')
+    await expect(page.getByText(DIGEST)).toBeVisible()
+    await expect(page.getByText('Equipe Projet')).toBeVisible()
+    // Reading the page never scans the mailbox
+    expect(api.requests.filter((r) => r.url().includes('/scan'))).toHaveLength(0)
+
+    // click, not check(): the filter lives in the URL, updated in a transition
+    await page.getByRole('checkbox', { name: t('cleanup.newslettersOnly') }).click()
+    await expect(page.getByRole('checkbox', { name: t('cleanup.newslettersOnly') })).toBeChecked()
+    await expect(page.getByText('Equipe Projet')).toBeHidden()
+    await expect(page).toHaveURL(/only=newsletters/)
+
+    await page.getByRole('tab', { name: t('cleanup.tab.large') }).click()
+    await expect(page).toHaveURL(/tab=large/)
+    await expect(page.getByText('video-vacances.mp4')).toBeVisible()
+    await expect(page.getByRole('link', { name: t('cleanup.large.download', { name: 'devis.pdf' }) })).toHaveAttribute('href', /live\/m8\/download/)
+  })
+
+  test('unsubscribe asks for confirmation, opens the link, then trashes with undo', async ({ page, isMobile, context }) => {
+    await context.route('https://news.test/**', (route) => route.fulfill({ body: 'unsubscribed' }))
+    await page.goto('/cleanup')
+    const actions = await actionsOf(page, isMobile, DIGEST)
+    await actions.getByRole('button', { name: t('cleanup.action.unsubscribe') }).click()
+    const dialog = page.getByRole('alertdialog', { name: t('cleanup.confirm.title', { sender: DIGEST }) })
+    await expect(dialog).toBeVisible()
+    await expect(dialog.getByRole('button', { name: t('common.cancel') })).toBeFocused()
+
+    const popup = context.waitForEvent('page')
+    const del = page.waitForRequest(isSenderDelete)
+    await dialog.getByRole('button', { name: /Se désabonner et supprimer 12 mails/ }).click()
+    expect((await popup).url()).toContain('news.test/unsub')
+    expect((await del).postDataJSON()).not.toHaveProperty('delayMs')
+    await expect(page.getByRole('button', { name: t('undoToast.undo'), exact: true })).toBeVisible()
+  })
+
+  test('« Tout supprimer » has no dialog and « Annuler » cancels the delayed job', async ({ page, isMobile }) => {
+    await page.goto('/cleanup')
+    const actions = await actionsOf(page, isMobile, DIGEST)
+    const del = page.waitForRequest(isSenderDelete)
+    await actions.getByRole('button', { name: t('cleanup.action.deleteAll') }).click()
+    await del
+    await expect(page.getByRole('alertdialog')).toHaveCount(0)
+    await expect(page.getByRole('progressbar', { name: /Suppression de 12 mails de Weekly Digest/ })).toBeVisible()
+
+    const cancel = page.waitForRequest((r) => r.method() === 'DELETE' && r.url().endsWith('/api/jobs/job-sender'))
+    await page.getByRole('button', { name: t('undoToast.undo'), exact: true }).click()
+    await cancel
+    await expect(page.getByRole('progressbar')).toHaveCount(0)
+  })
+
+  test('sender without List-Unsubscribe: unsubscribe disabled with the reason (D3)', async ({ page, isMobile }) => {
+    await page.goto('/cleanup')
+    const actions = await actionsOf(page, isMobile, 'Equipe Projet')
+    const button = actions.getByRole('button', { name: t('cleanup.action.unsubscribe') })
+    await expect(button).toHaveAttribute('aria-disabled', 'true')
+    await expect(button).toHaveAccessibleDescription(t('cleanup.noUnsubscribe'))
+    await button.click({ force: true })
+    await expect(page.getByRole('alertdialog')).toHaveCount(0)
+    await expect(actions.getByRole('button', { name: t('cleanup.action.deleteAll') })).toBeEnabled()
+  })
+
+  test('« Toujours faire ça » creates a trash rule with a preview count', async ({ page, isMobile }) => {
+    await page.goto('/cleanup')
+    const actions = await actionsOf(page, isMobile, DIGEST)
+    await actions.getByRole('button', { name: t('cleanup.action.rule') }).click()
+    const sheet = page.getByRole('dialog', { name: t('cleanup.rule.title', { sender: DIGEST }) })
+    await expect(sheet.getByText(/12 mails correspondent/)).toBeVisible()
+    const create = page.waitForRequest((r) => r.method() === 'POST' && r.url().endsWith(`/api/rules/${ACCOUNT}`))
+    await sheet.getByRole('button', { name: t('cleanup.rule.create') }).click()
+    expect((await create).postDataJSON()).toMatchObject({
+      conditions: [{ field: 'from', operator: 'contains', value: 'digest@news.test' }], action: { type: 'trash' },
+    })
+    await expect(sheet).toBeHidden()
+  })
+
+  test('never scanned: empty state with « Analyser la boîte »', async ({ page }) => {
+    await page.route((url) => url.pathname === `/api/unsubscribe/${ACCOUNT}/newsletters`, (route) => route.fulfill({ json: { senders: [], scannedAt: null } }))
+    await page.goto('/cleanup')
+    await expect(page.getByText(t('cleanup.never.title'))).toBeVisible()
+    const scan = page.waitForRequest((r) => r.method() === 'POST' && r.url().endsWith('/scan'))
+    await page.getByRole('button', { name: t('cleanup.scan') }).click()
+    await scan
+    await expect(page.getByRole('progressbar', { name: t('cleanup.scanning') })).toBeVisible()
+  })
+
+  test('mobile: cards, no table', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'cards are mobile only')
+    await page.goto('/cleanup')
+    await expect(page.getByRole('table')).toHaveCount(0)
+    await expect(page.getByRole('tablist', { name: t('cleanup.tabsLabel') })).toBeVisible()
+    await expect(page.getByRole('main').getByRole('list').last().getByRole('listitem')).toHaveCount(2)
+  })
 })
 
 test('Attachments', async ({ page }) => {
