@@ -13,12 +13,11 @@ export interface NavEntry {
   adminOnly?: boolean
 }
 
-// N1 (§3.1). `to` = the new route when it exists, else the legacy page until its lot lands
-// (Nettoyage → /unsubscribe until L6).
+// N1 (§3.1). `to` = the new route when it exists, else the legacy page until its lot lands.
 export const NAV: NavEntry[] = [
   { key: 'overview', to: '/overview', icon: LayoutDashboard, match: ['/overview', '/analytics', '/insights'] },
   { key: 'mails', to: '/mails', icon: Inbox, match: ['/mails', '/unified', '/saved-searches'] },
-  { key: 'cleanup', to: '/unsubscribe', icon: BrushCleaning, match: ['/cleanup', '/unsubscribe', '/attachments'] },
+  { key: 'cleanup', to: '/cleanup', icon: BrushCleaning, match: ['/cleanup', '/unsubscribe', '/attachments'] },
   { key: 'rules', to: '/rules', icon: Zap, match: ['/rules', '/expiration'] },
   { key: 'archives', to: '/archives', icon: Archive, match: ['/archives', '/sharing'] },
   { key: 'activity', to: '/activity', icon: Activity, match: ['/activity'] },

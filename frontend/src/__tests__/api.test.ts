@@ -277,9 +277,9 @@ describe('API modules', () => {
   })
 
   describe('unsubscribeApi', () => {
-    it('scanNewsletters', async () => {
-      mockGet([])
-      await unsubscribeApi.scanNewsletters('acc-1')
+    it('getNewsletters', async () => {
+      mockGet({ senders: [], scannedAt: null })
+      await unsubscribeApi.getNewsletters('acc-1')
       expect(api.get).toHaveBeenCalledWith('/api/unsubscribe/acc-1/newsletters')
     })
 
@@ -297,8 +297,9 @@ describe('API modules', () => {
 
     it('deleteSender', async () => {
       mockPost({})
-      await unsubscribeApi.deleteSender('acc-1', 'news@test.com', true)
-      expect(api.post).toHaveBeenCalledWith('/api/unsubscribe/acc-1/newsletters/news%40test.com/delete', { permanent: true, delayMs: 0 })
+      await unsubscribeApi.deleteSender('acc-1', 'news@test.com')
+      // No delayMs: the server's 10 s undo window applies (D1)
+      expect(api.post).toHaveBeenCalledWith('/api/unsubscribe/acc-1/newsletters/news%40test.com/delete', {})
     })
   })
 

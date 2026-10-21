@@ -14,7 +14,7 @@ const SettingsPage = lazy(() => import("./pages/Settings"));
 const JobsPage = lazy(() => import("./pages/Jobs"));
 const RulesPage = lazy(() => import("./pages/Rules"));
 const AdminPage = lazy(() => import("./pages/Admin"));
-const UnsubscribePage = lazy(() => import("./pages/Unsubscribe"));
+const CleanupPage = lazy(() => import("./pages/Cleanup"));
 const AttachmentsPage = lazy(() => import("./pages/Attachments"));
 const InsightsPage = lazy(() => import("./pages/Insights"));
 const PrivacyPage = lazy(() => import("./pages/Privacy"));
@@ -102,7 +102,6 @@ export default function App() {
             <Route path="settings/:section" element={<SettingsPage />} />
             <Route path="admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
             {/* Legacy routes whose destination does not exist yet: redirected in their lot (§3.3) */}
-            <Route path="unsubscribe" element={<UnsubscribePage />} />
             <Route path="attachments" element={<AttachmentsPage />} />
             <Route path="insights" element={<InsightsPage />} />
             <Route path="privacy" element={<PrivacyPage />} />
@@ -115,12 +114,14 @@ export default function App() {
           </Route>
           {/* Migrated pages (§9.2): no antd context; own Suspense so the shell stays while the chunk loads */}
           <Route path="mails" element={<Suspense fallback={<RouteFallback />}><MailsPage /></Suspense>} />
+          <Route path="cleanup" element={<Suspense fallback={<RouteFallback />}><CleanupPage /></Suspense>} />
           {/* §3.3 redirects whose target exists in L0 */}
           <Route index element={<Redirect to="/overview" />} />
           <Route path="dashboard" element={<Redirect to="/overview" />} />
           <Route path="archive" element={<Redirect to="/archives" />} />
           <Route path="jobs" element={<Redirect to="/activity" />} />
           <Route path="settings" element={<Redirect to="/settings/account" />} />
+          <Route path="unsubscribe" element={<Navigate to="/cleanup?tab=senders" replace />} />
         </Route>
       </Routes>
     </Suspense>

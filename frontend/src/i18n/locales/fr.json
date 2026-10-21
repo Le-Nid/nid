@@ -480,33 +480,6 @@
     "jobError": "Erreur"
   },
 
-  "unsubscribe": {
-    "title": "Newsletters & Listes",
-    "scan": "Scanner",
-    "detected": "Newsletters détectées",
-    "newsletterMails": "Mails newsletter",
-    "spaceUsed": "Espace occupé",
-    "hint": "Cliquez sur Se désinscrire puis supprimer pour nettoyer.",
-    "searchPlaceholder": "Rechercher un expéditeur...",
-    "sender": "Expéditeur",
-    "mails": "Mails",
-    "size": "Taille",
-    "lastSent": "Dernier envoi",
-    "unsubscribeCol": "Désinscription",
-    "unsubscribeBtn": "Se désinscrire",
-    "byEmail": "Par email",
-    "unavailable": "Non disponible",
-    "trashMails": "Mettre à la corbeille",
-    "deleteConfirm": "Supprimer {{count}} mails de {{sender}} ?",
-    "deleteHint": "Les mails seront mis à la corbeille.",
-    "scanError": "Erreur lors du scan des newsletters",
-    "deleteStarted": "Suppression lancée",
-    "deleteDesc": "{{count}} mails de {{sender}} seront mis à la corbeille.",
-    "deleteError": "Erreur lors de la suppression",
-    "noNewsletters": "Aucune newsletter détectée. Cliquez sur Scanner.",
-    "noAccount": "Aucun compte Gmail connecté"
-  },
-
   "attachments": {
     "title": "Pièces jointes",
     "archived": "Archives",
@@ -1046,6 +1019,107 @@
       "attachments_other": "{{count}} pièces jointes",
       "download": "Télécharger {{name}}",
       "downloadFailed": "Téléchargement impossible"
+    }
+  },
+
+  "cleanup": {
+    "title": "Nettoyage",
+    "noAccount": "Aucun compte Gmail connecté",
+    "summary_one": "{{total}} récupérables. Le premier expéditeur pèse {{top}}.",
+    "summary_other": "{{total}} récupérables. Les {{count}} premiers expéditeurs pèsent {{top}}.",
+    "tabsLabel": "Que nettoyer",
+    "tab": {
+      "senders": "Expéditeurs & newsletters",
+      "large": "Gros mails & pièces jointes"
+    },
+    "sortLabel": "Trier par",
+    "sort": {
+      "count": "Nombre de mails",
+      "size": "Taille",
+      "unread": "Jamais ouverts"
+    },
+    "newslettersOnly": "Newsletters uniquement (List-Unsubscribe)",
+    "scannedAt": "Analyse du {{date}}",
+    "rescan": "Relancer l'analyse",
+    "scan": "Analyser la boîte",
+    "scanning": "Analyse des expéditeurs",
+    "scanFailed": "L'analyse des expéditeurs a échoué",
+    "never": {
+      "title": "Aucune analyse pour ce compte",
+      "description": "Nid regroupe par expéditeur les mails de listes de diffusion et de newsletters. L'analyse tourne en arrière-plan ; vous pouvez quitter la page."
+    },
+    "loadError": "Impossible de charger les expéditeurs",
+    "empty": "Aucun expéditeur à nettoyer",
+    "emptyDescription": "La dernière analyse n'a trouvé aucun mail de liste de diffusion.",
+    "emptyNewsletters": "Aucune newsletter avec désabonnement",
+    "showAllSenders": "Afficher tous les expéditeurs",
+    "col": {
+      "sender": "Expéditeur",
+      "email": "Adresse",
+      "size": "Taille",
+      "count": "Mails",
+      "unread": "Jamais ouverts"
+    },
+    "mails_one": "{{count, number}} mail",
+    "mails_other": "{{count, number}} mails",
+    "unread_one": "{{count, number}} jamais ouvert",
+    "unread_other": "{{count, number}} jamais ouverts",
+    "senderActions": "Actions pour {{sender}}",
+    "action": {
+      "unsubscribe": "Se désabonner et nettoyer",
+      "deleteAll": "Tout supprimer",
+      "rule": "Toujours faire ça"
+    },
+    "noUnsubscribe": "Cet expéditeur ne propose pas de désabonnement automatique",
+    "confirm": {
+      "title": "Se désabonner de {{sender}} ?",
+      "description_one": "La page de désabonnement de l'expéditeur s'ouvre dans un nouvel onglet : le désabonnement est définitif. Son mail part ensuite vers la corbeille Gmail, annulable pendant 10 s.",
+      "description_other": "La page de désabonnement de l'expéditeur s'ouvre dans un nouvel onglet : le désabonnement est définitif. Ses {{count, number}} mails partent ensuite vers la corbeille Gmail, annulable pendant 10 s.",
+      "action_one": "Se désabonner et supprimer {{count, number}} mail",
+      "action_other": "Se désabonner et supprimer {{count, number}} mails"
+    },
+    "job": {
+      "unsubscribed_one": "Désabonné · suppression de {{count, number}} mail de {{sender}}",
+      "unsubscribed_other": "Désabonné · suppression de {{count, number}} mails de {{sender}}",
+      "deleteAll_one": "Suppression de {{count, number}} mail de {{sender}}",
+      "deleteAll_other": "Suppression de {{count, number}} mails de {{sender}}"
+    },
+    "rule": {
+      "title": "Toujours supprimer les mails de {{sender}}",
+      "description": "Une règle met chaque jour à la corbeille les mails de cet expéditeur, nouveaux comme anciens.",
+      "name": "Nom de la règle",
+      "defaultName": "Corbeille : {{sender}}",
+      "if": "Si",
+      "condition": "l'expéditeur contient {{email}}",
+      "then": "Alors",
+      "action": "mettre à la corbeille, chaque jour",
+      "preview_one": "{{count, number}} mail correspond aujourd'hui",
+      "preview_other": "{{count, number}} mails correspondent aujourd'hui",
+      "previewLoading": "Calcul de l'aperçu…",
+      "previewError": "Aperçu indisponible",
+      "create": "Créer la règle",
+      "created": "Règle créée",
+      "failed": "Impossible de créer la règle"
+    },
+    "large": {
+      "source": "Source",
+      "live": "Gmail",
+      "archived": "Archives (NAS)",
+      "col": {
+        "file": "Fichier",
+        "mail": "Mail",
+        "size": "Taille",
+        "date": "Date"
+      },
+      "download": "Télécharger {{name}}",
+      "summary_one": "{{count, number}} pièce jointe · {{size}}",
+      "summary_other": "{{count, number}} pièces jointes · {{size}}",
+      "loadError": "Impossible de charger les pièces jointes",
+      "empty": "Aucune pièce jointe volumineuse",
+      "emptyDescription": {
+        "live": "Aucun mail Gmail avec une pièce jointe de plus de 100 Ko.",
+        "archived": "Aucune pièce jointe dans les archives de ce compte."
+      }
     }
   }
 }
