@@ -5,13 +5,13 @@ import type { TFunction } from 'i18next'
 import { createColumnHelper, useTable, type RowSelectionState, type Updater } from '@tanstack/react-table'
 import { toast } from 'sonner'
 import {
-  Archive, Ellipsis, HardDriveDownload, Inbox, MailCheck, MailOpen, Paperclip, RefreshCw, Tag, Trash2, Zap,
+  Archive, HardDriveDownload, Inbox, MailCheck, MailOpen, Paperclip, RefreshCw, Tag, Trash2, Zap,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { RowMenu } from '@/components/app/RowMenu'
 import { DataList, dataListFeatures } from '@/components/app/DataList'
 import { BulkActionBar, type BulkAction } from '@/components/app/BulkActionBar'
 import { SearchBar, type SavedSearch } from '@/components/app/SearchBar'
@@ -92,23 +92,13 @@ function DateCell({ value }: Readonly<{ value: string }>) {
   return <>{new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'short', year: sameYear ? undefined : 'numeric' }).format(date)}</>
 }
 
-function RowMenu({ mail, onRow }: Readonly<{ mail: Mail; onRow: (action: RowAction, mail: Mail) => void }>) {
+function MailMenu({ mail, onRow }: Readonly<{ mail: Mail; onRow: (action: RowAction, mail: Mail) => void }>) {
   const { t } = useTranslation()
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="size-11 md:size-8" aria-label={t('mails.rowActions', { subject: mail.subject || t('mails.noSubject') })}>
-          <Ellipsis aria-hidden="true" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {ROW_ACTIONS.map((a) => (
-          <DropdownMenuItem key={a} variant={a === 'trash' ? 'destructive' : 'default'} className="min-h-11 md:min-h-8" onSelect={() => onRow(a, mail)}>
-            {t(`mails.action.${a}`)}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <RowMenu
+      label={t('mails.rowActions', { subject: mail.subject || t('mails.noSubject') })}
+      items={ROW_ACTIONS.map((a) => ({ key: a, label: t(`mails.action.${a}`), onSelect: () => onRow(a, mail), destructive: a === 'trash' }))}
+    />
   )
 }
 
@@ -139,7 +129,7 @@ function buildColumns(t: TFunction, labels: ApiLabel[], onRow: (action: RowActio
       header: () => <span className="sr-only">{t('common.actions')}</span>,
       enableHiding: false,
       meta: { mobile: 'menu', align: 'end' },
-      cell: ({ row }) => <RowMenu mail={row.original} onRow={onRow} />,
+      cell: ({ row }) => <MailMenu mail={row.original} onRow={onRow} />,
     }),
   ])
 }

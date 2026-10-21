@@ -10,6 +10,21 @@ export interface RuleTemplate {
   dto: RuleCreateDTO
 }
 
+/** A daily rule applying the Gmail label `name` to mails whose subject matches `subjectQuery` (Gmail OR syntax). */
+function labelTemplate(id: string, name: string, target: string, subjectQuery: string): RuleTemplate {
+  const description = `Applique le libellé ${name} ${target}`
+  return {
+    id, name, description, category: 'label', label: { name },
+    dto: {
+      name, description,
+      conditions: [{ field: 'subject', operator: 'contains', value: subjectQuery }],
+      action: { type: 'label' },
+      schedule: 'daily',
+      is_active: true,
+    },
+  }
+}
+
 export const RULE_TEMPLATES: RuleTemplate[] = [
   // ─── Cleanup ──────────────────────────────────────────
   {
@@ -169,74 +184,10 @@ export const RULE_TEMPLATES: RuleTemplate[] = [
   },
 
   // ─── Label (L5: one click creates the Gmail label and the rule that fills it) ──
-  {
-    id: 'label-invoices',
-    name: 'Factures',
-    description: 'Applique le libellé Factures aux factures et reçus',
-    category: 'label',
-    label: { name: 'Factures' },
-    dto: {
-      name: 'Factures',
-      description: 'Applique le libellé Factures aux factures et reçus',
-      conditions: [
-        { field: 'subject', operator: 'contains', value: 'facture OR invoice OR reçu OR receipt' },
-      ],
-      action: { type: 'label' },
-      schedule: 'daily',
-      is_active: true,
-    },
-  },
-  {
-    id: 'label-deliveries',
-    name: 'Livraisons',
-    description: 'Applique le libellé Livraisons aux suivis de colis et d\'expédition',
-    category: 'label',
-    label: { name: 'Livraisons' },
-    dto: {
-      name: 'Livraisons',
-      description: 'Applique le libellé Livraisons aux suivis de colis et d\'expédition',
-      conditions: [
-        { field: 'subject', operator: 'contains', value: 'livraison OR colis OR expédié OR shipped OR delivery OR tracking' },
-      ],
-      action: { type: 'label' },
-      schedule: 'daily',
-      is_active: true,
-    },
-  },
-  {
-    id: 'label-bank',
-    name: 'Banque',
-    description: 'Applique le libellé Banque aux relevés, virements et prélèvements',
-    category: 'label',
-    label: { name: 'Banque' },
-    dto: {
-      name: 'Banque',
-      description: 'Applique le libellé Banque aux relevés, virements et prélèvements',
-      conditions: [
-        { field: 'subject', operator: 'contains', value: 'relevé OR virement OR prélèvement OR statement' },
-      ],
-      action: { type: 'label' },
-      schedule: 'daily',
-      is_active: true,
-    },
-  },
-  {
-    id: 'label-travel',
-    name: 'Billets & voyages',
-    description: 'Applique le libellé Billets & voyages aux billets et réservations',
-    category: 'label',
-    label: { name: 'Billets & voyages' },
-    dto: {
-      name: 'Billets & voyages',
-      description: 'Applique le libellé Billets & voyages aux billets et réservations',
-      conditions: [
-        { field: 'subject', operator: 'contains', value: 'billet OR réservation OR booking OR itinéraire OR boarding OR e-ticket' },
-      ],
-      action: { type: 'label' },
-      schedule: 'daily',
-      is_active: true,
-    },
-  },
+  labelTemplate('label-invoices', 'Factures', 'aux factures et reçus', 'facture OR invoice OR reçu OR receipt'),
+  labelTemplate('label-deliveries', 'Livraisons', 'aux suivis de colis et d\'expédition', 'livraison OR colis OR expédié OR shipped OR delivery OR tracking'),
+  labelTemplate('label-bank', 'Banque', 'aux relevés, virements et prélèvements', 'relevé OR virement OR prélèvement OR statement'),
+  labelTemplate('label-travel', 'Billets & voyages', 'aux billets et réservations', 'billet OR réservation OR booking OR itinéraire OR boarding OR e-ticket'),
 
   // ─── Expire (ex-Expiration: « expire dans X jours » = older_than + trash) ──
   {

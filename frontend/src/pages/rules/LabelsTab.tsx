@@ -2,13 +2,13 @@ import { useId, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { Ellipsis, Plus, Tag } from 'lucide-react'
+import { Plus, Tag } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
   Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { RowMenu } from '@/components/app/RowMenu'
 import { ConfirmDialog } from '@/components/app/ConfirmDialog'
 import { EmptyState } from '@/components/app/EmptyState'
 import { LabelBadge } from '@/components/app/LabelBadge'
@@ -40,7 +40,10 @@ export function buildTree(labels: ApiLabel[]): Node[] {
     label.name.split('/').forEach((part, i, parts) => {
       const path = parts.slice(0, i + 1).join('/')
       let child = node.children.find((c) => c.path === path)
-      if (!child) node.children.push((child = { name: part, path, children: [] }))
+      if (!child) {
+        child = { name: part, path, children: [] }
+        node.children.push(child)
+      }
       node = child
     })
     node.label = label
@@ -48,27 +51,25 @@ export function buildTree(labels: ApiLabel[]): Node[] {
   return root.children
 }
 
-const mailsQuery = (name: string) => `/mails?q=${encodeURIComponent(`label:${/\s/.test(name) ? `"${name}"` : name}`)}`
+const mailsQuery = (name: string) => {
+  const label = /\s/.test(name) ? `"${name}"` : name
+  return `/mails?q=${encodeURIComponent('label:' + label)}`
+}
 
 function LabelMenu({ label, open, onCreateRule }: Readonly<{ label: ApiLabel; open: (d: Dialogs) => void; onCreateRule: (t: RuleSheetTarget) => void }>) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const item = 'min-h-11 md:min-h-8'
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="size-11 md:size-8" aria-label={t('rules.labelsTab.menu', { name: label.name })}>
-          <Ellipsis aria-hidden="true" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem className={item} onSelect={() => open({ kind: 'rename', label })}>{t('rules.labelsTab.rename')}</DropdownMenuItem>
-        <DropdownMenuItem className={item} onSelect={() => open({ kind: 'color', label })}>{t('rules.labelsTab.color')}</DropdownMenuItem>
-        <DropdownMenuItem className={item} onSelect={() => onCreateRule({ labelId: label.id })}>{t('rules.labelsTab.createRule')}</DropdownMenuItem>
-        <DropdownMenuItem className={item} onSelect={() => navigate(mailsQuery(label.name))}>{t('rules.labelsTab.viewMails')}</DropdownMenuItem>
-        <DropdownMenuItem variant="destructive" className={item} onSelect={() => open({ kind: 'delete', label })}>{t('rules.labelsTab.delete')}</DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <RowMenu
+      label={t('rules.labelsTab.menu', { name: label.name })}
+      items={[
+        { key: 'rename', label: t('rules.labelsTab.rename'), onSelect: () => open({ kind: 'rename', label }) },
+        { key: 'color', label: t('rules.labelsTab.color'), onSelect: () => open({ kind: 'color', label }) },
+        { key: 'rule', label: t('rules.labelsTab.createRule'), onSelect: () => onCreateRule({ labelId: label.id }) },
+        { key: 'mails', label: t('rules.labelsTab.viewMails'), onSelect: () => navigate(mailsQuery(label.name)) },
+        { key: 'delete', label: t('rules.labelsTab.delete'), onSelect: () => open({ kind: 'delete', label }), destructive: true },
+      ]}
+    />
   )
 }
 

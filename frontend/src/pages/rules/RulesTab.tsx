@@ -4,9 +4,9 @@ import type { TFunction } from 'i18next'
 import { createColumnHelper, useTable } from '@tanstack/react-table'
 import { Switch } from 'radix-ui'
 import { toast } from 'sonner'
-import { Ellipsis, Plus, Zap } from 'lucide-react'
+import { Plus, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { RowMenu } from '@/components/app/RowMenu'
 import { DataList, dataListFeatures } from '@/components/app/DataList'
 import { ConfirmDialog } from '@/components/app/ConfirmDialog'
 import { EmptyState } from '@/components/app/EmptyState'
@@ -18,21 +18,17 @@ import type { Rule } from '@/types/rules'
 
 type Handlers = { run: (r: Rule) => void; edit: (r: Rule) => void; remove: (r: Rule) => void; toggle: (r: Rule) => void }
 
-function RowMenu({ rule, on }: Readonly<{ rule: Rule; on: Handlers }>) {
+function RuleMenu({ rule, on }: Readonly<{ rule: Rule; on: Handlers }>) {
   const { t } = useTranslation()
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="size-11 md:size-8" aria-label={t('rules.rowActions', { name: rule.name })}>
-          <Ellipsis aria-hidden="true" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem className="min-h-11 md:min-h-8" onSelect={() => on.run(rule)}>{t('rules.menu.run')}</DropdownMenuItem>
-        <DropdownMenuItem className="min-h-11 md:min-h-8" onSelect={() => on.edit(rule)}>{t('rules.menu.edit')}</DropdownMenuItem>
-        <DropdownMenuItem variant="destructive" className="min-h-11 md:min-h-8" onSelect={() => on.remove(rule)}>{t('rules.menu.delete')}</DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <RowMenu
+      label={t('rules.rowActions', { name: rule.name })}
+      items={[
+        { key: 'run', label: t('rules.menu.run'), onSelect: () => on.run(rule) },
+        { key: 'edit', label: t('rules.menu.edit'), onSelect: () => on.edit(rule) },
+        { key: 'delete', label: t('rules.menu.delete'), onSelect: () => on.remove(rule), destructive: true },
+      ]}
+    />
   )
 }
 
@@ -86,7 +82,7 @@ function buildColumns(t: TFunction, locale: string, cells: { current: { on: Hand
       header: () => <span className="sr-only">{t('common.actions')}</span>,
       enableHiding: false,
       meta: { mobile: 'menu', align: 'end' },
-      cell: ({ row }) => <RowMenu rule={row.original} on={cells.current.on} />,
+      cell: ({ row }) => <RuleMenu rule={row.original} on={cells.current.on} />,
     }),
   ])
 }
