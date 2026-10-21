@@ -82,6 +82,7 @@ vi.mock('../dashboard/cache.service', () => ({
 vi.mock('../rules/rules.service', () => ({
   getRules: vi.fn().mockResolvedValue([]),
   getRule: vi.fn().mockResolvedValue(null),
+  getRuleByTemplate: vi.fn().mockResolvedValue(null),
   createRule: vi.fn().mockResolvedValue({ id: 'rule-1', name: 'New' }),
   updateRule: vi.fn().mockResolvedValue({ id: 'rule-1', name: 'Updated' }),
   deleteRule: vi.fn(),

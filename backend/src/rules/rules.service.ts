@@ -29,7 +29,16 @@ export async function getRule(id: string, accountId: string) {
     .executeTakeFirst() ?? null
 }
 
-export async function createRule(accountId: string, dto: RuleCreateDTO) {
+export async function getRuleByTemplate(accountId: string, templateId: string) {
+  return getDb()
+    .selectFrom('rules')
+    .selectAll()
+    .where('gmail_account_id', '=', accountId)
+    .where('template_id', '=', templateId)
+    .executeTakeFirst() ?? null
+}
+
+export async function createRule(accountId: string, dto: RuleCreateDTO, templateId?: string) {
   logger.info({ accountId, name: dto.name }, 'creating rule')
   return getDb()
     .insertInto('rules')
@@ -41,6 +50,7 @@ export async function createRule(accountId: string, dto: RuleCreateDTO) {
       action:           JSON.stringify(dto.action),
       schedule:         dto.schedule ?? null,
       is_active:        dto.is_active ?? true,
+      template_id:      templateId ?? null,
     })
     .returningAll()
     .executeTakeFirstOrThrow()
