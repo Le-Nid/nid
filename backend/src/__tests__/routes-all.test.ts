@@ -93,6 +93,8 @@ vi.mock('../privacy/encryption.service', () => ({
 vi.mock('../unsubscribe/unsubscribe.service', () => ({
   scanNewsletters: vi.fn().mockResolvedValue([]),
   getNewsletterMessageIds: vi.fn().mockResolvedValue([]),
+  getNewsletterScan: vi.fn().mockResolvedValue({ senders: [], scannedAt: null }),
+  forgetNewsletterSender: vi.fn(),
 }))
 vi.mock('../reports/report.service', () => ({
   generateWeeklyReport: vi.fn().mockResolvedValue({ subject: 'Report', html: '<p>report</p>', stats: {} }),

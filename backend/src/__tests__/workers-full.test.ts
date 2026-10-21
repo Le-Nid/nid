@@ -46,8 +46,12 @@ vi.mock('../rules/rules.service', () => ({
 }))
 
 const mockScanNewsletters = vi.fn()
+const mockSaveNewsletterScan = vi.fn()
+const mockForgetNewsletterSender = vi.fn()
 vi.mock('../unsubscribe/unsubscribe.service', () => ({
   scanNewsletters: (...args: any[]) => mockScanNewsletters(...args),
+  saveNewsletterScan: (...args: any[]) => mockSaveNewsletterScan(...args),
+  forgetNewsletterSender: (...args: any[]) => mockForgetNewsletterSender(...args),
 }))
 
 const mockScanTrackingPixels = vi.fn()

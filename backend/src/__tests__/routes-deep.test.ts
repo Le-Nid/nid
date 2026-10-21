@@ -108,6 +108,8 @@ vi.mock('../privacy/encryption.service', () => ({
 vi.mock('../unsubscribe/unsubscribe.service', () => ({
   scanNewsletters: vi.fn().mockResolvedValue([]),
   getNewsletterMessageIds: vi.fn().mockResolvedValue(['msg-1', 'msg-2']),
+  getNewsletterScan: vi.fn().mockResolvedValue({ senders: [], scannedAt: null }),
+  forgetNewsletterSender: vi.fn(),
 }))
 vi.mock('../webhooks/webhook.service', () => ({
   triggerWebhooks: vi.fn(),

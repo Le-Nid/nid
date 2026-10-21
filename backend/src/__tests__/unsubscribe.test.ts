@@ -28,7 +28,10 @@ vi.mock('../gmail/quota.service', () => ({
   trackApiCall: vi.fn().mockResolvedValue(undefined),
 }))
 
-import { scanNewsletters, getNewsletterMessageIds } from '../unsubscribe/unsubscribe.service'
+import {
+  scanNewsletters, getNewsletterMessageIds, saveNewsletterScan, getNewsletterScan, forgetNewsletterSender,
+} from '../unsubscribe/unsubscribe.service'
+import { getDb } from '../db'
 import { trackApiCall } from '../gmail/quota.service'
 
 beforeEach(() => vi.clearAllMocks())
@@ -112,26 +115,20 @@ describe('scanNewsletters', () => {
     expect(trackApiCall).toHaveBeenCalledWith('acc-1', 'messages.get')
   })
 
-  it('skips messages without List-Unsubscribe header', async () => {
+  it('keeps list senders without List-Unsubscribe (D3) and counts unread mails', async () => {
     mockList.mockResolvedValue({
       data: {
-        messages: [{ id: 'msg-1' }],
+        messages: [{ id: 'msg-1' }, { id: 'msg-2' }],
         nextPageToken: null,
       },
     })
-    mockGet.mockResolvedValueOnce({
-      data: {
-        id: 'msg-1',
-        payload: {
-          headers: [
-            { name: 'From', value: 'plain@test.com' },
-          ],
-        },
-      },
+    const plain = (id: string, labelIds: string[]) => ({
+      data: { id, labelIds, payload: { headers: [{ name: 'From', value: 'plain@test.com' }] } },
     })
+    mockGet.mockResolvedValueOnce(plain('msg-1', ['UNREAD', 'INBOX'])).mockResolvedValueOnce(plain('msg-2', ['INBOX']))
 
-    const result = await scanNewsletters('acc-1')
-    expect(result).toEqual([])
+    const [sender] = await scanNewsletters('acc-1')
+    expect(sender).toMatchObject({ email: 'plain@test.com', count: 2, unreadCount: 1, unsubscribeUrl: null, unsubscribeMailto: null })
   })
 
   it('calls onProgress callback', async () => {
@@ -246,5 +243,55 @@ describe('getNewsletterMessageIds', () => {
 
     const ids = await getNewsletterMessageIds('acc-1', 'nobody@test.com')
     expect(ids).toEqual([])
+  })
+})
+
+// ─── Cached scan (L6) ───────────────────────────────────────
+function chain(result?: unknown) {
+  const c: any = {}
+  for (const m of ['insertInto', 'values', 'onConflict', 'column', 'doUpdateSet', 'selectFrom', 'select', 'where', 'updateTable', 'set']) {
+    c[m] = vi.fn((arg?: any) => {
+      if (m === 'onConflict') arg(c)
+      return c
+    })
+  }
+  c.execute = vi.fn().mockResolvedValue(undefined)
+  c.executeTakeFirst = vi.fn().mockResolvedValue(result)
+  vi.mocked(getDb).mockReturnValue(c)
+  return c
+}
+
+describe('newsletter scan cache', () => {
+  const sender = { sender: 'N <n@x.com>', email: 'n@x.com', count: 3, totalSizeBytes: 10, unreadCount: 2, unsubscribeUrl: null, unsubscribeMailto: null, latestDate: '', sampleMessageIds: [] }
+
+  it('persists the scan, one row per account (upsert)', async () => {
+    const db = chain()
+    await saveNewsletterScan('acc-1', [sender])
+    expect(db.insertInto).toHaveBeenCalledWith('newsletter_scans')
+    expect(db.values).toHaveBeenCalledWith(expect.objectContaining({ gmail_account_id: 'acc-1', senders: JSON.stringify([sender]) }))
+    expect(db.column).toHaveBeenCalledWith('gmail_account_id')
+    expect(db.doUpdateSet).toHaveBeenCalledWith(expect.objectContaining({ senders: JSON.stringify([sender]) }))
+  })
+
+  it('reads the cached senders and scan date', async () => {
+    const scannedAt = new Date('2026-10-20T08:00:00Z')
+    chain({ senders: [sender], scanned_at: scannedAt })
+    expect(await getNewsletterScan('acc-1')).toEqual({ senders: [sender], scannedAt })
+  })
+
+  it('reports a never-scanned account', async () => {
+    chain(undefined)
+    expect(await getNewsletterScan('acc-1')).toEqual({ senders: [], scannedAt: null })
+  })
+
+  it('drops one sender from the cache without rescanning', async () => {
+    const db = chain()
+    await forgetNewsletterSender('acc-1', 'N@X.com')
+    expect(db.updateTable).toHaveBeenCalledWith('newsletter_scans')
+    expect(db.where).toHaveBeenCalledWith('gmail_account_id', '=', 'acc-1')
+    const { senders } = db.set.mock.calls[0][0]
+    // Filtered in SQL (atomic), lowercased like the scan's keys
+    expect(JSON.stringify(senders.toOperationNode())).toContain('"n@x.com"')
+    expect(mockList).not.toHaveBeenCalled()
   })
 })
