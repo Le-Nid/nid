@@ -36,7 +36,9 @@ function UserMenu({ withAccounts }: Readonly<{ withAccounts: boolean }>) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-11 gap-2 px-2 md:h-9" aria-label={t('layout.userMenu')}>
+        {/* Name from content, not aria-label: it must contain the visible user name (WCAG 2.5.3) */}
+        <Button variant="ghost" className="h-11 gap-2 px-2 md:h-9">
+          <span className="sr-only">{t('layout.userMenu')}</span>
           <span className="grid size-8 place-items-center overflow-hidden rounded-full bg-avatar text-avatar-foreground">
             {user?.avatar_url
               ? <img src={user.avatar_url} alt="" crossOrigin="anonymous" className="size-full object-cover" />
