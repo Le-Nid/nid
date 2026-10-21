@@ -942,6 +942,7 @@
 
   "jobProgress": {
     "stop": "Stop",
+    "waiting": "Waiting…",
     "stopFailed": "Could not stop the task",
     "completed_one": "Done · {{count, number}} email processed",
     "completed_other": "Done · {{count, number}} emails processed",

@@ -942,6 +942,7 @@
 
   "jobProgress": {
     "stop": "Arrêter",
+    "waiting": "En attente…",
     "stopFailed": "Impossible d'arrêter la tâche",
     "completed_one": "Terminé · {{count, number}} mail traité",
     "completed_other": "Terminé · {{count, number}} mails traités",

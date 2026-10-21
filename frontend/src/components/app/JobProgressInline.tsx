@@ -17,6 +17,8 @@ export function JobProgressInline({ jobId, label, onDone }: Readonly<{
   const { t, i18n } = useTranslation()
   const { job } = useJobSSE(jobId)
   const done = !!job && TERMINAL.has(job.status)
+  // A delayed (undo window) or queued job has no total yet: "0 / 0" would read as an empty result
+  const started = done || (job?.total ?? 0) > 0
 
   useEffect(() => {
     if (done) onDone?.(job)
@@ -41,7 +43,9 @@ export function JobProgressInline({ jobId, label, onDone }: Readonly<{
         />
       </Progress.Root>
       <div className="flex justify-between gap-2 text-xs text-muted-foreground">
-        <span className="tabular-nums">{n.format(job?.processed ?? 0)} / {n.format(job?.total ?? 0)}</span>
+        <span className="tabular-nums">
+          {started ? `${n.format(job?.processed ?? 0)} / ${n.format(job?.total ?? 0)}` : t('jobProgress.waiting')}
+        </span>
         <span aria-live="polite">{done && t(`jobProgress.${job.status}`, { count: job.processed, error: job.error })}</span>
       </div>
     </div>
