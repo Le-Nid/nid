@@ -131,6 +131,10 @@ export function buildGmailQuery(conditions: RuleCondition[]): string {
 
 // ─── Exécution d'une règle ────────────────────────────────
 
+const PENDING_ONLY: Partial<Record<RuleAction['type'], string>> = {
+  archive: 'in:inbox', mark_read: 'is:unread', mark_unread: 'is:read',
+}
+
 export async function runRule(rule: any, accountId: string, userId?: string): Promise<RuleRunResult> {
   const conditions: RuleCondition[] = Array.isArray(rule.conditions)
     ? rule.conditions
@@ -140,7 +144,9 @@ export async function runRule(rule: any, accountId: string, userId?: string): Pr
     ? rule.action
     : JSON.parse(rule.action as string)
 
-  const gmailQuery = buildGmailQuery(conditions)
+  // Only mails the action still changes: a daily rule must not redo (nor recount) what it already did.
+  // shortcut: label/unlabel/archive_nas keep re-matching (no safe Gmail operator by label id); add one if their counts matter
+  const gmailQuery = [buildGmailQuery(conditions), PENDING_ONLY[action.type]].filter(Boolean).join(' ')
   logger.info({ ruleId: rule.id, accountId, gmailQuery, action: action.type }, 'executing rule')
   // B5: the job pages the query itself under BULK_QUERY_MAX; listing every id here made 80k-id payloads
   const res = await listMessages(accountId, { query: gmailQuery, maxResults: 1 })
