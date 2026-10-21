@@ -81,9 +81,19 @@ Rules:
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
 
-### ponytail + graphify (revues)
+### ponytail + graphify
 
-Les deux outils travaillent ensemble : ponytail décide quoi chercher, graphify trouve où.
+Les deux outils travaillent ensemble : ponytail décide quoi chercher, graphify trouve où. But : recherche rapide et peu de tokens.
+
+**Pendant une feature**
+
+- Étape ponytail « Already in this codebase? » = `graphify query "<besoin>"` (helper, composant, hook, service) avant d'écrire quoi que ce soit.
+- Étape ponytail « list every place your change must reach » = `graphify explain "<symbole>()"` sur chaque fonction/composant touché (liens entrants = appelants, tests, MCP, worker).
+- Lire uniquement les lignes que le graphe a localisées (`sed -n 'L1,L2p'` / Read avec offset+limit), jamais un fichier entier « pour voir ». `GRAPH_REPORT.md` seulement pour une question d'architecture.
+- `graphify update .` après chaque lot de modifications, pour que la recherche suivante voie le nouveau code.
+- Prompts de sous-agents : y recopier ces règles et demander un rapport court (fichiers, sha, tests, écarts).
+
+**Pendant une revue**
 
 - `/ponytail-review` et `/ponytail-audit` commencent par `graphify update .` puis s'appuient sur le graphe avant toute lecture de fichier.
 - « Callers of every changed function » : `graphify explain "<fonction>()"` (liens entrants `<--`) pour chaque fonction modifiée du diff, au lieu d'un grep ; `grep` seulement pour confirmer une ligne précise.
