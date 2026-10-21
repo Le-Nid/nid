@@ -68,27 +68,33 @@ export async function gmailRoutes(app: FastifyInstance) {
   // ─── Bulk operations (async via BullMQ) ───────────────
   const bulkSchema = z.object({
     action: z.enum(['trash', 'label', 'unlabel', 'mark_read', 'mark_unread', 'archive']),
-    messageIds: z.array(z.string()).min(1, 'No messageIds provided').max(5000),
+    messageIds: z.array(z.string()).min(1, 'No messageIds provided').max(5000).optional(),
+    // B5 select-all: Gmail search string, the worker pages through its results (capped by BULK_QUERY_MAX)
+    query: z.string().trim().min(1).max(2000).optional(),
     labelId: z.string().optional(),
     // D1 undo window: the job waits this long in BullMQ and can be cancelled via DELETE /api/jobs/:jobId
     delayMs: z.number().int().min(0).max(60_000).default(10_000),
+  }).refine((b) => (b.messageIds === undefined) !== (b.query === undefined), {
+    message: 'Provide exactly one of messageIds or query',
   })
 
   app.post('/:accountId/messages/bulk', accountAuth, async (request, reply) => {
     const { accountId } = request.params as { accountId: string }
     const userId = request.user.sub
-    const { action, messageIds, labelId, delayMs } = bulkSchema.parse(request.body)
+    const { action, messageIds, query, labelId, delayMs } = bulkSchema.parse(request.body)
 
     const job = await enqueueJob('bulk_operation', {
       accountId,
       userId,
       action,
       messageIds,
+      query,
       labelId,
     }, { delay: delayMs })
     const runAt = new Date(Date.now() + delayMs).toISOString()
 
-    await logAudit(userId, `bulk.${action === 'trash' ? 'trash' : action === 'archive' ? 'archive' : 'label'}` as any, {
+    // Query mode: the worker audits the real processed count once it is known
+    if (messageIds) await logAudit(userId, `bulk.${action === 'trash' ? 'trash' : action === 'archive' ? 'archive' : 'label'}` as any, {
       targetType: 'messages', targetId: accountId,
       details: { action, count: messageIds.length, jobId: job.id },
     })

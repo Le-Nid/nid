@@ -87,6 +87,9 @@ vi.mock('../archive/integrity.service', () => ({
   checkArchiveIntegrity: (...args: any[]) => mockCheckIntegrity(...args),
 }))
 
+const mockLogAudit = vi.fn()
+vi.mock('../audit/audit.service', () => ({ logAudit: (...args: any[]) => mockLogAudit(...args) }))
+
 vi.mock('bullmq', () => {
   return {
     Worker: class MockWorker {
@@ -106,6 +109,7 @@ vi.mock('bullmq', () => {
 })
 
 import { startUnifiedWorker } from '../jobs/workers/unified.worker'
+import { config } from '../config'
 
 beforeEach(() => vi.clearAllMocks())
 
@@ -628,5 +632,109 @@ describe('unified worker handlers', () => {
     expect(job.updateProgress).toHaveBeenCalledWith(10)
     expect(job.updateProgress).toHaveBeenCalledWith(50)
     expect(result).toHaveLength(2)
+  })
+})
+
+describe('bulk_operation by query (B5)', () => {
+  let processJob: (job: any) => Promise<any>
+  const page = (ids: string[], nextPageToken: string | null, resultSizeEstimate = 6) => ({
+    messages: ids.map((id) => ({ id })), nextPageToken, resultSizeEstimate,
+  })
+  const withCap = async (cap: number, fn: () => Promise<void>) => {
+    const saved = config.BULK_QUERY_MAX
+    ;(config as any).BULK_QUERY_MAX = cap
+    try { await fn() } finally { (config as any).BULK_QUERY_MAX = saved }
+  }
+
+  beforeEach(() => {
+    processJob = (startUnifiedWorker() as any).processor
+  })
+
+  it('pages through messages.list and processes every page, then audits the real count', async () => {
+    mockListMessages
+      .mockResolvedValueOnce(page(['a', 'b', 'c'], 'p2'))
+      .mockResolvedValueOnce(page(['d', 'e'], null))
+    const job = makeJob('bulk_operation', { accountId: 'acc-1', userId: 'user-1', action: 'archive', query: 'from:x' })
+
+    await processJob(job)
+
+    expect(mockListMessages).toHaveBeenNthCalledWith(1, 'acc-1', { query: 'from:x', maxResults: 500, pageToken: undefined })
+    expect(mockListMessages).toHaveBeenNthCalledWith(2, 'acc-1', { query: 'from:x', maxResults: 500, pageToken: 'p2' })
+    expect(mockModifyMessages).toHaveBeenNthCalledWith(1, 'acc-1', ['a', 'b', 'c'], [], ['INBOX'])
+    expect(mockModifyMessages).toHaveBeenNthCalledWith(2, 'acc-1', ['d', 'e'], [], ['INBOX'])
+    expect(job.updateProgress).toHaveBeenNthCalledWith(1, 50) // 3 of Gmail's estimate of 6
+    expect(job.updateProgress).toHaveBeenLastCalledWith(100) // 5 of 5 discovered
+    expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({
+      category: 'job_completed', data: expect.objectContaining({ count: 5, capped: false }),
+    }))
+    expect(mockLogAudit).toHaveBeenCalledWith('user-1', 'bulk.archive', expect.objectContaining({
+      details: expect.objectContaining({ query: 'from:x', count: 5, capped: false }),
+    }))
+  })
+
+  it('stops at BULK_QUERY_MAX and reports the cap', () => withCap(4, async () => {
+    mockListMessages
+      .mockResolvedValueOnce(page(['a', 'b', 'c'], 'p2'))
+      .mockResolvedValueOnce(page(['d', 'e', 'f'], 'p3'))
+    const job = makeJob('bulk_operation', { accountId: 'acc-1', userId: 'user-1', action: 'trash', query: 'older_than:1y' })
+
+    await processJob(job)
+
+    expect(mockListMessages).toHaveBeenCalledTimes(2) // never fetches p3
+    expect(mockTrashMessages).toHaveBeenNthCalledWith(1, 'acc-1', ['a', 'b', 'c'])
+    expect(mockTrashMessages).toHaveBeenNthCalledWith(2, 'acc-1', ['d'])
+    expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({
+      body: expect.stringContaining('Plafond de 4'), data: expect.objectContaining({ count: 4, capped: true }),
+    }))
+    expect(mockLogAudit).toHaveBeenCalledWith('user-1', 'bulk.trash', expect.objectContaining({
+      details: expect.objectContaining({ count: 4, capped: true }),
+    }))
+  }))
+
+  it('does not report a cap when the results end exactly at it', () => withCap(2, async () => {
+    mockListMessages.mockResolvedValueOnce(page(['a', 'b'], null, 2))
+    await processJob(makeJob('bulk_operation', { accountId: 'acc-1', userId: 'user-1', action: 'mark_read', query: 'is:unread' }))
+    expect(mockLogAudit).toHaveBeenCalledWith('user-1', 'bulk.label', expect.objectContaining({
+      details: expect.objectContaining({ count: 2, capped: false }),
+    }))
+  }))
+
+  it('completes cleanly when the query matches nothing', async () => {
+    mockListMessages.mockResolvedValueOnce(page([], null, 0))
+    const job = makeJob('bulk_operation', { accountId: 'acc-1', userId: 'user-1', action: 'trash', query: 'from:nobody' })
+
+    await processJob(job)
+
+    expect(mockTrashMessages).not.toHaveBeenCalled()
+    expect(job.updateProgress).toHaveBeenCalledWith(100)
+    expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ category: 'job_completed' }))
+    expect(mockLogAudit).toHaveBeenCalledWith('user-1', 'bulk.trash', expect.objectContaining({
+      details: expect.objectContaining({ count: 0 }),
+    }))
+  })
+
+  it('audits what was processed before a failure', async () => {
+    mockListMessages
+      .mockResolvedValueOnce(page(['a'], 'p2'))
+      .mockRejectedValueOnce(new Error('Gmail down'))
+    const job = makeJob('bulk_operation', { accountId: 'acc-1', userId: 'user-1', action: 'trash', query: 'from:x' })
+
+    await expect(processJob(job)).rejects.toThrow('Gmail down')
+    expect(mockLogAudit).toHaveBeenCalledWith('user-1', 'bulk.trash', expect.objectContaining({
+      details: expect.objectContaining({ count: 1 }),
+    }))
+  })
+
+  it('keeps 50-id chunks and exact progress for explicit ids', async () => {
+    const ids = Array.from({ length: 120 }, (_, i) => `m${i}`)
+    const job = makeJob('bulk_operation', { accountId: 'acc-1', action: 'trash', messageIds: ids })
+    await processJob(job)
+    expect(mockTrashMessages.mock.calls.map((c: any[]) => c[1].length)).toEqual([50, 50, 20])
+    expect(job.updateProgress.mock.calls.map((c: any[]) => c[0])).toEqual([42, 83, 100])
+  })
+
+  it('does not audit id-based jobs (the route already did)', async () => {
+    await processJob(makeJob('bulk_operation', { accountId: 'acc-1', userId: 'user-1', action: 'trash', messageIds: ['m1'] }))
+    expect(mockLogAudit).not.toHaveBeenCalled()
   })
 })

@@ -914,5 +914,45 @@
     "selected_other": "{{count}} rows selected",
     "columns": "Columns",
     "loading": "Loading list"
+  },
+
+  "bulkBar": {
+    "label": "Actions on selection",
+    "selected_one": "{{count, number}} selected",
+    "selected_other": "{{count, number}} selected",
+    "selectedEstimate_one": "~{{count, number}} selected",
+    "selectedEstimate_other": "~{{count, number}} selected",
+    "pageSelected_one": "The email on this page is selected.",
+    "pageSelected_other": "All {{count, number}} emails on this page are selected.",
+    "selectAll_one": "Select the search result",
+    "selectAll_other": "Select all ~{{count, number}} search results",
+    "clear": "Clear selection",
+    "more": "More"
+  },
+
+  "undoToast": {
+    "message": "{{message}} in {{seconds}} s",
+    "undo": "Undo",
+    "region": "Notifications",
+    "trash_one": "Deleting {{count, number}} email",
+    "trash_other": "Deleting {{count, number}} emails",
+    "trashDescription": "To Gmail trash · tracked in Activity"
+  },
+
+  "jobProgress": {
+    "stop": "Stop",
+    "stopFailed": "Could not stop the task",
+    "completed_one": "Done · {{count, number}} email processed",
+    "completed_other": "Done · {{count, number}} emails processed",
+    "failed": "Failed: {{error}}",
+    "cancelled": "Stopped"
+  },
+
+  "searchBar": {
+    "label": "Search emails",
+    "placeholder": "Keywords or operator: from:, has:attachment, larger:10M…",
+    "removeFilter": "Remove filter {{filter}}",
+    "saved": "Saved searches",
+    "save": "Save search"
   }
 }

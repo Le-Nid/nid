@@ -103,6 +103,7 @@ Exemple : `http://localhost:3000/api/auth/social/microsoft/callback`
 | `ADMIN_EMAIL` | *(vide)* | L'utilisateur qui s'inscrit avec cet email obtient automatiquement le rôle `admin` |
 | `ALLOW_REGISTRATION` | `true` | `false` pour fermer les inscriptions (formulaire et SSO). Les tentatives retourneront une erreur 403 |
 | `WEBHOOK_ALLOW_PRIVATE_NETWORKS` | `false` | `true` pour autoriser les webhooks vers le réseau local (ntfy, Home Assistant sur le LAN). Désactivé par défaut : sinon tout utilisateur peut sonder les services internes (SSRF) |
+| `BULK_QUERY_MAX` | `50000` | Nombre max de mails traités par une action de masse envoyée avec une `query` Gmail (« sélectionner tous les résultats ») ; le job s'arrête là et le signale |
 
 ---
 

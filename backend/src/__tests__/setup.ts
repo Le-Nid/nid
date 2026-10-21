@@ -21,6 +21,7 @@ vi.mock('../config', () => ({
     GMAIL_BATCH_SIZE: 25,
     GMAIL_THROTTLE_MS: 1000,
     GMAIL_CONCURRENCY: 10,
+    BULK_QUERY_MAX: 50000,
   },
 }))
 

@@ -55,6 +55,7 @@ vi.mock('../rules/rules.service', () => ({
 }))
 
 import { gmailRoutes } from '../routes/gmail'
+import { logAudit } from '../audit/audit.service'
 import { unsubscribeRoutes } from '../routes/unsubscribe'
 import { rulesRoutes } from '../routes/rules'
 import { jobRoutes } from '../routes/jobs'
@@ -108,6 +109,42 @@ describe('delayMs on bulk endpoints', () => {
     expect((await post(-1)).statusCode).toBe(400)
     expect((await post(1.5)).statusCode).toBe(400)
     await app.close()
+  })
+})
+
+describe('bulk select-all by query (B5)', () => {
+  const post = async (payload: Record<string, unknown>) => {
+    const app = await buildApp(gmailRoutes)
+    const res = await app.inject({ method: 'POST', url: '/acc-1/messages/bulk', payload: { action: 'trash', ...payload } })
+    await app.close()
+    return res
+  }
+
+  it.each([
+    ['both', { messageIds: ['m1'], query: 'from:a' }],
+    ['none', {}],
+    ['empty query', { query: '  ' }],
+  ])('rejects %s messageIds/query with 400', async (_name, payload) => {
+    expect((await post(payload)).statusCode).toBe(400)
+    expect(mockEnqueueJob).not.toHaveBeenCalled()
+  })
+
+  it('enqueues the query (no ids) with the default delay and leaves the audit to the worker', async () => {
+    const res = await post({ query: 'from:news@x.com' })
+    expect(res.statusCode).toBe(202)
+    expect(mockEnqueueJob).toHaveBeenCalledWith(
+      'bulk_operation',
+      expect.objectContaining({ accountId: 'acc-1', userId: 'user-1', action: 'trash', query: 'from:news@x.com', messageIds: undefined }),
+      { delay: 10_000 },
+    )
+    expect(logAudit).not.toHaveBeenCalled()
+  })
+
+  it('still audits at enqueue time for explicit ids', async () => {
+    await post({ messageIds: ['m1', 'm2'] })
+    expect(logAudit).toHaveBeenCalledWith('user-1', 'bulk.trash', expect.objectContaining({
+      details: expect.objectContaining({ count: 2 }),
+    }))
   })
 })
 

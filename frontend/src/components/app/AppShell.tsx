@@ -5,6 +5,7 @@ import { LogOut, User } from 'lucide-react'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Button } from '@/components/ui/button'
+import { Toaster } from '@/components/ui/sonner'
 import {
   DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
   DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -74,6 +75,7 @@ function UserMenu({ withAccounts }: Readonly<{ withAccounts: boolean }>) {
 
 /** Layout of every authenticated page (§5.2): sidebar ≥md, bottom bar <md, ⌘K palette. */
 export default function AppShell() {
+  const { t } = useTranslation()
   const isMobile = useIsMobile()
   const dark = useThemeStore((s) => s.mode) === 'dark'
   const [paletteOpen, setPaletteOpen] = useState(false)
@@ -97,6 +99,8 @@ export default function AppShell() {
         </div>
         {isMobile && <BottomNav />}
         <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+        {/* Mobile: above the bottom bar (52 px + safe area) */}
+        <Toaster containerAriaLabel={t('undoToast.region')} mobileOffset={{ bottom: 'calc(60px + max(22px, env(safe-area-inset-bottom)))' }} />
       </SidebarProvider>
     </TooltipProvider>
   )
