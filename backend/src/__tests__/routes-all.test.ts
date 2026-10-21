@@ -60,7 +60,7 @@ vi.mock('../analytics/analytics.service', () => ({
   getHeatmap: vi.fn().mockResolvedValue([]),
   getSenderScores: vi.fn().mockResolvedValue([]),
   getCleanupSuggestions: vi.fn().mockResolvedValue([]),
-  dismissSuggestion: vi.fn(),
+  dismissSuggestion: vi.fn().mockImplementation(async (id: string) => id !== 'foreign'),
   getInboxZeroData: vi.fn().mockResolvedValue({ snapshots: [], streak: 0 }),
   recordInboxSnapshot: vi.fn(),
 }))
@@ -226,6 +226,8 @@ describe('analyticsRoutes', () => {
 
     const res = await app.inject({ method: 'PATCH', url: '/suggestions/sug-1/dismiss' })
     expect(res.statusCode).toBe(200)
+    // another user's suggestion
+    expect((await app.inject({ method: 'PATCH', url: '/suggestions/foreign/dismiss' })).statusCode).toBe(404)
     await app.close()
   })
 
