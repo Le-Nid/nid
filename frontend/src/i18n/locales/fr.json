@@ -914,5 +914,45 @@
     "selected_other": "{{count}} lignes sélectionnées",
     "columns": "Colonnes",
     "loading": "Chargement de la liste"
+  },
+
+  "bulkBar": {
+    "label": "Actions sur la sélection",
+    "selected_one": "{{count, number}} sélectionné",
+    "selected_other": "{{count, number}} sélectionnés",
+    "selectedEstimate_one": "~{{count, number}} sélectionné",
+    "selectedEstimate_other": "~{{count, number}} sélectionnés",
+    "pageSelected_one": "Le mail de cette page est sélectionné.",
+    "pageSelected_other": "Les {{count, number}} mails de cette page sont sélectionnés.",
+    "selectAll_one": "Sélectionner le résultat de la recherche",
+    "selectAll_other": "Sélectionner les ~{{count, number}} résultats de la recherche",
+    "clear": "Annuler la sélection",
+    "more": "Plus"
+  },
+
+  "undoToast": {
+    "message": "{{message}} dans {{seconds}} s",
+    "undo": "Annuler",
+    "region": "Notifications",
+    "trash_one": "Suppression de {{count, number}} mail",
+    "trash_other": "Suppression de {{count, number}} mails",
+    "trashDescription": "Vers la corbeille Gmail · suivi dans Activité"
+  },
+
+  "jobProgress": {
+    "stop": "Arrêter",
+    "stopFailed": "Impossible d'arrêter la tâche",
+    "completed_one": "Terminé · {{count, number}} mail traité",
+    "completed_other": "Terminé · {{count, number}} mails traités",
+    "failed": "Échec : {{error}}",
+    "cancelled": "Arrêté"
+  },
+
+  "searchBar": {
+    "label": "Rechercher dans les mails",
+    "placeholder": "Mots-clés ou opérateur : from:, has:attachment, larger:10M…",
+    "removeFilter": "Retirer le filtre {{filter}}",
+    "saved": "Recherches enregistrées",
+    "save": "Enregistrer la recherche"
   }
 }

@@ -211,6 +211,13 @@
 
   --font-sans: "Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, monospace;
+
+  /* UndoToast gauge (§4.4): scaleX 1→0, linear, duration set inline to the undo delay */
+  --animate-drain: drain 10s linear forwards;
+  @keyframes drain {
+    from { transform: scaleX(1); }
+    to { transform: scaleX(0); }
+  }
 }
 
 @layer base {
