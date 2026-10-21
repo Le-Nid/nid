@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useRef } from 'react'
 import { useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import { Paperclip } from 'lucide-react'
 import { dataListFeatures } from '@/components/app/DataList'
 import { showUndoToast } from '@/components/app/UndoToast'
-import { useExportMbox, useTrashArchived } from '@/hooks/queries'
+import { useExportMbox, useTrashArchived, useRestoreArchived } from '@/hooks/queries'
 import { saveBlob } from '@/utils/download'
 import { formatBytes, formatSender } from '@/utils/format'
 
@@ -67,34 +67,23 @@ export function useMboxExport(accountId: string) {
   return { run, isPending: exportMbox.isPending }
 }
 
-const UNDO_MS = 10_000
-
 /**
- * « Supprimer » (§6.3, D1): rows hide at once, the move to the archive trash happens after the 10 s window.
- * shortcut: the window runs in this tab, closing it within 10 s drops the deletion (nothing is lost); move it server-side with a delayed job if that matters.
+ * « Supprimer » (§6.3): the archive trash is reversible, so the move happens at once and « Annuler » restores.
+ * (A client-side 10 s wait silently dropped the deletion when the tab closed.)
  */
-export function useDeferredTrash(accountId: string) {
+export function useArchiveTrashWithUndo(accountId: string) {
   const { t } = useTranslation()
   const trash = useTrashArchived(accountId)
-  const [hidden, setHidden] = useState<string[]>([])
-  const show = (ids: string[]) => setHidden((list) => list.filter((id) => !ids.includes(id)))
-  const run = (ids: string[]) => {
-    setHidden((list) => [...list, ...ids])
-    const timer = setTimeout(() => trash.mutate(ids, {
-      onError: () => toast.error(t('archives.trashFailed')),
-      onSettled: () => show(ids),
-    }), UNDO_MS)
-    showUndoToast({
+  const restore = useRestoreArchived(accountId)
+  const run = (ids: string[]) => trash.mutate(ids, {
+    onError: () => toast.error(t('archives.trashFailed')),
+    onSuccess: () => showUndoToast({
       message: t('archives.trashToast', { count: ids.length }),
       description: t('archives.trashDescription'),
-      delayMs: UNDO_MS,
-      onUndo: () => {
-        clearTimeout(timer)
-        show(ids)
-      },
-    })
-  }
-  return { hidden: useMemo(() => new Set(hidden), [hidden]), run }
+      onUndo: () => restore.mutate(ids, { onError: () => toast.error(t('mails.undoFailed')) }),
+    }),
+  })
+  return { run }
 }
 
 export function DateCell({ value }: Readonly<{ value: string | null | undefined }>) {

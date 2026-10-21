@@ -21,7 +21,7 @@ import { useIsMobile } from '@/hooks/use-mobile'
 import type { ApiLabel } from '@/utils/gmail'
 import { ShareDialog } from './ShareDialog'
 import {
-  actionsHeader, col, DateCell, mailColumns, useArchiveFilters, useDeferredTrash, useMboxExport,
+  actionsHeader, col, DateCell, mailColumns, useArchiveFilters, useArchiveTrashWithUndo, useMboxExport,
   type ArchivedMail, type Filters,
 } from './shared'
 
@@ -152,7 +152,7 @@ export function SearchTab({ accountId }: Readonly<{ accountId: string }>) {
   const nodes = labelTreeNodes(labels, t, stats ? Number(stats.total_mails) : undefined)
   const search = useArchiveMails(accountId, apiParams)
   const exporter = useMboxExport(accountId)
-  const trash = useDeferredTrash(accountId)
+  const trash = useArchiveTrashWithUndo(accountId)
   const [q, setQ] = useDebounced(filters.q, (v) => set({ q: v }))
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
   const [viewing, setViewing] = useState<string | null>(null)
@@ -168,8 +168,8 @@ export function SearchTab({ accountId }: Readonly<{ accountId: string }>) {
   }
 
   const mails: ArchivedMail[] = useMemo(
-    () => (search.data?.pages.flatMap((p) => p.mails as ArchivedMail[]) ?? []).filter((m) => !trash.hidden.has(m.id)),
-    [search.data, trash.hidden],
+    () => (search.data?.pages.flatMap((p) => p.mails as ArchivedMail[]) ?? []),
+    [search.data],
   )
   const first = search.data?.pages[0]
   const subjectOf = (id: string | null) => mails.find((m) => m.id === id)?.subject || t('mails.noSubject')

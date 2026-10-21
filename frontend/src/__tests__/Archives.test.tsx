@@ -75,7 +75,7 @@ beforeEach(() => {
   }))
   useAuthStore.setState({ user: { id: 'u1', email: 'a@b.c', role: 'admin' } as never })
   vi.mocked(archiveApi.listMails).mockResolvedValue({ mails: [MAIL, OTHER], total: 2, page: 1, limit: 50, tookMs: 120 })
-  vi.mocked(archiveApi.getMail).mockResolvedValue({ ...MAIL, recipient: 'a@b.c', label_ids: [], emlContent: 'Subject: x\r\n\r\ncorps', thread_id: null, attachments: [] })
+  vi.mocked(archiveApi.getMail).mockResolvedValue({ ...MAIL, recipient: 'a@b.c', label_ids: [], html: '', text: 'corps', thread_id: null, attachments: [] })
   vi.mocked(archiveApi.trashMails).mockResolvedValue({ trashed: 1 })
   vi.mocked(archiveApi.restoreMails).mockResolvedValue({ restored: 1 })
   vi.mocked(archiveApi.listTrash).mockResolvedValue({ mails: [{ ...OTHER, deleted_at: '2026-10-01T00:00:00Z' }], total: 1, retentionDays: 30 })
@@ -168,7 +168,7 @@ describe('Archives — search', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Impossible de charger les archives.')
   })
 
-  it('selection: export .mbox, delete with undo (D1), committed after 10 s', async () => {
+  it('selection: export .mbox, delete at once to the archive trash, « Annuler » restores', async () => {
     setup()
     await user().click(await screen.findByRole('checkbox', { name: 'Sélectionner Facture EDF' }))
     const bar = screen.getByRole('toolbar', { name: 'Actions sur la sélection' })
@@ -176,20 +176,10 @@ describe('Archives — search', () => {
     await waitFor(() => expect(importApi.exportMbox).toHaveBeenCalledWith('acc-1', [MAIL.id]))
 
     await user().click(within(bar).getByRole('button', { name: 'Supprimer' }))
-    expect(screen.queryByText('Facture EDF')).toBeNull()
-    expect(showUndoToast).toHaveBeenCalledWith(expect.objectContaining({ message: 'Suppression de 1 archive' }))
+    await waitFor(() => expect(archiveApi.trashMails).toHaveBeenCalledWith('acc-1', [MAIL.id]))
+    await waitFor(() => expect(showUndoToast).toHaveBeenCalledWith(expect.objectContaining({ message: 'Suppression de 1 archive' })))
     act(() => vi.mocked(showUndoToast).mock.calls[0][0].onUndo())
-    expect(await screen.findByText('Facture EDF')).toBeInTheDocument()
-
-    vi.useFakeTimers({ shouldAdvanceTime: true })
-    try {
-      await user().click(screen.getByRole('checkbox', { name: 'Sélectionner Facture EDF' }))
-      await user().click(within(screen.getByRole('toolbar', { name: 'Actions sur la sélection' })).getByRole('button', { name: 'Supprimer' }))
-      act(() => vi.advanceTimersByTime(10_000))
-      await waitFor(() => expect(archiveApi.trashMails).toHaveBeenCalledWith('acc-1', [MAIL.id]))
-    } finally {
-      vi.useRealTimers()
-    }
+    await waitFor(() => expect(archiveApi.restoreMails).toHaveBeenCalledWith('acc-1', [MAIL.id]))
   })
 
   it('header: export the whole archive, back up to the NAS now with inline progress', async () => {

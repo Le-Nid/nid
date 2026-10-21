@@ -57,13 +57,15 @@ test.describe('Archives', () => {
     await revoke
   })
 
-  test('« Supprimer » hides the row, « Annuler » brings it back without deleting', async ({ page }) => {
+  test('« Supprimer » moves to the archive trash at once, « Annuler » restores', async ({ page }) => {
     await page.goto('/archives')
     await page.getByRole('checkbox', { name: t('dataList.selectRow', { label: MORNING }) }).check()
+    const trash = page.waitForRequest(is('POST', `/api/archive/${ACCOUNT}/mails/trash`))
     await page.getByRole('toolbar', { name: t('bulkBar.label') }).getByRole('button', { name: t('archives.action.trash') }).click()
-    await expect(page.getByRole('button', { name: MORNING, exact: true })).toHaveCount(0)
+    const ids = (await trash).postDataJSON().mailIds
+    const restore = page.waitForRequest(is('POST', `/api/archive/${ACCOUNT}/mails/restore`))
     await page.getByRole('button', { name: t('undoToast.undo'), exact: true }).click()
-    await expect(page.getByRole('button', { name: MORNING, exact: true })).toBeVisible()
+    expect((await restore).postDataJSON()).toEqual({ mailIds: ids })
   })
 
   test('Corbeille: restore, and empty after confirmation', async ({ page }) => {

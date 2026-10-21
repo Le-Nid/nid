@@ -11,6 +11,7 @@ import { escapeIlike, notFound } from "../utils/db";
 import { extractPagination } from "../utils/pagination";
 import { authPresets } from "../utils/auth";
 import { createLogger } from "../logger";
+import { simpleParser } from "mailparser";
 import { HEADLINE_OPTIONS, highlightToHtml } from "../archive/body-text";
 
 /** Sanitize filename for Content-Disposition header (Point 17) */
@@ -32,10 +33,10 @@ const mailsQuerySchema = z.object({
   limit: positiveInt,
 });
 
-/** List rows: everything but body_text (heavy, derived) and search_vector. */
+/** List rows: everything but body_text (heavy, derived), search_vector and eml_path (server path). */
 const MAIL_LIST_COLUMNS = [
   "id", "gmail_account_id", "gmail_message_id", "thread_id", "in_reply_to", "references_header",
-  "subject", "sender", "recipient", "date", "size_bytes", "has_attachments", "label_ids", "eml_path",
+  "subject", "sender", "recipient", "date", "size_bytes", "has_attachments", "label_ids",
   "snippet", "attachment_names", "is_encrypted", "archived_at", "deleted_at",
 ] as const;
 
@@ -108,10 +109,12 @@ export async function archiveRoutes(app: FastifyInstance) {
       .where("archived_mail_id", "=", mailId)
       .execute();
 
-    const emlContent = await fs.promises.readFile(mail.eml_path, "utf-8").catch(() => null);
-    const { body_text: _bodyText, ...rest } = mail; // derived from the EML returned below
+    // Parsed here from the raw bytes (8bit mails keep their charset); an encrypted EML has no readable body
+    const raw = mail.is_encrypted ? null : await fs.promises.readFile(mail.eml_path).catch(() => null);
+    const parsed = raw ? await simpleParser(raw).catch(() => null) : null;
+    const { body_text: _bodyText, eml_path: _emlPath, ...rest } = mail;
 
-    return { ...rest, emlContent, attachments };
+    return { ...rest, html: parsed?.html || "", text: parsed?.text || "", attachments };
   });
 
   // ─── Download pièce jointe ───────────────────────────────

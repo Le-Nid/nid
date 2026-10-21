@@ -105,8 +105,7 @@ export async function getSharedMail(token: string) {
   let textBody: string | null = null
 
   try {
-    const emlContent = await fs.readFile(share.eml_path, 'utf-8')
-    const parsed = await simpleParser(emlContent)
+    const parsed = await simpleParser(await fs.readFile(share.eml_path)) // bytes: 8bit mails keep their charset
     htmlBody = parsed.html || null
     textBody = parsed.text || null
   } catch (err) {

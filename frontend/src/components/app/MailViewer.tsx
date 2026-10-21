@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button'
 import { archiveApi, gmailApi } from '@/api'
 import { useArchiveMail, useArchiveThread, useGmailMessage } from '@/hooks/queries'
 import { saveBlob, saveFile } from '@/utils/download'
-import { emlBody } from '@/utils/eml'
 import { formatBytes, formatEmail, formatSender } from '@/utils/format'
 import {
   base64UrlToBytes, extractAttachments, extractBody, hasRemoteContent, mailSrcDoc, toBadge,
@@ -40,7 +39,7 @@ type ViewerMail = {
 }
 type ArchivedDetail = {
   subject: string | null; sender: string | null; recipient: string | null; date: string | null; size_bytes: number | string
-  label_ids: string[] | null; emlContent: string | null; thread_id: string | null
+  label_ids: string[] | null; html: string; text: string; is_encrypted?: boolean; thread_id: string | null
   attachments?: { id: string; filename: string; size_bytes: number | string }[]
 }
 type ThreadMail = { id: string; sender: string | null; date: string | null }
@@ -64,10 +63,10 @@ function fromGmail(accountId: string, messageId: string, mail: any): ViewerMail 
   }
 }
 
-function fromArchive(accountId: string, mail: ArchivedDetail): ViewerMail {
+function fromArchive(accountId: string, mail: ArchivedDetail, encryptedText: string): ViewerMail {
   return {
     subject: mail.subject ?? '', from: mail.sender ?? '', to: mail.recipient ?? '', date: mail.date ?? '', size: Number(mail.size_bytes),
-    labelIds: mail.label_ids ?? [], ...emlBody(mail.emlContent ?? ''), threadId: mail.thread_id,
+    labelIds: mail.label_ids ?? [], html: mail.html, text: mail.is_encrypted ? encryptedText : mail.text, threadId: mail.thread_id,
     attachments: (mail.attachments ?? []).map((att) => ({
       id: att.id, filename: att.filename, size: Number(att.size_bytes),
       save: async () => saveFile(archiveApi.downloadAttachment(accountId, att.id), att.filename),
@@ -77,11 +76,12 @@ function fromArchive(accountId: string, mail: ArchivedDetail): ViewerMail {
 
 /** The mail of either source; only the matching query runs. */
 function useViewerMail(source: 'gmail' | 'archive', accountId: string, messageId: string | null) {
+  const { t } = useTranslation()
   const gmail = useGmailMessage(accountId, source === 'gmail' ? messageId : null)
   const archived = useArchiveMail(accountId, source === 'archive' ? messageId : null)
   const query = source === 'archive' ? archived : gmail
   let mail: ViewerMail | undefined
-  if (query.data && messageId) mail = source === 'archive' ? fromArchive(accountId, query.data) : fromGmail(accountId, messageId, query.data)
+  if (query.data && messageId) mail = source === 'archive' ? fromArchive(accountId, query.data, t('archives.encryptedBody')) : fromGmail(accountId, messageId, query.data)
   return { mail, isLoading: query.isLoading, isError: query.isError, refetch: query.refetch }
 }
 

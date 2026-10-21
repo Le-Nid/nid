@@ -127,15 +127,10 @@ describe('MailViewer', () => {
 
   it('archive source: EML body, thread, attachment links, Partager / Supprimer', async () => {
     query({})
-    const eml = [
-      'Subject: Facture EDF', 'Content-Type: multipart/alternative; boundary="b1"', '',
-      '--b1', 'Content-Type: text/plain; charset=utf-8', '', 'texte', '--b1',
-      'Content-Type: text/html; charset=utf-8', 'Content-Transfer-Encoding: quoted-printable', '', '<p>=C3=A9t=C3=A9</p>', '--b1--',
-    ].join('\r\n')
     vi.mocked(useArchiveMail).mockReturnValue({
       data: {
         subject: 'Facture EDF', sender: 'EDF <edf@edf.test>', recipient: 'ana@gmail.com', date: '2026-08-01T07:00:00Z',
-        size_bytes: '4096', label_ids: ['Label_1'], emlContent: eml, thread_id: 't1',
+        size_bytes: '4096', label_ids: ['Label_1'], html: '<p>été</p>', text: 'texte', thread_id: 't1',
         attachments: [{ id: 'att1', filename: 'facture.pdf', size_bytes: '52000' }],
       },
       isLoading: false, isError: false, refetch: vi.fn(),

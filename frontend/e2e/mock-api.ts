@@ -63,7 +63,7 @@ const ROUTES: [string, RegExp, Handler][] = [
   ['GET', /^\/api\/archive\/[^/]+\/mails$/, archiveSearch],
   ['GET', /^\/api\/archive\/[^/]+\/mails\/[^/]+$/, (req: Request) => {
     const mail = archive.mails.find((m: { id: string }) => req.url().endsWith(m.id)) ?? archive.mails[0]
-    return { ...mail, recipient: 'ana@gmail.com', emlContent: `Subject: ${mail.subject}\r\n\r\n${mail.snippet}`, attachments: [] }
+    return { ...mail, recipient: 'ana@gmail.com', html: '', text: mail.snippet, attachments: [] }
   }],
   ['GET', /^\/api\/archive\/[^/]+\/threads\/[^/]+$/, []],
   ['POST', /^\/api\/archive\/[^/]+\/mails\/trash$/, (req: Request) => ({ trashed: req.postDataJSON().mailIds.length })],

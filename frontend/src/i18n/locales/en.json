@@ -322,7 +322,8 @@
       "empty": "No active share link",
       "emptyDescription": "Share a mail from the archive reader.",
       "loadError": "Could not load the shares."
-    }
+    },
+    "encryptedBody": "This mail is encrypted: its content cannot be read here."
   },
   "rules": {
     "title": "Rules & labels",

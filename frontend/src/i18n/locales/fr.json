@@ -322,7 +322,8 @@
       "empty": "Aucun lien de partage actif",
       "emptyDescription": "Partagez un mail depuis le lecteur d'archive.",
       "loadError": "Impossible de charger les partages."
-    }
+    },
+    "encryptedBody": "Ce mail est chiffré : son contenu n'est pas lisible ici."
   },
   "rules": {
     "title": "Règles & libellés",

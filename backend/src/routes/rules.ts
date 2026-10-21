@@ -7,7 +7,6 @@ import {
   createRule,
   updateRule,
   deleteRule,
-  runRule,
   buildGmailQuery,
 } from "../rules/rules.service";
 import { enqueueJob } from "../jobs/queue";

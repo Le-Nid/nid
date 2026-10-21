@@ -2,7 +2,6 @@ import { render } from '@testing-library/react'
 import i18n from '../i18n'
 import { Highlight, highlightParts } from '../components/app/Highlight'
 import { labelTreeNodes } from '../components/app/LabelTree'
-import { emlBody } from '../utils/eml'
 
 beforeAll(() => i18n.changeLanguage('fr'))
 
@@ -18,24 +17,6 @@ describe('highlight', () => {
     expect(container.querySelectorAll('mark')).toHaveLength(1)
     expect(container.querySelector('script, b')).toBeNull()
     expect(container.textContent).toBe('a <script>alert(1)</script> EDF &lt; "x" \'y\' <b>z</b>')
-  })
-})
-
-describe('emlBody', () => {
-  it('reads single-part text, base64 html, nested multiparts and skips attachments', () => {
-    expect(emlBody('Subject: x\r\n\r\nBonjour\r\n')).toEqual({ html: '', text: 'Bonjour' })
-    const b64 = btoa(String.fromCodePoint(...new TextEncoder().encode('<p>é</p>')))
-    const eml = [
-      'Content-Type: multipart/mixed;', '\tboundary="outer"', '',
-      '--outer', 'Content-Type: multipart/alternative; boundary=inner', '',
-      '--inner', 'Content-Type: text/plain', '', 'plain', '--inner',
-      'Content-Type: text/html; charset=utf-8', 'Content-Transfer-Encoding: base64', '', b64, '--inner--',
-      '--outer', 'Content-Type: text/plain', 'Content-Disposition: attachment; filename=a.txt', '', 'piece', '--outer--',
-    ].join('\r\n')
-    expect(emlBody(eml)).toEqual({ html: '<p>é</p>', text: 'plain' })
-    expect(emlBody('Content-Type: application/pdf\n\n%PDF')).toEqual({ html: '', text: '' })
-    expect(emlBody('Content-Type: text/plain; charset=latin1\nContent-Transfer-Encoding: quoted-printable\n\n=E9t=\n=E9')).toEqual({ html: '', text: 'été' })
-    expect(emlBody('Content-Transfer-Encoding: base64\n\n%%%')).toEqual({ html: '', text: '%%%' })
   })
 })
 

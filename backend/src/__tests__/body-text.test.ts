@@ -254,6 +254,29 @@ describe('GET /:accountId/mails', () => {
   })
 })
 
+describe('GET /:accountId/mails/:mailId body', () => {
+  it('parses the raw bytes (latin-1 8bit keeps its accents), never exposes eml_path, skips encrypted mails', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'nid-detail-'))
+    const file = path.join(dir, 'm.eml')
+    await fs.writeFile(file, Buffer.concat([
+      Buffer.from('From: a@b.c\r\nSubject: x\r\nContent-Type: text/plain; charset=iso-8859-1\r\nContent-Transfer-Encoding: 8bit\r\n\r\n'),
+      Buffer.from('Réglé à l\'été', 'latin1'),
+    ]))
+    let encrypted = false
+    respond = (q) => (q.sql.includes('"archived_attachments"') ? [] : [{ id: 'm1', eml_path: file, is_encrypted: encrypted }])
+    const app = await buildApp()
+    const plain = (await app.inject({ method: 'GET', url: '/acc-1/mails/m1' })).json()
+    expect(plain.text.trim()).toBe("Réglé à l'été")
+    expect(plain).not.toHaveProperty('eml_path')
+    expect(plain).not.toHaveProperty('emlContent')
+    encrypted = true
+    const locked = (await app.inject({ method: 'GET', url: '/acc-1/mails/m1' })).json()
+    expect(locked).toMatchObject({ html: '', text: '', is_encrypted: true })
+    await app.close()
+    await fs.rm(dir, { recursive: true, force: true })
+  })
+})
+
 // ─── Migration 007 ──────────────────────────────────────────
 describe('migration 007_archive_body_text', () => {
   it('up adds the column and weights the body D; down restores the previous trigger', async () => {
