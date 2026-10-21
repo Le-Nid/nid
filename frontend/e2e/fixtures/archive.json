@@ -1,9 +1,27 @@
 {
   "mails": [
     {
-      "id": "a1", "sender": "News <news@paper.test>", "subject": "Édition du matin archivée", "snippet": "Les titres du jour",
-      "size_bytes": 8192, "date": "2026-08-01T07:00:00Z", "archived_at": "2026-08-02T07:00:00Z", "has_attachments": false
+      "id": "0b7c1a52-6f1e-4c55-9a51-3f0f6c1d0a01", "sender": "News <news@paper.test>", "subject": "Édition du matin archivée", "snippet": "Les titres du jour",
+      "size_bytes": 8192, "date": "2026-08-01T07:00:00Z", "archived_at": "2026-08-02T07:00:00Z", "has_attachments": false, "label_ids": ["INBOX"], "thread_id": "t1"
+    },
+    {
+      "id": "0b7c1a52-6f1e-4c55-9a51-3f0f6c1d0a02", "sender": "EDF <facture@edf.test>", "subject": "Votre facture d'août", "snippet": "Votre facture est disponible",
+      "size_bytes": 52000, "date": "2026-08-20T07:00:00Z", "archived_at": "2026-08-21T07:00:00Z", "has_attachments": true, "label_ids": ["Label_1"], "thread_id": "t2"
     }
   ],
-  "total": 1
+  "trash": [
+    {
+      "id": "0b7c1a52-6f1e-4c55-9a51-3f0f6c1d0a03", "sender": "Promo <promo@shop.test>", "subject": "Soldes d'été", "snippet": "-50 %",
+      "size_bytes": 4096, "date": "2026-07-01T07:00:00Z", "deleted_at": "2026-10-01T07:00:00Z", "has_attachments": false
+    }
+  ],
+  "shares": [
+    {
+      "id": "share-1", "archived_mail_id": "0b7c1a52-6f1e-4c55-9a51-3f0f6c1d0a02", "token": "aaaa", "expires_at": "2099-01-01T00:00:00Z",
+      "access_count": 2, "max_access": null, "subject": "Votre facture d'août", "sender": "EDF <facture@edf.test>"
+    }
+  ],
+  "retention": [
+    { "id": "pol-1", "name": "Vieilles promos", "gmail_account_id": "acc-1", "label": "Label_1", "max_age_days": 365, "last_run_at": null, "deleted_count": 0 }
+  ]
 }

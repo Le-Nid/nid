@@ -9,7 +9,7 @@ import { Skeleton } from "./components/ui/skeleton";
 const LoginPage = lazy(() => import("./pages/Login"));
 const DashboardPage = lazy(() => import("./pages/Dashboard"));
 const MailsPage = lazy(() => import("./pages/Mails"));
-const ArchivePage = lazy(() => import("./pages/Archive"));
+const ArchivesPage = lazy(() => import("./pages/Archives"));
 const SettingsPage = lazy(() => import("./pages/Settings"));
 const JobsPage = lazy(() => import("./pages/Jobs"));
 const RulesPage = lazy(() => import("./pages/Rules"));
@@ -22,7 +22,6 @@ const AnalyticsPage = lazy(() => import("./pages/Analytics"));
 const SavedSearchesPage = lazy(() => import("./pages/SavedSearches"));
 const UnifiedInboxPage = lazy(() => import("./pages/UnifiedInbox"));
 const OpsResiliencePage = lazy(() => import("./pages/OpsResilience"));
-const SharingPage = lazy(() => import("./pages/Sharing"));
 const SharedMailPage = lazy(() => import("./pages/SharedMail"));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -95,7 +94,6 @@ export default function App() {
           <Route element={<LegacyPages />}>
             {/* New routes (§3.1), rendering the legacy page until its lot lands */}
             <Route path="overview" element={<DashboardPage />} />
-            <Route path="archives" element={<ArchivePage />} />
             <Route path="activity" element={<JobsPage />} />
             <Route path="settings/:section" element={<SettingsPage />} />
             <Route path="admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
@@ -107,12 +105,12 @@ export default function App() {
             <Route path="saved-searches" element={<SavedSearchesPage />} />
             <Route path="unified" element={<UnifiedInboxPage />} />
             <Route path="ops" element={<OpsResiliencePage />} />
-            <Route path="sharing" element={<SharingPage />} />
           </Route>
           {/* Migrated pages (§9.2): no antd context; own Suspense so the shell stays while the chunk loads */}
           <Route path="mails" element={<Suspense fallback={<RouteFallback />}><MailsPage /></Suspense>} />
           <Route path="cleanup" element={<Suspense fallback={<RouteFallback />}><CleanupPage /></Suspense>} />
           <Route path="rules" element={<Suspense fallback={<RouteFallback />}><RulesPage /></Suspense>} />
+          <Route path="archives" element={<Suspense fallback={<RouteFallback />}><ArchivesPage /></Suspense>} />
           {/* §3.3 redirects whose target exists in L0 */}
           <Route index element={<Redirect to="/overview" />} />
           <Route path="dashboard" element={<Redirect to="/overview" />} />
@@ -121,6 +119,7 @@ export default function App() {
           <Route path="settings" element={<Redirect to="/settings/account" />} />
           <Route path="unsubscribe" element={<Navigate to="/cleanup?tab=senders" replace />} />
           <Route path="expiration" element={<Navigate to="/rules?tab=labels" replace />} />
+          <Route path="sharing" element={<Navigate to="/archives?tab=shares" replace />} />
         </Route>
       </Routes>
     </Suspense>

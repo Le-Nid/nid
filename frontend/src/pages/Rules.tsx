@@ -1,18 +1,16 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { Tabs } from 'radix-ui'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/app/PageHeader'
 import { EmptyState } from '@/components/app/EmptyState'
+import { PageTabs } from '@/components/app/PageTabs'
 import { RuleSheet, userLabels, type RuleSheetTarget } from '@/components/app/RuleSheet'
 import { useAccount } from '@/hooks/useAccount'
 import { useLabels } from '@/hooks/queries'
 import { RulesTab } from './rules/RulesTab'
 import { LabelsTab } from './rules/LabelsTab'
-
-const TABS = ['rules', 'labels'] as const
 
 /** /rules « Règles & libellés » (§7.4, §7.9). Tab in the URL (§3.3); `?new=1` (command palette) opens a new rule. */
 export default function RulesPage() {
@@ -46,24 +44,24 @@ export default function RulesPage() {
       />
       {accountId ? (
         <>
-          <Tabs.Root value={tab} onValueChange={(next) => setParams(next === 'rules' ? {} : { tab: next })} className="flex flex-col gap-4">
-            <Tabs.List aria-label={t('rules.tabsLabel')} className="flex gap-1 overflow-x-auto border-b">
-              {TABS.map((key) => (
-                <Tabs.Trigger
-                  key={key}
-                  value={key}
-                  className="-mb-px flex min-h-11 shrink-0 items-center gap-2 border-b-2 border-transparent px-3 text-sm font-medium text-muted-foreground hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none data-[state=active]:border-primary data-[state=active]:text-foreground"
-                >
-                  {t(`rules.tab.${key}`)}
-                  {key === 'labels' && labelCount > 0 && (
-                    <span className="rounded-md bg-muted px-1.5 text-xs text-muted-foreground tabular-nums">{labelCount}</span>
-                  )}
-                </Tabs.Trigger>
-              ))}
-            </Tabs.List>
-            <Tabs.Content value="rules" className="focus-visible:outline-none"><RulesTab accountId={accountId} onEdit={setSheet} /></Tabs.Content>
-            <Tabs.Content value="labels" className="focus-visible:outline-none"><LabelsTab accountId={accountId} onEdit={setSheet} /></Tabs.Content>
-          </Tabs.Root>
+          <PageTabs
+            value={tab}
+            onChange={(next) => setParams(next === 'rules' ? {} : { tab: next })}
+            label={t('rules.tabsLabel')}
+            tabs={[
+              { key: 'rules', label: t('rules.tab.rules'), content: <RulesTab accountId={accountId} onEdit={setSheet} /> },
+              {
+                key: 'labels',
+                label: (
+                  <>
+                    {t('rules.tab.labels')}
+                    {labelCount > 0 && <span className="rounded-md bg-muted px-1.5 text-xs text-muted-foreground tabular-nums">{labelCount}</span>}
+                  </>
+                ),
+                content: <LabelsTab accountId={accountId} onEdit={setSheet} />,
+              },
+            ]}
+          />
           <RuleSheet accountId={accountId} target={sheet} onClose={closeSheet} />
         </>
       ) : (

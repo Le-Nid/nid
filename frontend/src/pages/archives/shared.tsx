@@ -1,0 +1,134 @@
+import { useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
+import { createColumnHelper } from '@tanstack/react-table'
+import { toast } from 'sonner'
+import { Paperclip } from 'lucide-react'
+import { dataListFeatures } from '@/components/app/DataList'
+import { showUndoToast } from '@/components/app/UndoToast'
+import { useExportMbox, useTrashArchived } from '@/hooks/queries'
+import { saveBlob } from '@/utils/download'
+import { formatBytes, formatSender } from '@/utils/format'
+
+/** A row of `GET /api/archive/:id/mails` (or `/trash`); `highlight` only when searching with `q` (B2). */
+export type ArchivedMail = {
+  id: string
+  subject: string | null
+  sender: string | null
+  date: string | null
+  size_bytes: number | string
+  has_attachments: boolean
+  snippet: string | null
+  deleted_at?: string | null
+  highlight?: string
+}
+
+const FILTERS = ['q', 'sender', 'from', 'to', 'att', 'label'] as const
+export type Filters = Record<(typeof FILTERS)[number], string>
+
+/** Search and filters of the archive list, in the URL (§3.3) so a search can be shared and survives back. */
+export function useArchiveFilters() {
+  const [params, setParams] = useSearchParams()
+  const filters = Object.fromEntries(FILTERS.map((k) => [k, params.get(k) ?? ''])) as Filters
+  // A new object each render is fine: React Query hashes its key
+  const apiParams: Record<string, string> = {}
+  if (filters.q) apiParams.q = filters.q
+  if (filters.sender) apiParams.sender = filters.sender
+  if (filters.from) apiParams.from_date = filters.from
+  if (filters.to) apiParams.to_date = `${filters.to}T23:59:59.999Z` // the whole last day
+  if (filters.att) apiParams.has_attachments = 'true'
+  if (filters.label) apiParams.label = filters.label
+  // Quick successive changes (typing, then a checkbox) must not drop each other: navigation is async, so
+  // each write starts from the previous write rather than from the params of the render it comes from
+  const latest = useRef(params)
+  latest.current = params
+  const set = (patch: Partial<Filters>) => {
+    const out = new URLSearchParams(latest.current)
+    for (const [k, v] of Object.entries(patch)) {
+      if (v) out.set(k, v)
+      else out.delete(k)
+    }
+    latest.current = out
+    setParams(out, { replace: true })
+  }
+  return { filters, apiParams, set, filtered: Object.keys(apiParams).length > 0 }
+}
+
+/** « Exporter (.mbox) »: the given mails, or the whole archive without ids. */
+export function useMboxExport(accountId: string) {
+  const { t } = useTranslation()
+  const exportMbox = useExportMbox(accountId)
+  const run = (mailIds?: string[]) =>
+    exportMbox.mutate(mailIds, {
+      onSuccess: (blob: Blob) => saveBlob(blob, `nid-archives-${new Date().toISOString().slice(0, 10)}.mbox`),
+      onError: () => toast.error(t('archives.exportFailed')),
+    })
+  return { run, isPending: exportMbox.isPending }
+}
+
+const UNDO_MS = 10_000
+
+/**
+ * « Supprimer » (§6.3, D1): rows hide at once, the move to the archive trash happens after the 10 s window.
+ * shortcut: the window runs in this tab, closing it within 10 s drops the deletion (nothing is lost); move it server-side with a delayed job if that matters.
+ */
+export function useDeferredTrash(accountId: string) {
+  const { t } = useTranslation()
+  const trash = useTrashArchived(accountId)
+  const [hidden, setHidden] = useState<string[]>([])
+  const show = (ids: string[]) => setHidden((list) => list.filter((id) => !ids.includes(id)))
+  const run = (ids: string[]) => {
+    setHidden((list) => [...list, ...ids])
+    const timer = setTimeout(() => trash.mutate(ids, {
+      onError: () => toast.error(t('archives.trashFailed')),
+      onSettled: () => show(ids),
+    }), UNDO_MS)
+    showUndoToast({
+      message: t('archives.trashToast', { count: ids.length }),
+      description: t('archives.trashDescription'),
+      delayMs: UNDO_MS,
+      onUndo: () => {
+        clearTimeout(timer)
+        show(ids)
+      },
+    })
+  }
+  return { hidden: useMemo(() => new Set(hidden), [hidden]), run }
+}
+
+export function DateCell({ value }: Readonly<{ value: string | null | undefined }>) {
+  const { i18n } = useTranslation()
+  if (!value) return <>—</>
+  return <span className="whitespace-nowrap">{new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(value))}</span>
+}
+
+export const col = createColumnHelper<typeof dataListFeatures, ArchivedMail>()
+
+/** Columns both archive lists show (results, trash). */
+export function mailColumns(t: TFunction) {
+  return {
+    subject: col.accessor('subject', {
+      header: t('archives.col.subject'),
+      meta: { mobile: 'title' },
+      cell: ({ row }) => (
+        <span className="block max-w-80 truncate">
+          {row.original.has_attachments && <Paperclip role="img" aria-label={t('mails.attachment')} className="mr-1 inline size-3.5 align-[-2px]" />}
+          {row.original.subject || t('mails.noSubject')}
+        </span>
+      ),
+    }),
+    sender: col.accessor('sender', {
+      header: t('archives.col.sender'),
+      meta: { mobile: 'meta' },
+      cell: ({ getValue }) => <span className="block max-w-48 truncate">{formatSender(getValue() ?? '')}</span>,
+    }),
+    size: col.accessor('size_bytes', {
+      header: t('archives.col.size'),
+      meta: { mobile: 'meta', align: 'end' },
+      cell: ({ getValue }) => <span className="whitespace-nowrap tabular-nums">{formatBytes(Number(getValue()))}</span>,
+    }),
+  }
+}
+
+export const actionsHeader = (t: TFunction) => () => <span className="sr-only">{t('common.actions')}</span>

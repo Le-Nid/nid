@@ -2,39 +2,87 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
-import { Archive, Download, HardDriveDownload, ImageOff, Paperclip, Trash2, X, Zap } from 'lucide-react'
+import { Archive, Download, HardDriveDownload, ImageOff, Paperclip, Share2, Trash2, X, Zap } from 'lucide-react'
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
-import { gmailApi } from '@/api'
-import { useGmailMessage } from '@/hooks/queries'
-import { formatBytes, formatEmail } from '@/utils/format'
+import { archiveApi, gmailApi } from '@/api'
+import { useArchiveMail, useArchiveThread, useGmailMessage } from '@/hooks/queries'
+import { saveBlob, saveFile } from '@/utils/download'
+import { emlBody } from '@/utils/eml'
+import { formatBytes, formatEmail, formatSender } from '@/utils/format'
 import {
   base64UrlToBytes, extractAttachments, extractBody, hasRemoteContent, mailSrcDoc, toBadge,
-  type ApiLabel, type Attachment,
+  type ApiLabel,
 } from '@/utils/gmail'
 import { LabelBadge } from './LabelBadge'
 
 export type ViewerAction = 'trash' | 'archive' | 'archive_nas'
+export type ArchiveViewerAction = 'share' | 'trash'
 
-const ACTIONS: { action: ViewerAction; icon: typeof Trash2 }[] = [
-  { action: 'archive', icon: Archive },
-  { action: 'archive_nas', icon: HardDriveDownload },
-  { action: 'trash', icon: Trash2 },
-]
+const ACTIONS = {
+  gmail: [
+    { action: 'archive', icon: Archive },
+    { action: 'archive_nas', icon: HardDriveDownload },
+    { action: 'trash', icon: Trash2 },
+  ],
+  archive: [
+    { action: 'share', icon: Share2 },
+    { action: 'trash', icon: Trash2 },
+  ],
+} as const
 
 type Header = { name?: string; value?: string }
+type ViewerAttachment = { id: string; filename: string; size: number; save: () => Promise<void> }
+/** What the reader shows, from a Gmail message or an archived EML. */
+type ViewerMail = {
+  subject: string; from: string; to: string; date: string; size: number; labelIds: string[]
+  html: string; text: string; attachments: ViewerAttachment[]; threadId: string | null
+}
+type ArchivedDetail = {
+  subject: string | null; sender: string | null; recipient: string | null; date: string | null; size_bytes: number | string
+  label_ids: string[] | null; emlContent: string | null; thread_id: string | null
+  attachments?: { id: string; filename: string; size_bytes: number | string }[]
+}
+type ThreadMail = { id: string; sender: string | null; date: string | null }
 
 // Toolbar buttons: icon over text, 52 px tall <md; inline ≥md
 const TOOL = 'h-auto min-h-[52px] flex-1 flex-col gap-1 px-1 text-xs whitespace-normal md:min-h-9 md:flex-none md:flex-row md:px-3 md:text-sm'
 
-async function download(accountId: string, messageId: string, att: Attachment) {
-  const { data } = await gmailApi.getAttachment(accountId, messageId, att.attachmentId)
-  const url = URL.createObjectURL(new Blob([base64UrlToBytes(data) as BlobPart], { type: att.mimeType }))
-  const a = document.createElement('a')
-  a.href = url
-  a.download = att.filename
-  a.click()
-  URL.revokeObjectURL(url)
+function fromGmail(accountId: string, messageId: string, mail: any): ViewerMail {
+  const headers: Header[] = mail.payload?.headers ?? []
+  const header = (name: string) => headers.find((h) => h.name?.toLowerCase() === name)?.value ?? ''
+  return {
+    subject: header('subject'), from: header('from'), to: header('to'), date: header('date'), size: mail.sizeEstimate ?? 0,
+    labelIds: mail.labelIds ?? [], ...extractBody(mail.payload), threadId: null,
+    attachments: extractAttachments(mail.payload).map((att) => ({
+      id: att.attachmentId, filename: att.filename, size: att.size,
+      save: async () => {
+        const { data } = await gmailApi.getAttachment(accountId, messageId, att.attachmentId)
+        saveBlob(new Blob([base64UrlToBytes(data) as BlobPart], { type: att.mimeType }), att.filename)
+      },
+    })),
+  }
+}
+
+function fromArchive(accountId: string, mail: ArchivedDetail): ViewerMail {
+  return {
+    subject: mail.subject ?? '', from: mail.sender ?? '', to: mail.recipient ?? '', date: mail.date ?? '', size: Number(mail.size_bytes),
+    labelIds: mail.label_ids ?? [], ...emlBody(mail.emlContent ?? ''), threadId: mail.thread_id,
+    attachments: (mail.attachments ?? []).map((att) => ({
+      id: att.id, filename: att.filename, size: Number(att.size_bytes),
+      save: async () => saveFile(archiveApi.downloadAttachment(accountId, att.id), att.filename),
+    })),
+  }
+}
+
+/** The mail of either source; only the matching query runs. */
+function useViewerMail(source: 'gmail' | 'archive', accountId: string, messageId: string | null) {
+  const gmail = useGmailMessage(accountId, source === 'gmail' ? messageId : null)
+  const archived = useArchiveMail(accountId, source === 'archive' ? messageId : null)
+  const query = source === 'archive' ? archived : gmail
+  let mail: ViewerMail | undefined
+  if (query.data && messageId) mail = source === 'archive' ? fromArchive(accountId, query.data) : fromGmail(accountId, messageId, query.data)
+  return { mail, isLoading: query.isLoading, isError: query.isError, refetch: query.refetch }
 }
 
 /** Body of a mail (I4): sandboxed, no scripts, remote content blocked until « Afficher ». */
@@ -63,23 +111,62 @@ function MailBody({ html, text }: Readonly<{ html: string; text: string }>) {
   )
 }
 
-/** Gmail mail reader (§5.2): right sheet ≥md, full screen <md (artboard 4); actions in a bottom toolbar. */
-export function MailViewer({ accountId, messageId, labels, onClose, onAction, onCreateRule }: Readonly<{
+/** Other messages of an archived conversation; the reader switches to the one picked. */
+function ThreadList({ accountId, threadId, current, onOpen }: Readonly<{
+  accountId: string
+  threadId: string | null
+  current: string
+  onOpen: (id: string) => void
+}>) {
+  const { t, i18n } = useTranslation()
+  const mails: ThreadMail[] = useArchiveThread(accountId, threadId).data ?? []
+  if (mails.length < 2) return null
+  const title = t('mails.viewer.thread', { count: mails.length })
+  return (
+    <section aria-label={title} className="border-b px-4 py-2">
+      <h2 className="text-sm font-medium">{title}</h2>
+      <ul className="flex flex-col">
+        {mails.map((m) => (
+          <li key={m.id}>
+            <Button
+              variant="ghost"
+              aria-current={m.id === current || undefined}
+              className="h-11 w-full justify-start gap-2 px-2 font-normal aria-[current]:font-semibold md:h-8"
+              onClick={() => onOpen(m.id)}
+            >
+              <span className="min-w-0 flex-1 truncate text-left">{formatSender(m.sender ?? '')}</span>
+              <span className="text-xs text-muted-foreground">
+                {m.date && new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(m.date))}
+              </span>
+            </Button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
+type ViewerProps = {
   accountId: string
   messageId: string | null
   labels: ApiLabel[]
   onClose: () => void
-  onAction: (action: ViewerAction) => void
   /** « Créer une règle » for the sender's address (I3). */
   onCreateRule?: (from: string) => void
-}>) {
+} & (
+  | { source?: 'gmail'; onAction: (action: ViewerAction) => void; onOpenMail?: never }
+  /** Archived EML (§7.5): Partager / Supprimer, and the other messages of its thread. */
+  | { source: 'archive'; onAction: (action: ArchiveViewerAction) => void; onOpenMail: (id: string) => void }
+)
+
+/** Mail reader (§5.2), Gmail or archive: right sheet ≥md, full screen <md (artboard 4); actions in a bottom toolbar. */
+export function MailViewer(props: Readonly<ViewerProps>) {
+  const { accountId, messageId, labels, onClose, onCreateRule, source = 'gmail' } = props
   const { t, i18n } = useTranslation()
-  const { data: mail, isLoading, isError, refetch } = useGmailMessage(accountId, messageId)
-  const headers: Header[] = mail?.payload?.headers ?? []
-  const header = (name: string) => headers.find((h) => h.name?.toLowerCase() === name)?.value ?? ''
-  const { html, text } = extractBody(mail?.payload)
-  const attachments = extractAttachments(mail?.payload)
-  const date = header('date') && new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(header('date')))
+  const { mail, isLoading, isError, refetch } = useViewerMail(source, accountId, messageId)
+  const attachments = mail?.attachments ?? []
+  const date = mail?.date && new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(mail.date))
+  const onAction = props.onAction as (action: string) => void
 
   return (
     <Sheet open={!!messageId} onOpenChange={(open) => !open && onClose()}>
@@ -91,22 +178,22 @@ export function MailViewer({ accountId, messageId, labels, onClose, onAction, on
         <div className="flex items-start gap-2 border-b p-4 pt-[max(1rem,env(safe-area-inset-top))]">
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <SheetTitle className="text-[21px] leading-tight font-semibold">
-              {isLoading ? t('common.loading') : header('subject') || t('mails.noSubject')}
+              {isLoading ? t('common.loading') : mail?.subject || t('mails.noSubject')}
             </SheetTitle>
             <SheetDescription asChild>
               <div className="flex flex-col gap-0.5 text-sm text-muted-foreground">
                 {mail && (
                   <>
-                    <span><span className="font-medium text-foreground">{t('mails.viewer.from')}</span> {header('from')}</span>
-                    <span><span className="font-medium text-foreground">{t('mails.viewer.to')}</span> {header('to')}</span>
-                    <span>{date} · {formatBytes(mail.sizeEstimate ?? 0)}</span>
+                    <span><span className="font-medium text-foreground">{t('mails.viewer.from')}</span> {mail.from}</span>
+                    <span><span className="font-medium text-foreground">{t('mails.viewer.to')}</span> {mail.to}</span>
+                    <span>{date} · {formatBytes(mail.size)}</span>
                   </>
                 )}
               </div>
             </SheetDescription>
-            {mail?.labelIds?.length > 0 && (
+            {!!mail?.labelIds.length && (
               <div className="flex flex-wrap gap-1 pt-1">
-                {(mail.labelIds as string[]).map((id) => <LabelBadge key={id} label={toBadge(labels, id)} />)}
+                {mail.labelIds.map((id) => <LabelBadge key={id} label={toBadge(labels, id)} />)}
               </div>
             )}
           </div>
@@ -122,6 +209,10 @@ export function MailViewer({ accountId, messageId, labels, onClose, onAction, on
           </div>
         )}
 
+        {props.source === 'archive' && mail && messageId && (
+          <ThreadList accountId={accountId} threadId={mail.threadId} current={messageId} onOpen={props.onOpenMail} />
+        )}
+
         {attachments.length > 0 && (
           <section aria-label={t('mails.viewer.attachments', { count: attachments.length })} className="border-b px-4 py-2">
             <h2 className="flex items-center gap-1.5 text-sm font-medium">
@@ -129,7 +220,7 @@ export function MailViewer({ accountId, messageId, labels, onClose, onAction, on
             </h2>
             <ul className="flex flex-col">
               {attachments.map((att) => (
-                <li key={att.attachmentId} className="flex items-center gap-2 text-sm">
+                <li key={att.id} className="flex items-center gap-2 text-sm">
                   <span className="min-w-0 flex-1 truncate">{att.filename}</span>
                   <span className="text-xs text-muted-foreground tabular-nums">{formatBytes(att.size)}</span>
                   <Button
@@ -137,7 +228,7 @@ export function MailViewer({ accountId, messageId, labels, onClose, onAction, on
                     size="icon"
                     className="size-11 md:size-8"
                     aria-label={t('mails.viewer.download', { name: att.filename })}
-                    onClick={() => download(accountId, messageId!, att).catch(() => toast.error(t('mails.viewer.downloadFailed')))}
+                    onClick={() => att.save().catch(() => toast.error(t('mails.viewer.downloadFailed')))}
                   >
                     <Download aria-hidden="true" />
                   </Button>
@@ -149,7 +240,7 @@ export function MailViewer({ accountId, messageId, labels, onClose, onAction, on
 
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
           {/* key: a new mail starts with remote content blocked again */}
-          {mail && <MailBody key={messageId} html={html} text={text} />}
+          {mail && <MailBody key={messageId} html={mail.html} text={mail.text} />}
         </div>
 
         <div
@@ -157,7 +248,7 @@ export function MailViewer({ accountId, messageId, labels, onClose, onAction, on
           aria-label={t('mails.viewer.actions')}
           className="flex border-t px-2 pt-1 pb-[max(8px,env(safe-area-inset-bottom))] md:justify-end md:gap-2 md:p-3"
         >
-          {ACTIONS.map(({ action, icon: Icon }) => (
+          {ACTIONS[source].map(({ action, icon: Icon }) => (
             <Button
               key={action}
               variant="ghost"
@@ -165,7 +256,7 @@ export function MailViewer({ accountId, messageId, labels, onClose, onAction, on
               className={cn(TOOL, action === 'trash' && 'text-destructive')}
               onClick={() => onAction(action)}
             >
-              <Icon aria-hidden="true" />{t(`mails.action.${action}`)}
+              <Icon aria-hidden="true" />{t(source === 'archive' ? `archives.action.${action}` : `mails.action.${action}`)}
             </Button>
           ))}
           {onCreateRule && (
@@ -173,7 +264,7 @@ export function MailViewer({ accountId, messageId, labels, onClose, onAction, on
               variant="ghost"
               disabled={!mail}
               className={TOOL}
-              onClick={() => onCreateRule(formatEmail(header('from')))}
+              onClick={() => onCreateRule(formatEmail(mail?.from ?? ''))}
             >
               <Zap aria-hidden="true" />{t('mails.createRule')}
             </Button>

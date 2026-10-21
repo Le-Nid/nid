@@ -21,8 +21,6 @@ export const queryKeys = {
     ['archive', accountId, 'mails', params] as const,
   archiveMail: (accountId: string, mailId: string) =>
     ['archive', accountId, 'mail', mailId] as const,
-  archiveThreads: (accountId: string, params?: Record<string, any>) =>
-    ['archive', accountId, 'threads', params] as const,
   archiveThread: (accountId: string, threadId: string) =>
     ['archive', accountId, 'thread', threadId] as const,
   archiveTrash: (accountId: string, params?: Record<string, any>) =>
@@ -145,12 +143,54 @@ export function useGmailMessage(accountId: string | null, messageId: string | nu
 
 // ─── Archive ──────────────────────────────────────────────
 
+export const ARCHIVE_PAGE_SIZE = 50
+
+/** Archive search (B2): `q` full text with a `highlight` per mail, filters, « Afficher plus » pages. */
 export function useArchiveMails(accountId: string | null, params: Record<string, any>) {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: queryKeys.archiveMails(accountId!, params),
-    queryFn: () => archiveApi.listMails(accountId!, params),
+    queryFn: ({ pageParam }) => archiveApi.listMails(accountId!, { ...params, page: pageParam, limit: ARCHIVE_PAGE_SIZE }),
+    initialPageParam: 1,
+    getNextPageParam: (last, pages) => (pages.length * ARCHIVE_PAGE_SIZE < last.total ? pages.length + 1 : undefined),
     enabled: !!accountId,
   })
+}
+
+export function useArchiveMail(accountId: string | null, mailId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.archiveMail(accountId!, mailId!),
+    queryFn: () => archiveApi.getMail(accountId!, mailId!),
+    enabled: !!accountId && !!mailId,
+  })
+}
+
+/** Archive edits refresh every archive list (search, trash) and the archive stats. */
+function useArchiveMutation<T, R>(fn: (input: T) => Promise<R>) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: fn,
+    onSuccess: () => Promise.all([
+      qc.invalidateQueries({ queryKey: ['archive'] }),
+      qc.invalidateQueries({ queryKey: ['dashboard'] }),
+    ]),
+  })
+}
+
+export const useTrashArchived = (accountId: string) =>
+  useArchiveMutation((mailIds: string[]) => archiveApi.trashMails(accountId, mailIds))
+
+export const useRestoreArchived = (accountId: string) =>
+  useArchiveMutation((mailIds: string[]) => archiveApi.restoreMails(accountId, mailIds))
+
+export const useEmptyArchiveTrash = (accountId: string) =>
+  useArchiveMutation(() => archiveApi.emptyTrash(accountId))
+
+export const useUpdateTrashConfig = () =>
+  useArchiveMutation((data: Parameters<typeof archiveApi.updateTrashConfig>[0]) => archiveApi.updateTrashConfig(data))
+
+/** « Sauvegarder sur le NAS maintenant »: differential archive of the whole mailbox. */
+export function useArchiveNow(accountId: string) {
+  return useMutation({ mutationFn: () => archiveApi.triggerArchive(accountId, { differential: true }) as Promise<{ jobId: string }> })
 }
 
 export function useArchiveTrash(accountId: string | null, params: Record<string, any>) {
@@ -495,14 +535,6 @@ export function useUnifiedMessages(params: Record<string, any>, enabled = true) 
 }
 
 // ─── Archive Threads ──────────────────────────────────────
-
-export function useArchiveThreads(accountId: string | null, params: Record<string, any>) {
-  return useQuery({
-    queryKey: queryKeys.archiveThreads(accountId!, params),
-    queryFn: () => archiveThreadsApi.listThreads(accountId!, params),
-    enabled: !!accountId,
-  })
-}
 
 export function useArchiveThread(accountId: string | null, threadId: string | null) {
   return useQuery({

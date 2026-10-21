@@ -132,6 +132,7 @@ export async function getUserShares(userId: string) {
     .innerJoin('archived_mails', 'archive_shares.archived_mail_id', 'archived_mails.id')
     .select([
       'archive_shares.id',
+      'archive_shares.archived_mail_id',
       'archive_shares.token',
       'archive_shares.expires_at',
       'archive_shares.access_count',

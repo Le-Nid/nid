@@ -12,7 +12,7 @@ const PAGES: [name: string, path: string, ready: string][] = [
   ['login', '/login', 'login.submit'],
   ['overview', '/overview', 'dashboard.title'],
   ['mails', '/mails', 'mails.title'],
-  ['archives', '/archives', 'archive.title'],
+  ['archives', '/archives', 'archives.title'],
   ['rules', '/rules', 'rules.title'],
   ['labels', '/rules?tab=labels', 'rules.title'],
   ['activity', '/activity', 'jobs.title'],

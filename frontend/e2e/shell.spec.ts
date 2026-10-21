@@ -14,7 +14,7 @@ test.describe('redirects (§3.3)', () => {
   const REDIRECTS: [from: string, to: string, heading: string][] = [
     ['/', '/overview', 'dashboard.title'],
     ['/dashboard', '/overview', 'dashboard.title'],
-    ['/archive', '/archives', 'archive.title'],
+    ['/archive', '/archives', 'archives.title'],
     ['/jobs', '/activity', 'jobs.title'],
     ['/settings', '/settings/account', 'settings.title'],
   ]
@@ -30,6 +30,12 @@ test.describe('redirects (§3.3)', () => {
     await page.goto('/unsubscribe')
     await expect(page).toHaveURL((url) => url.pathname === '/cleanup' && url.search === '?tab=senders')
     await expect(page.getByRole('tab', { name: t('cleanup.tab.senders') })).toHaveAttribute('aria-selected', 'true')
+  })
+
+  test('/sharing → /archives?tab=shares', async ({ page }) => {
+    await page.goto('/sharing')
+    await expect(page).toHaveURL((url) => url.pathname === '/archives' && url.search === '?tab=shares')
+    await expect(page.getByRole('tab', { name: t('archives.tab.shares') })).toHaveAttribute('aria-selected', 'true')
   })
 
   test('/expiration → /rules?tab=labels', async ({ page }) => {
@@ -55,7 +61,7 @@ test.describe('desktop sidebar', () => {
 
     await nav.getByRole('link', { name: t('shell.archives') }).click()
     await expect(page).toHaveURL(/\/archives$/)
-    await expect(page.getByRole('heading', { name: t('archive.title') })).toBeVisible()
+    await expect(page.getByRole('heading', { name: t('archives.title') })).toBeVisible()
     await expect(nav.getByRole('link', { name: t('shell.archives') })).toHaveAttribute('aria-current', 'page')
     await expect(nav.getByRole('link', { name: t('shell.overview') })).not.toHaveAttribute('aria-current', 'page')
   })
