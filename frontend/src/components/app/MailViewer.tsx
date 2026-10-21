@@ -69,7 +69,7 @@ function fromArchive(accountId: string, mail: ArchivedDetail, encryptedText: str
     labelIds: mail.label_ids ?? [], html: mail.html, text: mail.is_encrypted ? encryptedText : mail.text, threadId: mail.thread_id,
     attachments: (mail.attachments ?? []).map((att) => ({
       id: att.id, filename: att.filename, size: Number(att.size_bytes),
-      save: async () => saveFile(archiveApi.downloadAttachment(accountId, att.id), att.filename),
+      save: () => Promise.resolve(saveFile(archiveApi.downloadAttachment(accountId, att.id), att.filename)),
     })),
   }
 }

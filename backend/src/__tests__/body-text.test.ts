@@ -73,13 +73,13 @@ describe('extractBodyText', () => {
     expect(text).not.toMatch(/<[a-z/]/i)
   })
 
-  it('strips HTML itself when mailparser gives no text', () => {
-    expect(bodyTextFromParsed({ text: '  ', html: '<p>Hello <b>world</b></p>' })).toBe('Hello world')
-    expect(bodyTextFromParsed({ text: undefined, html: false })).toBe('')
+  it('no text gives an empty string', () => {
+    expect(bodyTextFromParsed({ text: undefined })).toBe('')
+    expect(bodyTextFromParsed({ text: '  ' })).toBe('')
   })
 
   it('removes NUL and ts_headline marker characters', () => {
-    expect(bodyTextFromParsed({ text: 'a\u0000b \u0001c\u0002', html: false })).toBe('ab c')
+    expect(bodyTextFromParsed({ text: 'a\u0000b \u0001c\u0002' })).toBe('ab c')
   })
 
   it('truncates to 100 000 chars', async () => {

@@ -136,7 +136,7 @@ export function startRuleScheduler() {
   }
 
   // Démarrer la boucle
-  enqueueBodyTextBackfill();
+  void enqueueBodyTextBackfill(); // logs its own errors
   setInterval(tick, INTERVAL_MS);
   logger.info('Rule scheduler started (1min interval)');
 }

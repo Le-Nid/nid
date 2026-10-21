@@ -8,11 +8,9 @@ const logger = createLogger('body-text')
 const MAX_BODY_CHARS = 100_000
 const BACKFILL_BATCH = 200
 
-/** Plain text of a parsed mail for full-text search: text/plain, else stripped HTML, whitespace collapsed, truncated. */
-export function bodyTextFromParsed(parsed: Pick<ParsedMail, 'text' | 'html'>): string {
-  let text = parsed.text?.trim() ? parsed.text : ''
-  if (!text && typeof parsed.html === 'string') text = parsed.html.replaceAll(/<[^>]*>/g, ' ')
-  return text
+/** Plain text of a parsed mail for full-text search (mailparser already derives `text` from HTML-only mails). */
+export function bodyTextFromParsed(parsed: Pick<ParsedMail, 'text'>): string {
+  return (parsed.text ?? '')
     // NUL is rejected by Postgres text; \x01/\x02 are the ts_headline markers
     .replaceAll(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '')
     .replaceAll(/\s+/g, ' ')

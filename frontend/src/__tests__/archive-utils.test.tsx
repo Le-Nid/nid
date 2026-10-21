@@ -9,9 +9,9 @@ describe('highlight', () => {
   it('only <mark> becomes an element; escaped tags stay text and entities are decoded once', () => {
     const html = 'a &lt;script&gt;alert(1)&lt;/script&gt; <mark>EDF</mark> &amp;lt; &quot;x&quot; &#39;y&#39; <b>z</b>'
     expect(highlightParts(html)).toEqual([
-      { text: 'a <script>alert(1)</script> ', mark: false },
-      { text: 'EDF', mark: true },
-      { text: ' &lt; "x" \'y\' <b>z</b>', mark: false },
+      { text: 'a <script>alert(1)</script> ', mark: false, at: 0 },
+      { text: 'EDF', mark: true, at: 46 },
+      { text: ' &lt; "x" \'y\' <b>z</b>', mark: false, at: 56 },
     ])
     const { container } = render(<p><Highlight html={html} /></p>)
     expect(container.querySelectorAll('mark')).toHaveLength(1)
