@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify'
 import { authPresets } from '../utils/auth'
+import { notFound } from '../utils/db'
 import {
   getHeatmap,
   getSenderScores,
@@ -45,9 +46,9 @@ export async function analyticsRoutes(app: FastifyInstance) {
   // ─── Dismiss une suggestion ─────────────────────────────
   app.patch<{
     Params: { suggestionId: string }
-  }>('/suggestions/:suggestionId/dismiss', { preHandler: [app.authenticate] }, async (request) => {
+  }>('/suggestions/:suggestionId/dismiss', { preHandler: [app.authenticate] }, async (request, reply) => {
     const { suggestionId } = request.params
-    await dismissSuggestion(suggestionId)
+    if (!(await dismissSuggestion(suggestionId, request.user.sub))) return notFound(reply, 'Suggestion not found')
     return { ok: true }
   })
 

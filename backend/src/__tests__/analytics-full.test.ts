@@ -198,10 +198,9 @@ describe('getCleanupSuggestions', () => {
 })
 
 describe('dismissSuggestion', () => {
-  it('marks suggestion as dismissed', async () => {
-    mockExecute.mockResolvedValueOnce([])
-    await dismissSuggestion('sug-1')
-    expect(mockExecute).toHaveBeenCalled()
+  it('unknown or foreign suggestion → false', async () => {
+    mockExecuteTakeFirst.mockResolvedValueOnce(undefined)
+    expect(await dismissSuggestion('sug-1', 'user-1')).toBe(false)
   })
 })
 

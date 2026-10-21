@@ -220,6 +220,18 @@ describe('rules.service - additional branch coverage', () => {
       .toBe('to:(me@t.com)')
   })
 
+  it('runRule only targets mails the action still changes (archive → in:inbox, mark_read → is:unread)', async () => {
+    mockListMessages.mockResolvedValue({ messages: [{ id: 'm1' }], resultSizeEstimate: 3 })
+    mockEnqueueJob.mockResolvedValue({ id: 'job-1' })
+    mockExecute.mockResolvedValue([])
+    const cond = [{ field: 'from', operator: 'contains', value: 'x' }]
+    await runRule({ id: 'r1', conditions: cond, action: { type: 'archive' } }, 'acc-1')
+    await runRule({ id: 'r2', conditions: cond, action: { type: 'mark_read' } }, 'acc-1')
+    await runRule({ id: 'r3', conditions: cond, action: { type: 'trash' } }, 'acc-1')
+    const queries = mockEnqueueJob.mock.calls.slice(-3).map((c) => c[1].query)
+    expect(queries).toEqual(['from:(x) in:inbox', 'from:(x) is:unread', 'from:(x)'])
+  })
+
   it('runRule hands the Gmail query to the job instead of listing every id', async () => {
     mockListMessages.mockResolvedValueOnce({ messages: [{ id: 'm1' }], resultSizeEstimate: 80000, nextPageToken: 'token2' })
     mockEnqueueJob.mockResolvedValueOnce({ id: 'job-1' })

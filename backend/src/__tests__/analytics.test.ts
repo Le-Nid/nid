@@ -208,10 +208,17 @@ describe('getSenderScores', () => {
 
 // ─── dismissSuggestion ─────────────────────────────────────
 describe('dismissSuggestion', () => {
-  it('updates suggestion as dismissed', async () => {
-    mockExecute.mockResolvedValue([])
-    await dismissSuggestion('sugg-1')
-    expect(mockExecute).toHaveBeenCalled()
+  it('dismisses the user\'s suggestion and drops the cached list', async () => {
+    mockExecuteTakeFirst.mockResolvedValueOnce({ gmail_account_id: 'acc-1' })
+    expect(await dismissSuggestion('sugg-1', 'user-1')).toBe(true)
+    expect(mockRedis.del).toHaveBeenCalledWith('analytics:cleanup:acc-1')
+  })
+
+  it('returns false for a suggestion of another user', async () => {
+    mockRedis.del.mockClear()
+    mockExecuteTakeFirst.mockResolvedValueOnce(undefined)
+    expect(await dismissSuggestion('sugg-1', 'user-2')).toBe(false)
+    expect(mockRedis.del).not.toHaveBeenCalled()
   })
 })
 

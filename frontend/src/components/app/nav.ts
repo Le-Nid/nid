@@ -15,7 +15,7 @@ export interface NavEntry {
 
 // N1 (§3.1). `to` = the new route when it exists, else the legacy page until its lot lands.
 export const NAV: NavEntry[] = [
-  { key: 'overview', to: '/overview', icon: LayoutDashboard, match: ['/overview', '/analytics', '/insights'] },
+  { key: 'overview', to: '/overview', icon: LayoutDashboard, match: ['/overview'] },
   { key: 'mails', to: '/mails', icon: Inbox, match: ['/mails', '/unified', '/saved-searches'] },
   { key: 'cleanup', to: '/cleanup', icon: BrushCleaning, match: ['/cleanup', '/unsubscribe', '/attachments'] },
   { key: 'rules', to: '/rules', icon: Zap, match: ['/rules', '/expiration'] },
@@ -30,8 +30,6 @@ export const LEGACY_PAGES: { to: string; labelKey: string }[] = [
   { to: '/unified', labelKey: 'nav.unified' },
   { to: '/saved-searches', labelKey: 'nav.savedSearches' },
   { to: '/attachments', labelKey: 'nav.attachments' },
-  { to: '/insights', labelKey: 'nav.insights' },
-  { to: '/analytics', labelKey: 'nav.analytics' },
   { to: '/privacy', labelKey: 'nav.privacy' },
   { to: '/ops', labelKey: 'nav.ops' },
 ]

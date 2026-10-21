@@ -390,13 +390,19 @@ export async function getCleanupSuggestions(accountId: string, refresh = false):
   return result
 }
 
-export async function dismissSuggestion(suggestionId: string): Promise<void> {
+/** false when the suggestion is not one of the user's. Drops the cached list, or the dismissed one came back for 15 min. */
+export async function dismissSuggestion(suggestionId: string, userId: string): Promise<boolean> {
   const db = getDb()
-  await db
+  const row = await db
     .updateTable('cleanup_suggestions')
     .set({ is_dismissed: true })
     .where('id', '=', suggestionId)
-    .execute()
+    .where('gmail_account_id', 'in', db.selectFrom('gmail_accounts').select('id').where('user_id', '=', userId))
+    .returning('gmail_account_id')
+    .executeTakeFirst()
+  if (!row) return false
+  await getRedis().del(`analytics:cleanup:${row.gmail_account_id}`)
+  return true
 }
 
 // ─── Inbox Zero Tracker ─────────────────────────────────

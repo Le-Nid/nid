@@ -31,9 +31,7 @@
   "nav": {
     "group_email": "Email",
     "group_tools": "Outils",
-    "group_analytics": "Analyse",
     "group_system": "Système",
-    "dashboard": "Dashboard",
     "mails": "Mes mails",
     "unified": "Boîte unifiée",
     "archives": "Archives",
@@ -41,8 +39,6 @@
     "rules": "Règles auto",
     "newsletters": "Newsletters",
     "attachments": "Pièces jointes",
-    "insights": "Insights",
-    "analytics": "Analytics",
     "privacy": "Vie privée",
     "jobs": "Jobs",
     "ops": "Ops & Résilience",
@@ -93,29 +89,6 @@
     "social_facebook": "Se connecter avec Facebook",
     "social_linkedin": "Se connecter avec LinkedIn",
     "social_keycloak": "Se connecter via SSO"
-  },
-  "dashboard": {
-    "title": "Dashboard",
-    "noAccount": "Aucun compte Gmail connecté.",
-    "connectAccount": "Connecter un compte",
-    "loadError": "Erreur lors du chargement",
-    "loadingStats": "Chargement des stats Gmail…",
-    "totalMessages": "Total messages",
-    "unread": "Non lus",
-    "estimatedSize": "Taille estimée",
-    "archivedNas": "Archivés (NAS)",
-    "timelineTitle": "Volume de mails par mois",
-    "topSendersCount": "Top expéditeurs (nombre)",
-    "topSendersSize": "Top expéditeurs (taille)",
-    "biggestMails": "Mails les plus gros",
-    "labelDistribution": "Répartition par label",
-    "readRate": "Taux de lecture",
-    "sender": "Expéditeur",
-    "subject": "Sujet",
-    "size": "Taille",
-    "date": "Date",
-    "noMail": "Aucun mail",
-    "mails": "Mails"
   },
   "labels": {
     "INBOX": "Boîte de réception",
@@ -676,18 +649,6 @@
     "dedupDetails": "{{duplicates}} fichier(s) dupliqué(s), {{saved}} économisés",
     "dedupBackfill": "Analyser"
   },
-  "insights": {
-    "title": "Rapport hebdomadaire",
-    "jobsCompleted": "Jobs terminés",
-    "jobsFailed": "Jobs en erreur",
-    "mailsArchived": "Mails archivés",
-    "rulesExecuted": "Règles exécutées",
-    "topSenders": "Top expéditeurs archivés cette semaine",
-    "sender": "Expéditeur",
-    "archivedMails": "Mails archivés",
-    "noData": "Aucune donnée disponible pour cette semaine",
-    "noActivity": "Aucune activité cette semaine. Les rapports s'enrichissent au fil de votre utilisation."
-  },
   "bulk": {
     "selected": "{{count}} mail(s) sélectionné(s)",
     "trash": "Corbeille",
@@ -798,28 +759,6 @@
       "minLength": "La phrase secrète doit faire au moins 8 caractères",
       "allEncrypted": "Toutes les archives sont chiffrées"
     }
-  },
-  "analytics": {
-    "title": "Intelligence & Analytics",
-    "loadError": "Erreur lors du chargement des analytics",
-    "noAccount": "Sélectionnez un compte Gmail pour voir les analytics",
-    "heatmapTitle": "Heatmap d'activité email",
-    "senderScoresTitle": "Score d'encombrement par expéditeur",
-    "suggestionsTitle": "Suggestions de nettoyage",
-    "inboxZeroHistory": "Évolution Inbox Zero (30 jours)",
-    "sender": "Expéditeur",
-    "volume": "Volume",
-    "size": "Taille",
-    "unread": "Non lus",
-    "readRate": "Taux lecture",
-    "clutterScore": "Score",
-    "inboxCount": "Inbox",
-    "unreadCount": "Non lus",
-    "streak": "Streak",
-    "bestStreak": "Meilleur streak",
-    "days": "jours",
-    "dismiss": "Ignorer",
-    "dismissed": "Suggestion ignorée"
   },
   "savedSearches": {
     "title": "Recherches sauvegardées",
@@ -1186,6 +1125,50 @@
         "live": "Aucun mail Gmail avec une pièce jointe de plus de 100 Ko.",
         "archived": "Aucune pièce jointe dans les archives de ce compte."
       }
+    }
+  },
+  "overview": {
+    "greeting": "Bonjour {{name}}",
+    "noAccount": "Aucun compte Gmail connecté",
+    "connectAccount": "Connecter un compte Gmail",
+    "seeAll": "Tout voir",
+    "kpi": {
+      "mails": "Mails dans Gmail",
+      "unread_one": "{{count, number}} non lu",
+      "unread_other": "{{count, number}} non lus",
+      "recoverable": "Récupérable",
+      "recoverableHint_one": "{{count, number}} expéditeur à nettoyer",
+      "recoverableHint_other": "{{count, number}} expéditeurs à nettoyer",
+      "notScanned": "Analyse des expéditeurs à lancer",
+      "backup": "Sauvegarde NAS",
+      "rules": "Règles actives",
+      "rulesHint_one": "{{count, number}} mail traité ces 30 derniers jours",
+      "rulesHint_other": "{{count, number}} mails traités ces 30 derniers jours"
+    },
+    "top": {
+      "title": "Top encombreurs",
+      "value_one": "{{count, number}} mail · {{size}}",
+      "value_other": "{{count, number}} mails · {{size}}",
+      "empty": "Aucun expéditeur à afficher pour l'instant",
+      "loadError": "Impossible de charger les statistiques du compte."
+    },
+    "suggestions": {
+      "title": "Suggestions",
+      "bulk_unread_one": "{{sender}} : {{count, number}} mail jamais lu ({{size}}).",
+      "bulk_unread_other": "{{sender}} : {{count, number}} mails jamais lus ({{size}}).",
+      "large_sender_one": "{{sender}} occupe {{size}} avec {{count, number}} mail.",
+      "large_sender_other": "{{sender}} occupe {{size}} avec {{count, number}} mails.",
+      "old_newsletters_one": "{{sender}} vous a envoyé {{count, number}} mail que vous lisez peu.",
+      "old_newsletters_other": "{{sender}} vous a envoyé {{count, number}} mails que vous lisez peu.",
+      "dismiss": "Ignorer",
+      "dismissFailed": "Impossible d'ignorer cette suggestion.",
+      "empty": "Aucune suggestion pour l'instant",
+      "loadError": "Impossible de charger les suggestions."
+    },
+    "jobs": {
+      "title": "Jobs en cours",
+      "empty": "Aucun job en cours",
+      "loadError": "Impossible de charger les jobs en cours."
     }
   }
 }

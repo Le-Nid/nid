@@ -42,11 +42,11 @@ const SORTS: Record<Sort, (s: NewsletterSender) => number> = {
   unread: (s) => s.unreadCount,
 }
 const isSort = (v: string | null): v is Sort => !!v && v in SORTS
-const unsubscribeTarget = (s: NewsletterSender) => s.unsubscribeUrl ?? s.unsubscribeMailto
-const senderName = (s: NewsletterSender) => formatSender(s.sender) || s.email
+export const unsubscribeTarget = (s: NewsletterSender) => s.unsubscribeUrl ?? s.unsubscribeMailto
+export const senderName = (s: NewsletterSender) => formatSender(s.sender) || s.email
 
-/** Trash every mail of a sender with the 10 s undo (D1); the row shows the job until it ends. */
-function useSenderCleanup(accountId: string | null) {
+/** Trash every mail of a sender with the 10 s undo (D1); the row shows the job until it ends. Also used by Vue d'ensemble. */
+export function useSenderCleanup(accountId: string | null) {
   const { t } = useTranslation()
   const qc = useQueryClient()
   const [jobs, setJobs] = useState<Record<string, SenderJob>>({})
@@ -91,7 +91,13 @@ function useSenderCleanup(accountId: string | null) {
     set(email, null)
   }
 
-  return { jobs, clean, done }
+  // Opened within the click (popup blockers), before the delete is queued; unsubscribing itself cannot be undone (D2)
+  const unsubscribe = (sender: NewsletterSender) => {
+    window.open(unsubscribeTarget(sender)!, '_blank', 'noopener,noreferrer')
+    void clean(sender, true)
+  }
+
+  return { jobs, clean, done, unsubscribe }
 }
 
 function Avatar({ name }: Readonly<{ name: string }>) {
@@ -130,27 +136,36 @@ function UnsubscribeUnavailable({ stacked, className }: Readonly<{ stacked: bool
   )
 }
 
+/** « Se désabonner et nettoyer » behind its D2 confirmation, or disabled (D3) without List-Unsubscribe. */
+export function UnsubscribeButton({ sender, stacked, className, onConfirm }: Readonly<{
+  sender: NewsletterSender
+  stacked: boolean
+  className: string
+  onConfirm: () => void
+}>) {
+  const { t } = useTranslation()
+  if (!unsubscribeTarget(sender)) return <UnsubscribeUnavailable stacked={stacked} className={className} />
+  return (
+    <ConfirmDialog
+      trigger={<Button variant="outline" className={className}><MailMinus aria-hidden="true" />{t('cleanup.action.unsubscribe')}</Button>}
+      title={t('cleanup.confirm.title', { sender: senderName(sender) })}
+      description={t('cleanup.confirm.description', { count: sender.count })}
+      confirmLabel={t('cleanup.confirm.action', { count: sender.count })}
+      onConfirm={onConfirm}
+      destructive
+    />
+  )
+}
+
 type Handlers = { unsubscribe: (s: NewsletterSender) => void; deleteAll: (s: NewsletterSender) => void; rule: (s: NewsletterSender) => void }
 
 /** The three sender actions (§7.3): a row of buttons ≥md, a stack of 52 px buttons in the mobile sheet. */
 function SenderActions({ sender, stacked, on }: Readonly<{ sender: NewsletterSender; stacked: boolean; on: Handlers }>) {
   const { t } = useTranslation()
   const cls = stacked ? 'h-13 w-full justify-start' : 'h-11 md:h-8'
-  const name = senderName(sender)
   return (
     <div className={stacked ? 'flex flex-col gap-2' : 'flex justify-end gap-1.5'}>
-      {unsubscribeTarget(sender) ? (
-        <ConfirmDialog
-          trigger={<Button variant="outline" className={cls}><MailMinus aria-hidden="true" />{t('cleanup.action.unsubscribe')}</Button>}
-          title={t('cleanup.confirm.title', { sender: name })}
-          description={t('cleanup.confirm.description', { count: sender.count })}
-          confirmLabel={t('cleanup.confirm.action', { count: sender.count })}
-          onConfirm={() => on.unsubscribe(sender)}
-          destructive
-        />
-      ) : (
-        <UnsubscribeUnavailable stacked={stacked} className={cls} />
-      )}
+      <UnsubscribeButton sender={sender} stacked={stacked} className={cls} onConfirm={() => on.unsubscribe(sender)} />
       <Button variant="outline" className={cn(cls, 'text-destructive')} onClick={() => on.deleteAll(sender)}>
         <Trash2 aria-hidden="true" />{t('cleanup.action.deleteAll')}
       </Button>
@@ -250,7 +265,7 @@ export function SendersTab({ accountId }: Readonly<{ accountId: string }>) {
   const sort: Sort = isSort(sortParam) ? sortParam : 'count'
   const onlyNewsletters = params.get('only') === 'newsletters'
   const newsletters = useNewsletters(accountId)
-  const { jobs, clean, done } = useSenderCleanup(accountId)
+  const { jobs, clean, done, unsubscribe } = useSenderCleanup(accountId)
   const [scanJob, setScanJob] = useState<string | null>(null)
   const [sheetFor, setSheetFor] = useState<NewsletterSender | null>(null)
   const [ruleFor, setRuleFor] = useState<NewsletterSender | null>(null)
@@ -272,10 +287,8 @@ export function SendersTab({ accountId }: Readonly<{ accountId: string }>) {
 
   const on: Handlers = {
     unsubscribe: (s) => {
-      // Opened within the click (popup blockers), before the delete is queued; unsubscribing itself cannot be undone (D2)
-      window.open(unsubscribeTarget(s)!, '_blank', 'noopener,noreferrer')
       setSheetFor(null)
-      void clean(s, true)
+      unsubscribe(s)
     },
     deleteAll: (s) => {
       setSheetFor(null)

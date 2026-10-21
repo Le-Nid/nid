@@ -12,7 +12,7 @@ test.describe('Archives', () => {
   test('search shows highlighted results and their count', async ({ page }) => {
     await page.goto('/archives')
     await expect(page.getByRole('heading', { level: 1, name: t('archives.title') })).toBeVisible()
-    await expect(page.getByText(/Dernière sauvegarde .* · 42 mails · 5 Go/)).toBeVisible()
+    await expect(page.getByText(/Dernière sauvegarde .* · 617 mails · 5 Go/)).toBeVisible()
     await expect(results(page)).toHaveText('2 résultats · 0,12 s')
 
     await page.getByRole('searchbox', { name: t('archives.search') }).fill('facture')

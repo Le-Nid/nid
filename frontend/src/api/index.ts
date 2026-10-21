@@ -89,6 +89,10 @@ export const rulesApi = {
   get: (accountId: string, ruleId: string) =>
     api.get(`/api/rules/${accountId}/${ruleId}`).then((r) => r.data),
 
+  /** `{ active, processed30d }` (Vue d'ensemble). */
+  getStats: (accountId: string) =>
+    api.get(`/api/rules/${accountId}/stats`).then((r) => r.data),
+
   create: (accountId: string, dto: any) =>
     api.post(`/api/rules/${accountId}`, dto).then((r) => r.data),
 

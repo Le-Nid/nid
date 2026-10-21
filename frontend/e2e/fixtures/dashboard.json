@@ -1,10 +1,19 @@
 {
   "stats": {
     "totalMessages": 1234, "unreadCount": 56, "totalSizeBytes": 104857600,
-    "bySender": [], "byLabel": [], "timeline": [],
+    "bySender": [
+      { "sender": "Weekly Digest <digest@news.test>", "count": 120, "sizeBytes": 5242880 },
+      { "sender": "Equipe Projet <list@groups.test>", "count": 40, "sizeBytes": 81920 }
+    ],
+    "byLabel": [], "timeline": [],
     "biggestMails": [
       { "id": "b1", "from": "Photos <photos@cloud.test>", "subject": "Album vacances", "sizeEstimate": 15728640, "date": "2026-09-15T08:00:00Z" }
     ]
   },
-  "archiveStats": { "total_mails": 42, "total_size": 5368709120, "last_archived_at": "2026-10-21T06:00:00Z" }
+  "archiveStats": { "total_mails": 617, "total_size": 5368709120, "last_archived_at": "2026-10-21T06:00:00Z" },
+  "ruleStats": { "active": 3, "processed30d": 1284 },
+  "suggestions": [
+    { "id": "sug-1", "type": "old_newsletters", "title": "", "description": null, "sender": "Weekly Digest <digest@news.test>", "emailCount": 12, "totalSizeBytes": 245760, "query": "from:(digest@news.test)", "isDismissed": false },
+    { "id": "sug-2", "type": "bulk_unread", "title": "", "description": null, "sender": "Equipe Projet <list@groups.test>", "emailCount": 30, "totalSizeBytes": 81920, "query": "from:(list@groups.test) is:unread", "isDismissed": false }
+  ]
 }

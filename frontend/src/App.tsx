@@ -7,7 +7,7 @@ import LegacyAntd from "./components/LegacyAntd";
 import { Skeleton } from "./components/ui/skeleton";
 
 const LoginPage = lazy(() => import("./pages/Login"));
-const DashboardPage = lazy(() => import("./pages/Dashboard"));
+const OverviewPage = lazy(() => import("./pages/Overview"));
 const MailsPage = lazy(() => import("./pages/Mails"));
 const ArchivesPage = lazy(() => import("./pages/Archives"));
 const SettingsPage = lazy(() => import("./pages/Settings"));
@@ -16,9 +16,7 @@ const RulesPage = lazy(() => import("./pages/Rules"));
 const AdminPage = lazy(() => import("./pages/Admin"));
 const CleanupPage = lazy(() => import("./pages/Cleanup"));
 const AttachmentsPage = lazy(() => import("./pages/Attachments"));
-const InsightsPage = lazy(() => import("./pages/Insights"));
 const PrivacyPage = lazy(() => import("./pages/Privacy"));
-const AnalyticsPage = lazy(() => import("./pages/Analytics"));
 const SavedSearchesPage = lazy(() => import("./pages/SavedSearches"));
 const UnifiedInboxPage = lazy(() => import("./pages/UnifiedInbox"));
 const OpsResiliencePage = lazy(() => import("./pages/OpsResilience"));
@@ -93,20 +91,18 @@ export default function App() {
         >
           <Route element={<LegacyPages />}>
             {/* New routes (§3.1), rendering the legacy page until its lot lands */}
-            <Route path="overview" element={<DashboardPage />} />
             <Route path="activity" element={<JobsPage />} />
             <Route path="settings/:section" element={<SettingsPage />} />
             <Route path="admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
             {/* Legacy routes whose destination does not exist yet: redirected in their lot (§3.3) */}
             <Route path="attachments" element={<AttachmentsPage />} />
-            <Route path="insights" element={<InsightsPage />} />
             <Route path="privacy" element={<PrivacyPage />} />
-            <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="saved-searches" element={<SavedSearchesPage />} />
             <Route path="unified" element={<UnifiedInboxPage />} />
             <Route path="ops" element={<OpsResiliencePage />} />
           </Route>
           {/* Migrated pages (§9.2): no antd context; own Suspense so the shell stays while the chunk loads */}
+          <Route path="overview" element={<Suspense fallback={<RouteFallback />}><OverviewPage /></Suspense>} />
           <Route path="mails" element={<Suspense fallback={<RouteFallback />}><MailsPage /></Suspense>} />
           <Route path="cleanup" element={<Suspense fallback={<RouteFallback />}><CleanupPage /></Suspense>} />
           <Route path="rules" element={<Suspense fallback={<RouteFallback />}><RulesPage /></Suspense>} />
@@ -114,6 +110,8 @@ export default function App() {
           {/* §3.3 redirects whose target exists in L0 */}
           <Route index element={<Redirect to="/overview" />} />
           <Route path="dashboard" element={<Redirect to="/overview" />} />
+          <Route path="analytics" element={<Redirect to="/overview" />} />
+          <Route path="insights" element={<Redirect to="/overview" />} />
           <Route path="archive" element={<Redirect to="/archives" />} />
           <Route path="jobs" element={<Redirect to="/activity" />} />
           <Route path="settings" element={<Redirect to="/settings/account" />} />

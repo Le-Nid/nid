@@ -14,7 +14,7 @@ const probe = vi.hoisted(() => async () => {
   return { default: () => { const { pathname, search } = useLocation(); return <h1>{pathname + search}</h1> } }
 })
 vi.mock('../pages/Login', probe)
-vi.mock('../pages/Dashboard', probe)
+vi.mock('../pages/Overview', probe)
 vi.mock('../pages/Mails', probe)
 vi.mock('../pages/Archives', probe)
 vi.mock('../pages/Settings', probe)
@@ -69,6 +69,8 @@ describe('routes', () => {
   it.each([
     ['/', '/overview'],
     ['/dashboard?tab=1', '/overview?tab=1'],
+    ['/analytics', '/overview'],
+    ['/insights', '/overview'],
     ['/archive?q=x', '/archives?q=x'],
     ['/jobs?status=failed', '/activity?status=failed'],
     ['/settings?gmail=connected', '/settings/account?gmail=connected'],

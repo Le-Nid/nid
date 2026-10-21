@@ -1,4 +1,5 @@
 import { FastifyInstance } from "fastify";
+import { sql } from "kysely";
 import { z } from "zod";
 import {
   getRules,
@@ -17,6 +18,7 @@ import { logAudit } from "../audit/audit.service";
 import { notFound } from "../utils/db";
 import { authPresets } from "../utils/auth";
 import { publishUserEvents } from "../events/events.service";
+import { getDb } from "../db";
 
 const conditionSchema = z.object({
   field: z.enum([
@@ -111,6 +113,24 @@ export async function rulesRoutes(app: FastifyInstance) {
   app.get("/:accountId", accountAuth, async (request) => {
     const { accountId } = request.params as { accountId: string };
     return getRules(accountId);
+  });
+
+  // « Règles actives » KPI (Vue d'ensemble): `processed` is what handleRule stores in jobs.payload.result,
+  // i.e. manual and scheduled runs; MCP runs call runRule directly and leave no job row.
+  app.get("/:accountId/stats", accountAuth, async (request) => {
+    const { accountId } = request.params as { accountId: string };
+    const db = getDb();
+    const [rules, runs] = await Promise.all([
+      db.selectFrom("rules").select(sql<string>`count(*)`.as("n"))
+        .where("gmail_account_id", "=", accountId).where("is_active", "=", true)
+        .executeTakeFirst(),
+      db.selectFrom("jobs")
+        .select(sql<string>`coalesce(sum((payload->'result'->>'processed')::int), 0)`.as("n"))
+        .where("gmail_account_id", "=", accountId).where("type", "=", "run_rule").where("status", "=", "completed")
+        .where("completed_at", ">=", new Date(Date.now() - 30 * 86_400_000))
+        .executeTakeFirst(),
+    ]);
+    return { active: Number(rules?.n ?? 0), processed30d: Number(runs?.n ?? 0) };
   });
 
   app.get("/:accountId/:ruleId", accountAuth, async (request, reply) => {

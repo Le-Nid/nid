@@ -246,3 +246,26 @@ describe('labels routes', () => {
     await app.close()
   })
 })
+
+describe('GET /:accountId/stats (L8)', () => {
+  it('counts active rules and sums what completed run_rule jobs processed over 30 days', async () => {
+    results.executeTakeFirst.push({ n: '3' }, { n: '1284' })
+    const app = await buildApp(rulesRoutes)
+    const res = await app.inject({ method: 'GET', url: `/${ACC}/stats` })
+    expect(res.statusCode).toBe(200)
+    expect(res.json()).toEqual({ active: 3, processed30d: 1284 })
+    const wheres = calls.filter((c) => c[0] === 'where').map((c) => c.slice(1))
+    expect(wheres).toContainEqual(['type', '=', 'run_rule'])
+    expect(wheres).toContainEqual(['status', '=', 'completed'])
+    const since = wheres.find((w) => w[0] === 'completed_at')![2] as Date
+    expect(Math.abs(Date.now() - since.getTime() - 30 * 86_400_000)).toBeLessThan(5_000)
+    await app.close()
+  })
+
+  it('no rows → zeros', async () => {
+    const app = await buildApp(rulesRoutes)
+    const res = await app.inject({ method: 'GET', url: `/${ACC}/stats` })
+    expect(res.json()).toEqual({ active: 0, processed30d: 0 })
+    await app.close()
+  })
+})

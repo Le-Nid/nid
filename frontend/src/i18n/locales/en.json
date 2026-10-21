@@ -31,9 +31,7 @@
   "nav": {
     "group_email": "Email",
     "group_tools": "Tools",
-    "group_analytics": "Analytics",
     "group_system": "System",
-    "dashboard": "Dashboard",
     "mails": "My Emails",
     "unified": "Unified Inbox",
     "archives": "Archives",
@@ -41,8 +39,6 @@
     "rules": "Auto Rules",
     "newsletters": "Newsletters",
     "attachments": "Attachments",
-    "insights": "Insights",
-    "analytics": "Analytics",
     "privacy": "Privacy",
     "jobs": "Jobs",
     "ops": "Ops & Resilience",
@@ -93,29 +89,6 @@
     "social_facebook": "Sign in with Facebook",
     "social_linkedin": "Sign in with LinkedIn",
     "social_keycloak": "Sign in via SSO"
-  },
-  "dashboard": {
-    "title": "Dashboard",
-    "noAccount": "No Gmail account connected.",
-    "connectAccount": "Connect an account",
-    "loadError": "Error loading data",
-    "loadingStats": "Loading Gmail stats…",
-    "totalMessages": "Total messages",
-    "unread": "Unread",
-    "estimatedSize": "Estimated size",
-    "archivedNas": "Archived (NAS)",
-    "timelineTitle": "Email volume per month",
-    "topSendersCount": "Top senders (count)",
-    "topSendersSize": "Top senders (size)",
-    "biggestMails": "Biggest emails",
-    "labelDistribution": "Label distribution",
-    "readRate": "Read rate",
-    "sender": "Sender",
-    "subject": "Subject",
-    "size": "Size",
-    "date": "Date",
-    "noMail": "No email",
-    "mails": "Emails"
   },
   "labels": {
     "INBOX": "Inbox",
@@ -676,18 +649,6 @@
     "dedupDetails": "{{duplicates}} duplicate file(s), {{saved}} saved",
     "dedupBackfill": "Analyze"
   },
-  "insights": {
-    "title": "Weekly Report",
-    "jobsCompleted": "Jobs completed",
-    "jobsFailed": "Jobs failed",
-    "mailsArchived": "Emails archived",
-    "rulesExecuted": "Rules executed",
-    "topSenders": "Top archived senders this week",
-    "sender": "Sender",
-    "archivedMails": "Archived emails",
-    "noData": "No data available for this week",
-    "noActivity": "No activity this week. Reports will grow as you use the app."
-  },
   "bulk": {
     "selected": "{{count}} email(s) selected",
     "trash": "Trash",
@@ -798,28 +759,6 @@
       "minLength": "Passphrase must be at least 8 characters",
       "allEncrypted": "All archives are encrypted"
     }
-  },
-  "analytics": {
-    "title": "Intelligence & Analytics",
-    "loadError": "Failed to load analytics",
-    "noAccount": "Select a Gmail account to view analytics",
-    "heatmapTitle": "Email Activity Heatmap",
-    "senderScoresTitle": "Sender Clutter Score",
-    "suggestionsTitle": "Cleanup Suggestions",
-    "inboxZeroHistory": "Inbox Zero Trend (30 days)",
-    "sender": "Sender",
-    "volume": "Volume",
-    "size": "Size",
-    "unread": "Unread",
-    "readRate": "Read Rate",
-    "clutterScore": "Score",
-    "inboxCount": "Inbox",
-    "unreadCount": "Unread",
-    "streak": "Streak",
-    "bestStreak": "Best Streak",
-    "days": "days",
-    "dismiss": "Dismiss",
-    "dismissed": "Suggestion dismissed"
   },
   "savedSearches": {
     "title": "Saved Searches",
@@ -1186,6 +1125,50 @@
         "live": "No Gmail mail with an attachment over 100 KB.",
         "archived": "No attachment in this account's archives."
       }
+    }
+  },
+  "overview": {
+    "greeting": "Hello {{name}}",
+    "noAccount": "No Gmail account connected",
+    "connectAccount": "Connect a Gmail account",
+    "seeAll": "See all",
+    "kpi": {
+      "mails": "Mails in Gmail",
+      "unread_one": "{{count, number}} unread",
+      "unread_other": "{{count, number}} unread",
+      "recoverable": "Recoverable",
+      "recoverableHint_one": "{{count, number}} sender to clean up",
+      "recoverableHint_other": "{{count, number}} senders to clean up",
+      "notScanned": "Sender scan not run yet",
+      "backup": "NAS backup",
+      "rules": "Active rules",
+      "rulesHint_one": "{{count, number}} mail processed in the last 30 days",
+      "rulesHint_other": "{{count, number}} mails processed in the last 30 days"
+    },
+    "top": {
+      "title": "Top senders",
+      "value_one": "{{count, number}} mail · {{size}}",
+      "value_other": "{{count, number}} mails · {{size}}",
+      "empty": "No sender to show yet",
+      "loadError": "Could not load the account statistics."
+    },
+    "suggestions": {
+      "title": "Suggestions",
+      "bulk_unread_one": "{{sender}}: {{count, number}} mail never read ({{size}}).",
+      "bulk_unread_other": "{{sender}}: {{count, number}} mails never read ({{size}}).",
+      "large_sender_one": "{{sender}} takes {{size}} with {{count, number}} mail.",
+      "large_sender_other": "{{sender}} takes {{size}} with {{count, number}} mails.",
+      "old_newsletters_one": "{{sender}} sent you {{count, number}} mail you rarely read.",
+      "old_newsletters_other": "{{sender}} sent you {{count, number}} mails you rarely read.",
+      "dismiss": "Ignore",
+      "dismissFailed": "Could not ignore this suggestion.",
+      "empty": "No suggestions for now",
+      "loadError": "Could not load the suggestions."
+    },
+    "jobs": {
+      "title": "Running jobs",
+      "empty": "No running job",
+      "loadError": "Could not load the running jobs."
     }
   }
 }

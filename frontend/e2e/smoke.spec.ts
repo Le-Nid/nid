@@ -29,13 +29,6 @@ test.describe('Login', () => {
   })
 })
 
-test('Dashboard', async ({ page }) => {
-  await page.goto('/dashboard')
-  await expect(page.getByRole('heading', { name: t('dashboard.title') })).toBeVisible()
-  await expect(page.getByText('Album vacances')).toBeVisible()
-  await expect(page.getByRole('button', { name: t('common.refresh') })).toBeVisible()
-})
-
 test.describe('Mails', () => {
   const select = (page: Page, subject: string) => page.getByRole('checkbox', { name: t('dataList.selectRow', { label: subject }) })
   const rowMenu = (page: Page, subject: string) => page.getByRole('button', { name: t('mails.rowActions', { subject }) })

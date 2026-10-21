@@ -10,7 +10,7 @@ const readBaseline = (): Record<string, Record<string, number>> => JSON.parse(re
 
 const PAGES: [name: string, path: string, ready: string][] = [
   ['login', '/login', 'login.submit'],
-  ['overview', '/overview', 'dashboard.title'],
+  ['overview', '/overview', 'overview.top.title'],
   ['mails', '/mails', 'mails.title'],
   ['archives', '/archives', 'archives.title'],
   ['rules', '/rules', 'rules.title'],
@@ -28,8 +28,7 @@ for (const [name, path, ready] of PAGES) {
       await page.route('**/api/auth/me', (route) => route.fulfill({ status: 401, json: { error: 'Unauthorized' } }))
     }
     await page.goto(path)
-    // Readiness only: the legacy antd overview (charts) can exceed the 5 s default when workers run in parallel
-    await expect(page.getByRole(name === 'login' ? 'button' : 'heading', { name: t(ready) })).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByRole(name === 'login' ? 'button' : 'heading', { name: t(ready) })).toBeVisible()
     await page.waitForLoadState('networkidle')
 
     const { violations } = await new AxeBuilder({ page })
