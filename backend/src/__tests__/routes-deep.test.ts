@@ -1252,7 +1252,7 @@ describe('jobRoutes deep', () => {
     await app.register(jobRoutes)
     await app.ready()
     mockExecute.mockResolvedValueOnce([])
-    const res = await app.inject({ method: 'GET', url: '/?status=active&accountId=acc-1' })
+    const res = await app.inject({ method: 'GET', url: '/?status=active&accountId=11111111-1111-1111-1111-111111111111' })
     expect(res.statusCode).toBe(200)
     await app.close()
   })
