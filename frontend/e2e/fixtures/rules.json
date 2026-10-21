@@ -2,6 +2,12 @@
   {
     "id": "r1", "name": "Nettoyer les promos", "description": "Supprime les promotions anciennes", "is_active": true,
     "conditions": [{ "field": "from", "operator": "contains", "value": "promo" }],
-    "action": { "type": "trash" }, "schedule": null, "last_run_at": null
+    "action": { "type": "trash" }, "schedule": null, "last_run_at": null, "template_id": null
+  },
+  {
+    "id": "r2", "name": "Factures", "is_active": true,
+    "conditions": [{ "field": "subject", "operator": "contains", "value": "facture" }],
+    "action": { "type": "label", "labelId": "Label_1" }, "schedule": "daily", "last_run_at": "2026-10-20T08:00:00Z",
+    "template_id": "label-invoices"
   }
 ]

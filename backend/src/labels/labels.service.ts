@@ -2,7 +2,7 @@ import { sql } from 'kysely'
 import type { gmail_v1 } from 'googleapis'
 import { getDb } from '../db'
 import type { GmailLabelType } from '../db/types'
-import { listLabels } from '../gmail/gmail.service'
+import { listLabels, createLabel } from '../gmail/gmail.service'
 import { createLogger } from '../logger'
 
 const logger = createLogger('labels')
@@ -41,6 +41,21 @@ export async function upsertLabels(accountId: string, labels: gmail_v1.Schema$La
       updated_at: now,
     })))
     .execute()
+}
+
+/** Id of the user label with this exact name, created in Gmail (and mirrored) when missing. */
+export async function findOrCreateLabel(accountId: string, name: string): Promise<string> {
+  const existing = await getDb()
+    .selectFrom('gmail_labels')
+    .select('id')
+    .where('gmail_account_id', '=', accountId)
+    .where('name', '=', name)
+    .where('deleted_at', 'is', null)
+    .executeTakeFirst()
+  if (existing) return existing.id
+  const label = await createLabel(accountId, name)
+  await upsertLabels(accountId, [label])
+  return label.id!
 }
 
 /** Soft delete only: archives keep resolving the name of a label deleted in Gmail. */

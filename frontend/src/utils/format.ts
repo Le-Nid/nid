@@ -18,3 +18,12 @@ export function formatEmail(sender: string): string {
   const match = sender.match(/<([^>]+)>/)
   return match ? match[1] : sender
 }
+
+const UNITS: [Intl.RelativeTimeFormatUnit, number][] = [['year', 31_536_000], ['month', 2_592_000], ['day', 86_400], ['hour', 3_600], ['minute', 60]]
+
+/** « il y a 3 heures », « hier »… */
+export function formatRelative(date: string, locale: string): string {
+  const seconds = (new Date(date).getTime() - Date.now()) / 1000
+  const [unit, size] = UNITS.find(([, s]) => Math.abs(seconds) >= s) ?? ['second', 1]
+  return new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(Math.round(seconds / size), unit)
+}

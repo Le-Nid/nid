@@ -32,6 +32,12 @@ test.describe('redirects (§3.3)', () => {
     await expect(page.getByRole('tab', { name: t('cleanup.tab.senders') })).toHaveAttribute('aria-selected', 'true')
   })
 
+  test('/expiration → /rules?tab=labels', async ({ page }) => {
+    await page.goto('/expiration')
+    await expect(page).toHaveURL((url) => url.pathname === '/rules' && url.search === '?tab=labels')
+    await expect(page.getByRole('tab', { name: new RegExp(t('rules.tab.labels')) })).toHaveAttribute('aria-selected', 'true')
+  })
+
   test('keeps the query string (OAuth callback lands on /settings?gmail=…)', async ({ page }) => {
     await page.goto('/settings?gmail=connected')
     await expect(page).toHaveURL((url) => url.pathname === '/settings/account' && url.search === '?gmail=connected')

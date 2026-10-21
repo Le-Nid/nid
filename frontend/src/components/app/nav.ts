@@ -30,7 +30,6 @@ export const LEGACY_PAGES: { to: string; labelKey: string }[] = [
   { to: '/unified', labelKey: 'nav.unified' },
   { to: '/saved-searches', labelKey: 'nav.savedSearches' },
   { to: '/attachments', labelKey: 'nav.attachments' },
-  { to: '/expiration', labelKey: 'nav.expiration' },
   { to: '/sharing', labelKey: 'nav.sharing' },
   { to: '/insights', labelKey: 'nav.insights' },
   { to: '/analytics', labelKey: 'nav.analytics' },

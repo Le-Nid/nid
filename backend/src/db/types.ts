@@ -86,6 +86,7 @@ export interface RulesTable {
   schedule:         string | null
   is_active:        Generated<boolean>
   last_run_at:      Date | null
+  template_id:      ColumnType<string | null, string | null | undefined, string | null>
   created_at:       Generated<Date>
   updated_at:       Generated<Date>
 }

@@ -5,7 +5,7 @@ import {
   analyticsApi, privacyApi, notificationsApi,
   auditApi, webhooksApi, savedSearchesApi, unifiedApi, archiveThreadsApi,
   retentionApi, quotaApi, importApi,
-  expirationApi, sharingApi, labelsApi,
+  sharingApi, labelsApi,
 } from '../api'
 
 // ─── Query key factories ──────────────────────────────────
@@ -16,7 +16,6 @@ export const queryKeys = {
   gmailMessages: (accountId: string, query?: string, filter?: string) =>
     ['gmail', accountId, 'messages', query, filter] as const,
   gmailMessage: (accountId: string, messageId: string) => ['gmail', accountId, 'message', messageId] as const,
-  gmailLabels: (accountId: string) => ['gmail', accountId, 'labels'] as const,
   labels: (accountId: string) => ['labels', accountId] as const,
   archiveMails: (accountId: string, params?: Record<string, any>) =>
     ['archive', accountId, 'mails', params] as const,
@@ -70,8 +69,6 @@ export const queryKeys = {
   webhooks: () => ['webhooks'] as const,
   retention: () => ['retention'] as const,
   quota: (accountId: string) => ['quota', accountId] as const,
-  expiration: (accountId: string) => ['expiration', accountId] as const,
-  expirationStats: (accountId: string) => ['expiration', accountId, 'stats'] as const,
   shares: () => ['shares'] as const,
 }
 
@@ -95,14 +92,6 @@ export function useDashboardArchiveStats(accountId: string | null) {
 
 // ─── Gmail ────────────────────────────────────────────────
 
-export function useGmailLabels(accountId: string | null) {
-  return useQuery({
-    queryKey: queryKeys.gmailLabels(accountId!),
-    queryFn: () => gmailApi.listLabels(accountId!),
-    enabled: !!accountId,
-  })
-}
-
 /** Synced labels (`GET /api/labels/:id`): Gmail colors, deleted ones kept so archives still show their names. */
 export function useLabels(accountId: string | null) {
   return useQuery({
@@ -111,6 +100,22 @@ export function useLabels(accountId: string | null) {
     enabled: !!accountId,
   })
 }
+
+/** Label edits go to Gmail; the synced list (`['labels']`) is refetched after each. */
+function useLabelMutation<T>(fn: (input: T) => Promise<unknown>) {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: fn, onSuccess: () => qc.invalidateQueries({ queryKey: ['labels'] }) })
+}
+
+export const useCreateLabel = (accountId: string) =>
+  useLabelMutation((name: string) => gmailApi.createLabel(accountId, name))
+
+export const useUpdateLabel = (accountId: string) =>
+  useLabelMutation(({ labelId, ...body }: { labelId: string } & Parameters<typeof gmailApi.updateLabel>[2]) =>
+    gmailApi.updateLabel(accountId, labelId, body))
+
+export const useDeleteLabel = (accountId: string) =>
+  useLabelMutation((labelId: string) => gmailApi.deleteLabel(accountId, labelId))
 
 // Each page = one Gmail list call (20 ids) + one batchGet of those ids; pageParam is Gmail's nextPageToken
 export function useGmailMessages(accountId: string | null, query: string, quickFilter: string) {
@@ -173,11 +178,10 @@ export function useRules(accountId: string | null) {
   })
 }
 
-export function useRuleTemplates(enabled = false) {
+export function useRuleTemplates() {
   return useQuery({
     queryKey: queryKeys.ruleTemplates(),
     queryFn: () => rulesApi.getTemplates(),
-    enabled,
   })
 }
 
@@ -197,12 +201,13 @@ export function useDeleteRule(accountId: string) {
   })
 }
 
-/** I3: how many mails the conditions match now (Gmail estimate). */
+/** I3: what the conditions match now: Gmail estimate, size and a few samples (B6). */
 export function useRulePreview(accountId: string | null, conditions: unknown[] | null) {
   return useQuery({
     queryKey: ['rules', accountId, 'preview', conditions] as const,
     queryFn: () => rulesApi.preview(accountId!, conditions!),
     enabled: !!accountId && !!conditions,
+    placeholderData: (previous) => previous, // keep the last figures while the next ones load
   })
 }
 
@@ -214,9 +219,29 @@ export function useCreateRule(accountId: string) {
   })
 }
 
+export function useUpdateRule(accountId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ ruleId, dto }: { ruleId: string; dto: unknown }) => rulesApi.update(accountId, ruleId, dto),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.rules(accountId) }),
+  })
+}
+
 export function useRunRule(accountId: string) {
   return useMutation({
-    mutationFn: (ruleId: string) => rulesApi.run(accountId, ruleId),
+    mutationFn: (ruleId: string) => rulesApi.run(accountId, ruleId) as Promise<{ jobId: string; runAt: string }>,
+  })
+}
+
+/** Idempotent (200 = the existing rule); may create the template's Gmail label. */
+export function useCreateRuleFromTemplate(accountId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (templateId: string) => rulesApi.createFromTemplate(accountId, templateId),
+    onSuccess: () => Promise.all([
+      qc.invalidateQueries({ queryKey: queryKeys.rules(accountId) }),
+      qc.invalidateQueries({ queryKey: ['labels'] }),
+    ]),
   })
 }
 
@@ -559,67 +584,6 @@ export function useImportImap(accountId: string) {
 export function useExportMbox(accountId: string) {
   return useMutation({
     mutationFn: (mailIds?: string[]) => importApi.exportMbox(accountId, mailIds),
-  })
-}
-
-// ─── Email Expiration ─────────────────────────────────────
-
-export function useExpirations(accountId: string | null) {
-  return useQuery({
-    queryKey: queryKeys.expiration(accountId!),
-    queryFn: () => expirationApi.list(accountId!),
-    enabled: !!accountId,
-  })
-}
-
-export function useExpirationStats(accountId: string | null) {
-  return useQuery({
-    queryKey: queryKeys.expirationStats(accountId!),
-    queryFn: () => expirationApi.stats(accountId!),
-    enabled: !!accountId,
-  })
-}
-
-export function useCreateExpiration(accountId: string) {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (data: Parameters<typeof expirationApi.create>[1]) =>
-      expirationApi.create(accountId, data),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.expiration(accountId) })
-      qc.invalidateQueries({ queryKey: queryKeys.expirationStats(accountId) })
-    },
-  })
-}
-
-export function useCreateExpirationBatch(accountId: string) {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (items: Parameters<typeof expirationApi.createBatch>[1]) =>
-      expirationApi.createBatch(accountId, items),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.expiration(accountId) })
-      qc.invalidateQueries({ queryKey: queryKeys.expirationStats(accountId) })
-    },
-  })
-}
-
-export function useDeleteExpiration(accountId: string) {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (expirationId: string) =>
-      expirationApi.remove(accountId, expirationId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.expiration(accountId) })
-      qc.invalidateQueries({ queryKey: queryKeys.expirationStats(accountId) })
-    },
-  })
-}
-
-export function useDetectExpirations(accountId: string) {
-  return useMutation({
-    mutationFn: (messages: Parameters<typeof expirationApi.detect>[1]) =>
-      expirationApi.detect(accountId, messages),
   })
 }
 

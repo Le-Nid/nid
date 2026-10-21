@@ -1,382 +1,334 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { createMemoryRouter, RouterProvider } from 'react-router'
+import { toast } from 'sonner'
+import i18n from '../i18n'
+import { gmailApi, jobsApi, labelsApi, rulesApi } from '../api'
+import { showUndoToast } from '../components/app/UndoToast'
 
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (key: string, opts?: any) => opts?.name ? `${key}:${opts.name}` : opts?.jobId ? `${key}:${opts.jobId}` : key,
-    i18n: { language: 'fr' },
-  }),
-  Trans: ({ i18nKey }: { i18nKey: string }) => i18nKey,
-}))
-
-vi.mock('../hooks/useAccount', () => ({
-  useAccount: () => ({ accountId: 'acc-1', account: null }),
-}))
-
-const mockRules = vi.fn()
-const mockLabels = vi.fn()
-const mockTemplates = vi.fn()
-const mockToggleMutateAsync = vi.fn()
-const mockDeleteMutateAsync = vi.fn()
-const mockRunMutateAsync = vi.fn()
-const mockToggleRule = vi.fn()
-const mockDeleteRule = vi.fn()
-const mockRunRule = vi.fn()
-
-vi.mock('../hooks/queries', () => ({
-  useRules: (...args: any[]) => mockRules(...args),
-  useGmailLabels: (...args: any[]) => mockLabels(...args),
-  useRuleTemplates: (...args: any[]) => mockTemplates(...args),
-  useToggleRule: () => mockToggleRule(),
-  useDeleteRule: () => mockDeleteRule(),
-  useRunRule: () => mockRunRule(),
-}))
-
-vi.mock('../components/RuleFormModal', () => ({
-  default: () => null,
-}))
-
-const mockRulesApi = vi.hoisted(() => ({
-  createFromTemplate: vi.fn(),
-}))
+const account = vi.hoisted(() => ({ id: 'acc-1' as string | null }))
+vi.mock('../hooks/useAccount', () => ({ useAccount: () => ({ accountId: account.id }) }))
 vi.mock('../api', () => ({
-  rulesApi: mockRulesApi,
+  rulesApi: {
+    list: vi.fn(), getTemplates: vi.fn(), toggle: vi.fn(), delete: vi.fn(), run: vi.fn(), preview: vi.fn(),
+    create: vi.fn(), update: vi.fn(), createFromTemplate: vi.fn(),
+  },
+  labelsApi: { list: vi.fn() },
+  gmailApi: { createLabel: vi.fn(), updateLabel: vi.fn(), deleteLabel: vi.fn() },
+  jobsApi: { cancel: vi.fn() },
 }))
+vi.mock('../components/app/UndoToast', () => ({ showUndoToast: vi.fn() }))
+vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
 import RulesPage from '../pages/Rules'
 
-const sampleRule = {
-  id: 'r1',
-  gmail_account_id: 'acc-1',
-  name: 'Clean spam',
-  description: 'Remove spam mails',
-  conditions: [{ field: 'from', operator: 'contains', value: 'spam' }],
+const RULE = {
+  id: 'r1', name: 'Promos', is_active: true, schedule: 'daily', last_run_at: null, template_id: null,
+  conditions: [{ field: 'from', operator: 'contains', value: 'promo@shop.test' }, { field: 'older_than', operator: 'gt', value: '30d' }],
   action: { type: 'trash' },
-  schedule: 'daily',
-  is_active: true,
-  last_run_at: '2026-03-29T10:00:00.000Z',
-  created_at: '2026-01-01T00:00:00.000Z',
-  updated_at: '2026-01-01T00:00:00.000Z',
 }
-
-const inactiveRule = {
-  ...sampleRule,
-  id: 'r2',
-  name: 'Archive old',
-  description: null,
-  conditions: [{ field: 'subject', operator: 'equals', value: 'Newsletter' }, { field: 'has_attachment', operator: 'equals', value: true }],
-  action: { type: 'label', labelId: 'l1' },
-  schedule: null,
-  is_active: false,
-  last_run_at: null,
+const INVOICES = {
+  id: 'r2', name: 'Factures', is_active: false, schedule: null, last_run_at: new Date(Date.now() - 2 * 3600_000).toISOString(),
+  template_id: 'label-invoices', conditions: [{ field: 'subject', operator: 'contains', value: 'facture' }], action: { type: 'label', labelId: 'L1' },
 }
+const LABELS = [
+  { id: 'INBOX', name: 'INBOX', type: 'system' },
+  { id: 'L1', name: 'Factures', type: 'user', color_bg: '#16a766', archived_count: 4 },
+  { id: 'L2', name: 'Factures/EDF', type: 'user', archived_count: 1 },
+  { id: 'L3', name: 'Ancien', type: 'user', deleted_at: '2026-01-01' },
+]
+const TEMPLATES = [
+  { id: 'label-invoices', name: 'Factures', description: 'Range les factures', category: 'label', label: { name: 'Factures' } },
+  { id: 'label-bank', name: 'Banque', description: 'Range la banque', category: 'label', label: { name: 'Banque' } },
+  { id: 'expire-otp', name: 'Codes OTP', description: 'Expire après 1 jour', category: 'expire' },
+  { id: 'cleanup-github', name: 'Notifs GitHub', description: 'Nettoie', category: 'cleanup' },
+]
 
-describe('RulesPage', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mockLabels.mockReturnValue({ data: [{ id: 'l1', name: 'Work' }], isLoading: false })
-    mockTemplates.mockReturnValue({ data: [], isLoading: false })
-    mockToggleMutateAsync.mockResolvedValue({})
-    mockDeleteMutateAsync.mockResolvedValue({})
-    mockRunMutateAsync.mockResolvedValue({ jobId: 'job-1' })
-    mockToggleRule.mockReturnValue({ mutateAsync: mockToggleMutateAsync })
-    mockDeleteRule.mockReturnValue({ mutateAsync: mockDeleteMutateAsync })
-    mockRunRule.mockReturnValue({ mutateAsync: mockRunMutateAsync })
+let mobile = false
+function setup(url = '/rules') {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const invalidate = vi.spyOn(client, 'invalidateQueries')
+  const router = createMemoryRouter(
+    [{ path: '/rules', element: <RulesPage /> }, { path: '/mails', element: <p>mails page</p> }],
+    { initialEntries: [url] },
+  )
+  render(<QueryClientProvider client={client}><RouterProvider router={router} /></QueryClientProvider>)
+  return { router, invalidate }
+}
+const user = () => userEvent.setup()
+const rowOf = async (name: string) => (await screen.findByRole('button', { name })).closest('tr')!
+const openMenu = async (label: string) => user().click(await screen.findByRole('button', { name: label }))
+
+beforeAll(() => i18n.changeLanguage('fr'))
+beforeEach(() => {
+  vi.clearAllMocks()
+  account.id = 'acc-1'
+  mobile = false
+  vi.mocked(window.matchMedia).mockImplementation((query: string) => ({
+    matches: query.includes('max-width') ? mobile : false,
+    media: query, onchange: null, addListener: vi.fn(), removeListener: vi.fn(),
+    addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn(),
+  }))
+  vi.mocked(rulesApi.list).mockResolvedValue([RULE, INVOICES])
+  vi.mocked(rulesApi.getTemplates).mockResolvedValue(TEMPLATES)
+  vi.mocked(rulesApi.preview).mockResolvedValue({ query: 'from:(promo@shop.test)', estimatedCount: 3, sizeBytes: 1024, samples: [] })
+  vi.mocked(rulesApi.run).mockResolvedValue({ jobId: 'job-r', runAt: '' })
+  vi.mocked(rulesApi.toggle).mockResolvedValue({})
+  vi.mocked(rulesApi.delete).mockResolvedValue({})
+  vi.mocked(rulesApi.update).mockResolvedValue(RULE)
+  vi.mocked(rulesApi.createFromTemplate).mockResolvedValue({ id: 'r9' })
+  vi.mocked(labelsApi.list).mockResolvedValue(LABELS)
+  vi.mocked(gmailApi.createLabel).mockResolvedValue({ id: 'L9' })
+  vi.mocked(gmailApi.updateLabel).mockResolvedValue({ id: 'L1' })
+  vi.mocked(gmailApi.deleteLabel).mockResolvedValue({})
+  vi.mocked(jobsApi.cancel).mockResolvedValue({})
+})
+
+describe('Rules page', () => {
+  it('lists rules in plain language, with the labels count on the tab', async () => {
+    setup()
+    expect(screen.getByRole('heading', { level: 1, name: 'Règles & libellés' })).toBeInTheDocument()
+    const row = await rowOf('Promos')
+    expect(row).toHaveTextContent('de promo@shop.test, de plus de 30 jours')
+    expect(row).toHaveTextContent('Supprimer')
+    expect(row).toHaveTextContent('Jamais exécutée')
+    expect(within(row).getByRole('switch', { name: 'Règle « Promos » active' })).toBeChecked()
+    const invoices = await rowOf('Factures')
+    expect(invoices).toHaveTextContent('objet contenant « facture »')
+    expect(invoices).toHaveTextContent('Appliquer un libellé « Factures »')
+    expect(invoices).toHaveTextContent('il y a 2 heures')
+    expect(within(invoices).getByRole('switch')).not.toBeChecked()
+    // Deleted and system labels are not counted
+    expect(screen.getByRole('tab', { name: 'Libellés 2' })).toBeInTheDocument()
   })
 
-  it('shows title', () => {
-    mockRules.mockReturnValue({ data: [], isLoading: false, refetch: vi.fn() })
-    render(<RulesPage />)
-    expect(screen.getByText('rules.title')).toBeInTheDocument()
+  it('toggles a rule, and reports a failure', async () => {
+    const { invalidate } = setup()
+    await user().click(within(await rowOf('Promos')).getByRole('switch'))
+    await waitFor(() => expect(rulesApi.toggle).toHaveBeenCalledWith('acc-1', 'r1'))
+    await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: ['rules', 'acc-1'] }))
+    vi.mocked(rulesApi.toggle).mockRejectedValue(new Error('x'))
+    await user().click(within(await rowOf('Promos')).getByRole('switch'))
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Impossible de changer l'état de la règle."))
   })
 
-  it('shows loading state', () => {
-    mockRules.mockReturnValue({ data: null, isLoading: true, refetch: vi.fn() })
-    render(<RulesPage />)
-    expect(screen.getByText('rules.title')).toBeInTheDocument()
+  it('« Exécuter » runs after the 10 s delay with an undo toast (D1)', async () => {
+    setup()
+    await openMenu('Actions pour la règle Promos')
+    await user().click(screen.getByRole('menuitem', { name: 'Exécuter' }))
+    await waitFor(() => expect(rulesApi.run).toHaveBeenCalledWith('acc-1', 'r1'))
+    await waitFor(() => expect(showUndoToast).toHaveBeenCalledWith(expect.objectContaining({ message: 'Exécution de « Promos »' })))
+    vi.mocked(showUndoToast).mock.calls[0][0].onUndo()
+    expect(jobsApi.cancel).toHaveBeenCalledWith('job-r')
   })
 
-  it('displays rules list with conditions and actions', () => {
-    mockRules.mockReturnValue({
-      data: [sampleRule, inactiveRule],
-      isLoading: false,
-      refetch: vi.fn(),
-    })
-
-    render(<RulesPage />)
-    expect(screen.getByText('Clean spam')).toBeInTheDocument()
-    expect(screen.getByText('Remove spam mails')).toBeInTheDocument()
-    expect(screen.getByText('Archive old')).toBeInTheDocument()
-    // Label name rendered from labels
-    expect(screen.getByText('Work')).toBeInTheDocument()
+  it('run and undo failures are reported', async () => {
+    vi.mocked(jobsApi.cancel).mockRejectedValue(new Error('late'))
+    setup()
+    await openMenu('Actions pour la règle Promos')
+    await user().click(screen.getByRole('menuitem', { name: 'Exécuter' }))
+    await waitFor(() => expect(showUndoToast).toHaveBeenCalled())
+    vi.mocked(showUndoToast).mock.calls[0][0].onUndo()
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(i18n.t('mails.undoFailed')))
+    vi.mocked(rulesApi.run).mockRejectedValue(new Error('x'))
+    await openMenu('Actions pour la règle Promos')
+    await user().click(screen.getByRole('menuitem', { name: 'Exécuter' }))
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Impossible d'exécuter la règle."))
   })
 
-  it('shows empty state when no rules', () => {
-    mockRules.mockReturnValue({ data: [], isLoading: false, refetch: vi.fn() })
-    render(<RulesPage />)
-    expect(screen.getByText('rules.noRules')).toBeInTheDocument()
+  it('« Supprimer » asks for confirmation', async () => {
+    setup()
+    await openMenu('Actions pour la règle Promos')
+    await user().click(screen.getByRole('menuitem', { name: 'Supprimer' }))
+    const dialog = await screen.findByRole('alertdialog', { name: 'Supprimer la règle « Promos » ?' })
+    await user().click(within(dialog).getByRole('button', { name: 'Supprimer la règle' }))
+    await waitFor(() => expect(rulesApi.delete).toHaveBeenCalledWith('acc-1', 'r1'))
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Règle supprimée'))
   })
 
-  it('toggles a rule', async () => {
-    mockRules.mockReturnValue({
-      data: [sampleRule],
-      isLoading: false,
-      refetch: vi.fn(),
-    })
-
-    render(<RulesPage />)
-    // Find and click the switch
-    const switchEl = screen.getByRole('switch')
-    fireEvent.click(switchEl)
-
-    await waitFor(() => {
-      expect(mockToggleMutateAsync).toHaveBeenCalledWith('r1')
-    })
+  it('delete failure is reported', async () => {
+    vi.mocked(rulesApi.delete).mockRejectedValue(new Error('x'))
+    setup()
+    await openMenu('Actions pour la règle Promos')
+    await user().click(screen.getByRole('menuitem', { name: 'Supprimer' }))
+    await user().click(await screen.findByRole('button', { name: 'Supprimer la règle' }))
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Impossible de supprimer la règle.'))
   })
 
-  it('shows new rule and template buttons', () => {
-    mockRules.mockReturnValue({ data: [], isLoading: false, refetch: vi.fn() })
-    render(<RulesPage />)
-    expect(screen.getByText('rules.newRule')).toBeInTheDocument()
-    expect(screen.getByText('rules.templates')).toBeInTheDocument()
-  })
-
-  it('shows description card', () => {
-    mockRules.mockReturnValue({ data: [], isLoading: false, refetch: vi.fn() })
-    render(<RulesPage />)
-    expect(screen.getByText('rules.description')).toBeInTheDocument()
-  })
-
-  it('shows schedule info for rules with schedule', () => {
-    mockRules.mockReturnValue({
-      data: [sampleRule],
-      isLoading: false,
-      refetch: vi.fn(),
-    })
-
-    render(<RulesPage />)
-    // sampleRule has last_run_at, so we should see relative time
-    // The exact text depends on dayjs locale
-    expect(screen.getByText('Clean spam')).toBeInTheDocument()
-  })
-
-  it('shows schedule label for rules without schedule', () => {
-    mockRules.mockReturnValue({
-      data: [inactiveRule],
-      isLoading: false,
-      refetch: vi.fn(),
-    })
-
-    render(<RulesPage />)
-    expect(screen.getByText('Manuel uniquement')).toBeInTheDocument()
-  })
-
-  it('shows schedule label for rules with daily schedule', () => {
-    mockRules.mockReturnValue({
-      data: [sampleRule],
-      isLoading: false,
-      refetch: vi.fn(),
-    })
-
-    render(<RulesPage />)
-    expect(screen.getByText('Chaque jour')).toBeInTheDocument()
-  })
-
-  it('shows no account state when accountId is null', () => {
-    vi.doMock('../hooks/useAccount', () => ({
-      useAccount: () => ({ accountId: null, account: null }),
+  it('« Modifier » (menu or row) opens the sheet on the rule and saves it', async () => {
+    setup()
+    await openMenu('Actions pour la règle Promos')
+    await user().click(screen.getByRole('menuitem', { name: 'Modifier' }))
+    const sheet = await screen.findByRole('dialog', { name: 'Modifier la règle' })
+    expect(within(sheet).getByLabelText('Quand un mail arrive de')).toHaveValue('promo@shop.test')
+    expect(within(sheet).getByRole('radio', { name: '30 jours' })).toBeChecked()
+    expect(within(sheet).getByRole('radio', { name: 'Quotidienne' })).toBeChecked()
+    await user().click(within(sheet).getByRole('radio', { name: 'Archiver (retirer de la boîte)' }))
+    await user().click(within(sheet).getByRole('button', { name: 'Enregistrer' }))
+    await waitFor(() => expect(rulesApi.update).toHaveBeenCalledWith('acc-1', 'r1', {
+      name: 'Promos', conditions: RULE.conditions, action: { type: 'archive' }, schedule: 'daily',
     }))
-    // The current mock has acc-1, so test that the table renders
-    mockRules.mockReturnValue({ data: [], isLoading: false, refetch: vi.fn() })
-    render(<RulesPage />)
-    expect(screen.getByText('rules.description')).toBeInTheDocument()
+    expect(toast.success).toHaveBeenCalledWith('Règle enregistrée')
+
+    await user().click(await screen.findByRole('button', { name: 'Factures' }))
+    expect(await screen.findByRole('dialog', { name: 'Modifier la règle' })).toHaveTextContent('objet contenant « facture »')
   })
 
-  it('opens template drawer', () => {
-    mockRules.mockReturnValue({ data: [], isLoading: false, refetch: vi.fn() })
-    mockTemplates.mockReturnValue({
-      data: [
-        {
-          id: 'tpl1',
-          name: 'Clean old newsletters',
-          description: 'Remove newsletters older than 6 months',
-          category: 'cleanup',
-        },
-        {
-          id: 'tpl2',
-          name: 'Archive large emails',
-          description: 'Archive emails over 10 MB',
-          category: 'archive',
-        },
-        {
-          id: 'tpl3',
-          name: 'Label important',
-          description: 'Tag important senders',
-          category: 'organize',
-        },
-      ],
-      isLoading: false,
-    })
-
-    render(<RulesPage />)
-    fireEvent.click(screen.getByText('rules.templates'))
-
-    expect(screen.getByText('rules.templateDrawerTitle')).toBeInTheDocument()
-    expect(screen.getByText('Clean old newsletters')).toBeInTheDocument()
-    expect(screen.getByText('Archive large emails')).toBeInTheDocument()
-    expect(screen.getByText('Label important')).toBeInTheDocument()
-    // Category tags
-    expect(screen.getByText('rules.categoryCleanup')).toBeInTheDocument()
-    expect(screen.getByText('rules.categoryArchive')).toBeInTheDocument()
-    expect(screen.getByText('rules.categoryOrganize')).toBeInTheDocument()
+  it('empty: « Nouvelle règle » opens a blank sheet', async () => {
+    vi.mocked(rulesApi.list).mockResolvedValue([])
+    setup()
+    const empty = (await screen.findByText('Aucune règle')).closest('[data-slot="empty"]') as HTMLElement
+    await user().click(within(empty).getByRole('button', { name: 'Nouvelle règle' }))
+    const sheet = await screen.findByRole('dialog', { name: 'Nouvelle règle' })
+    expect(within(sheet).getByText('Indiquez un expéditeur ou une durée pour voir les mails concernés.')).toBeInTheDocument()
+    expect(within(sheet).getByRole('button', { name: 'Créer la règle' })).toBeDisabled()
   })
 
-  it('renders condition fields and action types correctly', () => {
-    const ruleWithLabelAction = {
-      ...sampleRule,
-      id: 'r3',
-      name: 'Label rule',
-      conditions: [
-        { field: 'subject', operator: 'contains', value: 'invoice' },
-        { field: 'has_attachment', operator: 'equals', value: true },
-      ],
-      action: { type: 'label', labelId: 'l1' },
-      schedule: 'weekly',
-    }
-
-    mockRules.mockReturnValue({
-      data: [ruleWithLabelAction],
-      isLoading: false,
-      refetch: vi.fn(),
-    })
-
-    render(<RulesPage />)
-    expect(screen.getByText('Label rule')).toBeInTheDocument()
-    expect(screen.getByText('Work')).toBeInTheDocument() // label name from labels mock
-    expect(screen.getByText('Chaque semaine')).toBeInTheDocument()
+  it('?new=1 opens a new rule and is dropped on close', async () => {
+    const { router } = setup('/rules?new=1')
+    const sheet = await screen.findByRole('dialog', { name: 'Nouvelle règle' })
+    await user().click(within(sheet).getByRole('button', { name: 'Annuler' }))
+    await waitFor(() => expect(router.state.location.search).toBe(''))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   })
 
-  it('renders run, edit, and delete buttons for active rules', () => {
-    mockRules.mockReturnValue({
-      data: [sampleRule],
-      isLoading: false,
-      refetch: vi.fn(),
-    })
-
-    render(<RulesPage />)
-    // Run, edit, delete buttons are tooltips, not text
-    expect(document.querySelector('.lucide-play')).toBeInTheDocument()
-    expect(document.querySelector('.lucide-pencil')).toBeInTheDocument()
-    expect(document.querySelector('.lucide-trash-2')).toBeInTheDocument()
+  it('load error offers a retry; no account shows an empty state', async () => {
+    vi.mocked(rulesApi.list).mockRejectedValue(new Error('x'))
+    setup()
+    expect(await screen.findByRole('alert')).toHaveTextContent('Impossible de charger les règles.')
+    vi.mocked(rulesApi.list).mockResolvedValue([RULE])
+    await user().click(screen.getByRole('button', { name: 'Réessayer' }))
+    expect(await screen.findByRole('button', { name: 'Promos' })).toBeInTheDocument()
   })
 
-  it('disables run button for inactive rules', () => {
-    mockRules.mockReturnValue({
-      data: [inactiveRule],
-      isLoading: false,
-      refetch: vi.fn(),
-    })
-
-    render(<RulesPage />)
-    // The run button should be disabled for inactive rules
-    const playButtons = document.querySelectorAll('.lucide-play')
-    expect(playButtons.length).toBeGreaterThanOrEqual(1)
+  it('without account: empty state, no tabs', () => {
+    account.id = null
+    setup()
+    expect(screen.getByText('Aucun compte Gmail connecté')).toBeInTheDocument()
+    expect(screen.queryByRole('tablist')).toBeNull()
   })
 
-  it('opens create modal when new rule button clicked', () => {
-    mockRules.mockReturnValue({ data: [], isLoading: false, refetch: vi.fn() })
-    render(<RulesPage />)
+  it('mobile: cards, no table', async () => {
+    mobile = true
+    setup()
+    expect(await screen.findByRole('button', { name: 'Promos' })).toBeInTheDocument()
+    expect(screen.queryByRole('table')).toBeNull()
+  })
+})
 
-    fireEvent.click(screen.getByText('rules.newRule'))
-    // RuleFormModal is mocked to null, but the state change is exercised
-    expect(screen.getByText('rules.newRule')).toBeInTheDocument()
+describe('Labels tab', () => {
+  const labelMenu = (name: string) => openMenu(`Actions pour le libellé ${name}`)
+
+  it('switches tab through the URL; tree nested by « / », categories, templates', async () => {
+    const { router } = setup()
+    await user().click(screen.getByRole('tab', { name: /Libellés/ }))
+    expect(router.state.location.search).toBe('?tab=labels')
+    const tree = (await screen.findByText('EDF')).closest('ul')!.parentElement!.closest('li')!
+    expect(tree).toHaveTextContent('Factures4 mails archivés')
+    expect(screen.queryByText('Ancien')).toBeNull()
+    expect(screen.getByText('Réseaux sociaux')).toBeInTheDocument()
+    expect(screen.getByText('Attribuées par Gmail, non modifiables.')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Autres modèles' })).toBeInTheDocument()
+    await user().click(screen.getByRole('tab', { name: 'Règles' }))
+    expect(router.state.location.search).toBe('')
   })
 
-  it('opens edit modal when edit button clicked', () => {
-    mockRules.mockReturnValue({
-      data: [sampleRule],
-      isLoading: false,
-      refetch: vi.fn(),
-    })
-
-    render(<RulesPage />)
-    const editBtn = document.querySelector('.lucide-pencil')!.closest('button')!
-    fireEvent.click(editBtn)
-    // Exercises openEdit(rule) → setEditingRule, setModalOpen
-    expect(editBtn).toBeDefined()
+  it('creates a label', async () => {
+    const { invalidate } = setup('/rules?tab=labels')
+    await user().click(await screen.findByRole('button', { name: 'Nouveau libellé' }))
+    const dialog = screen.getByRole('dialog', { name: 'Nouveau libellé' })
+    await user().type(within(dialog).getByLabelText('Nom'), 'Voyages/Trains')
+    await user().click(within(dialog).getByRole('button', { name: 'Sauvegarder' }))
+    await waitFor(() => expect(gmailApi.createLabel).toHaveBeenCalledWith('acc-1', 'Voyages/Trains'))
+    await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: ['labels'] }))
+    expect(toast.success).toHaveBeenCalledWith('Libellé créé')
   })
 
-  it('runs rule when play button clicked', async () => {
-    mockRules.mockReturnValue({
-      data: [sampleRule],
-      isLoading: false,
-      refetch: vi.fn(),
-    })
+  it('renames, recolors and deletes a label', async () => {
+    setup('/rules?tab=labels')
+    await labelMenu('Factures/EDF')
+    await user().click(screen.getByRole('menuitem', { name: 'Renommer' }))
+    const rename = screen.getByRole('dialog', { name: 'Renommer « Factures/EDF »' })
+    const input = within(rename).getByLabelText('Nom')
+    expect(input).toHaveValue('Factures/EDF')
+    await user().clear(input)
+    await user().type(input, 'Factures/Énergie')
+    await user().click(within(rename).getByRole('button', { name: 'Sauvegarder' }))
+    await waitFor(() => expect(gmailApi.updateLabel).toHaveBeenCalledWith('acc-1', 'L2', { name: 'Factures/Énergie' }))
 
-    render(<RulesPage />)
-    const playBtn = document.querySelector('.lucide-play')!.closest('button')!
-    fireEvent.click(playBtn)
+    await labelMenu('Factures')
+    await user().click(screen.getByRole('menuitem', { name: 'Couleur' }))
+    const colors = screen.getByRole('dialog', { name: 'Couleur de « Factures »' })
+    expect(within(colors).getByRole('button', { name: 'Vert' })).toHaveAttribute('aria-pressed', 'true')
+    await user().click(within(colors).getByRole('button', { name: 'Bleu' }))
+    await waitFor(() => expect(gmailApi.updateLabel).toHaveBeenCalledWith('acc-1', 'L1', { color: { backgroundColor: '#4a86e8', textColor: '#ffffff' } }))
 
-    await waitFor(() => {
-      expect(mockRunMutateAsync).toHaveBeenCalledWith('r1')
-    })
+    await labelMenu('Factures')
+    await user().click(screen.getByRole('menuitem', { name: 'Supprimer' }))
+    await user().click(await screen.findByRole('button', { name: 'Supprimer le libellé' }))
+    await waitFor(() => expect(gmailApi.deleteLabel).toHaveBeenCalledWith('acc-1', 'L1'))
   })
 
-  it('handles run rule error', async () => {
-    mockRunMutateAsync.mockRejectedValueOnce(new Error('fail'))
-    mockRules.mockReturnValue({
-      data: [sampleRule],
-      isLoading: false,
-      refetch: vi.fn(),
-    })
-
-    render(<RulesPage />)
-    const playBtn = document.querySelector('.lucide-play')!.closest('button')!
-    fireEvent.click(playBtn)
-
-    await waitFor(() => {
-      expect(mockRunMutateAsync).toHaveBeenCalled()
-    })
+  it('label errors are reported', async () => {
+    vi.mocked(gmailApi.deleteLabel).mockRejectedValue(new Error('x'))
+    setup('/rules?tab=labels')
+    await labelMenu('Factures')
+    await user().click(screen.getByRole('menuitem', { name: 'Supprimer' }))
+    await user().click(await screen.findByRole('button', { name: 'Supprimer le libellé' }))
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Gmail a refusé la modification du libellé.'))
   })
 
-  it('handles toggle error', async () => {
-    mockToggleMutateAsync.mockRejectedValueOnce(new Error('fail'))
-    mockRules.mockReturnValue({
-      data: [sampleRule],
-      isLoading: false,
-      refetch: vi.fn(),
-    })
+  it('« Créer une règle » prefills the label action; « Voir les mails » searches it', async () => {
+    const { router } = setup('/rules?tab=labels')
+    await labelMenu('Factures/EDF')
+    await user().click(screen.getByRole('menuitem', { name: 'Créer une règle' }))
+    const sheet = await screen.findByRole('dialog', { name: 'Nouvelle règle' })
+    expect(within(sheet).getByRole('radio', { name: 'Appliquer un libellé' })).toBeChecked()
+    expect(within(sheet).getByLabelText('Libellé')).toHaveValue('L2')
+    expect(within(sheet).getByLabelText('Nom')).toHaveValue('Factures/EDF')
+    await user().click(within(sheet).getByRole('button', { name: 'Annuler' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
 
-    render(<RulesPage />)
-    const switchEl = screen.getByRole('switch')
-    fireEvent.click(switchEl)
-
-    await waitFor(() => {
-      expect(mockToggleMutateAsync).toHaveBeenCalled()
-    })
+    await labelMenu('Factures/EDF')
+    await user().click(screen.getByRole('menuitem', { name: 'Voir les mails' }))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/mails'))
+    expect(new URLSearchParams(router.state.location.search).get('q')).toBe('label:Factures/EDF')
   })
 
-  it('applies template from drawer', async () => {
-    mockRulesApi.createFromTemplate.mockResolvedValue({})
-    mockRules.mockReturnValue({ data: [], isLoading: false, refetch: vi.fn() })
-    mockTemplates.mockReturnValue({
-      data: [
-        { id: 'tpl1', name: 'Template 1', description: 'Desc 1', category: 'cleanup' },
-      ],
-      isLoading: false,
-    })
+  it('templates: active one edits its rule, others create label + rule', async () => {
+    const { invalidate } = setup('/rules?tab=labels')
+    const invoices = (await screen.findByRole('heading', { name: 'Factures' })).closest('li')!
+    expect(invoices).toHaveTextContent('Déjà actif')
+    await user().click(within(invoices).getByRole('button', { name: 'Modifier la règle' }))
+    expect(await screen.findByRole('dialog', { name: 'Modifier la règle' })).toBeInTheDocument()
+    await user().click(screen.getByRole('button', { name: 'Annuler' }))
 
-    render(<RulesPage />)
-    fireEvent.click(screen.getByText('rules.templates'))
+    const bank = screen.getByRole('heading', { name: 'Banque' }).closest('li')!
+    await user().click(within(bank).getByRole('button', { name: 'Créer le libellé et la règle' }))
+    await waitFor(() => expect(rulesApi.createFromTemplate).toHaveBeenCalledWith('acc-1', 'label-bank'))
+    await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: ['labels'] }))
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['rules', 'acc-1'] })
+    expect(toast.success).toHaveBeenCalledWith('« Banque » est actif')
 
-    await waitFor(() => {
-      expect(screen.getByText('Template 1')).toBeInTheDocument()
-    })
+    vi.mocked(rulesApi.createFromTemplate).mockRejectedValue(new Error('x'))
+    const otp = screen.getByRole('heading', { name: 'Codes OTP' }).closest('li')!
+    await user().click(within(otp).getByRole('button', { name: 'Activer' }))
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Impossible d'activer le modèle."))
+  })
 
-    fireEvent.click(screen.getByText('Activer'))
+  it('no labels: empty state; load error: retry', async () => {
+    vi.mocked(labelsApi.list).mockResolvedValue([])
+    setup('/rules?tab=labels')
+    expect(await screen.findByText('Aucun libellé')).toBeInTheDocument()
+  })
 
-    await waitFor(() => {
-      expect(mockRulesApi.createFromTemplate).toHaveBeenCalledWith('acc-1', 'tpl1')
-    })
+  it('labels load error offers a retry', async () => {
+    vi.mocked(labelsApi.list).mockRejectedValue(new Error('x'))
+    setup('/rules?tab=labels')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Impossible de charger les libellés.')
+    vi.mocked(labelsApi.list).mockResolvedValue(LABELS)
+    await user().click(screen.getByRole('button', { name: 'Réessayer' }))
+    expect(await screen.findByText('EDF')).toBeInTheDocument()
   })
 })

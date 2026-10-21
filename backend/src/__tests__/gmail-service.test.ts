@@ -9,6 +9,7 @@ const mockBatchModify = vi.fn()
 const mockLabelsList = vi.fn()
 const mockLabelsCreate = vi.fn()
 const mockLabelsDelete = vi.fn()
+const mockLabelsPatch = vi.fn()
 const mockLabelsGet = vi.fn()
 const mockGetProfile = vi.fn()
 const mockAttachmentsGet = vi.fn()
@@ -38,6 +39,7 @@ vi.mock('googleapis', () => ({
           list: (...args: any[]) => mockLabelsList(...args),
           create: (...args: any[]) => mockLabelsCreate(...args),
           delete: (...args: any[]) => mockLabelsDelete(...args),
+          patch: (...args: any[]) => mockLabelsPatch(...args),
           get: (...args: any[]) => mockLabelsGet(...args),
         },
         getProfile: (...args: any[]) => mockGetProfile(...args),
@@ -70,6 +72,7 @@ import {
   modifyMessages,
   listLabels,
   createLabel,
+  updateLabel,
   deleteLabel,
   getMailboxProfile,
   getLabelStats,
@@ -294,6 +297,17 @@ describe('createLabel', () => {
 
     expect(result).toEqual({ id: 'Label_1', name: 'MyLabel' })
     expect(mockTrackApiCall).toHaveBeenCalledWith('acc-1', 'labels.create')
+  })
+})
+
+// ─── updateLabel ────────────────────────────────────────
+describe('updateLabel', () => {
+  it('patches the label and tracks API call', async () => {
+    mockLabelsPatch.mockResolvedValue({ data: { id: 'Label_1', name: 'Renamed' } })
+    const result = await updateLabel('acc-1', 'Label_1', { name: 'Renamed' })
+    expect(result).toEqual({ id: 'Label_1', name: 'Renamed' })
+    expect(mockLabelsPatch).toHaveBeenCalledWith({ userId: 'me', id: 'Label_1', requestBody: { name: 'Renamed' } })
+    expect(mockTrackApiCall).toHaveBeenCalledWith('acc-1', 'labels.patch')
   })
 })
 

@@ -71,6 +71,14 @@ describe('MailViewer', () => {
     expect(onClose).toHaveBeenCalled()
   })
 
+  it('« Créer une règle » passes the sender address, only when asked for', async () => {
+    query({ data: MAIL })
+    const onCreateRule = vi.fn()
+    renderViewer({ onCreateRule })
+    await userEvent.click(within(screen.getByRole('toolbar')).getByRole('button', { name: 'Créer une règle' }))
+    expect(onCreateRule).toHaveBeenCalledWith('b@shop.test')
+  })
+
   it('downloads an attachment, and says so when it fails', async () => {
     query({ data: MAIL })
     URL.createObjectURL = vi.fn(() => 'blob:x')

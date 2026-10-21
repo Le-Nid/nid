@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   getRules,
   getRule,
+  getRuleByTemplate,
   createRule,
   updateRule,
   deleteRule,
@@ -10,7 +11,8 @@ import {
   buildGmailQuery,
 } from "../rules/rules.service";
 import { enqueueJob } from "../jobs/queue";
-import { listMessages } from "../gmail/gmail.service";
+import { listMessages, batchGetMessages } from "../gmail/gmail.service";
+import { findOrCreateLabel } from "../labels/labels.service";
 import { RULE_TEMPLATES } from "../rules/rule-templates";
 import { logAudit } from "../audit/audit.service";
 import { notFound } from "../utils/db";
@@ -90,10 +92,16 @@ export async function rulesRoutes(app: FastifyInstance) {
   app.post("/:accountId/from-template", accountAuth, async (request, reply) => {
     const { accountId } = request.params as { accountId: string };
     const userId = request.user.sub;
-    const { templateId } = request.body as { templateId: string };
+    const { templateId } = z.object({ templateId: z.string().min(1) }).parse(request.body);
     const template = RULE_TEMPLATES.find((t) => t.id === templateId);
     if (!template) return notFound(reply, "Template not found");
-    const rule = await createRule(accountId, template.dto);
+    // shortcut: check-then-insert; a concurrent double submit hits the unique index (500) instead of returning the rule
+    const existing = await getRuleByTemplate(accountId, templateId);
+    if (existing) return existing;
+    const dto = template.label
+      ? { ...template.dto, action: { type: "label" as const, labelId: await findOrCreateLabel(accountId, template.label.name) } }
+      : template.dto;
+    const rule = await createRule(accountId, dto, templateId);
     await logAudit(userId, 'rule.create_from_template', {
       targetType: 'rule', targetId: rule.id,
       details: { templateId, name: template.name },
@@ -178,7 +186,17 @@ export async function rulesRoutes(app: FastifyInstance) {
     const { accountId } = request.params as { accountId: string };
     const conditions = conditionsSchema.parse((request.body as { conditions?: unknown })?.conditions);
     const query = buildGmailQuery(conditions);
-    const res = await listMessages(accountId, { query, maxResults: 1 });
-    return { query, estimatedCount: res.resultSizeEstimate ?? 0 };
+    const res = await listMessages(accountId, { query, maxResults: 5 });
+    const estimatedCount = res.resultSizeEstimate ?? 0;
+    const ids = res.messages.map((m) => m.id!).filter(Boolean);
+    if (estimatedCount === 0 || ids.length === 0) return { query, estimatedCount, samples: [], sizeBytes: 0 };
+    const metas = await batchGetMessages(accountId, ids);
+    const avgSize = metas.reduce((sum, m) => sum + m.sizeEstimate, 0) / metas.length;
+    return {
+      query,
+      estimatedCount,
+      samples: metas.map(({ id, from, subject, date }) => ({ id, from, subject, date })),
+      sizeBytes: Math.round(avgSize * estimatedCount),
+    };
   });
 }

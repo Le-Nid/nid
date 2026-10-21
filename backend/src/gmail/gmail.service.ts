@@ -195,6 +195,19 @@ export async function createLabel(accountId: string, name: string) {
   return res.data
 }
 
+export async function updateLabel(
+  accountId: string,
+  labelId: string,
+  patch: { name?: string; color?: { backgroundColor: string; textColor: string } }
+) {
+  const gmail = await getGmailClient(accountId)
+  const res = await gmailRetry(() =>
+    gmail.users.labels.patch({ userId: 'me', id: labelId, requestBody: patch })
+  )
+  trackApiCall(accountId, 'labels.patch').catch(() => {})
+  return res.data
+}
+
 export async function deleteLabel(accountId: string, labelId: string) {
   const gmail = await getGmailClient(accountId)
   await gmailRetry(() => gmail.users.labels.delete({ userId: 'me', id: labelId }))

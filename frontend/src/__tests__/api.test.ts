@@ -6,7 +6,7 @@ import {
   notificationsApi, auditApi, twoFactorApi,
   webhooksApi, integrityApi, configApi, privacyApi, analyticsApi,
   savedSearchesApi, unifiedApi, archiveThreadsApi,
-  expirationApi, sharingApi, importApi,
+  sharingApi, importApi,
   retentionApi, quotaApi,
 } from '../api'
 
@@ -75,6 +75,15 @@ describe('API modules', () => {
       mockPost({ id: 'l1' })
       await gmailApi.createLabel('acc-1', 'Work')
       expect(api.post).toHaveBeenCalledWith('/api/gmail/acc-1/labels', { name: 'Work' })
+    })
+
+    it('updateLabel / deleteLabel', async () => {
+      mockPatch({ id: 'l1' })
+      await gmailApi.updateLabel('acc-1', 'l1', { name: 'Perso' })
+      expect(api.patch).toHaveBeenCalledWith('/api/gmail/acc-1/labels/l1', { name: 'Perso' })
+      mockDelete({})
+      await gmailApi.deleteLabel('acc-1', 'l1')
+      expect(api.delete).toHaveBeenCalledWith('/api/gmail/acc-1/labels/l1')
     })
 
     it('bulkOperation', async () => {
@@ -191,7 +200,7 @@ describe('API modules', () => {
     it('run', async () => {
       mockPost({ jobId: 'j1' })
       await rulesApi.run('acc-1', 'r1')
-      expect(api.post).toHaveBeenCalledWith('/api/rules/acc-1/r1/run', { delayMs: 0 })
+      expect(api.post).toHaveBeenCalledWith('/api/rules/acc-1/r1/run', {})
     })
 
     it('preview', async () => {
@@ -678,50 +687,6 @@ describe('API modules', () => {
       mockGet({ id: 't1' })
       await archiveThreadsApi.getThread('acc-1', 't1')
       expect(api.get).toHaveBeenCalledWith('/api/archive/acc-1/threads/t1')
-    })
-  })
-
-  describe('expirationApi', () => {
-    it('list', async () => {
-      mockGet([])
-      await expirationApi.list('acc-1')
-      expect(api.get).toHaveBeenCalledWith('/api/expiration/acc-1')
-    })
-
-    it('stats', async () => {
-      mockGet({ total: 5 })
-      await expirationApi.stats('acc-1')
-      expect(api.get).toHaveBeenCalledWith('/api/expiration/acc-1/stats')
-    })
-
-    it('create', async () => {
-      mockPost({ id: 'exp-1' })
-      await expirationApi.create('acc-1', { gmailMessageId: 'm1', expiresInDays: 7 })
-      expect(api.post).toHaveBeenCalledWith('/api/expiration/acc-1', { gmailMessageId: 'm1', expiresInDays: 7 })
-    })
-
-    it('createBatch', async () => {
-      mockPost({ created: 2 })
-      await expirationApi.createBatch('acc-1', [{ gmailMessageId: 'm1', expiresInDays: 7 }])
-      expect(api.post).toHaveBeenCalledWith('/api/expiration/acc-1/batch', { items: [{ gmailMessageId: 'm1', expiresInDays: 7 }] })
-    })
-
-    it('detect', async () => {
-      mockPost([])
-      await expirationApi.detect('acc-1', [{ gmailMessageId: 'm1', subject: 'test' }])
-      expect(api.post).toHaveBeenCalledWith('/api/expiration/acc-1/detect', { messages: [{ gmailMessageId: 'm1', subject: 'test' }] })
-    })
-
-    it('update', async () => {
-      mockPatch({ id: 'exp-1' })
-      await expirationApi.update('acc-1', 'exp-1', '2025-12-31')
-      expect(api.patch).toHaveBeenCalledWith('/api/expiration/acc-1/exp-1', { expiresAt: '2025-12-31' })
-    })
-
-    it('remove', async () => {
-      mockDelete({})
-      await expirationApi.remove('acc-1', 'exp-1')
-      expect(api.delete).toHaveBeenCalledWith('/api/expiration/acc-1/exp-1')
     })
   })
 

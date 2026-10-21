@@ -11,7 +11,7 @@ describe('RULE_TEMPLATES', () => {
       expect(tmpl.id).toBeTruthy()
       expect(tmpl.name).toBeTruthy()
       expect(tmpl.description).toBeTruthy()
-      expect(['cleanup', 'archive', 'organize']).toContain(tmpl.category)
+      expect(['cleanup', 'archive', 'organize', 'label', 'expire']).toContain(tmpl.category)
       expect(tmpl.dto).toBeDefined()
       expect(tmpl.dto.name).toBeTruthy()
       expect(tmpl.dto.conditions).toBeDefined()

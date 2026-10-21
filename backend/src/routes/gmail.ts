@@ -3,7 +3,7 @@ import { z } from 'zod'
 import {
   listMessages, getMessage, getMessageFull, batchGetMessages,
   trashMessages, modifyMessages,
-  listLabels, createLabel, deleteLabel, getMailboxProfile,
+  listLabels, createLabel, updateLabel, deleteLabel, getMailboxProfile,
   getGmailClient,
 } from '../gmail/gmail.service'
 import { trackApiCall } from '../gmail/quota.service'
@@ -11,6 +11,16 @@ import { upsertLabels, markLabelsDeleted } from '../labels/labels.service'
 import { enqueueJob } from '../jobs/queue'
 import { logAudit } from '../audit/audit.service'
 import { authPresets } from '../utils/auth'
+
+const labelName = z.string().trim().min(1).max(225)
+const labelNameSchema = z.object({ name: labelName })
+const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/)
+const labelPatchSchema = z
+  .object({
+    name: labelName.optional(),
+    color: z.object({ backgroundColor: hexColor, textColor: hexColor }).optional(),
+  })
+  .refine((b) => b.name !== undefined || b.color !== undefined, { message: 'name or color is required' })
 
 export async function gmailRoutes(app: FastifyInstance) {
   const { accountAuth } = authPresets(app)
@@ -111,10 +121,19 @@ export async function gmailRoutes(app: FastifyInstance) {
 
   app.post('/:accountId/labels', accountAuth, async (request, reply) => {
     const { accountId } = request.params as { accountId: string }
-    const { name } = request.body as { name: string }
+    const { name } = labelNameSchema.parse(request.body)
     const label = await createLabel(accountId, name)
     await upsertLabels(accountId, [label])
     return reply.code(201).send(label)
+  })
+
+  app.patch('/:accountId/labels/:labelId', accountAuth, async (request) => {
+    const { accountId, labelId } = request.params as { accountId: string; labelId: string }
+    const patch = labelPatchSchema.parse(request.body)
+    // Gmail rejects colors outside its fixed palette itself
+    const label = await updateLabel(accountId, labelId, patch)
+    await upsertLabels(accountId, [label])
+    return label
   })
 
   app.delete('/:accountId/labels/:labelId', accountAuth, async (request, reply) => {
