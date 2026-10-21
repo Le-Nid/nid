@@ -80,3 +80,13 @@ Rules:
 - When graphify-out/graph.json exists, run `graphify query "<question>"` before your first grep, search or source-file read for a codebase question, and put this rule in every subagent prompt that explores code. Read raw files only for lines the graph or an earlier read already located. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts.
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+
+### ponytail + graphify (revues)
+
+Les deux outils travaillent ensemble : ponytail décide quoi chercher, graphify trouve où.
+
+- `/ponytail-review` et `/ponytail-audit` commencent par `graphify update .` puis s'appuient sur le graphe avant toute lecture de fichier.
+- « Callers of every changed function » : `graphify explain "<fonction>()"` (liens entrants `<--`) pour chaque fonction modifiée du diff, au lieu d'un grep ; `grep` seulement pour confirmer une ligne précise.
+- « Trace the real flow » : `graphify path "<entrée>" "<stockage>"` (route → service → DB/worker).
+- « reuse: the repo already has this helper » : `graphify query "<ce que fait le code ajouté>"` avant de signaler ou d'écrire un helper.
+- Le rapport de revue indique, dans « Not checked », ce que le graphe ne couvre pas (SQL brut, appels dynamiques par nom de job, i18n).
