@@ -4,16 +4,18 @@ import type { ReactNode } from 'react'
 
 const listMessages = vi.fn()
 const batchGetMessages = vi.fn()
+const getMessageFull = vi.fn()
 
 vi.mock('../api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../api')>()),
   gmailApi: {
     listMessages: (...a: any[]) => listMessages(...a),
     batchGetMessages: (...a: any[]) => batchGetMessages(...a),
+    getMessageFull: (...a: any[]) => getMessageFull(...a),
   },
 }))
 
-import { useGmailMessages } from '../hooks/queries'
+import { useGmailMessage, useGmailMessages } from '../hooks/queries'
 
 function wrapper({ children }: { children: ReactNode }) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -61,5 +63,16 @@ describe('useGmailMessages', () => {
   it('does not fetch without an account', () => {
     renderHook(() => useGmailMessages(null, '', ''), { wrapper })
     expect(listMessages).not.toHaveBeenCalled()
+  })
+})
+
+describe('useGmailMessage', () => {
+  it('loads the full message only when one is open', async () => {
+    getMessageFull.mockResolvedValue({ id: 'm1' })
+    const { result, rerender } = renderHook(({ id }) => useGmailMessage('acc-1', id), { wrapper, initialProps: { id: null as string | null } })
+    expect(getMessageFull).not.toHaveBeenCalled()
+    rerender({ id: 'm1' })
+    await waitFor(() => expect(result.current.data).toEqual({ id: 'm1' }))
+    expect(getMessageFull).toHaveBeenCalledWith('acc-1', 'm1')
   })
 })

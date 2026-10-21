@@ -16,6 +16,7 @@ import { Download, Paperclip } from 'lucide-react';
 import { useTranslation } from "react-i18next";
 import { gmailApi } from "../api";
 import { formatBytes } from "../utils/format";
+import { extractAttachments, extractBody } from "../utils/gmail";
 import dayjs from "dayjs";
 
 const { Text } = Typography;
@@ -33,57 +34,6 @@ const IMAGE_MIME_TYPES = new Set([
   "image/webp",
   "image/svg+xml",
 ]);
-
-function decodeBase64Url(str: string): string {
-  try {
-    return decodeURIComponent(
-      atob(str.replace(/-/g, "+").replace(/_/g, "/"))
-        .split("")
-        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join(""),
-    );
-  } catch {
-    return "";
-  }
-}
-
-function extractBody(payload: any): { html: string; text: string } {
-  let html = "",
-    text = "";
-  function walk(part: any) {
-    if (!part) return;
-    const mime = part.mimeType ?? "";
-    const data = part.body?.data ?? "";
-    if (mime === "text/html" && data) html = decodeBase64Url(data);
-    else if (mime === "text/plain" && data) text = decodeBase64Url(data);
-    else if (part.parts) part.parts.forEach(walk);
-  }
-  walk(payload);
-  return { html, text };
-}
-
-function extractAttachments(payload: any) {
-  const result: {
-    filename: string;
-    mimeType: string;
-    size: number;
-    attachmentId: string;
-  }[] = [];
-  function walk(part: any) {
-    if (!part) return;
-    if (part.filename && part.body?.attachmentId) {
-      result.push({
-        filename: part.filename,
-        mimeType: part.mimeType ?? "application/octet-stream",
-        size: part.body.size ?? 0,
-        attachmentId: part.body.attachmentId,
-      });
-    }
-    if (part.parts) part.parts.forEach(walk);
-  }
-  walk(payload);
-  return result;
-}
 
 const { useBreakpoint } = Grid;
 

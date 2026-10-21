@@ -8,7 +8,7 @@ import { Skeleton } from "./components/ui/skeleton";
 
 const LoginPage = lazy(() => import("./pages/Login"));
 const DashboardPage = lazy(() => import("./pages/Dashboard"));
-const MailManagerPage = lazy(() => import("./pages/MailManager"));
+const MailsPage = lazy(() => import("./pages/Mails"));
 const ArchivePage = lazy(() => import("./pages/Archive"));
 const SettingsPage = lazy(() => import("./pages/Settings"));
 const JobsPage = lazy(() => import("./pages/Jobs"));
@@ -96,7 +96,6 @@ export default function App() {
           <Route element={<LegacyPages />}>
             {/* New routes (§3.1), rendering the legacy page until its lot lands */}
             <Route path="overview" element={<DashboardPage />} />
-            <Route path="mails" element={<MailManagerPage />} />
             <Route path="archives" element={<ArchivePage />} />
             <Route path="rules" element={<RulesPage />} />
             <Route path="activity" element={<JobsPage />} />
@@ -114,6 +113,8 @@ export default function App() {
             <Route path="expiration" element={<ExpirationPage />} />
             <Route path="sharing" element={<SharingPage />} />
           </Route>
+          {/* Migrated pages (§9.2): no antd context; own Suspense so the shell stays while the chunk loads */}
+          <Route path="mails" element={<Suspense fallback={<RouteFallback />}><MailsPage /></Suspense>} />
           {/* §3.3 redirects whose target exists in L0 */}
           <Route index element={<Redirect to="/overview" />} />
           <Route path="dashboard" element={<Redirect to="/overview" />} />

@@ -26,16 +26,14 @@ export const gmailApi = {
   createLabel: (accountId: string, name: string) =>
     api.post(`/api/gmail/${accountId}/labels`, { name }).then((r) => r.data),
 
+  getAttachment: (accountId: string, messageId: string, attachmentId: string) =>
+    api.get(`/api/gmail/${accountId}/messages/${messageId}/attachments/${attachmentId}`).then((r) => r.data),
+
+  /** `messageIds` or `query` (B5 select-all); no `delayMs` = the server's 10 s undo window (D1). */
   bulkOperation: (
     accountId: string,
-    action: string,
-    messageIds: string[],
-    labelId?: string
-  ) =>
-    api
-      // delayMs 0: the current UI follows the job in a progress modal; the undo toast (D1) will send the 10 s delay
-      .post(`/api/gmail/${accountId}/messages/bulk`, { action, messageIds, labelId, delayMs: 0 })
-      .then((r) => r.data),
+    body: { action: string; labelId?: string; delayMs?: number } & ({ messageIds: string[] } | { query: string }),
+  ) => api.post(`/api/gmail/${accountId}/messages/bulk`, body).then((r) => r.data),
 }
 
 // ─── Archive ──────────────────────────────────────────────

@@ -15,7 +15,7 @@ const probe = vi.hoisted(() => async () => {
 })
 vi.mock('../pages/Login', probe)
 vi.mock('../pages/Dashboard', probe)
-vi.mock('../pages/MailManager', probe)
+vi.mock('../pages/Mails', probe)
 vi.mock('../pages/Archive', probe)
 vi.mock('../pages/Settings', probe)
 vi.mock('../pages/Jobs', probe)
@@ -211,11 +211,11 @@ describe('user menu', () => {
   it('toggles dark mode and logs out', async () => {
     renderAt('/overview')
     await landedOn('/overview')
-    await userEvent.click(screen.getByRole('button', { name: 'Menu utilisateur' }))
+    await userEvent.click(screen.getByRole('button', { name: /^Menu utilisateur/ }))
     await userEvent.click(await screen.findByRole('menuitemcheckbox', { name: 'Mode sombre' }))
     expect(useThemeStore.getState().mode).toBe('dark')
 
-    await userEvent.click(screen.getByRole('button', { name: 'Menu utilisateur' }))
+    await userEvent.click(screen.getByRole('button', { name: /^Menu utilisateur/ }))
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Se déconnecter' }))
     expect(logout).toHaveBeenCalled()
     expect(await landedOn('/login')).toBeInTheDocument()
@@ -225,11 +225,11 @@ describe('user menu', () => {
     mobile = true
     renderAt('/overview')
     await landedOn('/overview')
-    await userEvent.click(screen.getByRole('button', { name: 'Menu utilisateur' }))
+    await userEvent.click(screen.getByRole('button', { name: /^Menu utilisateur/ }))
     await userEvent.click(await screen.findByRole('menuitemradio', { name: 'pro@gmail.com' }))
     expect(setActiveAccount).toHaveBeenCalledWith('a2')
 
-    await userEvent.click(screen.getByRole('button', { name: 'Menu utilisateur' }))
+    await userEvent.click(screen.getByRole('button', { name: /^Menu utilisateur/ }))
     await userEvent.click(await screen.findByRole('menuitemradio', { name: 'English' }))
     expect(i18n.language).toBe('en')
     await i18n.changeLanguage('fr')
