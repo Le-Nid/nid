@@ -7,5 +7,14 @@
     "total": 1,
     "totalSizeBytes": 102400
   },
+  "live": {
+    "attachments": [
+      { "messageId": "m9", "filename": "video-vacances.mp4", "mimeType": "video/mp4", "sizeBytes": 18874368,
+        "mailSubject": "Les vidéos", "mailSender": "Marie <marie@family.test>", "mailDate": "2026-08-02T10:00:00Z", "mailSizeEstimate": 18900000 },
+      { "messageId": "m8", "filename": "devis.pdf", "mimeType": "application/pdf", "sizeBytes": 524288,
+        "mailSubject": "Votre devis", "mailSender": "Artisan <devis@artisan.test>", "mailDate": "2026-09-15T10:00:00Z", "mailSizeEstimate": 530000 }
+    ],
+    "totalSizeBytes": 19398656
+  },
   "dedupStats": { "savedBytes": 0, "duplicateFiles": 0, "hashCoverage": 1 }
 }

@@ -480,33 +480,6 @@
     "jobError": "Error"
   },
 
-  "unsubscribe": {
-    "title": "Newsletters & Lists",
-    "scan": "Scan",
-    "detected": "Newsletters detected",
-    "newsletterMails": "Newsletter emails",
-    "spaceUsed": "Space used",
-    "hint": "Click Unsubscribe then delete to clean up.",
-    "searchPlaceholder": "Search for a sender...",
-    "sender": "Sender",
-    "mails": "Emails",
-    "size": "Size",
-    "lastSent": "Last sent",
-    "unsubscribeCol": "Unsubscribe",
-    "unsubscribeBtn": "Unsubscribe",
-    "byEmail": "By email",
-    "unavailable": "Unavailable",
-    "trashMails": "Move to trash",
-    "deleteConfirm": "Delete {{count}} emails from {{sender}}?",
-    "deleteHint": "Emails will be moved to trash.",
-    "scanError": "Error scanning newsletters",
-    "deleteStarted": "Deletion started",
-    "deleteDesc": "{{count}} emails from {{sender}} will be moved to trash.",
-    "deleteError": "Error deleting emails",
-    "noNewsletters": "No newsletters detected. Click Scan.",
-    "noAccount": "No Gmail account connected"
-  },
-
   "attachments": {
     "title": "Attachments",
     "archived": "Archives",
@@ -1046,6 +1019,107 @@
       "attachments_other": "{{count}} attachments",
       "download": "Download {{name}}",
       "downloadFailed": "Download failed"
+    }
+  },
+
+  "cleanup": {
+    "title": "Cleanup",
+    "noAccount": "No Gmail account connected",
+    "summary_one": "{{total}} to reclaim. The top sender weighs {{top}}.",
+    "summary_other": "{{total}} to reclaim. The top {{count}} senders weigh {{top}}.",
+    "tabsLabel": "What to clean",
+    "tab": {
+      "senders": "Senders & newsletters",
+      "large": "Large mails & attachments"
+    },
+    "sortLabel": "Sort by",
+    "sort": {
+      "count": "Number of mails",
+      "size": "Size",
+      "unread": "Never opened"
+    },
+    "newslettersOnly": "Newsletters only (List-Unsubscribe)",
+    "scannedAt": "Scanned on {{date}}",
+    "rescan": "Scan again",
+    "scan": "Scan the mailbox",
+    "scanning": "Scanning senders",
+    "scanFailed": "The sender scan failed",
+    "never": {
+      "title": "This account has not been scanned yet",
+      "description": "Nid groups mailing-list and newsletter mails by sender. The scan runs in the background; you can leave this page."
+    },
+    "loadError": "Could not load the senders",
+    "empty": "No sender to clean up",
+    "emptyDescription": "The last scan found no mailing-list mail.",
+    "emptyNewsletters": "No newsletter with an unsubscribe link",
+    "showAllSenders": "Show all senders",
+    "col": {
+      "sender": "Sender",
+      "email": "Address",
+      "size": "Size",
+      "count": "Mails",
+      "unread": "Never opened"
+    },
+    "mails_one": "{{count, number}} mail",
+    "mails_other": "{{count, number}} mails",
+    "unread_one": "{{count, number}} never opened",
+    "unread_other": "{{count, number}} never opened",
+    "senderActions": "Actions for {{sender}}",
+    "action": {
+      "unsubscribe": "Unsubscribe and clean up",
+      "deleteAll": "Delete all",
+      "rule": "Always do this"
+    },
+    "noUnsubscribe": "This sender offers no automatic unsubscribe",
+    "confirm": {
+      "title": "Unsubscribe from {{sender}}?",
+      "description_one": "The sender's unsubscribe page opens in a new tab: unsubscribing is final. Its mail then goes to the Gmail trash, with 10 s to undo.",
+      "description_other": "The sender's unsubscribe page opens in a new tab: unsubscribing is final. Its {{count, number}} mails then go to the Gmail trash, with 10 s to undo.",
+      "action_one": "Unsubscribe and delete {{count, number}} mail",
+      "action_other": "Unsubscribe and delete {{count, number}} mails"
+    },
+    "job": {
+      "unsubscribed_one": "Unsubscribed · deleting {{count, number}} mail from {{sender}}",
+      "unsubscribed_other": "Unsubscribed · deleting {{count, number}} mails from {{sender}}",
+      "deleteAll_one": "Deleting {{count, number}} mail from {{sender}}",
+      "deleteAll_other": "Deleting {{count, number}} mails from {{sender}}"
+    },
+    "rule": {
+      "title": "Always delete mails from {{sender}}",
+      "description": "A rule moves this sender's mails, new and old, to the trash every day.",
+      "name": "Rule name",
+      "defaultName": "Trash: {{sender}}",
+      "if": "If",
+      "condition": "the sender contains {{email}}",
+      "then": "Then",
+      "action": "move to trash, every day",
+      "preview_one": "{{count, number}} mail matches today",
+      "preview_other": "{{count, number}} mails match today",
+      "previewLoading": "Computing the preview…",
+      "previewError": "Preview unavailable",
+      "create": "Create the rule",
+      "created": "Rule created",
+      "failed": "Could not create the rule"
+    },
+    "large": {
+      "source": "Source",
+      "live": "Gmail",
+      "archived": "Archives (NAS)",
+      "col": {
+        "file": "File",
+        "mail": "Mail",
+        "size": "Size",
+        "date": "Date"
+      },
+      "download": "Download {{name}}",
+      "summary_one": "{{count, number}} attachment · {{size}}",
+      "summary_other": "{{count, number}} attachments · {{size}}",
+      "loadError": "Could not load the attachments",
+      "empty": "No large attachment",
+      "emptyDescription": {
+        "live": "No Gmail mail with an attachment over 100 KB.",
+        "archived": "No attachment in this account's archives."
+      }
     }
   }
 }

@@ -1,9 +1,11 @@
-import { google, gmail_v1 } from 'googleapis'
+import { gmail_v1 } from 'googleapis'
+import { sql } from 'kysely'
 import { getGmailClient } from '../gmail/gmail.service'
 import { gmailRetry, limitConcurrency } from '../gmail/gmail-throttle'
 import { trackApiCall } from '../gmail/quota.service'
 import { config } from '../config'
 import { createLogger } from '../logger'
+import { getDb } from '../db'
 
 const logger = createLogger('unsubscribe')
 
@@ -12,13 +14,16 @@ export interface NewsletterSender {
   email: string
   count: number
   totalSizeBytes: number
+  /** Mails still unread (« jamais ouverts »). */
+  unreadCount: number
   unsubscribeUrl: string | null
   unsubscribeMailto: string | null
   latestDate: string
   sampleMessageIds: string[]
 }
 
-// ─── Scan newsletters via List-Unsubscribe headers ──────
+// ─── Scan mailing-list senders (List-* headers) ─────────
+// Senders without List-Unsubscribe are kept with null url/mailto: the UI disables unsubscribe for them (D3)
 export async function scanNewsletters(
   accountId: string,
   onProgress?: (done: number, total: number) => void
@@ -65,8 +70,7 @@ export async function scanNewsletters(
           headers.find((h: any) => h.name?.toLowerCase() === name.toLowerCase())?.value ?? ''
 
         const unsubHeader = getH('List-Unsubscribe')
-        if (!unsubHeader) continue
-
+        const unread = msg.labelIds?.includes('UNREAD') ? 1 : 0
         const from = getH('From')
         const email = extractEmail(from)
         const key = email.toLowerCase()
@@ -77,6 +81,7 @@ export async function scanNewsletters(
         if (existing) {
           existing.count++
           existing.totalSizeBytes += msg.sizeEstimate ?? 0
+          existing.unreadCount += unread
           if (existing.sampleMessageIds.length < 5) {
             existing.sampleMessageIds.push(msg.id!)
           }
@@ -94,6 +99,7 @@ export async function scanNewsletters(
             email: key,
             count: 1,
             totalSizeBytes: msg.sizeEstimate ?? 0,
+            unreadCount: unread,
             unsubscribeUrl: url,
             unsubscribeMailto: mailto,
             latestDate: getH('Date') || new Date().toISOString(),
@@ -115,6 +121,38 @@ export async function scanNewsletters(
 
   // Sort by count descending
   return [...senderMap.values()].sort((a, b) => b.count - a.count)
+}
+
+// ─── Cached scan (one row per account) ──────────────────
+// The scan walks the whole mailbox: the page reads this cache, only the scan_unsubscribe job writes it.
+export async function saveNewsletterScan(accountId: string, senders: NewsletterSender[]) {
+  const values = { senders: JSON.stringify(senders), scanned_at: new Date() }
+  await getDb()
+    .insertInto('newsletter_scans')
+    .values({ gmail_account_id: accountId, ...values })
+    .onConflict((oc) => oc.column('gmail_account_id').doUpdateSet(values))
+    .execute()
+}
+
+export async function getNewsletterScan(accountId: string): Promise<{ senders: NewsletterSender[]; scannedAt: Date | null }> {
+  const row = await getDb()
+    .selectFrom('newsletter_scans')
+    .select(['senders', 'scanned_at'])
+    .where('gmail_account_id', '=', accountId)
+    .executeTakeFirst()
+  return { senders: row?.senders ?? [], scannedAt: row?.scanned_at ?? null }
+}
+
+/** After a sender's mails are deleted: drop it from the cache instead of rescanning the mailbox. */
+export async function forgetNewsletterSender(accountId: string, email: string) {
+  // One statement: a scan finishing meanwhile is not overwritten with a stale list
+  await getDb()
+    .updateTable('newsletter_scans')
+    .set({
+      senders: sql<string>`COALESCE((SELECT jsonb_agg(s) FROM jsonb_array_elements(senders) s WHERE s->>'email' <> ${email.toLowerCase()}), '[]'::jsonb)`,
+    })
+    .where('gmail_account_id', '=', accountId)
+    .execute()
 }
 
 // ─── Get all message IDs for a specific newsletter sender ─

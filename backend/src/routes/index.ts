@@ -26,6 +26,7 @@ import { importRoutes } from './import'
 import { expirationRoutes } from './expiration'
 import { sharingRoutes } from './sharing'
 import { eventsRoutes } from './events'
+import { labelsRoutes } from './labels'
 
 export async function registerRoutes(app: FastifyInstance) {
   // Health check
@@ -63,6 +64,7 @@ export async function registerRoutes(app: FastifyInstance) {
   await app.register(expirationRoutes,    { prefix: '/api/expiration' })
   await app.register(sharingRoutes,       { prefix: '/api/shares' })
   await app.register(eventsRoutes,        { prefix: '/api/events' })
+  await app.register(labelsRoutes,        { prefix: '/api/labels' })
 
   // Démarrer le broadcaster SSE ← QueueEvents BullMQ
   startQueueEventBroadcaster()

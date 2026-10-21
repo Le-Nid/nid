@@ -146,7 +146,7 @@ Creates a new retention policy.
 |---|---|---|---|
 | `name` | string | Yes | Descriptive name for the policy |
 | `gmailAccountId` | string | No | Target a specific account (all if omitted) |
-| `label` | string | No | Target a specific Gmail label |
+| `label` | string | No | Target a Gmail label: its id, which must exist in the synced labels of the account (any of the user's accounts when `gmailAccountId` is omitted), else `400` — see [labels.md](labels.md). Same check on `PUT`; `""` clears it |
 | `maxAgeDays` | number | Yes | Maximum age in days (>= 1) |
 
 **Response (201):** the created policy.

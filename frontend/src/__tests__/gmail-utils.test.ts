@@ -1,4 +1,4 @@
-import { extractAttachments, extractBody, hasRemoteContent, mailSrcDoc, toBadge } from '../utils/gmail'
+import { extractAttachments, extractBody, hasRemoteContent, mailSrcDoc, toBadge, type ApiLabel } from '../utils/gmail'
 
 const b64 = (s: string) => btoa(String.fromCodePoint(...new TextEncoder().encode(s))).replace(/\+/g, '-').replace(/\//g, '_')
 
@@ -42,14 +42,16 @@ describe('gmail payload helpers', () => {
   })
 
   it('maps label ids to LabelBadge labels', () => {
-    const labels = [
-      { id: 'Label_1', name: 'Factures', type: 'user', color: { backgroundColor: '#16a765' } },
-      { id: 'CATEGORY_SOCIAL', name: 'CATEGORY_SOCIAL', type: 'system' },
-      { id: 'Label_2', name: 'Sans couleur', type: 'user', color: null },
+    const labels: ApiLabel[] = [
+      { id: 'Label_1', name: 'Factures', type: 'user', color_bg: '#16a765' },
+      { id: 'CATEGORY_SOCIAL', name: 'CATEGORY_SOCIAL', type: 'category' },
+      { id: 'Label_2', name: 'Sans couleur', type: 'user', color_bg: null },
+      { id: 'imported:Voyages', name: 'Voyages', type: 'imported' },
     ]
     expect(toBadge(labels, 'Label_1')).toEqual({ name: 'Factures', type: 'user', color: '#16a765' })
     expect(toBadge(labels, 'CATEGORY_SOCIAL')).toEqual({ name: 'CATEGORY_SOCIAL', type: 'system', color: undefined })
-    expect(toBadge(labels, 'Label_2')).toEqual({ name: 'Sans couleur', type: 'user', color: undefined })
+    expect(toBadge(labels, 'Label_2')).toEqual({ name: 'Sans couleur', type: 'user', color: null })
+    expect(toBadge(labels, 'imported:Voyages')).toEqual({ name: 'Voyages', type: 'user', color: undefined })
     expect(toBadge([], 'INBOX')).toEqual({ name: 'INBOX', type: 'system' })
   })
 })

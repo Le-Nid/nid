@@ -46,8 +46,12 @@ vi.mock('../rules/rules.service', () => ({
 }))
 
 const mockScanNewsletters = vi.fn().mockResolvedValue([])
+const mockSaveNewsletterScan = vi.fn()
+const mockForgetNewsletterSender = vi.fn()
 vi.mock('../unsubscribe/unsubscribe.service', () => ({
   scanNewsletters: (...args: any[]) => mockScanNewsletters(...args),
+  saveNewsletterScan: (...args: any[]) => mockSaveNewsletterScan(...args),
+  forgetNewsletterSender: (...args: any[]) => mockForgetNewsletterSender(...args),
 }))
 
 const mockScanTrackingPixels = vi.fn().mockResolvedValue({ scanned: 10, tracked: 2 })
@@ -183,6 +187,15 @@ describe('unified worker handlers', () => {
     await processJob(job)
     expect(mockTrashMessages).toHaveBeenCalledWith('acc-1', ['msg-1'])
     expect(mockNotify).toHaveBeenCalled()
+    expect(mockForgetNewsletterSender).not.toHaveBeenCalled()
+  })
+
+  it('drops the sender from the cached scan once its mails are trashed (L6)', async () => {
+    const job = makeJob('bulk_operation', {
+      accountId: 'acc-1', userId: 'user-1', action: 'trash', messageIds: ['msg-1'], senderEmail: 'news@x.com',
+    })
+    await processJob(job)
+    expect(mockForgetNewsletterSender).toHaveBeenCalledWith('acc-1', 'news@x.com')
   })
 
   it('handles bulk_operation archive (remove INBOX label)', async () => {
@@ -276,9 +289,13 @@ describe('unified worker handlers', () => {
   })
 
   it('handles scan_unsubscribe', async () => {
+    const senders = [{ email: 'n@x.com', count: 1 }]
+    mockScanNewsletters.mockResolvedValueOnce(senders)
     const job = makeJob('scan_unsubscribe', { accountId: 'acc-1' })
     await processJob(job)
     expect(mockScanNewsletters).toHaveBeenCalled()
+    // The result is persisted for GET /newsletters (L6), not only counted in the job row
+    expect(mockSaveNewsletterScan).toHaveBeenCalledWith('acc-1', senders)
   })
 
   it('handles scan_tracking', async () => {

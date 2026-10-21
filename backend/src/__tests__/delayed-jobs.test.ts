@@ -48,6 +48,8 @@ vi.mock('../gmail/quota.service', () => ({ trackApiCall: vi.fn() }))
 vi.mock('../unsubscribe/unsubscribe.service', () => ({
   scanNewsletters: vi.fn(),
   getNewsletterMessageIds: vi.fn().mockResolvedValue(['m1', 'm2']),
+  getNewsletterScan: vi.fn().mockResolvedValue({ senders: [], scannedAt: null }),
+  forgetNewsletterSender: vi.fn(),
 }))
 vi.mock('../rules/rules.service', () => ({
   getRules: vi.fn(), getRule: vi.fn().mockResolvedValue({ id: 'r1' }), createRule: vi.fn(),
@@ -57,6 +59,7 @@ vi.mock('../rules/rules.service', () => ({
 import { gmailRoutes } from '../routes/gmail'
 import { logAudit } from '../audit/audit.service'
 import { unsubscribeRoutes } from '../routes/unsubscribe'
+import { getNewsletterScan, getNewsletterMessageIds, forgetNewsletterSender, scanNewsletters } from '../unsubscribe/unsubscribe.service'
 import { rulesRoutes } from '../routes/rules'
 import { jobRoutes } from '../routes/jobs'
 
@@ -108,6 +111,35 @@ describe('delayMs on bulk endpoints', () => {
     expect((await post(60_001)).statusCode).toBe(400)
     expect((await post(-1)).statusCode).toBe(400)
     expect((await post(1.5)).statusCode).toBe(400)
+    await app.close()
+  })
+})
+
+describe('sender delete (L6 cache)', () => {
+  it('tags the job with the sender so the worker can update the cached scan', async () => {
+    const app = await buildApp(unsubscribeRoutes)
+    await app.inject({ method: 'POST', url: '/acc-1/newsletters/News%40X.com/delete', payload: {} })
+    expect(mockEnqueueJob).toHaveBeenCalledWith('bulk_operation', expect.objectContaining({ senderEmail: 'News@X.com', messageIds: ['m1', 'm2'] }), { delay: 10_000 })
+    await app.close()
+  })
+
+  it('reads the cached scan instead of scanning the mailbox', async () => {
+    const scan = { senders: [{ email: 'n@x.com' }], scannedAt: '2026-10-20T08:00:00.000Z' }
+    vi.mocked(getNewsletterScan).mockResolvedValueOnce(scan as any)
+    const app = await buildApp(unsubscribeRoutes)
+    const res = await app.inject({ method: 'GET', url: '/acc-1/newsletters' })
+    expect(res.json()).toEqual(scan)
+    expect(scanNewsletters).not.toHaveBeenCalled()
+    await app.close()
+  })
+
+  it('drops a sender with nothing left in Gmail from the cache', async () => {
+    vi.mocked(getNewsletterMessageIds).mockResolvedValueOnce([])
+    const app = await buildApp(unsubscribeRoutes)
+    const res = await app.inject({ method: 'POST', url: '/acc-1/newsletters/gone%40x.com/delete', payload: {} })
+    expect(res.json()).toEqual({ deleted: 0 })
+    expect(forgetNewsletterSender).toHaveBeenCalledWith('acc-1', 'gone@x.com')
+    expect(mockEnqueueJob).not.toHaveBeenCalled()
     await app.close()
   })
 })

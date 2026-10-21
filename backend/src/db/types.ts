@@ -1,4 +1,5 @@
 import { ColumnType, Generated, Selectable, Insertable, Updateable } from 'kysely'
+import type { NewsletterSender } from '../unsubscribe/unsubscribe.service'
 
 // ─── Helpers ──────────────────────────────────────────────
 // ColumnType<SelectType, InsertType, UpdateType>
@@ -103,6 +104,13 @@ export interface JobsTable {
   error:            string | null
   created_at:       Generated<Date>
   completed_at:     Date | null
+}
+
+// One cached scan per account (L6): the Nettoyage page reads it, scan_unsubscribe writes it
+export interface NewsletterScansTable {
+  gmail_account_id: string
+  senders:          ColumnType<NewsletterSender[], string, string>
+  scanned_at:       Generated<Date>
 }
 
 export interface NotificationsTable {
@@ -260,6 +268,20 @@ export interface SystemConfigTable {
   updated_at: Generated<Date>
 }
 
+export type GmailLabelType = 'system' | 'user' | 'category' | 'imported'
+
+export interface GmailLabelsTable {
+  gmail_account_id: string
+  id:               string   // Gmail label id, or `imported:<name>` for labels only seen in an mbox import
+  name:             string
+  color_bg:         string | null
+  color_text:       string | null
+  type:             GmailLabelType
+  messages_total:   number | null
+  deleted_at:       Date | null
+  updated_at:       Generated<Date>
+}
+
 export interface RetentionPoliciesTable {
   id:               Generated<string>
   user_id:          string
@@ -330,10 +352,12 @@ export interface Database {
   user_social_accounts: UserSocialAccountsTable
   saved_searches:       SavedSearchesTable
   retention_policies:   RetentionPoliciesTable
+  gmail_labels:         GmailLabelsTable
   system_config:        SystemConfigTable
   gmail_api_usage:      GmailApiUsageTable
   email_expirations:    EmailExpirationsTable
   archive_shares:       ArchiveSharesTable
+  newsletter_scans:     NewsletterScansTable
 }
 
 // ─── Row types (Selectable = what you get back from SELECT) ─

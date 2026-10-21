@@ -146,7 +146,7 @@ Crée une nouvelle politique de rétention.
 |---|---|---|---|
 | `name` | string | Oui | Nom descriptif de la politique |
 | `gmailAccountId` | string | Non | Cibler un compte spécifique (tous si omis) |
-| `label` | string | Non | Cibler un label Gmail spécifique |
+| `label` | string | Non | Cibler un libellé Gmail : son id, qui doit exister dans les libellés synchronisés du compte (de l'un des comptes de l'utilisateur si `gmailAccountId` est absent), sinon `400` — voir [labels.md](labels.md). Même contrôle sur `PUT` ; `""` le retire |
 | `maxAgeDays` | number | Oui | Âge maximum en jours (>= 1) |
 
 **Réponse (201) :** la politique créée.

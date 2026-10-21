@@ -19,19 +19,26 @@ Lance un scan asynchrone des headers `List-Unsubscribe` des mails du compte.
 
 ### GET /api/unsubscribe/:accountId/newsletters 🔒
 
-Scan synchrone (pour les boîtes plus petites). Retourne directement la liste des newsletters détectées.
+Dernier résultat du scan (`POST …/scan`), lu en cache (table `newsletter_scans`) : aucun appel Gmail. `scannedAt` vaut `null` tant qu'aucun scan n'a abouti. Les expéditeurs de listes sans `List-Unsubscribe` sont inclus avec `unsubscribeUrl` et `unsubscribeMailto` à `null`. Après la suppression des mails d'un expéditeur, il est retiré du cache (pas de nouveau scan).
 
 **Réponse 200**
 ```json
-[
-  {
-    "sender": "newsletter@example.com",
-    "count": 42,
-    "totalSizeBytes": 1234567,
-    "unsubscribeUrl": "https://example.com/unsubscribe",
-    "lastDate": "2026-03-15T10:00:00Z"
-  }
-]
+{
+  "scannedAt": "2026-10-20T08:00:00.000Z",
+  "senders": [
+    {
+      "sender": "Newsletter <newsletter@example.com>",
+      "email": "newsletter@example.com",
+      "count": 42,
+      "totalSizeBytes": 1234567,
+      "unreadCount": 40,
+      "unsubscribeUrl": "https://example.com/unsubscribe",
+      "unsubscribeMailto": null,
+      "latestDate": "2026-03-15T10:00:00Z",
+      "sampleMessageIds": ["msg-1"]
+    }
+  ]
+}
 ```
 
 ---

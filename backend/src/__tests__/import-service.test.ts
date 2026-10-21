@@ -35,6 +35,7 @@ vi.mock('mailparser', () => ({
     attachments: [],
     inReplyTo: null,
     references: null,
+    headers: new Map(),
   }),
 }))
 
@@ -182,6 +183,7 @@ describe('importMbox', () => {
       ],
       inReplyTo: '<ref@test.com>',
       references: ['<ref@test.com>'],
+      headers: new Map([['x-gmail-labels', 'Inbox, Factures,Inbox']]),
     })
     mockExecuteTakeFirst.mockResolvedValue(null) // no duplicate
     mockExecuteTakeFirstOrThrow.mockResolvedValue({ id: 'arch-att' })
@@ -203,6 +205,7 @@ describe('importMbox', () => {
       attachments: [],
       inReplyTo: null,
       references: null,
+      headers: new Map(),
     })
     mockExecuteTakeFirst.mockResolvedValue(null)
     mockExecuteTakeFirstOrThrow.mockResolvedValue({ id: 'arch-noid' })

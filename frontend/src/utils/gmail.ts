@@ -66,12 +66,22 @@ export function mailSrcDoc(html: string, allowRemote: boolean): string {
   return `<meta http-equiv="Content-Security-Policy" content="${csp}"><base target="_blank">${html}`
 }
 
-/** Label of a mail as `LabelBadge` takes it; `labels` = `GET /api/gmail/:id/labels` (Gmail's color is an object). */
-export type ApiLabel = { id: string; name: string; type?: string; color?: { backgroundColor?: string } | null }
+/** A synced label as `GET /api/labels/:id` returns it (B4). */
+export type ApiLabel = {
+  id: string
+  name: string
+  type: 'system' | 'user' | 'category' | 'imported'
+  color_bg?: string | null
+  deleted_at?: string | null
+}
+
+/** Label of a mail as `LabelBadge` takes it. */
 
 export function toBadge(labels: ApiLabel[], id: string): GmailLabel {
   const label = labels.find((l) => l.id === id)
   // Unknown id (list not loaded yet): treat as system, so INBOX-like ids never show as user labels
   if (!label) return { name: id, type: 'system' }
-  return { name: label.name, type: label.type === 'user' ? 'user' : 'system', color: label.color?.backgroundColor }
+  // Imported (mbox) labels are user labels Gmail no longer knows: same dot + text badge
+  const isUser = label.type === 'user' || label.type === 'imported'
+  return { name: label.name, type: isUser ? 'user' : 'system', color: label.color_bg }
 }

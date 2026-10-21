@@ -21,7 +21,7 @@ vi.mock('../pages/Settings', probe)
 vi.mock('../pages/Jobs', probe)
 vi.mock('../pages/Rules', probe)
 vi.mock('../pages/Admin', probe)
-vi.mock('../pages/Unsubscribe', probe)
+vi.mock('../pages/Cleanup', probe)
 vi.mock('../hooks/useGlobalJobNotifier', () => ({ useGlobalJobNotifier: vi.fn() }))
 vi.mock('../components/NotificationBell', () => ({ default: () => null }))
 
@@ -72,6 +72,7 @@ describe('routes', () => {
     ['/archive?q=x', '/archives?q=x'],
     ['/jobs?status=failed', '/activity?status=failed'],
     ['/settings?gmail=connected', '/settings/account?gmail=connected'],
+    ['/unsubscribe', '/cleanup?tab=senders'],
   ])('redirects %s to %s, keeping the query string', async (from, to) => {
     renderAt(from)
     expect(await landedOn(to)).toBeInTheDocument()
@@ -141,7 +142,7 @@ describe('desktop sidebar', () => {
     renderAt('/overview')
     await landedOn('/overview')
     await userEvent.click(within(nav()).getByRole('link', { name: 'Nettoyage' }))
-    expect(await landedOn('/unsubscribe')).toBeInTheDocument()
+    expect(await landedOn('/cleanup')).toBeInTheDocument()
   })
 })
 

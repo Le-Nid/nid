@@ -53,6 +53,8 @@ vi.mock('../archive/export.service', () => ({
 vi.mock('../unsubscribe/unsubscribe.service', () => ({
   scanNewsletters: vi.fn().mockResolvedValue([]),
   getNewsletterMessageIds: vi.fn().mockResolvedValue([]),
+  getNewsletterScan: vi.fn().mockResolvedValue({ senders: [], scannedAt: null }),
+  forgetNewsletterSender: vi.fn(),
 }))
 vi.mock('../privacy/tracking.service', () => ({
   getTrackingStats: vi.fn().mockResolvedValue({}),

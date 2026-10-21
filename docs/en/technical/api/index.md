@@ -35,6 +35,7 @@ All routes (except `/api/auth/config`, `/api/auth/register`, `/api/auth/login` a
 | Privacy | `/api/privacy` | [privacy.md](privacy.md) |
 | Analytics | `/api/analytics` | [analytics.md](analytics.md) |
 | Saved searches | `/api/saved-searches` | [saved-searches.md](saved-searches.md) |
+| Labels | `/api/labels` | [labels.md](labels.md) |
 | Unified inbox | `/api/unified` | [unified.md](unified.md) |
 
 ---

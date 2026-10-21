@@ -3,6 +3,7 @@ import { enqueueJob } from "./queue";
 import { recordInboxSnapshot } from "../analytics/analytics.service";
 import { processExpiredEmails } from "../expiration/expiration.service";
 import { cleanupExpiredShares } from "../archive/sharing.service";
+import { syncAllLabels } from "../labels/labels.service";
 import { createLogger } from '../logger'
 
 const logger = createLogger('scheduler')
@@ -19,6 +20,7 @@ export function startRuleScheduler() {
   let lastExpirationCheck: Date | null = null;
   let lastShareCleanup: Date | null = null;
   let lastTrashPurge: Date | null = null;
+  let lastLabelSync: Date | null = null;
 
   async function tick() {
     const db = getDb();
@@ -51,6 +53,12 @@ export function startRuleScheduler() {
         }
         lastInboxSnapshot = now;
         logger.info(`Inbox zero snapshots recorded (${accounts.length} accounts)`);
+      }
+
+      // ─── Gmail labels sync — daily (1 labels.list call per account) ─
+      if (!lastLabelSync || (now.getTime() - lastLabelSync.getTime()) > 24 * 3600 * 1000) {
+        await syncAllLabels();
+        lastLabelSync = now;
       }
 
       // ─── Process expired emails — every 15 min ─────────────

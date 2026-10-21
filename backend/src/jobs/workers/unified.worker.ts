@@ -5,7 +5,7 @@ import { notify } from '../../notifications/notify'
 import { archiveMail, getArchivedIds } from '../../archive/archive.service'
 import { listMessages, trashMessages, modifyMessages } from '../../gmail/gmail.service'
 import { getRule, runRule } from '../../rules/rules.service'
-import { scanNewsletters } from '../../unsubscribe/unsubscribe.service'
+import { scanNewsletters, saveNewsletterScan, forgetNewsletterSender } from '../../unsubscribe/unsubscribe.service'
 import { scanTrackingPixels } from '../../privacy/tracking.service'
 import { scanArchivePii } from '../../privacy/pii.service'
 import { encryptArchives } from '../../privacy/encryption.service'
@@ -239,7 +239,7 @@ async function applyBulkAction(accountId: string, action: string, labelId: strin
 }
 
 async function handleBulk(job: Job) {
-  const { accountId, action, messageIds, labelId, query, userId } = job.data
+  const { accountId, action, messageIds, labelId, query, userId, senderEmail } = job.data
   const db = getDb()
   const jobRow = () => db.updateTable('jobs').where('bullmq_id', '=', String(job.id))
   const cap = query ? config.BULK_QUERY_MAX : Infinity
@@ -272,6 +272,8 @@ async function handleBulk(job: Job) {
         completed_at: new Date(), ...(capNote ? { error: capNote } : {}),
       })
       .execute()
+    // Cleanup « Tout supprimer »: the sender's mails are gone, keep the cached scan in step
+    if (senderEmail) await forgetNewsletterSender(accountId, senderEmail)
 
     if (userId && state.capped) {
       // No auto-relaunch: label/mark actions keep matching the query and would loop. The UI offers "Relancer" (B11).
@@ -398,6 +400,7 @@ async function handleUnsubscribe(job: Job) {
         .where('bullmq_id', '=', String(job.id))
         .execute()
     })
+    await saveNewsletterScan(accountId, newsletters)
 
     await db
       .updateTable('jobs')

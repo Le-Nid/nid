@@ -99,6 +99,7 @@ The `scheduler.ts` file performs periodic checks (every 60 seconds) and enqueues
 |---|---|---|
 | `apply_retention` | Daily (3 AM) | Applies active retention policies |
 | `purge_archive_trash` | Daily (4 AM) | Permanently deletes expired trashed archives |
+| Gmail labels sync (in-process, no job) | Daily (first tick after start) | `syncAllLabels()`: one `labels.list` call per active account into `gmail_labels` — see [API — Labels](api/labels.md) |
 
 ### Archive Trash Purge
 

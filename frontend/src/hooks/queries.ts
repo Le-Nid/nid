@@ -5,7 +5,7 @@ import {
   analyticsApi, privacyApi, notificationsApi,
   auditApi, webhooksApi, savedSearchesApi, unifiedApi, archiveThreadsApi,
   retentionApi, quotaApi, importApi,
-  expirationApi, sharingApi,
+  expirationApi, sharingApi, labelsApi,
 } from '../api'
 
 // ─── Query key factories ──────────────────────────────────
@@ -17,6 +17,7 @@ export const queryKeys = {
     ['gmail', accountId, 'messages', query, filter] as const,
   gmailMessage: (accountId: string, messageId: string) => ['gmail', accountId, 'message', messageId] as const,
   gmailLabels: (accountId: string) => ['gmail', accountId, 'labels'] as const,
+  labels: (accountId: string) => ['labels', accountId] as const,
   archiveMails: (accountId: string, params?: Record<string, any>) =>
     ['archive', accountId, 'mails', params] as const,
   archiveMail: (accountId: string, mailId: string) =>
@@ -98,6 +99,15 @@ export function useGmailLabels(accountId: string | null) {
   return useQuery({
     queryKey: queryKeys.gmailLabels(accountId!),
     queryFn: () => gmailApi.listLabels(accountId!),
+    enabled: !!accountId,
+  })
+}
+
+/** Synced labels (`GET /api/labels/:id`): Gmail colors, deleted ones kept so archives still show their names. */
+export function useLabels(accountId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.labels(accountId!),
+    queryFn: () => labelsApi.list(accountId!),
     enabled: !!accountId,
   })
 }
@@ -187,6 +197,23 @@ export function useDeleteRule(accountId: string) {
   })
 }
 
+/** I3: how many mails the conditions match now (Gmail estimate). */
+export function useRulePreview(accountId: string | null, conditions: unknown[] | null) {
+  return useQuery({
+    queryKey: ['rules', accountId, 'preview', conditions] as const,
+    queryFn: () => rulesApi.preview(accountId!, conditions!),
+    enabled: !!accountId && !!conditions,
+  })
+}
+
+export function useCreateRule(accountId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (dto: unknown) => rulesApi.create(accountId, dto),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.rules(accountId) }),
+  })
+}
+
 export function useRunRule(accountId: string) {
   return useMutation({
     mutationFn: (ruleId: string) => rulesApi.run(accountId, ruleId),
@@ -247,17 +274,8 @@ export function useUpdateAdminUser() {
 export function useNewsletters(accountId: string | null) {
   return useQuery({
     queryKey: queryKeys.unsubscribe(accountId!),
-    queryFn: () => unsubscribeApi.scanNewsletters(accountId!),
+    queryFn: () => unsubscribeApi.getNewsletters(accountId!),
     enabled: !!accountId,
-  })
-}
-
-export function useDeleteSender(accountId: string) {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: ({ email, permanent }: { email: string; permanent: boolean }) =>
-      unsubscribeApi.deleteSender(accountId, email, permanent),
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.unsubscribe(accountId) }),
   })
 }
 

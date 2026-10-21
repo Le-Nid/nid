@@ -36,6 +36,11 @@ export const gmailApi = {
   ) => api.post(`/api/gmail/${accountId}/messages/bulk`, body).then((r) => r.data),
 }
 
+// ─── Labels (synced `gmail_labels`, B4) ───────────────────
+export const labelsApi = {
+  list: (accountId: string) => api.get(`/api/labels/${accountId}`).then((r) => r.data),
+}
+
 // ─── Archive ──────────────────────────────────────────────
 export const archiveApi = {
   listMails: (accountId: string, params: Record<string, any> = {}) =>
@@ -140,7 +145,8 @@ export const adminApi = {
 
 // ─── Unsubscribe ──────────────────────────────────────────
 export const unsubscribeApi = {
-  scanNewsletters: (accountId: string) =>
+  /** Last scan, from the server's cache: `{ senders, scannedAt }`, scannedAt null = never scanned. */
+  getNewsletters: (accountId: string) =>
     api.get(`/api/unsubscribe/${accountId}/newsletters`).then((r) => r.data),
 
   scanAsync: (accountId: string) =>
@@ -149,8 +155,9 @@ export const unsubscribeApi = {
   getMessageIds: (accountId: string, senderEmail: string) =>
     api.get(`/api/unsubscribe/${accountId}/newsletters/${encodeURIComponent(senderEmail)}/messages`).then((r) => r.data),
 
-  deleteSender: (accountId: string, senderEmail: string, permanent = false) =>
-    api.post(`/api/unsubscribe/${accountId}/newsletters/${encodeURIComponent(senderEmail)}/delete`, { permanent, delayMs: 0 }).then((r) => r.data),
+  /** Trash every mail of the sender after the server's 10 s undo window (D1): `{ jobId, runAt, count }`. */
+  deleteSender: (accountId: string, senderEmail: string) =>
+    api.post(`/api/unsubscribe/${accountId}/newsletters/${encodeURIComponent(senderEmail)}/delete`, {}).then((r) => r.data),
 }
 
 // ─── Attachments ──────────────────────────────────────────
