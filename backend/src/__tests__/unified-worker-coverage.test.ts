@@ -54,16 +54,6 @@ vi.mock('../unsubscribe/unsubscribe.service', () => ({
   forgetNewsletterSender: (...args: any[]) => mockForgetNewsletterSender(...args),
 }))
 
-const mockScanTrackingPixels = vi.fn().mockResolvedValue({ scanned: 10, tracked: 2 })
-vi.mock('../privacy/tracking.service', () => ({
-  scanTrackingPixels: (...args: any[]) => mockScanTrackingPixels(...args),
-}))
-
-const mockScanArchivePii = vi.fn().mockResolvedValue({ scanned: 10, withPii: 1 })
-vi.mock('../privacy/pii.service', () => ({
-  scanArchivePii: (...args: any[]) => mockScanArchivePii(...args),
-}))
-
 const mockEncryptArchives = vi.fn().mockResolvedValue({ encrypted: 5 })
 vi.mock('../privacy/encryption.service', () => ({
   encryptArchives: (...args: any[]) => mockEncryptArchives(...args),
@@ -300,28 +290,6 @@ describe('unified worker handlers', () => {
     expect(mockSaveNewsletterScan).toHaveBeenCalledWith('acc-1', senders)
   })
 
-  it('handles scan_tracking', async () => {
-    const job = makeJob('scan_tracking', {
-      accountId: 'acc-1',
-      userId: 'user-1',
-      action: 'scan_tracking',
-      maxMessages: 100,
-    })
-    await processJob(job)
-    expect(mockScanTrackingPixels).toHaveBeenCalled()
-    expect(mockNotify).toHaveBeenCalled()
-  })
-
-  it('handles scan_pii', async () => {
-    const job = makeJob('scan_pii', {
-      accountId: 'acc-1',
-      userId: 'user-1',
-      action: 'scan_pii',
-    })
-    await processJob(job)
-    expect(mockScanArchivePii).toHaveBeenCalled()
-  })
-
   it('handles encrypt_archives', async () => {
     const job = makeJob('encrypt_archives', {
       accountId: 'acc-1',
@@ -331,6 +299,20 @@ describe('unified worker handlers', () => {
     })
     await processJob(job)
     expect(mockEncryptArchives).toHaveBeenCalled()
+  })
+
+  it('reports encryption progress, every 10 archives, and skips the notification without a user', async () => {
+    mockEncryptArchives.mockImplementationOnce(async (_accountId: string, _passphrase: string, { onProgress }: any) => {
+      await onProgress(5, 20)
+      await onProgress(10, 20)
+      return { encrypted: 20 }
+    })
+    const job = makeJob('encrypt_archives', { accountId: 'acc-1', action: 'encrypt_archives', passphrase: 'secret' })
+    mockNotify.mockClear()
+    await processJob(job)
+    expect(job.updateProgress).toHaveBeenCalledWith(25)
+    expect(job.updateProgress).toHaveBeenCalledWith(50)
+    expect(mockNotify).not.toHaveBeenCalled()
   })
 
   it('handles encrypt_archives without passphrase', async () => {
@@ -442,17 +424,6 @@ describe('unified worker handlers', () => {
     await expect(processJob(job)).rejects.toThrow('Unknown job type')
   })
 
-  it('handles privacy failure with notification', async () => {
-    mockScanTrackingPixels.mockRejectedValueOnce(new Error('Scan failed'))
-    const job = makeJob('scan_tracking', {
-      accountId: 'acc-1',
-      userId: 'user-1',
-      action: 'scan_tracking',
-    })
-    await expect(processJob(job)).rejects.toThrow('Scan failed')
-    expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ category: 'job_failed' }))
-  })
-
   // ─── Additional branch coverage ──────────────────────────
 
   it('handles archive_mails without userId (no notification)', async () => {
@@ -527,27 +498,6 @@ describe('unified worker handlers', () => {
     await expect(processJob(job)).rejects.toThrow('scan error')
   })
 
-  it('handles scan_pii with userId', async () => {
-    const job = makeJob('scan_pii', {
-      accountId: 'acc-1',
-      userId: 'user-1',
-      action: 'scan_pii',
-    })
-    await processJob(job)
-    expect(mockScanArchivePii).toHaveBeenCalled()
-    expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ category: 'job_completed' }))
-  })
-
-  it('handles scan_tracking without userId (no notify)', async () => {
-    const job = makeJob('scan_tracking', {
-      accountId: 'acc-1',
-      action: 'scan_tracking',
-    })
-    await processJob(job)
-    expect(mockScanTrackingPixels).toHaveBeenCalled()
-    expect(mockNotify).not.toHaveBeenCalled()
-  })
-
   it('handles encrypt_archives with userId', async () => {
     const job = makeJob('encrypt_archives', {
       accountId: 'acc-1',
@@ -602,17 +552,6 @@ describe('unified worker handlers', () => {
     expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ category: 'job_failed' }))
   })
 
-  it('handles privacy scan_pii failure with userId', async () => {
-    mockScanArchivePii.mockRejectedValueOnce(new Error('PII fail'))
-    const job = makeJob('scan_pii', {
-      accountId: 'acc-1',
-      userId: 'user-1',
-      action: 'scan_pii',
-    })
-    await expect(processJob(job)).rejects.toThrow('PII fail')
-    expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ category: 'job_failed' }))
-  })
-
   it('handles encrypt_archives failure with userId', async () => {
     mockEncryptArchives.mockRejectedValueOnce(new Error('Encrypt fail'))
     const job = makeJob('encrypt_archives', {
@@ -632,18 +571,6 @@ describe('unified worker handlers', () => {
       await expect(processJob(job)).rejects.toThrow('labelId required')
     }
     expect(mockModifyMessages).not.toHaveBeenCalled()
-  })
-
-  it('reports privacy scan progress through onProgress', async () => {
-    mockScanTrackingPixels.mockImplementationOnce(async (_acc: string, opts: any) => {
-      await opts.onProgress(20, 100)
-      await opts.onProgress(40, 100)
-      return { scanned: 100, tracked: 3 }
-    })
-    const job = makeJob('scan_tracking', { accountId: 'acc-1', action: 'scan_tracking' })
-    await processJob(job)
-    expect(job.updateProgress).toHaveBeenCalledWith(20)
-    expect(job.updateProgress).toHaveBeenCalledWith(40)
   })
 
   it('reports newsletter scan progress through onProgress', async () => {

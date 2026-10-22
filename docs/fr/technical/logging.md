@@ -68,8 +68,6 @@ logger.warn('something unusual happened')
 | `audit` | `audit/audit.service.ts` | Audit log |
 | `expiration` | `expiration/expiration.service.ts` | Expiration des mails |
 | `encryption` | `privacy/encryption.service.ts` | Chiffrement archives |
-| `pii-scanner` | `privacy/pii.service.ts` | Détection PII |
-| `tracking-pixel` | `privacy/tracking.service.ts` | Détection pixels espions |
 | `unsubscribe` | `unsubscribe/unsubscribe.service.ts` | Scan newsletters |
 | `job-sse` | `routes/job-sse.ts` | SSE broadcast |
 | `mcp` | `mcp-server.ts` | Serveur MCP |

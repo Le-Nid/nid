@@ -103,31 +103,6 @@ sequenceDiagram
     participant PG as PostgreSQL
     participant NAS as NAS (EML)
 
-    Note over UI,NAS: Détection de pixels espions
-    UI->>API: POST /api/privacy/:id/tracking/scan
-    API->>Queue: enqueueJob("scan_tracking")
-    API-->>UI: 202 {jobId}
-    Queue->>Worker: Job dépilé
-    loop Pour chaque message récent
-        Worker->>Gmail: messages.get(id, format=full)
-        Worker->>Worker: detectTrackingPixels(html)
-        alt Trackers détectés
-            Worker->>PG: INSERT tracking_pixels
-        end
-    end
-
-    Note over UI,NAS: Scanner PII dans les archives
-    UI->>API: POST /api/privacy/:id/pii/scan
-    API->>Queue: enqueueJob("scan_pii")
-    Queue->>Worker: Job dépilé
-    loop Pour chaque EML archivé
-        Worker->>NAS: Lecture fichier .eml
-        Worker->>Worker: detectPii(contenu)
-        alt PII détectées
-            Worker->>PG: INSERT pii_findings
-        end
-    end
-
     Note over UI,NAS: Chiffrement des archives
     UI->>API: POST /api/privacy/:id/encryption/encrypt
     API->>Queue: enqueueJob("encrypt_archives")

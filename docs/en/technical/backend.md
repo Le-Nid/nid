@@ -109,7 +109,7 @@ import { startUnifiedWorker } from './jobs/workers/unified.worker'
 startUnifiedWorker()
 ```
 
-Job types handled: `bulk_operation`, `archive_mails`, `run_rule`, `scan_unsubscribe`, `scan_tracking`, `scan_pii`, `encrypt_archives`.
+Job types handled: `bulk_operation`, `archive_mails`, `run_rule`, `scan_unsubscribe`, `encrypt_archives`.
 
 ---
 
@@ -123,30 +123,6 @@ src/privacy/
 ├── pii.service.ts         ← Scanner de données sensibles (PII)
 └── encryption.service.ts  ← Chiffrement AES-256-GCM des archives
 ```
-
-### Tracking Pixel Detector
-
-The service analyzes the HTML body of Gmail messages to identify three types of trackers:
-
-1. **1×1 pixels** — images with `width=1 height=1`, `display:none` or `visibility:hidden`
-2. **Known domains** — database of 35+ ESP domains (Mailchimp, SendGrid, HubSpot, Klaviyo, Brevo…)
-3. **UTM parameters** — links containing `utm_source`, `utm_medium`, `utm_campaign`, etc.
-
-The scan is launched as an async job (BullMQ). Results are stored in `tracking_pixels` with JSON details of each detected tracker.
-
-### PII Scanner
-
-The service scans archived EML files on disk to detect sensitive data via regex:
-
-| Type | Description |
-|---|---|
-| `credit_card` | Visa, Mastercard, Amex card (with separators) |
-| `iban` | International IBAN number |
-| `french_ssn` | French social security number |
-| `password_plain` | Plaintext password (`password:`, `mdp=`, etc.) |
-| `phone_fr` | French phone number (+33 / 06…) |
-
-Stored snippets are automatically masked (e.g., `****-****-****-4242`) to avoid exposing actual data.
 
 ### Archive Encryption
 

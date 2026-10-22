@@ -507,42 +507,6 @@ describe('API modules', () => {
   })
 
   describe('privacyApi', () => {
-    it('getTrackingStats', async () => {
-      mockGet({})
-      await privacyApi.getTrackingStats('acc-1')
-      expect(api.get).toHaveBeenCalledWith('/api/privacy/acc-1/tracking/stats')
-    })
-
-    it('listTrackedMessages', async () => {
-      mockGet([])
-      await privacyApi.listTrackedMessages('acc-1', { page: 1 })
-      expect(api.get).toHaveBeenCalledWith('/api/privacy/acc-1/tracking', { params: { page: 1 } })
-    })
-
-    it('scanTracking', async () => {
-      mockPost({})
-      await privacyApi.scanTracking('acc-1', 100)
-      expect(api.post).toHaveBeenCalledWith('/api/privacy/acc-1/tracking/scan', { maxMessages: 100 })
-    })
-
-    it('getPiiStats', async () => {
-      mockGet({})
-      await privacyApi.getPiiStats('acc-1')
-      expect(api.get).toHaveBeenCalledWith('/api/privacy/acc-1/pii/stats')
-    })
-
-    it('listPiiFindings', async () => {
-      mockGet([])
-      await privacyApi.listPiiFindings('acc-1', {})
-      expect(api.get).toHaveBeenCalledWith('/api/privacy/acc-1/pii', { params: {} })
-    })
-
-    it('scanPii', async () => {
-      mockPost({})
-      await privacyApi.scanPii('acc-1')
-      expect(api.post).toHaveBeenCalledWith('/api/privacy/acc-1/pii/scan')
-    })
-
     it('getEncryptionStatus', async () => {
       mockGet({})
       await privacyApi.getEncryptionStatus('acc-1')

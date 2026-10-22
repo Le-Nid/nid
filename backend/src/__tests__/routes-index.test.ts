@@ -125,18 +125,6 @@ describe('registerRoutes', () => {
       getEncryptionStatus: vi.fn().mockResolvedValue({ total: 0, encrypted: 0, unencrypted: 0, percentage: 0 }),
       decryptFile: vi.fn(),
     }))
-    vi.mock('../privacy/pii.service', () => ({
-      detectPii: vi.fn(() => []),
-      scanArchivePii: vi.fn(),
-      getPiiStats: vi.fn().mockResolvedValue({ totalFindings: 0, affectedMails: 0, byType: [] }),
-      listPiiFindings: vi.fn().mockResolvedValue({ items: [], total: 0 }),
-    }))
-    vi.mock('../privacy/tracking.service', () => ({
-      detectTrackingPixels: vi.fn(() => []),
-      scanTrackingPixels: vi.fn(),
-      getTrackingStats: vi.fn().mockResolvedValue({ trackedMessages: 0, totalTrackers: 0, topDomains: [] }),
-      listTrackedMessages: vi.fn().mockResolvedValue({ items: [], total: 0 }),
-    }))
     vi.mock('../reports/report.service', () => ({
       generateWeeklyReport: vi.fn().mockResolvedValue(null),
       generateAllReports: vi.fn().mockResolvedValue([]),

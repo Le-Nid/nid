@@ -6,8 +6,6 @@ import { archiveMail, getArchivedIds } from '../../archive/archive.service'
 import { listMessages, trashMessages, modifyMessages } from '../../gmail/gmail.service'
 import { getRule, runRule } from '../../rules/rules.service'
 import { scanNewsletters, saveNewsletterScan, forgetNewsletterSender } from '../../unsubscribe/unsubscribe.service'
-import { scanTrackingPixels } from '../../privacy/tracking.service'
-import { scanArchivePii } from '../../privacy/pii.service'
 import { encryptArchives } from '../../privacy/encryption.service'
 import { importMbox, importImap } from '../../archive/import.service'
 import { applyRetentionPolicies } from '../../archive/retention.service'
@@ -35,8 +33,6 @@ export function startUnifiedWorker() {
           return handleRule(job)
         case 'scan_unsubscribe':
           return handleUnsubscribe(job)
-        case 'scan_tracking':
-        case 'scan_pii':
         case 'encrypt_archives':
           return handlePrivacy(job)
         case 'import_mbox':
@@ -432,7 +428,7 @@ async function handlePrivacy(job: Job) {
   const { accountId, userId, action } = job.data as {
     accountId: string
     userId?: string
-    action: 'scan_tracking' | 'scan_pii' | 'encrypt_archives'
+    action: 'encrypt_archives'
   }
   const db = getDb()
 
@@ -443,94 +439,35 @@ async function handlePrivacy(job: Job) {
     .execute()
 
   try {
-    if (action === 'scan_tracking') {
-      const result = await scanTrackingPixels(accountId, {
-        maxMessages: job.data.maxMessages ?? 200,
-        onProgress: async (done: number, total: number) => {
-          const progress = Math.round((done / total) * 100)
-          await job.updateProgress(progress)
-          if (done % 20 === 0) {
-            await db.updateTable('jobs')
-              .set({ progress, processed: done, total })
-              .where('bullmq_id', '=', String(job.id))
-              .execute()
-          }
-        },
+    const passphrase = job.data.passphrase
+    if (!passphrase) throw new Error('Passphrase required')
+
+    const result = await encryptArchives(accountId, passphrase, {
+      onProgress: async (done: number, total: number) => {
+        const progress = Math.round((done / total) * 100)
+        await job.updateProgress(progress)
+        if (done % 10 === 0) {
+          await db.updateTable('jobs')
+            .set({ progress, processed: done, total })
+            .where('bullmq_id', '=', String(job.id))
+            .execute()
+        }
+      },
+    })
+
+    await db.updateTable('jobs')
+      .set({ status: 'completed', progress: 100, processed: result.encrypted, total: result.encrypted, completed_at: new Date() })
+      .where('bullmq_id', '=', String(job.id))
+      .execute()
+
+    if (userId) {
+      await notify({
+        userId,
+        category: 'job_completed',
+        title: 'Chiffrement terminé',
+        body: `${result.encrypted} archive(s) chiffrée(s).`,
+        data: { jobId: String(job.id), ...result },
       })
-
-      await db.updateTable('jobs')
-        .set({ status: 'completed', progress: 100, processed: result.scanned, total: result.scanned, completed_at: new Date() })
-        .where('bullmq_id', '=', String(job.id))
-        .execute()
-
-      if (userId) {
-        await notify({
-          userId,
-          category: 'job_completed',
-          title: 'Scan tracking terminé',
-          body: `${result.scanned} message(s) analysé(s), ${result.tracked} contenant des trackers.`,
-          data: { jobId: String(job.id), ...result },
-        })
-      }
-    } else if (action === 'scan_pii') {
-      const result = await scanArchivePii(accountId, {
-        onProgress: async (done: number, total: number) => {
-          const progress = Math.round((done / total) * 100)
-          await job.updateProgress(progress)
-          if (done % 20 === 0) {
-            await db.updateTable('jobs')
-              .set({ progress, processed: done, total })
-              .where('bullmq_id', '=', String(job.id))
-              .execute()
-          }
-        },
-      })
-
-      await db.updateTable('jobs')
-        .set({ status: 'completed', progress: 100, processed: result.scanned, total: result.scanned, completed_at: new Date() })
-        .where('bullmq_id', '=', String(job.id))
-        .execute()
-
-      if (userId) {
-        await notify({
-          userId,
-          category: 'job_completed',
-          title: 'Scan PII terminé',
-          body: `${result.scanned} archive(s) analysée(s), ${result.withPii} contenant des données sensibles.`,
-          data: { jobId: String(job.id), ...result },
-        })
-      }
-    } else if (action === 'encrypt_archives') {
-      const passphrase = job.data.passphrase
-      if (!passphrase) throw new Error('Passphrase required')
-
-      const result = await encryptArchives(accountId, passphrase, {
-        onProgress: async (done: number, total: number) => {
-          const progress = Math.round((done / total) * 100)
-          await job.updateProgress(progress)
-          if (done % 10 === 0) {
-            await db.updateTable('jobs')
-              .set({ progress, processed: done, total })
-              .where('bullmq_id', '=', String(job.id))
-              .execute()
-          }
-        },
-      })
-
-      await db.updateTable('jobs')
-        .set({ status: 'completed', progress: 100, processed: result.encrypted, total: result.encrypted, completed_at: new Date() })
-        .where('bullmq_id', '=', String(job.id))
-        .execute()
-
-      if (userId) {
-        await notify({
-          userId,
-          category: 'job_completed',
-          title: 'Chiffrement terminé',
-          body: `${result.encrypted} archive(s) chiffrée(s).`,
-          data: { jobId: String(job.id), ...result },
-        })
-      }
     }
   } catch (err) {
     await db.updateTable('jobs')

@@ -1,15 +1,6 @@
 import { FastifyInstance } from 'fastify'
 import { authPresets } from '../utils/auth'
-import { extractPagination } from '../utils/pagination'
 import { enqueueJob } from '../jobs/queue'
-import {
-  getTrackingStats,
-  listTrackedMessages,
-} from '../privacy/tracking.service'
-import {
-  getPiiStats,
-  listPiiFindings,
-} from '../privacy/pii.service'
 import {
   setupEncryption,
   verifyEncryptionKey,
@@ -20,73 +11,6 @@ import { getDb } from '../db'
 
 export async function privacyRoutes(app: FastifyInstance) {
   const { auth, accountAuth } = authPresets(app)
-
-  // ═══════════════════════════════════════════════════════
-  // TRACKING PIXELS
-  // ═══════════════════════════════════════════════════════
-
-  // GET /:accountId/tracking/stats — Stats tracking pixels
-  app.get('/:accountId/tracking/stats', accountAuth, async (request) => {
-    const { accountId } = request.params as { accountId: string }
-    return getTrackingStats(accountId)
-  })
-
-  // GET /:accountId/tracking — List tracked messages
-  app.get('/:accountId/tracking', accountAuth, async (request) => {
-    const { accountId } = request.params as { accountId: string }
-    const { limit, offset, page } = extractPagination(request.query as any)
-    const result = await listTrackedMessages(accountId, { limit, offset })
-    return { ...result, page, limit }
-  })
-
-  // POST /:accountId/tracking/scan — Launch tracking pixel scan
-  app.post('/:accountId/tracking/scan', accountAuth, async (request, reply) => {
-    const { accountId } = request.params as { accountId: string }
-    const userId = request.user.sub
-    const { maxMessages } = (request.body as any) ?? {}
-    const job = await enqueueJob('scan_tracking', {
-      accountId,
-      userId,
-      action: 'scan_tracking',
-      maxMessages: maxMessages ?? 200,
-    })
-    return reply.code(202).send({ jobId: job.id, message: 'Tracking pixel scan enqueued' })
-  })
-
-  // ═══════════════════════════════════════════════════════
-  // PII SCANNER
-  // ═══════════════════════════════════════════════════════
-
-  // GET /:accountId/pii/stats — PII scan stats
-  app.get('/:accountId/pii/stats', accountAuth, async (request) => {
-    const { accountId } = request.params as { accountId: string }
-    return getPiiStats(accountId)
-  })
-
-  // GET /:accountId/pii — List PII findings
-  app.get('/:accountId/pii', accountAuth, async (request) => {
-    const { accountId } = request.params as { accountId: string }
-    const query = request.query as Record<string, string>
-    const { limit, offset, page } = extractPagination(query)
-    const result = await listPiiFindings(accountId, {
-      limit,
-      offset,
-      piiType: query.piiType || undefined,
-    })
-    return { ...result, page, limit }
-  })
-
-  // POST /:accountId/pii/scan — Launch PII scan on archives
-  app.post('/:accountId/pii/scan', accountAuth, async (request, reply) => {
-    const { accountId } = request.params as { accountId: string }
-    const userId = request.user.sub
-    const job = await enqueueJob('scan_pii', {
-      accountId,
-      userId,
-      action: 'scan_pii',
-    })
-    return reply.code(202).send({ jobId: job.id, message: 'PII scan enqueued' })
-  })
 
   // ═══════════════════════════════════════════════════════
   // ENCRYPTION

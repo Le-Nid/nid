@@ -54,16 +54,6 @@ vi.mock('../unsubscribe/unsubscribe.service', () => ({
   forgetNewsletterSender: (...args: any[]) => mockForgetNewsletterSender(...args),
 }))
 
-const mockScanTrackingPixels = vi.fn()
-vi.mock('../privacy/tracking.service', () => ({
-  scanTrackingPixels: (...args: any[]) => mockScanTrackingPixels(...args),
-}))
-
-const mockScanArchivePii = vi.fn()
-vi.mock('../privacy/pii.service', () => ({
-  scanArchivePii: (...args: any[]) => mockScanArchivePii(...args),
-}))
-
 const mockEncryptArchives = vi.fn()
 vi.mock('../privacy/encryption.service', () => ({
   encryptArchives: (...args: any[]) => mockEncryptArchives(...args),
@@ -292,40 +282,6 @@ describe('unified worker handlers', () => {
 
     await capturedHandler(job)
     expect(mockScanNewsletters).toHaveBeenCalled()
-  })
-
-  it('handles scan_tracking job', async () => {
-    const { startUnifiedWorker } = await import('../jobs/workers/unified.worker')
-    startUnifiedWorker()
-
-    mockScanTrackingPixels.mockResolvedValue({ scanned: 10, tracked: 2, newFindings: 2 })
-
-    const job = createMockJob('scan_tracking', {
-      accountId: 'acc-1',
-      userId: 'user-1',
-      action: 'scan_tracking',
-    })
-
-    await capturedHandler(job)
-    expect(mockScanTrackingPixels).toHaveBeenCalled()
-    expect(mockNotify).toHaveBeenCalled()
-  })
-
-  it('handles scan_pii job', async () => {
-    const { startUnifiedWorker } = await import('../jobs/workers/unified.worker')
-    startUnifiedWorker()
-
-    mockScanArchivePii.mockResolvedValue({ scanned: 5, withPii: 1, findings: 3 })
-
-    const job = createMockJob('scan_pii', {
-      accountId: 'acc-1',
-      userId: 'user-1',
-      action: 'scan_pii',
-    })
-
-    await capturedHandler(job)
-    expect(mockScanArchivePii).toHaveBeenCalled()
-    expect(mockNotify).toHaveBeenCalled()
   })
 
   it('handles encrypt_archives job', async () => {

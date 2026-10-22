@@ -92,14 +92,6 @@ vi.mock('../rules/rules.service', () => ({
 vi.mock('../rules/rule-templates', () => ({
   RULE_TEMPLATES: [{ id: 'tmpl-1', name: 'Template', dto: { name: 'Rule', conditions: [{ field: 'from', operator: 'contains', value: 'test' }], action: { type: 'trash' } } }],
 }))
-vi.mock('../privacy/tracking.service', () => ({
-  getTrackingStats: vi.fn().mockResolvedValue({ trackedMessages: 0 }),
-  listTrackedMessages: vi.fn().mockResolvedValue({ items: [], total: 0 }),
-}))
-vi.mock('../privacy/pii.service', () => ({
-  getPiiStats: vi.fn().mockResolvedValue({ totalFindings: 0 }),
-  listPiiFindings: vi.fn().mockResolvedValue({ items: [], total: 0 }),
-}))
 vi.mock('../privacy/encryption.service', () => ({
   setupEncryption: vi.fn(),
   verifyEncryptionKey: vi.fn().mockResolvedValue(true),
@@ -1194,27 +1186,6 @@ describe('privacyRoutes deep', () => {
     await app.close()
   })
 
-  it('GET /:accountId/pii with piiType filter', async () => {
-    const app = await buildTestApp()
-    await app.register(privacyRoutes)
-    await app.ready()
-    const res = await app.inject({ method: 'GET', url: '/acc-1/pii?piiType=email' })
-    expect(res.statusCode).toBe(200)
-    await app.close()
-  })
-
-  it('POST /:accountId/tracking/scan with maxMessages', async () => {
-    const app = await buildTestApp()
-    await app.register(privacyRoutes)
-    await app.ready()
-    const res = await app.inject({
-      method: 'POST',
-      url: '/acc-1/tracking/scan',
-      payload: { maxMessages: 500 },
-    })
-    expect(res.statusCode).toBe(202)
-    await app.close()
-  })
 })
 
 // ═══════════════════════════════════════════════════════════

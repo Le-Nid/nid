@@ -100,9 +100,6 @@ erDiagram
     users ||--o{ audit_logs : "trace"
     users ||--o{ webhooks : "configure"
     users ||--|| notification_preferences : "paramètre"
-    gmail_accounts ||--o{ tracking_pixels : "scanne"
-    gmail_accounts ||--o{ pii_findings : "analyse"
-    archived_mails ||--o{ pii_findings : "référence"
     users ||--o{ retention_policies : "configure"
     gmail_accounts ||--o{ gmail_api_usage : "suit"
     users ||--|| storage_configs : "paramètre"
@@ -113,27 +110,7 @@ erDiagram
         timestamptz updated_at
     }
 
-    tracking_pixels {
-        uuid id PK
-        uuid gmail_account_id FK
-        varchar gmail_message_id
-        varchar subject
-        varchar sender
-        timestamptz date
-        jsonb trackers "détail des trackers"
-        integer tracker_count
-        timestamptz scanned_at
-    }
 
-    pii_findings {
-        uuid id PK
-        uuid gmail_account_id FK
-        uuid archived_mail_id FK
-        varchar pii_type "credit_card, iban, ..."
-        integer count
-        varchar snippet "masqué"
-        timestamptz scanned_at
-    }
 
     notification_preferences {
         uuid id PK
@@ -259,10 +236,6 @@ erDiagram
 | `audit_logs` | `action + created_at` | BTree | Filter by action |
 | `webhooks` | `user_id` | BTree | Filter by user |
 | `notification_preferences` | `user_id` | Unique | One row per user |
-| `tracking_pixels` | `gmail_account_id` | BTree | Filter by account |
-| `tracking_pixels` | `(gmail_account_id, gmail_message_id)` | Unique | Scan deduplication |
-| `pii_findings` | `gmail_account_id` | BTree | Filter by account |
-| `pii_findings` | `archived_mail_id` | BTree | Join emails ↔ PII |
 | `retention_policies` | `user_id` | BTree | Filter by user |
 | `gmail_api_usage` | `(gmail_account_id, recorded_at)` | BTree | Quota stats by account |
 | `gmail_api_usage` | `recorded_at` | BTree | Old data cleanup |
