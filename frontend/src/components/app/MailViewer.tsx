@@ -87,10 +87,15 @@ function useViewerMail(source: 'gmail' | 'archive', accountId: string, messageId
 
 /** Body of a mail (I4): sandboxed, no scripts, remote content blocked until « Afficher » unless the user allows it (B10). */
 function MailBody({ html, text }: Readonly<{ html: string; text: string }>) {
-  const { t } = useTranslation()
-  const [shown, setAllowRemote] = useState(false)
   // Blocked while the preference loads or when it cannot be read: never show more than the user asked for
   const allowedByPref = useNotificationPreferences().data?.remote_images === 'allow'
+  return <MailFrame html={html} text={text} allowedByPref={allowedByPref} />
+}
+
+/** Same sandboxed body without the user preference: the public shared page (`/shared/:token`) has no session to read it. */
+export function MailFrame({ html, text, allowedByPref = false }: Readonly<{ html: string; text: string; allowedByPref?: boolean }>) {
+  const { t } = useTranslation()
+  const [shown, setAllowRemote] = useState(false)
   const allowRemote = shown || allowedByPref
   if (!html) return <pre className="p-4 font-sans text-[15px] leading-normal whitespace-pre-wrap">{text || t('mails.viewer.empty')}</pre>
 

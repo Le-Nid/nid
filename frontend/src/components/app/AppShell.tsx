@@ -15,17 +15,10 @@ import { useGlobalJobNotifier } from '@/hooks/useGlobalJobNotifier'
 import { useLiveCounters } from '@/hooks/useLiveCounters'
 import { useAuthStore } from '@/store/auth.store'
 import { useThemeStore } from '@/store/theme.store'
-import LegacyAntd from '../LegacyAntd'
-import NotificationBell from '../NotificationBell'
 import AppSidebar from './AppSidebar'
 import BottomNav from './BottomNav'
 import CommandPalette from './CommandPalette'
-
-// Still antd (needs App.useApp for job toasts); moves to sonner with UndoToast in L1/L3.
-function LegacyNotifications() {
-  useGlobalJobNotifier()
-  return <NotificationBell />
-}
+import NotificationBell from './NotificationBell'
 
 function UserMenu({ withAccounts }: Readonly<{ withAccounts: boolean }>) {
   const { t, i18n } = useTranslation()
@@ -84,6 +77,7 @@ export default function AppShell() {
   const [paletteOpen, setPaletteOpen] = useState(false)
   const counters = useLiveCounters()
   const activeJobs = counters?.activeJobs ?? 0
+  useGlobalJobNotifier()
 
   return (
     <TooltipProvider>
@@ -95,7 +89,7 @@ export default function AppShell() {
           <header className="sticky top-0 z-20 flex min-h-14 items-center gap-2 border-b bg-background px-3 pt-[env(safe-area-inset-top)] md:px-6">
             {isMobile && <img src={dark ? '/nid-logo-full-dark.svg' : '/nid-logo-full-light.svg'} alt="Nid" className="h-7 w-auto" />}
             <div className="ml-auto flex items-center gap-1">
-              <LegacyAntd><LegacyNotifications /></LegacyAntd>
+              <NotificationBell />
               <UserMenu withAccounts={isMobile} />
             </div>
           </header>

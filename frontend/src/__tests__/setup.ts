@@ -39,13 +39,14 @@ Object.defineProperty(globalThis, 'matchMedia', {
   })),
 })
 
-// Mock ResizeObserver for antd components
+// Mock ResizeObserver (Radix, TanStack)
 globalThis.ResizeObserver = class {
   observe = vi.fn()
   unobserve = vi.fn()
   disconnect = vi.fn()
 } as any
 
+// Role/name queries in the tests rely on this stub: with jsdom's own, 11 of them stop matching
 Object.defineProperty(globalThis, 'getComputedStyle', {
   writable: true,
   value: vi.fn().mockImplementation(() => ({

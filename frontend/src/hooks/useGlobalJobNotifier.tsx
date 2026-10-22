@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { App } from "antd";
-import { CheckCircle, XCircle } from 'lucide-react';
+import { useEffect, useRef } from "react";
+import { toast } from "sonner";
 import { jobsApi, notificationsApi } from "../api";
 import { useAccount } from "./useAccount";
 import { useTranslation } from "react-i18next";
@@ -13,21 +12,21 @@ const TYPE_LABEL_KEYS: Record<string, string> = {
 
 /**
  * Lance un poll léger (5s) sur les jobs actifs du compte courant.
- * Quand un job passe à completed/failed, affiche une notification Ant Design.
+ * Quand un job passe à completed/failed, affiche un toast sonner.
  * Respecte la préférence `toast_enabled` de l'utilisateur.
  * Doit être monté une seule fois (AppShell).
  */
 export function useGlobalJobNotifier() {
   const { accountId } = useAccount();
-  const { notification } = App.useApp();
   const { t } = useTranslation();
   const knownStates = useRef<Map<string, string>>(new Map());
-  const [prefs, setPrefs] = useState<Record<string, boolean>>({});
+  // A ref: the poll below must see the preferences once they arrive
+  const prefs = useRef<Record<string, boolean>>({});
 
   // Load toast preferences once
   useEffect(() => {
     notificationsApi.getPreferences()
-      .then((p) => setPrefs(p))
+      .then((p) => { prefs.current = p })
       .catch(() => {})
   }, [])
 
@@ -43,23 +42,19 @@ export function useGlobalJobNotifier() {
           const curr = job.status;
           const typeLabel = TYPE_LABEL_KEYS[job.type] ? t(TYPE_LABEL_KEYS[job.type]) : job.type;
 
-          if (prev && prev !== "completed" && curr === "completed" && prefs.job_completed_toast !== false) {
-            notification.success({
-              key: `job-${job.id}`,
-              message: t('notifier.completed', { type: typeLabel }),
+          if (prev && prev !== "completed" && curr === "completed" && prefs.current.job_completed_toast !== false) {
+            toast.success(t('notifier.completed', { type: typeLabel }), {
+              id: `job-${job.id}`,
               description: t('notifier.processedCount', { count: job.processed ?? 0 }),
-              icon: <CheckCircle size={16} style={{ color: "#52c41a" }} />,
-              duration: 6,
+              duration: 6_000,
             });
           }
 
-          if (prev && prev !== "failed" && curr === "failed" && prefs.job_failed_toast !== false) {
-            notification.error({
-              key: `job-${job.id}`,
-              message: t('notifier.failed', { type: typeLabel }),
+          if (prev && prev !== "failed" && curr === "failed" && prefs.current.job_failed_toast !== false) {
+            toast.error(t('notifier.failed', { type: typeLabel }), {
+              id: `job-${job.id}`,
               description: job.error ?? t('notifier.genericError'),
-              icon: <XCircle size={16} style={{ color: "#ff4d4f" }} />,
-              duration: 10,
+              duration: 10_000,
             });
           }
 
@@ -73,5 +68,5 @@ export function useGlobalJobNotifier() {
     poll();
     const interval = setInterval(poll, 5_000);
     return () => clearInterval(interval);
-  }, [accountId]);
+  }, [accountId, t]);
 }

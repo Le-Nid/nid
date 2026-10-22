@@ -1,6 +1,12 @@
 import { describe, it, expect, vi } from 'vitest'
+import { act, renderHook } from '@testing-library/react'
+import { toast } from 'sonner'
+import i18n from '../i18n'
+import { jobsApi } from '../api'
+import { useGlobalJobNotifier } from '../hooks/useGlobalJobNotifier'
 
-// NotificationBell rendering (minimal)
+vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
+
 vi.mock('../api', () => ({
   notificationsApi: {
     list: vi.fn().mockResolvedValue({ notifications: [], unreadCount: 0 }),
@@ -21,6 +27,32 @@ vi.mock('../api', () => ({
 vi.mock('../hooks/useAccount', () => ({
   useAccount: () => ({ accountId: 'acc-1', account: null }),
 }))
+
+describe('useGlobalJobNotifier', () => {
+  beforeAll(() => i18n.changeLanguage('fr'))
+  afterEach(() => vi.useRealTimers())
+
+  it('toasts a job that completes or fails while polled, not one already finished', async () => {
+    vi.useFakeTimers()
+    vi.mocked(jobsApi.list)
+      .mockResolvedValueOnce([
+        { id: 'j1', type: 'archive_mails', status: 'active' },
+        { id: 'j2', type: 'run_rule', status: 'active' },
+        { id: 'j3', type: 'bulk_operation', status: 'completed' },
+      ])
+      .mockResolvedValue([
+        { id: 'j1', type: 'archive_mails', status: 'completed', processed: 12 },
+        { id: 'j2', type: 'run_rule', status: 'failed', error: 'boom' },
+        { id: 'j3', type: 'bulk_operation', status: 'completed' },
+      ])
+    renderHook(() => useGlobalJobNotifier())
+    await act(() => vi.advanceTimersByTimeAsync(5_000))
+
+    expect(toast.success).toHaveBeenCalledTimes(1)
+    expect(toast.success).toHaveBeenCalledWith('Archivage NAS terminé', expect.objectContaining({ id: 'job-j1', description: '12 éléments traités avec succès.' }))
+    expect(toast.error).toHaveBeenCalledWith('Règle automatique échoué', expect.objectContaining({ id: 'job-j2', description: 'boom' }))
+  })
+})
 
 describe('notification preferences API contract', () => {
   it('getPreferences returns all expected keys', async () => {

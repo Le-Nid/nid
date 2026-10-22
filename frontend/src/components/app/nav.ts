@@ -13,7 +13,7 @@ export interface NavEntry {
   adminOnly?: boolean
 }
 
-// N1 (§3.1). `to` = the new route when it exists, else the legacy page until its lot lands.
+// N1 (§3.1)
 export const NAV: NavEntry[] = [
   { key: 'overview', to: '/overview', icon: LayoutDashboard, match: ['/overview'] },
   { key: 'mails', to: '/mails', icon: Inbox, match: ['/mails', '/unified', '/saved-searches'] },
@@ -25,10 +25,8 @@ export const NAV: NavEntry[] = [
   { key: 'admin', to: '/admin', icon: Shield, match: ['/admin'], adminOnly: true },
 ]
 
-/** Legacy pages without a nav entry of their own yet, reachable from the command palette. */
-export const LEGACY_PAGES: { to: string; labelKey: string }[] = [
-  { to: '/unified', labelKey: 'nav.unified' },
-  { to: '/saved-searches', labelKey: 'nav.savedSearches' },
+/** Pages without a nav entry of their own, reachable from the command palette. */
+export const OTHER_PAGES: { to: string; labelKey: string }[] = [
   { to: '/attachments', labelKey: 'nav.attachments' },
 ]
 

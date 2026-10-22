@@ -13,7 +13,7 @@ test.describe('Login', () => {
     await expect(page).toHaveURL(/\/login$/)
     await expect(page.getByRole('tab', { name: t('login.tabLogin') })).toBeVisible()
     await expect(page.getByLabel(t('login.email'))).toBeVisible()
-    await expect(page.getByLabel(t('login.password'))).toBeVisible()
+    await expect(page.getByLabel(t('login.password'), { exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: t('login.submit') })).toBeVisible()
   })
 
@@ -22,7 +22,7 @@ test.describe('Login', () => {
       route.fulfill({ status: 401, json: { error: 'Identifiants invalides' } }))
     await page.goto('/login')
     await page.getByLabel(t('login.email')).fill('alice@example.com')
-    await page.getByLabel(t('login.password')).fill('wrong-password')
+    await page.getByLabel(t('login.password'), { exact: true }).fill('wrong-password')
     await page.getByRole('button', { name: t('login.submit') }).click()
     await expect(page.getByRole('alert').filter({ hasText: 'Identifiants invalides' })).toBeVisible()
     await expect(page).toHaveURL(/\/login$/)

@@ -1,6 +1,6 @@
 {
   "desktop": {
-    "login": 3,
+    "login": 0,
     "overview": 0,
     "mails": 0,
     "archives": 0,
@@ -9,12 +9,12 @@
     "activity": 0,
     "settings": 0,
     "cleanup": 0,
-    "attachments": 7,
+    "attachments": 0,
     "admin": 0,
     "more": 0
   },
   "mobile": {
-    "login": 3,
+    "login": 0,
     "overview": 0,
     "mails": 0,
     "archives": 0,
@@ -23,7 +23,7 @@
     "activity": 0,
     "settings": 0,
     "cleanup": 0,
-    "attachments": 6,
+    "attachments": 0,
     "admin": 0,
     "more": 0
   }

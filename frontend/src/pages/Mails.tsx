@@ -12,7 +12,9 @@ import {
   Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
 import { RowMenu } from '@/components/app/RowMenu'
+import { FormField } from '@/components/app/FormField'
 import { DataList, dataListFeatures } from '@/components/app/DataList'
+import { LoadError } from '@/components/app/LoadError'
 import { BulkActionBar, type BulkAction } from '@/components/app/BulkActionBar'
 import { SearchBar, type SavedSearch } from '@/components/app/SearchBar'
 import { PageHeader } from '@/components/app/PageHeader'
@@ -22,12 +24,13 @@ import { LabelBadge } from '@/components/app/LabelBadge'
 import { MailViewer, type ViewerAction } from '@/components/app/MailViewer'
 import { RuleSheet, type RuleSheetTarget } from '@/components/app/RuleSheet'
 import { useAccount } from '@/hooks/useAccount'
-import { useCreateSavedSearch, useGmailMessages, useLabels, useSavedSearches } from '@/hooks/queries'
+import { useCreateSavedSearch, useGmailMessages, useLabels, useSavedSearches, useUnifiedMessages } from '@/hooks/queries'
 import { useKeyboardShortcuts, useShortcutsPref } from '@/hooks/useKeyboardShortcuts'
 import { useMailActions, type MailAction, type Target } from '@/hooks/useMailActions'
 import { formatBytes, formatEmail, formatSender } from '@/utils/format'
 import { toBadge, type ApiLabel } from '@/utils/gmail'
 import { cn } from '@/lib/utils'
+import { useAuthStore } from '@/store/auth.store'
 
 type Mail = {
   id: string
@@ -39,6 +42,9 @@ type Mail = {
   snippet: string
   labelIds: string[]
   hasAttachments: boolean
+  // « Tous les comptes » only (GET /api/unified/messages)
+  accountId?: string
+  accountEmail?: string
 }
 type RowAction = 'open' | ViewerAction
 const ROW_ACTIONS: RowAction[] = ['open', 'archive', 'archive_nas', 'trash']
@@ -95,7 +101,7 @@ function MailMenu({ mail, onRow }: Readonly<{ mail: Mail; onRow: (action: RowAct
 
 const col = createColumnHelper<typeof dataListFeatures, Mail>()
 
-function buildColumns(t: TFunction, labels: ApiLabel[], onRow: (action: RowAction, mail: Mail) => void) {
+function buildColumns(t: TFunction, labels: ApiLabel[], onRow: (action: RowAction, mail: Mail) => void, accountId: string | null, allMode: boolean) {
   return col.columns([
     col.accessor('from', { header: t('mails.col.from'), meta: { mobile: 'title' }, cell: ({ row }) => <SenderCell mail={row.original} /> }),
     col.accessor('subject', { header: t('mails.col.subject'), meta: { mobile: 'subtitle' }, cell: ({ row }) => <SubjectCell mail={row.original} /> }),
@@ -104,12 +110,23 @@ function buildColumns(t: TFunction, labels: ApiLabel[], onRow: (action: RowActio
     col.accessor('labelIds', {
       header: t('mails.col.labels'),
       meta: { mobile: 'meta' },
-      cell: ({ getValue }) => (
+      cell: ({ getValue, row }) => (
         <span className="flex flex-wrap gap-1">
-          {getValue().map((id) => <LabelBadge key={id} label={toBadge(labels, id)} />)}
+          {getValue()
+            // Only the current account's user labels (Label_*) are loaded: hide the other accounts' raw ids
+            .filter((id) => (row.original.accountId ?? accountId) === accountId || !id.startsWith('Label_'))
+            .map((id) => <LabelBadge key={id} label={toBadge(labels, id)} />)}
         </span>
       ),
     }),
+    ...(allMode
+      ? [col.accessor((m) => m.accountEmail ?? '', {
+          id: 'account',
+          header: t('mails.col.account'),
+          meta: { mobile: 'meta' },
+          cell: ({ getValue }) => <span className="block max-w-48 truncate text-xs text-muted-foreground">{getValue()}</span>,
+        })]
+      : []),
     col.accessor('sizeEstimate', {
       header: t('mails.col.size'),
       meta: { mobile: 'meta', align: 'end' },
@@ -168,27 +185,149 @@ function ShortcutsHint({ on, onToggle }: Readonly<{ on: boolean; onToggle: () =>
   )
 }
 
+/** Mails of one account (Gmail pages) or of every account (« Tous les comptes », one request). */
+function useMailList(allMode: boolean, accountId: string | null, q: string) {
+  const messages = useGmailMessages(allMode ? null : accountId, q, '')
+  const unified = useUnifiedMessages({ q: q || undefined, maxResults: 50 }, allMode)
+  const loaded: Mail[] = useMemo(
+    () => (allMode ? (unified.data?.messages as Mail[] | undefined) : messages.data?.pages.flatMap((p) => p.mails as Mail[])) ?? [],
+    [allMode, unified.data, messages.data],
+  )
+  const total: number = allMode ? loaded.length : messages.data?.pages[0]?.total ?? 0
+  return { messages, list: allMode ? unified : messages, loaded, total }
+}
+
+function SearchActions({ q, onSaveAll, onCreateRule }: Readonly<{ q: string; onSaveAll: () => void; onCreateRule: () => void }>) {
+  const { t } = useTranslation()
+  return (
+    <>
+      <Button variant="outline" className="h-11 md:h-9" onClick={onSaveAll}>
+        <HardDriveDownload aria-hidden="true" />{t('mails.saveAllNas')}
+      </Button>
+      {q && (
+        <Button variant="outline" className="h-11 md:h-9" onClick={onCreateRule}>
+          <Zap aria-hidden="true" />{t('mails.createRule')}
+        </Button>
+      )}
+    </>
+  )
+}
+
+function ListFooter({ messages, empty }: Readonly<{ messages: ReturnType<typeof useGmailMessages>; empty: boolean }>) {
+  const { t } = useTranslation()
+  if (messages.hasNextPage) {
+    return (
+      <Button variant="outline" className="h-11 self-center md:h-9" disabled={messages.isFetchingNextPage} onClick={() => void messages.fetchNextPage()}>
+        {t('mails.loadMore')}
+      </Button>
+    )
+  }
+  return empty ? null : <p className="text-center text-sm text-muted-foreground">{t('mails.allLoaded')}</p>
+}
+
+/** « Tous les comptes » lives in the URL (?account=all, §3.3); picking one account leaves it. */
+function useAccountParam() {
+  const { gmailAccounts, setActiveAccount } = useAuthStore()
+  const [params, setParams] = useSearchParams()
+  const switchAccount = (value: string) => {
+    if (value !== 'all') setActiveAccount(value)
+    setParams((prev) => {
+      const out = new URLSearchParams(prev)
+      if (value === 'all') out.set('account', 'all')
+      else out.delete('account')
+      return out
+    })
+  }
+  return { allMode: params.get('account') === 'all', activeAccounts: gmailAccounts.filter((a) => a.is_active), switchAccount }
+}
+
+function buildBulkActions(t: TFunction, { onSelection, canLabel, onLabel, ruleAccounts, onRule }: {
+  onSelection: (action: MailAction) => void
+  canLabel: boolean
+  onLabel: () => void
+  ruleAccounts: Set<string | null>
+  onRule: (accountId?: string) => void
+}): BulkAction[] {
+  return [
+    { label: t('mails.action.archive'), icon: <Archive aria-hidden="true" />, onSelect: () => onSelection('archive') },
+    { label: t('mails.action.archive_nas'), icon: <HardDriveDownload aria-hidden="true" />, onSelect: () => onSelection('archive_nas') },
+    { label: t('mails.action.mark_read'), icon: <MailCheck aria-hidden="true" />, onSelect: () => onSelection('mark_read') },
+    { label: t('mails.action.trash'), icon: <Trash2 aria-hidden="true" />, onSelect: () => onSelection('trash'), destructive: true },
+    { label: t('mails.action.mark_unread'), icon: <MailOpen aria-hidden="true" />, onSelect: () => onSelection('mark_unread') },
+    ...(canLabel ? [{ label: t('mails.action.label'), icon: <Tag aria-hidden="true" />, onSelect: onLabel }] : []),
+    ...(ruleAccounts.size <= 1
+      ? [{ label: t('mails.createRule'), icon: <Zap aria-hidden="true" />, onSelect: () => onRule([...ruleAccounts][0] ?? undefined) }]
+      : []),
+  ]
+}
+
+function MailsEmpty({ searching, onClear }: Readonly<{ searching: boolean; onClear: () => void }>) {
+  const { t } = useTranslation()
+  return (
+    <EmptyState
+      icon={<Inbox />}
+      title={t('mails.empty')}
+      description={t('mails.emptyDescription')}
+      action={searching ? <Button variant="outline" onClick={onClear}>{t('mails.clearSearch')}</Button> : undefined}
+    />
+  )
+}
+
+function groupByAccount(ids: string[], accountOf: (id: string) => string | null) {
+  const byAccount = new Map<string, string[]>()
+  for (const id of ids) {
+    const account = accountOf(id)
+    if (account) byAccount.set(account, [...(byAccount.get(account) ?? []), id])
+  }
+  return byAccount
+}
+
+/** Gmail account of the list, « Tous les comptes » included (P2); shown from two active accounts. */
+function AccountSelect({ accounts, allMode, accountId, onChange }: Readonly<{
+  accounts: { id: string; email: string }[]; allMode: boolean; accountId: string | null; onChange: (value: string) => void
+}>) {
+  const { t } = useTranslation()
+  const value = allMode ? 'all' : accountId ?? ''
+  return (
+    <div className="md:w-72">
+      <FormField id="mails-account" label={t('layout.gmailAccount')}>
+        <select
+          id="mails-account"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="h-11 rounded-md border border-input bg-transparent px-3 text-base md:h-9 md:text-sm"
+        >
+          <option value="all">{t('mails.allAccounts')}</option>
+          {accounts.map((a) => <option key={a.id} value={a.id}>{a.email}</option>)}
+        </select>
+      </FormField>
+    </div>
+  )
+}
+
 /** /mails (§7.2): Gmail search, chips, responsive list, bulk actions with undo, reader. */
 export default function MailsPage() {
   const { t } = useTranslation()
   const { accountId } = useAccount()
   const [params, setParams] = useSearchParams()
   const q = params.get('q') ?? ''
+  const { allMode, activeAccounts, switchAccount } = useAccountParam()
   const { data: labels = [] } = useLabels(accountId)
   const { data: savedSearches = [] } = useSavedSearches()
   const createSaved = useCreateSavedSearch()
-  const messages = useGmailMessages(accountId, q, '')
+  const { messages, list, loaded, total } = useMailList(allMode, accountId, q)
   const { pending, run, done } = useMailActions(accountId, (id) => ['gmail', id, 'messages'])
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
   const [allResults, setAllResults] = useState(false)
   const [viewing, setViewing] = useState<string | null>(null)
   const [pickingLabel, setPickingLabel] = useState(false)
-  const [ruleTarget, setRuleTarget] = useState<RuleSheetTarget | null>(null)
+  // accountId: the rule's account when it is not the current one (« Tous les comptes »)
+  const [ruleTarget, setRuleTarget] = useState<(RuleSheetTarget & { accountId?: string }) | null>(null)
   const [shortcutsOn, setShortcutsOn] = useShortcutsPref()
   const pageRef = useRef<HTMLDivElement>(null)
 
   // Selection and reader belong to one list: reset when the account or the search changes (§6.4)
-  const scope = `${accountId}\n${q}`
+  const scope = `${allMode ? 'all' : accountId}\n${q}`
   const [prevScope, setPrevScope] = useState(scope)
   if (scope !== prevScope) {
     setPrevScope(scope)
@@ -198,21 +337,26 @@ export default function MailsPage() {
   }
 
   const hidden = useMemo(() => new Set(pending.flatMap((p) => p.hidden)), [pending])
-  const mails: Mail[] = useMemo(
-    () => (messages.data?.pages.flatMap((p) => p.mails as Mail[]) ?? []).filter((m) => !hidden.has(m.id)),
-    [messages.data, hidden],
-  )
-  const total = messages.data?.pages[0]?.total ?? 0
+  const mails = useMemo(() => loaded.filter((m) => !hidden.has(m.id)), [loaded, hidden])
+  const accountOf = (id: string) => loaded.find((m) => m.id === id)?.accountId ?? accountId
   // Only labels still in Gmail can be applied
   const userLabels = (labels as ApiLabel[]).filter((l) => l.type === 'user' && !l.deleted_at)
 
-  const act = (action: MailAction, target: Target, hiddenIds: string[], labelId?: string) =>
-    void run(action, target, { count: 'ids' in target ? target.ids.length : total, hidden: hiddenIds, labelId })
+  const act = (action: MailAction, target: Target, hiddenIds: string[], labelId?: string) => {
+    if (!allMode || !('ids' in target)) {
+      void run(action, target, { count: 'ids' in target ? target.ids.length : total, hidden: hiddenIds, labelId })
+      return
+    }
+    // « Tous les comptes »: one job per account (the API is per account)
+    for (const [account, ids] of groupByAccount(target.ids, accountOf)) {
+      void run(action, { ids }, { count: ids.length, hidden: ids, labelId, accountId: account })
+    }
+  }
 
   // Columns stay stable across renders; the row menu reaches the current handlers through this ref
   const onRowRef = useRef<(action: RowAction, mail: Mail) => void>(() => {})
   onRowRef.current = (action, mail) => (action === 'open' ? setViewing(mail.id) : act(action, { ids: [mail.id] }, [mail.id]))
-  const columns = useMemo(() => buildColumns(t, labels, (a, m) => onRowRef.current(a, m)), [t, labels])
+  const columns = useMemo(() => buildColumns(t, labels, (a, m) => onRowRef.current(a, m), accountId, allMode), [t, labels, accountId, allMode])
 
   const table = useTable({
     features: dataListFeatures,
@@ -231,7 +375,9 @@ export default function MailsPage() {
   const selectedIds = Object.keys(rowSelection).filter((id) => rowSelection[id])
   const count = selectedIds.length
   // I2: a non-empty search whose loaded rows are all selected can extend to every result (B5 needs a query)
-  const canSelectAll = !!q && count > 0 && count === mails.length && total > count
+  const canSelectAll = !allMode && !!q && count > 0 && count === mails.length && total > count
+  const selectAllTotal = allResults || canSelectAll ? total : undefined
+  const selectAllResults = () => setAllResults(true)
   const clearSelection = () => {
     setRowSelection({})
     setAllResults(false)
@@ -247,19 +393,18 @@ export default function MailsPage() {
     clearSelection()
   }
 
-  const bulkActions: BulkAction[] = [
-    { label: t('mails.action.archive'), icon: <Archive aria-hidden="true" />, onSelect: () => onSelection('archive') },
-    { label: t('mails.action.archive_nas'), icon: <HardDriveDownload aria-hidden="true" />, onSelect: () => onSelection('archive_nas') },
-    { label: t('mails.action.mark_read'), icon: <MailCheck aria-hidden="true" />, onSelect: () => onSelection('mark_read') },
-    { label: t('mails.action.trash'), icon: <Trash2 aria-hidden="true" />, onSelect: () => onSelection('trash'), destructive: true },
-    { label: t('mails.action.mark_unread'), icon: <MailOpen aria-hidden="true" />, onSelect: () => onSelection('mark_unread') },
-    ...(userLabels.length ? [{ label: t('mails.action.label'), icon: <Tag aria-hidden="true" />, onSelect: () => setPickingLabel(true) }] : []),
-    { label: t('mails.createRule'), icon: <Zap aria-hidden="true" />, onSelect: () => setRuleTarget({ from: selectionSender() }) },
-  ]
+  const bulkActions = buildBulkActions(t, {
+    onSelection,
+    canLabel: !allMode && userLabels.length > 0,
+    onLabel: () => setPickingLabel(true),
+    // A rule belongs to one account: in « Tous les comptes », only for a one-account selection
+    ruleAccounts: new Set(allMode ? selectedIds.map(accountOf) : []),
+    onRule: (accountId) => setRuleTarget({ from: selectionSender(), accountId }),
+  })
 
   const search = (next: string) => {
     if (next === q) {
-      void messages.refetch()
+      void list.refetch()
       return
     }
     setParams((prev) => {
@@ -304,32 +449,34 @@ export default function MailsPage() {
     Escape: clearSelection,
   }, shortcutsOn && !viewing && !pickingLabel && !ruleTarget)
   const toggleShortcuts = () => setShortcutsOn(!shortcutsOn)
+  const viewingAccount = viewing ? accountOf(viewing) : accountId
+  const ruleAccount = ruleTarget?.accountId ?? accountId
 
   return (
     <div ref={pageRef} className="mx-auto flex w-full max-w-[1180px] flex-col gap-4 p-4 md:px-6 md:pt-8">
       <PageHeader
         title={t('mails.title')}
-        description={messages.data ? t('mails.results', { count: total }) : undefined}
+        description={list.data ? t('mails.results', { count: total }) : undefined}
         actions={(
           <>
-            <Button variant="outline" className="h-11 md:h-9" onClick={() => void messages.refetch()} disabled={messages.isFetching}>
-              <RefreshCw aria-hidden="true" className={cn(messages.isFetching && 'animate-spin motion-reduce:animate-none')} />{t('mails.refresh')}
+            <Button variant="outline" className="h-11 md:h-9" onClick={() => void list.refetch()} disabled={list.isFetching}>
+              <RefreshCw aria-hidden="true" className={cn(list.isFetching && 'animate-spin motion-reduce:animate-none')} />{t('mails.refresh')}
             </Button>
-            <Button
-              variant="outline"
-              className="h-11 md:h-9"
-              onClick={() => void run('archive_nas', { query: q }, { count: total, hidden: [], label: t('mails.job.saveAll') })}
-            >
-              <HardDriveDownload aria-hidden="true" />{t('mails.saveAllNas')}
-            </Button>
-            {q && (
-              <Button variant="outline" className="h-11 md:h-9" onClick={() => setRuleTarget({ from: searchSender(q) })}>
-                <Zap aria-hidden="true" />{t('mails.createRule')}
-              </Button>
+            {/* Both act on one account's search */}
+            {!allMode && (
+              <SearchActions
+                q={q}
+                onSaveAll={() => void run('archive_nas', { query: q }, { count: total, hidden: [], label: t('mails.job.saveAll') })}
+                onCreateRule={() => setRuleTarget({ from: searchSender(q) })}
+              />
             )}
           </>
         )}
       />
+
+      {activeAccounts.length >= 2 && (
+        <AccountSelect accounts={activeAccounts} allMode={allMode} accountId={accountId} onChange={switchAccount} />
+      )}
 
       <SearchBar value={q} onChange={search} saved={chips} onSave={saveSearch} />
 
@@ -339,49 +486,35 @@ export default function MailsPage() {
 
       <BulkActionBar
         count={count}
-        total={allResults || canSelectAll ? total : undefined}
+        total={selectAllTotal}
         mode={allResults ? 'query' : 'ids'}
         actions={bulkActions}
-        onSelectAll={canSelectAll ? () => setAllResults(true) : undefined}
+        onSelectAll={canSelectAll ? selectAllResults : undefined}
         onClear={clearSelection}
       />
 
-      {messages.isError ? (
-        <div role="alert" className="flex items-center gap-3 rounded-lg bg-destructive-soft px-4 py-3 text-destructive">
-          <span className="flex-1">{t('mails.loadError')}</span>
-          <Button variant="outline" onClick={() => void messages.refetch()}>{t('mails.retry')}</Button>
-        </div>
+      {list.isError ? (
+        <LoadError message={t('mails.loadError')} onRetry={() => void list.refetch()} />
       ) : (
         <DataList
           table={table}
           rowLabel={(row) => row.original.subject || t('mails.noSubject')}
           onRowOpen={(row) => setViewing(row.id)}
-          isLoading={messages.isLoading}
-          empty={(
-            <EmptyState
-              icon={<Inbox />}
-              title={t('mails.empty')}
-              description={t('mails.emptyDescription')}
-              action={q ? <Button variant="outline" onClick={() => search('')}>{t('mails.clearSearch')}</Button> : undefined}
-            />
-          )}
+          isLoading={list.isLoading}
+          empty={<MailsEmpty searching={!!q} onClear={() => search('')} />}
         />
       )}
 
-      {messages.hasNextPage && (
-        <Button variant="outline" className="h-11 self-center md:h-9" disabled={messages.isFetchingNextPage} onClick={() => void messages.fetchNextPage()}>
-          {t('mails.loadMore')}
-        </Button>
-      )}
-      {!messages.hasNextPage && mails.length > 0 && <p className="text-center text-sm text-muted-foreground">{t('mails.allLoaded')}</p>}
+      {/* « Tous les comptes » has no pages: 50 mails per account */}
+      {!allMode && <ListFooter messages={messages} empty={!mails.length} />}
 
       <ShortcutsHint on={shortcutsOn} onToggle={toggleShortcuts} />
 
-      {accountId && (
+      {viewingAccount && (
         <MailViewer
-          accountId={accountId}
+          accountId={viewingAccount}
           messageId={viewing}
-          labels={labels}
+          labels={viewingAccount === accountId ? labels : []}
           onClose={() => setViewing(null)}
           onAction={(action) => {
             setViewing(null)
@@ -389,11 +522,11 @@ export default function MailsPage() {
           }}
           onCreateRule={(from) => {
             setViewing(null)
-            setRuleTarget({ from })
+            setRuleTarget({ from, accountId: viewingAccount ?? undefined })
           }}
         />
       )}
-      {accountId && <RuleSheet accountId={accountId} target={ruleTarget} onClose={() => setRuleTarget(null)} />}
+      {ruleAccount && <RuleSheet accountId={ruleAccount} target={ruleTarget} onClose={() => setRuleTarget(null)} />}
       <LabelPicker
         open={pickingLabel}
         onOpenChange={setPickingLabel}

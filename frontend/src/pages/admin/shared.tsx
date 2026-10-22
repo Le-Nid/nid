@@ -26,9 +26,9 @@ export function useTabParams<K extends string>(keys: readonly K[]) {
 }
 
 /** « Page 2 sur 5 » with previous/next; nothing when everything fits on one page. */
-export function Pager({ page, total, onChange }: Readonly<{ page: number; total: number; onChange: (page: number) => void }>) {
+export function Pager({ page, total, onChange, pageSize = PAGE_SIZE }: Readonly<{ page: number; total: number; onChange: (page: number) => void; pageSize?: number }>) {
   const { t } = useTranslation()
-  const pages = Math.ceil(total / PAGE_SIZE)
+  const pages = Math.ceil(total / pageSize)
   if (pages <= 1) return null
   return (
     <nav aria-label={t('admin.pager.label')} className="flex items-center justify-end gap-2">

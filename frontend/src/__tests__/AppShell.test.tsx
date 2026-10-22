@@ -1,10 +1,8 @@
 import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
-import { Empty } from 'antd'
 import i18n from '../i18n'
 import App from '../App'
-import LegacyAntd from '../components/LegacyAntd'
 import { useAuthStore } from '../store/auth.store'
 import { useThemeStore } from '../store/theme.store'
 
@@ -24,7 +22,7 @@ vi.mock('../pages/Rules', probe)
 vi.mock('../pages/Admin', probe)
 vi.mock('../pages/Cleanup', probe)
 vi.mock('../hooks/useGlobalJobNotifier', () => ({ useGlobalJobNotifier: vi.fn() }))
-vi.mock('../components/NotificationBell', () => ({ default: () => null }))
+vi.mock('../components/app/NotificationBell', () => ({ default: () => null }))
 
 let mobile = false
 const logout = vi.fn(() => Promise.resolve())
@@ -79,6 +77,8 @@ describe('routes', () => {
     ['/expiration', '/rules?tab=labels'],
     ['/sharing', '/archives?tab=shares'],
     ['/ops', '/settings/data'],
+    ['/unified', '/mails?account=all'],
+    ['/saved-searches', '/mails'],
   ])('redirects %s to %s, keeping the query string', async (from, to) => {
     renderAt(from)
     expect(await landedOn(to)).toBeInTheDocument()
@@ -172,13 +172,13 @@ describe('command palette', () => {
     expect(await landedOn('/rules?new=1')).toBeInTheDocument()
   })
 
-  it('opens from the sidebar search button and lists legacy pages', async () => {
+  it('opens from the sidebar search button and lists the other pages', async () => {
     renderAt('/overview')
     await landedOn('/overview')
     await userEvent.click(screen.getByRole('button', { name: /Rechercher/ }))
     const palette = await screen.findByRole('dialog', { name: 'Palette de commandes' })
     expect(within(palette).getByRole('option', { name: 'Admin' })).toBeInTheDocument()
-    expect(within(palette).getByRole('group', { name: 'Autres pages (en cours de migration)' })).toBeInTheDocument()
+    expect(within(palette).getByRole('group', { name: 'Autres pages' })).toBeInTheDocument()
     await userEvent.keyboard('{Control>}k{/Control}')
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
@@ -297,18 +297,5 @@ describe('live counters (B3, D6)', () => {
     await landedOn('/overview')
     unmount()
     expect(FakeEventSource.last.close).toHaveBeenCalled()
-  })
-})
-
-describe('LegacyAntd', () => {
-  it('gives antd children its locale and theme', async () => {
-    useThemeStore.setState({ mode: 'dark' })
-    const { rerender } = render(<LegacyAntd><Empty /></LegacyAntd>)
-    expect(screen.getByText('Aucune donnée', { selector: 'div' })).toBeInTheDocument()
-
-    await i18n.changeLanguage('en')
-    rerender(<LegacyAntd><Empty /></LegacyAntd>)
-    expect(screen.getByText('No data', { selector: 'div' })).toBeInTheDocument()
-    await i18n.changeLanguage('fr')
   })
 })
