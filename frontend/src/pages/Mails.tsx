@@ -14,6 +14,7 @@ import {
 import { RowMenu } from '@/components/app/RowMenu'
 import { FormField } from '@/components/app/FormField'
 import { DataList, dataListFeatures } from '@/components/app/DataList'
+import { LoadError } from '@/components/app/LoadError'
 import { BulkActionBar, type BulkAction } from '@/components/app/BulkActionBar'
 import { SearchBar, type SavedSearch } from '@/components/app/SearchBar'
 import { PageHeader } from '@/components/app/PageHeader'
@@ -240,9 +241,10 @@ function useAccountParam() {
   return { allMode: params.get('account') === 'all', activeAccounts: gmailAccounts.filter((a) => a.is_active), switchAccount }
 }
 
-function buildBulkActions(t: TFunction, { onSelection, onLabel, ruleAccounts, onRule }: {
+function buildBulkActions(t: TFunction, { onSelection, canLabel, onLabel, ruleAccounts, onRule }: {
   onSelection: (action: MailAction) => void
-  onLabel?: () => void
+  canLabel: boolean
+  onLabel: () => void
   ruleAccounts: Set<string | null>
   onRule: (accountId?: string) => void
 }): BulkAction[] {
@@ -252,11 +254,23 @@ function buildBulkActions(t: TFunction, { onSelection, onLabel, ruleAccounts, on
     { label: t('mails.action.mark_read'), icon: <MailCheck aria-hidden="true" />, onSelect: () => onSelection('mark_read') },
     { label: t('mails.action.trash'), icon: <Trash2 aria-hidden="true" />, onSelect: () => onSelection('trash'), destructive: true },
     { label: t('mails.action.mark_unread'), icon: <MailOpen aria-hidden="true" />, onSelect: () => onSelection('mark_unread') },
-    ...(onLabel ? [{ label: t('mails.action.label'), icon: <Tag aria-hidden="true" />, onSelect: onLabel }] : []),
+    ...(canLabel ? [{ label: t('mails.action.label'), icon: <Tag aria-hidden="true" />, onSelect: onLabel }] : []),
     ...(ruleAccounts.size <= 1
       ? [{ label: t('mails.createRule'), icon: <Zap aria-hidden="true" />, onSelect: () => onRule([...ruleAccounts][0] ?? undefined) }]
       : []),
   ]
+}
+
+function MailsEmpty({ searching, onClear }: Readonly<{ searching: boolean; onClear: () => void }>) {
+  const { t } = useTranslation()
+  return (
+    <EmptyState
+      icon={<Inbox />}
+      title={t('mails.empty')}
+      description={t('mails.emptyDescription')}
+      action={searching ? <Button variant="outline" onClick={onClear}>{t('mails.clearSearch')}</Button> : undefined}
+    />
+  )
 }
 
 function groupByAccount(ids: string[], accountOf: (id: string) => string | null) {
@@ -362,6 +376,8 @@ export default function MailsPage() {
   const count = selectedIds.length
   // I2: a non-empty search whose loaded rows are all selected can extend to every result (B5 needs a query)
   const canSelectAll = !allMode && !!q && count > 0 && count === mails.length && total > count
+  const selectAllTotal = allResults || canSelectAll ? total : undefined
+  const selectAllResults = () => setAllResults(true)
   const clearSelection = () => {
     setRowSelection({})
     setAllResults(false)
@@ -379,7 +395,8 @@ export default function MailsPage() {
 
   const bulkActions = buildBulkActions(t, {
     onSelection,
-    onLabel: !allMode && userLabels.length ? () => setPickingLabel(true) : undefined,
+    canLabel: !allMode && userLabels.length > 0,
+    onLabel: () => setPickingLabel(true),
     // A rule belongs to one account: in « Tous les comptes », only for a one-account selection
     ruleAccounts: new Set(allMode ? selectedIds.map(accountOf) : []),
     onRule: (accountId) => setRuleTarget({ from: selectionSender(), accountId }),
@@ -469,32 +486,22 @@ export default function MailsPage() {
 
       <BulkActionBar
         count={count}
-        total={allResults || canSelectAll ? total : undefined}
+        total={selectAllTotal}
         mode={allResults ? 'query' : 'ids'}
         actions={bulkActions}
-        onSelectAll={canSelectAll ? () => setAllResults(true) : undefined}
+        onSelectAll={canSelectAll ? selectAllResults : undefined}
         onClear={clearSelection}
       />
 
       {list.isError ? (
-        <div role="alert" className="flex items-center gap-3 rounded-lg bg-destructive-soft px-4 py-3 text-destructive">
-          <span className="flex-1">{t('mails.loadError')}</span>
-          <Button variant="outline" onClick={() => void list.refetch()}>{t('mails.retry')}</Button>
-        </div>
+        <LoadError message={t('mails.loadError')} onRetry={() => void list.refetch()} />
       ) : (
         <DataList
           table={table}
           rowLabel={(row) => row.original.subject || t('mails.noSubject')}
           onRowOpen={(row) => setViewing(row.id)}
           isLoading={list.isLoading}
-          empty={(
-            <EmptyState
-              icon={<Inbox />}
-              title={t('mails.empty')}
-              description={t('mails.emptyDescription')}
-              action={q ? <Button variant="outline" onClick={() => search('')}>{t('mails.clearSearch')}</Button> : undefined}
-            />
-          )}
+          empty={<MailsEmpty searching={!!q} onClear={() => search('')} />}
         />
       )}
 
