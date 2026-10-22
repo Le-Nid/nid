@@ -150,7 +150,7 @@ export function startRuleScheduler() {
   logger.info('Rule scheduler started (1min interval)');
 }
 
-const BACKUP_INTERVAL_MS: Record<BackupInterval, number> = { '1h': 3600_000, '6h': 6 * 3600_000, '24h': 24 * 3600_000 };
+const BACKUP_INTERVAL_MS: Record<BackupInterval, number> = { '1h': 3_600_000, '6h': 6 * 3_600_000, '24h': 24 * 3_600_000 };
 
 /**
  * B12: differential NAS backup of each account whose automatic backup is on and due. Accounts waiting for a

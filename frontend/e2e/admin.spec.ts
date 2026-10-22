@@ -74,10 +74,12 @@ test.describe('Admin', () => {
     await expect(page).toHaveURL((url) => url.pathname === '/overview')
     const nav = page.getByRole('navigation', { name: t('shell.mainNav') })
     if (isMobile) {
-      await nav.getByRole('button', { name: t('shell.more') }).click()
-      const sheet = page.getByRole('dialog', { name: t('shell.more') })
-      await expect(sheet.getByRole('link', { name: t('shell.activity') })).toBeVisible()
-      await expect(sheet.getByRole('link', { name: t('shell.admin') })).toHaveCount(0)
+      // « Plus » is a page since L9b
+      await nav.getByRole('link', { name: t('shell.more') }).click()
+      const main = page.getByRole('main')
+      await expect(main.getByRole('link', { name: new RegExp(t('shell.activity')) })).toBeVisible()
+      await expect(main.getByRole('heading', { name: t('shell.administration') })).toHaveCount(0)
+      await expect(main.getByRole('link', { name: new RegExp(t('shell.admin')) })).toHaveCount(0)
     } else {
       await expect(nav.getByRole('link', { name: t('shell.overview') })).toBeVisible()
       await expect(nav.getByRole('link', { name: t('shell.admin') })).toHaveCount(0)

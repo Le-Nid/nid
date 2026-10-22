@@ -55,7 +55,7 @@ function PreferencesCard() {
                     checked={!!prefs?.[pref]}
                     disabled={!prefs}
                     onCheckedChange={(v) => set(pref, v)}
-                    aria-label={`${t(i ? 'settings.notifications.toast' : 'settings.notifications.inApp')} — ${t(`settings.notifications.event.${key}`)}`}
+                    aria-label={[t(i ? 'settings.notifications.toast' : 'settings.notifications.inApp'), t('settings.notifications.event.' + key)].join(' — ')}
                   />
                   <span aria-hidden="true">{t(i ? 'settings.notifications.toast' : 'settings.notifications.inApp')}</span>
                 </label>
@@ -78,7 +78,7 @@ function WebhookForm({ onClose }: Readonly<{ onClose: () => void }>) {
   const submit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const form = new FormData(e.currentTarget)
-    const field = (name: string) => String(form.get(name) ?? '').trim()
+    const field = (name: string) => { const v = form.get(name); return typeof v === 'string' ? v.trim() : '' }
     if (!events.length) return void toast.error(t('settings.webhooks.eventsRequired'))
     create.mutate({
       name: field('name'), url: field('url'), type, events,

@@ -76,8 +76,8 @@ describe('adminRoutes - full coverage with sql mock', () => {
     mockExecute.mockResolvedValueOnce([
       { id: 'u1', email: 'a@test.com', role: 'user', display_name: null, avatar_url: null, is_active: true, max_gmail_accounts: 3, storage_quota_bytes: 0, last_login_at: null, created_at: new Date() },
     ])
+    mockExecuteTakeFirstOrThrow.mockResolvedValueOnce({ count: 1 }) // total users
     mockSqlExecute
-      .mockResolvedValueOnce({ rows: [{ count: 1 }] }) // total users
       .mockResolvedValueOnce({ rows: [{ user_id: 'u1', count: 2 }] }) // gmail accounts
       .mockResolvedValueOnce({ rows: [{ user_id: 'u1', total: '1024' }] }) // storage
 
@@ -94,8 +94,8 @@ describe('adminRoutes - full coverage with sql mock', () => {
   it('GET /users with search parameter', async () => {
     const app = await buildAdminApp()
     mockExecute.mockResolvedValueOnce([])
+    mockExecuteTakeFirstOrThrow.mockResolvedValueOnce({ count: 0 })
     mockSqlExecute
-      .mockResolvedValueOnce({ rows: [{ count: 0 }] })
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [] })
 
@@ -108,8 +108,8 @@ describe('adminRoutes - full coverage with sql mock', () => {
   it('GET /users with pagination', async () => {
     const app = await buildAdminApp()
     mockExecute.mockResolvedValueOnce([])
+    mockExecuteTakeFirstOrThrow.mockResolvedValueOnce({ count: 50 })
     mockSqlExecute
-      .mockResolvedValueOnce({ rows: [{ count: 50 }] })
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [] })
 

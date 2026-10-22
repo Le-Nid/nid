@@ -36,17 +36,9 @@ export async function adminRoutes(app: FastifyInstance) {
 
     const { page, limit: lim, offset } = extractPagination(paginationQuery)
 
-    let query = db
-      .selectFrom('users')
-      .select([
-        'id', 'email', 'role', 'display_name', 'avatar_url',
-        'is_active', 'max_gmail_accounts', 'storage_quota_bytes',
-        'last_login_at', 'created_at',
-      ])
-      .orderBy('created_at', 'desc')
-
+    let base = db.selectFrom('users')
     if (search) {
-      query = query.where((eb) =>
+      base = base.where((eb) =>
         eb.or([
           eb('email', 'ilike', `%${escapeIlike(search)}%`),
           eb('display_name', 'ilike', `%${escapeIlike(search)}%`),
@@ -54,9 +46,17 @@ export async function adminRoutes(app: FastifyInstance) {
       )
     }
 
-    const users = await query.limit(lim).offset(offset).execute()
+    const users = await base
+      .select([
+        'id', 'email', 'role', 'display_name', 'avatar_url',
+        'is_active', 'max_gmail_accounts', 'storage_quota_bytes',
+        'last_login_at', 'created_at',
+      ])
+      .orderBy('created_at', 'desc')
+      .limit(lim).offset(offset).execute()
 
-    const totalResult = await sql<{ count: number }>`SELECT count(*)::int as count FROM users`.execute(db)
+    // The total follows the search, or the pagination shows pages of nothing
+    const total = await base.select((eb) => eb.fn.countAll<number>().as('count')).executeTakeFirstOrThrow()
 
     // Compter les comptes Gmail par user
     const accounts = await sql<{ user_id: string; count: number }>`
@@ -81,7 +81,7 @@ export async function adminRoutes(app: FastifyInstance) {
         gmail_accounts_count: accountMap.get(u.id) ?? 0,
         storage_used_bytes: storageMap.get(u.id) ?? 0,
       })),
-      total: totalResult.rows[0].count,
+      total: Number(total.count),
       page,
       limit: lim,
     }

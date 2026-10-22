@@ -148,7 +148,7 @@ export function GmailSection() {
   return (
     <div className="flex flex-col gap-4">
       {/* Back from Google's consent page (OAuth callback) */}
-      {status === 'connected' && <p role="status" className="rounded-lg bg-success-soft px-4 py-3 text-success">{t('settings.gmail.connected', { email: params.get('account') ?? '' })}</p>}
+      {status === 'connected' && <output className="block rounded-lg bg-success-soft px-4 py-3 text-success">{t('settings.gmail.connected', { email: params.get('account') ?? '' })}</output>}
       {status === 'error' && <p role="alert" className="rounded-lg bg-destructive-soft px-4 py-3 text-destructive">{t('settings.gmail.connectFailed')}</p>}
       {gmailAccounts.length === 0 ? (
         <EmptyState title={t('settings.gmail.none')} description={t('settings.gmail.scopeHint')} action={add} />

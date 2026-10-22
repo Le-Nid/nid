@@ -53,13 +53,14 @@ function MailImportCards({ accountId, email }: Readonly<{ accountId: string; ema
   const submitImap = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const form = new FormData(e.currentTarget)
-    const field = (name: string) => String(form.get(name) ?? '').trim()
+    const text = (name: string) => { const v = form.get(name); return typeof v === 'string' ? v : '' }
+    const field = (name: string) => text(name).trim()
     imap.mutate({
       host: field('host'),
       port: Number(field('port')) || 993,
       secure: form.get('secure') === 'on',
       user: field('user'),
-      pass: String(form.get('pass') ?? ''),
+      pass: text('pass'),
       folder: field('folder') || undefined,
       maxMessages: Number(field('max')) || undefined,
     }, { onSuccess: started, onError: failed })
