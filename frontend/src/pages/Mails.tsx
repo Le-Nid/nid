@@ -224,6 +224,41 @@ function ListFooter({ messages, empty }: Readonly<{ messages: ReturnType<typeof 
   return empty ? null : <p className="text-center text-sm text-muted-foreground">{t('mails.allLoaded')}</p>
 }
 
+/** « Tous les comptes » lives in the URL (?account=all, §3.3); picking one account leaves it. */
+function useAccountParam() {
+  const { gmailAccounts, setActiveAccount } = useAuthStore()
+  const [params, setParams] = useSearchParams()
+  const switchAccount = (value: string) => {
+    if (value !== 'all') setActiveAccount(value)
+    setParams((prev) => {
+      const out = new URLSearchParams(prev)
+      if (value === 'all') out.set('account', 'all')
+      else out.delete('account')
+      return out
+    })
+  }
+  return { allMode: params.get('account') === 'all', activeAccounts: gmailAccounts.filter((a) => a.is_active), switchAccount }
+}
+
+function buildBulkActions(t: TFunction, { onSelection, onLabel, ruleAccounts, onRule }: {
+  onSelection: (action: MailAction) => void
+  onLabel?: () => void
+  ruleAccounts: Set<string | null>
+  onRule: (accountId?: string) => void
+}): BulkAction[] {
+  return [
+    { label: t('mails.action.archive'), icon: <Archive aria-hidden="true" />, onSelect: () => onSelection('archive') },
+    { label: t('mails.action.archive_nas'), icon: <HardDriveDownload aria-hidden="true" />, onSelect: () => onSelection('archive_nas') },
+    { label: t('mails.action.mark_read'), icon: <MailCheck aria-hidden="true" />, onSelect: () => onSelection('mark_read') },
+    { label: t('mails.action.trash'), icon: <Trash2 aria-hidden="true" />, onSelect: () => onSelection('trash'), destructive: true },
+    { label: t('mails.action.mark_unread'), icon: <MailOpen aria-hidden="true" />, onSelect: () => onSelection('mark_unread') },
+    ...(onLabel ? [{ label: t('mails.action.label'), icon: <Tag aria-hidden="true" />, onSelect: onLabel }] : []),
+    ...(ruleAccounts.size <= 1
+      ? [{ label: t('mails.createRule'), icon: <Zap aria-hidden="true" />, onSelect: () => onRule([...ruleAccounts][0] ?? undefined) }]
+      : []),
+  ]
+}
+
 function groupByAccount(ids: string[], accountOf: (id: string) => string | null) {
   const byAccount = new Map<string, string[]>()
   for (const id of ids) {
@@ -234,8 +269,11 @@ function groupByAccount(ids: string[], accountOf: (id: string) => string | null)
 }
 
 /** Gmail account of the list, « Tous les comptes » included (P2); shown from two active accounts. */
-function AccountSelect({ accounts, value, onChange }: Readonly<{ accounts: { id: string; email: string }[]; value: string; onChange: (value: string) => void }>) {
+function AccountSelect({ accounts, allMode, accountId, onChange }: Readonly<{
+  accounts: { id: string; email: string }[]; allMode: boolean; accountId: string | null; onChange: (value: string) => void
+}>) {
   const { t } = useTranslation()
+  const value = allMode ? 'all' : accountId ?? ''
   return (
     <div className="md:w-72">
       <FormField id="mails-account" label={t('layout.gmailAccount')}>
@@ -257,11 +295,9 @@ function AccountSelect({ accounts, value, onChange }: Readonly<{ accounts: { id:
 export default function MailsPage() {
   const { t } = useTranslation()
   const { accountId } = useAccount()
-  const { gmailAccounts, setActiveAccount } = useAuthStore()
-  const activeAccounts = gmailAccounts.filter((a) => a.is_active)
   const [params, setParams] = useSearchParams()
   const q = params.get('q') ?? ''
-  const allMode = params.get('account') === 'all'
+  const { allMode, activeAccounts, switchAccount } = useAccountParam()
   const { data: labels = [] } = useLabels(accountId)
   const { data: savedSearches = [] } = useSavedSearches()
   const createSaved = useCreateSavedSearch()
@@ -341,19 +377,13 @@ export default function MailsPage() {
     clearSelection()
   }
 
-  const selectionAccounts = new Set(allMode ? selectedIds.map(accountOf) : [])
-  const bulkActions: BulkAction[] = [
-    { label: t('mails.action.archive'), icon: <Archive aria-hidden="true" />, onSelect: () => onSelection('archive') },
-    { label: t('mails.action.archive_nas'), icon: <HardDriveDownload aria-hidden="true" />, onSelect: () => onSelection('archive_nas') },
-    { label: t('mails.action.mark_read'), icon: <MailCheck aria-hidden="true" />, onSelect: () => onSelection('mark_read') },
-    { label: t('mails.action.trash'), icon: <Trash2 aria-hidden="true" />, onSelect: () => onSelection('trash'), destructive: true },
-    { label: t('mails.action.mark_unread'), icon: <MailOpen aria-hidden="true" />, onSelect: () => onSelection('mark_unread') },
-    ...(!allMode && userLabels.length ? [{ label: t('mails.action.label'), icon: <Tag aria-hidden="true" />, onSelect: () => setPickingLabel(true) }] : []),
+  const bulkActions = buildBulkActions(t, {
+    onSelection,
+    onLabel: !allMode && userLabels.length ? () => setPickingLabel(true) : undefined,
     // A rule belongs to one account: in « Tous les comptes », only for a one-account selection
-    ...(selectionAccounts.size <= 1
-      ? [{ label: t('mails.createRule'), icon: <Zap aria-hidden="true" />, onSelect: () => setRuleTarget({ from: selectionSender(), accountId: [...selectionAccounts][0] ?? undefined }) }]
-      : []),
-  ]
+    ruleAccounts: new Set(allMode ? selectedIds.map(accountOf) : []),
+    onRule: (accountId) => setRuleTarget({ from: selectionSender(), accountId }),
+  })
 
   const search = (next: string) => {
     if (next === q) {
@@ -402,15 +432,6 @@ export default function MailsPage() {
     Escape: clearSelection,
   }, shortcutsOn && !viewing && !pickingLabel && !ruleTarget)
   const toggleShortcuts = () => setShortcutsOn(!shortcutsOn)
-  const switchAccount = (value: string) => {
-    if (value !== 'all') setActiveAccount(value)
-    setParams((prev) => {
-      const out = new URLSearchParams(prev)
-      if (value === 'all') out.set('account', 'all')
-      else out.delete('account')
-      return out
-    })
-  }
   const viewingAccount = viewing ? accountOf(viewing) : accountId
   const ruleAccount = ruleTarget?.accountId ?? accountId
 
@@ -437,7 +458,7 @@ export default function MailsPage() {
       />
 
       {activeAccounts.length >= 2 && (
-        <AccountSelect accounts={activeAccounts} value={allMode ? 'all' : accountId ?? ''} onChange={switchAccount} />
+        <AccountSelect accounts={activeAccounts} allMode={allMode} accountId={accountId} onChange={switchAccount} />
       )}
 
       <SearchBar value={q} onChange={search} saved={chips} onSave={saveSearch} />
