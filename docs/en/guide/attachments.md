@@ -1,77 +1,34 @@
 # Attachments
 
-The **Attachments** page centralizes all attachments from your emails, whether they're in Gmail or in your local archives.
+The **Attachments** page (`/attachments`) lists every attachment of the active account, heaviest first. It has no sidebar entry: open it from the command palette (`⌘K` / `Ctrl+K`, **Other pages** group).
+
+For a quick sort of large mails with bulk actions, the **Large mails & attachments** tab of [Cleanup](cleanup.md#large-mails-attachments) is usually enough.
 
 ---
 
-## Two Tabs
+## Source
 
-The page is divided into two tabs:
+Two buttons pick the source:
 
-### Archives (NAS)
+- **Archives** (default): attachments of the mails saved on the NAS. A search **by name, subject or sender** is available.
+- **Live**: attachments over 100 KB still in Gmail.
 
-Attachments from emails archived on your NAS. They are stored separately from EML files and indexed in the database.
-
-- Search by file name
-- Sort by size or date
-- Direct download
-
-### Gmail (Live)
-
-Attachments from emails still in your Gmail mailbox. A scan is performed via the Gmail API to retrieve the list.
-
-- On-demand scan
-- Sort by size to identify the largest files
-- Navigate to the email in Gmail
-
-> 📸 *Suggested screenshot: Attachments page with both Archives / Gmail tabs, the attachment list, and sort buttons*
+Source, search and page are kept in the address. **Reload** fetches the list again.
 
 ---
 
-## Search and Sort
+## Indicators
 
-You can:
-
-- **Search** by file name (e.g., `invoice`, `.pdf`, `photo.jpg`)
-- **Sort by size**: largest files first — ideal for freeing up space
-- **Sort by date**: newest or oldest first
-- **Paginate**: navigate between result pages
+- **Attachments**: number of files;
+- **Total size**;
+- **Source**: "Local archives" or "Gmail (>100 KB)";
+- **Space saved**: gain from deduplicating archived attachments ("N duplicate file(s), X saved"). If some files have not been analyzed yet, the **Analyze** button runs it.
 
 ---
 
-## Download
+## List
 
-Click the **Download** button next to an attachment to download it directly. Archived attachments are served from the NAS, while Gmail attachments are fetched via the Gmail API.
+Columns: **File**, **Email**, **Size**, **Date**, **Type**, **Actions**. The list is paginated.
 
----
-
-## Use Cases
-
-- **Free up Gmail space**: identify the largest attachments, archive the corresponding emails to the NAS, then delete them from Gmail
-- **Find a file**: search for a file name in the archives
-- **Storage audit**: visualize the distribution of attachment types
-
----
-
-## Content Hash Deduplication
-
-Nid automatically deduplicates identical attachments during archiving. Each file is identified by its SHA-256 hash: if two emails contain exactly the same attachment, the file is stored only once on disk.
-
-### Statistics
-
-The **Space Saved** card displays:
-
-- The amount of disk space saved through deduplication
-- The number of duplicate files detected
-- Hash coverage (percentage of attachments analyzed)
-
-### Backfill
-
-If you archived emails before deduplication was enabled, click the **Analyze** button to calculate hashes for existing attachments. This operation:
-
-1. Reads each file from local storage
-2. Calculates the SHA-256 hash
-3. Identifies duplicates and removes redundant copies
-4. Updates the database to point to the unique file
-
-> ⚠️ Backfill may take some time if you have many archived attachments.
+- **Download**: saves the file.
+- **View**: opens the file in the browser, only for images (PNG, JPEG, GIF, WebP) and PDFs.

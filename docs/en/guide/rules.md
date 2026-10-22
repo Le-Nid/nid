@@ -1,124 +1,85 @@
-# Automatic rules
+# Rules & labels
 
-Rules allow you to automate the cleanup and organization of your Gmail mailbox. Define conditions and actions — Nid executes them for you.
+The **Rules & labels** page (`/rules`) automates sorting your mailbox: each rule applies an action to the mails it matches. It has two tabs: **Rules** and **Labels** (`/rules?tab=labels`).
 
 ---
 
-## Overview
+## Rules tab
 
-A rule consists of:
+The list shows for each rule:
 
-- **Conditions**: which emails to target (sender, subject, size, etc.)
-- **Action**: what to do with those emails (delete, archive, label, etc.)
-- **Schedule**: when to run the rule (manually, daily, weekly, etc.)
+- **Name**;
+- **Conditions**, in plain words ("from news@example.com, older than 30 days");
+- **Action** ("Apply a label “Invoices”"…);
+- **Last run** (or "Never run");
+- **Active**: a switch to pause or resume the rule.
 
-> 📸 *Suggested screenshot: Rules page with the list of configured rules (name, summarized conditions, action, schedule, active/inactive toggle)*
+A rule's `⋯` menu offers:
+
+- **Run**: runs the rule now on mails already received. A toast "Running “…”" lets you **Undo** for 10 s; follow the rest in [Activity](activity.md).
+- **Edit**: opens the form.
+- **Delete**: after confirmation ("The rule will not run anymore. Mails it already handled stay as they are.").
+
+With no rule, the page suggests creating one or starting from a template in the Labels tab.
 
 ---
 
 ## Create a rule
 
-1. In **Rules**, click **Create a rule**
-2. Fill in the form fields
+The **New rule** button (also in the `⌘K` palette) opens the form. It also opens prefilled from:
 
-> 📸 *Suggested screenshot: rule creation form (modal) with conditions, action and schedule fields*
+- [Mail](mails.md): **Create a rule** in the header (current search), the selection bar or the reader;
+- [Cleanup](cleanup.md) and the [Overview](overview.md) suggestions: **Always do this**;
+- the Labels tab: **Create a rule** on a label.
 
-### Conditions
+### Fields
 
-You can combine multiple conditions. **All conditions** must be met for an email to be targeted (AND logic).
-
-| Field | Description | Example |
-|---|---|---|
-| `from` | Sender | `newsletter@example.com` |
-| `to` | Recipient | `my-alias@gmail.com` |
-| `subject` | Email subject | `promotion` |
-| `has_attachment` | Has attachment | `true` / `false` |
-| `size_gt` | Minimum size (in bytes) | `5242880` (5 MB) |
-| `older_than` | Minimum age | `30d`, `6m`, `1y` |
-| `label` | Gmail label | `INBOX`, `SPAM`, `Label_123` |
-| `is_unread` | Unread | `true` / `false` |
-
-Available operators: `contains`, `equals` (exact match), `not_contains`, `gt` (greater than), `lt` (less than).
-
-### Actions
-
-| Action | Description |
+| Field | Content |
 |---|---|
-| **Move to trash** | Sends emails to the Gmail trash |
-| **Delete permanently** | Irreversible deletion |
-| **Archive (Gmail)** | Removes from the inbox |
-| **Archive to NAS** | Saves as EML on your NAS |
-| **Add a label** | Applies a Gmail label |
-| **Remove a label** | Removes a Gmail label |
-| **Mark as read** | Marks emails as read |
-| **Mark as unread** | Marks emails as unread |
+| **Name** | suggested automatically ("Mails from …") |
+| **When a mail comes from** | address or domain, e.g. `news@example.com` |
+| **Other conditions (kept)** | conditions of an existing rule that the form cannot edit; they are kept as they are |
+| **And is older than** | No limit, 7 days, 30 days, 6 months |
+| **Then** | Save to the NAS then delete · Archive (remove from inbox) · Delete · Apply a label (+ pick the **Label**) |
+| **Runs** | Manual, Daily (default), Weekly |
+| **Also apply to mails already received** | runs the rule as soon as it is saved (with the same undo toast) |
 
-### Schedules
+A sender is required: "a rule based on age alone would target the whole mailbox".
 
-| Option | Description |
-|---|---|
-| **Manual** | Runs only on demand |
-| **Hourly** | Runs every hour |
-| **Daily** | Runs once a day |
-| **Weekly** | Runs every Monday |
-| **Monthly** | Runs on the 1st of each month |
+### Preview
+
+Under the form, Nid computes the matching mails: "143 matching mails · 58 MB", a few **Examples**, and the **See the 143 mails** link, which opens [Mail](mails.md) with the matching search.
+
+**Create rule** (or **Save** when editing) confirms.
 
 ---
 
-## Rule templates
+## Labels tab
 
-To get started quickly, Nid offers a **library of pre-configured templates**.
+"Your Gmail labels, synced with their colors, and ready-made templates."
 
-1. Click **Templates** at the top of the Rules page
-2. Browse templates by category:
-    - **Cleanup**: delete promotional emails, old notifications
-    - **Archive**: archive invoices, old emails
-    - **Organization**: automatically label by sender
-3. Click **Use** on a template
-4. The rule is created — modify it if needed then activate it
+### Gmail labels
 
-> 📸 *Suggested screenshot: rule templates drawer/panel with the 3 categories*
+The account's label tree, with their Gmail color and the number of archived mails. Nested labels (`Invoices/Power`) show as a tree.
 
-Template examples:
+- **New label**: creates the label in Gmail. Use "/" to nest it, e.g. `Invoices/Power`.
+- A label's menu:
+  - **Rename**;
+  - **Color** (Gmail palette: Red, Orange, Yellow, Green, Teal, Blue, Purple, Pink, Gray);
+  - **Create a rule** that applies this label;
+  - **See mails**: opens [Mail](mails.md) filtered on this label;
+  - **Delete**: after confirmation; the label is removed from Gmail and from the mails that have it, the mails are not deleted.
 
-- "Clean up GitHub notifications older than 30 days"
-- "Archive invoices older than 3 months"
-- "Delete unread newsletters older than 30 days"
+### Gmail categories
 
----
+Promotions, Social, Updates, Forums: "Assigned by Gmail, cannot be changed."
 
-## Preview a rule
+### Templates
 
-Before running a rule, you can **preview** it:
+"One click creates the Gmail label and the rule that fills it."
 
-1. Click **Preview** on an existing rule
-2. Nid displays the list of emails matching the conditions
-3. Verify that the targeted emails are the ones you expect
-4. Click **Run** to launch the rule
+- Labels: **Factures** (invoices), **Livraisons** (deliveries), **Banque** (bank), **Billets & voyages** (tickets & travel) — each template creates the label and a daily rule that applies it based on subject keywords (button **Create label and rule**). Template names come from the server and are in French.
+- Expiry: **Codes OTP (expire après 1 jour)**, **Promotions (expire après 7 jours)** — a rule that deletes those mails once they are older than the age (button **Activate**). These templates replace the former "Email expiration" page.
+- **Other templates**: cleanup (GitHub notifications, unread newsletters, promotions, social), archiving (old mails, invoices, large mails) and organizing (mark old mails as read…), button **Activate**.
 
-> 📸 *Suggested screenshot: rule preview result with the list of matching emails*
-
----
-
-## Run a rule
-
-### Manual execution
-
-Click **Run** on a rule to launch it immediately. A job is created with real-time tracking.
-
-### Scheduled execution
-
-If a schedule is configured (daily, weekly, etc.), the rule runs automatically. The **Last run** field indicates when the rule was last executed.
-
----
-
-## Enable / disable a rule
-
-The **toggle** next to each rule lets you enable or disable it without deleting it. A disabled rule is not executed during automatic schedules.
-
----
-
-## Edit and delete
-
-- Click on a rule to open the editing form
-- The **Delete** button permanently deletes the rule
+A template already in use shows **Already active** and the **Edit rule** button.

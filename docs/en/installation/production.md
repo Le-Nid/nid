@@ -202,7 +202,7 @@ Simply back up the mounted directory (e.g. `/mnt/nas/gmail-archives/`). EML file
 
 ### Application Configuration
 
-Use the built-in [configuration export](../guide/settings.md#export--import-de-configuration) feature to back up your rules and webhooks in JSON format.
+Use the built-in [configuration export](../guide/settings.md#configuration) feature to back up your rules and webhooks in JSON format.
 
 ---
 

@@ -1,51 +1,52 @@
 # Guide utilisateur
 
-Bienvenue dans le guide utilisateur de Nid. Cette section explique comment utiliser chaque fonctionnalité de l'application.
+Nid gère et archive vos boîtes Gmail depuis votre propre serveur (NAS, serveur maison). Ce guide suit l'organisation de l'application : une page par écran.
 
 ---
 
-## Vue d'ensemble
+## Les écrans
 
-Nid est une application de gestion et d'archivage de boîtes Gmail, installée chez vous (NAS, serveur). Vos mails restent sur votre réseau — aucune donnée n'est envoyée vers des serveurs tiers.
+| Écran | Adresse | À quoi il sert |
+|---|---|---|
+| [**Vue d'ensemble**](overview.md) | `/overview` | État du compte, top encombreurs, suggestions, jobs en cours |
+| [**Mails**](mails.md) | `/mails` | Rechercher, sélectionner et traiter vos mails en masse, avec annulation |
+| [**Nettoyage**](cleanup.md) | `/cleanup` | Expéditeurs & newsletters, gros mails & pièces jointes |
+| [**Règles & libellés**](rules.md) | `/rules` | Règles automatiques, libellés Gmail, modèles |
+| [**Archives**](archives.md) | `/archives` | Copie locale sur le NAS : recherche, lecteur, partage, corbeille, rétention |
+| [**Activité**](activity.md) | `/activity` | Toutes les tâches lancées, en direct |
+| [**Paramètres**](settings.md) | `/settings/…` | Compte, Sécurité, Comptes Gmail, Notifications & webhooks, Données |
+| [**Pièces jointes**](attachments.md) | `/attachments` | Liste complète des pièces jointes (depuis la palette ⌘K) |
+| [**Notifications**](notifications.md) | cloche + Paramètres | Notifications in-app, toasts, webhooks |
+| [**Administration**](admin.md) | `/admin` | Utilisateurs, réglages de l'instance, audit (admins) |
+| [**Serveur MCP**](mcp-server.md) | — | Piloter Nid depuis un assistant IA |
 
-### Ce que vous pouvez faire
-
-| Fonctionnalité | Description |
-|---|---|
-| [**Dashboard**](dashboard.md) | Visualisez les statistiques de votre boîte en un coup d'œil |
-| [**Gestion des mails**](mail-management.md) | Supprimez, labellisez et archivez en masse |
-| [**Archivage**](archiving.md) | Sauvegardez vos mails sur votre NAS au format EML |
-| [**Règles automatiques**](rules.md) | Créez des règles pour automatiser le nettoyage |
-| [**Newsletters**](newsletters.md) | Identifiez et nettoyez les newsletters en un clic |
-| [**Pièces jointes**](attachments.md) | Gérez et téléchargez vos pièces jointes |
-| [**Analytics**](analytics.md) | Analysez vos habitudes email avec des graphiques |
-| [**Vie privée**](privacy.md) | Détectez les pixels espions et protégez vos données |
-| [**Boîte unifiée**](unified-inbox.md) | Consultez tous vos comptes Gmail en une seule vue |
-| [**Recherches sauvegardées**](saved-searches.md) | Sauvegardez vos filtres favoris |
-| [**Ops & Résilience**](ops-resilience.md) | Rétention, quota API, import/export |
-| [**Notifications**](notifications.md) | Restez informé via notifications in-app et webhooks |
-| [**Paramètres**](settings.md) | 2FA, export/import, langue, thème |
-| [**Administration**](admin.md) | Gérez les utilisateurs et les quotas (admins) |
+Nouveau sur Nid ? Commencez par les [**Premiers pas**](first-steps.md).
 
 ---
 
-## Navigation dans l'application
+## Se repérer dans l'interface
 
-L'interface se compose de :
+### Sur ordinateur
 
-- Une **barre latérale** (sidebar) à gauche avec les liens vers chaque section
-- Un **sélecteur de compte** Gmail en haut de la sidebar pour choisir le compte actif
-- Une **barre de navigation** en haut avec la cloche de notifications, le sélecteur de langue, et le toggle thème sombre/clair
+- **Barre latérale** à gauche : logo, bouton **Réduire la barre latérale** (`Ctrl+B` / `⌘B`), sélecteur **Compte Gmail**, bouton **Rechercher…**, puis les entrées Vue d'ensemble, Mails, Nettoyage, Règles & libellés, Archives, Activité, Paramètres. Les administrateurs ont en plus un groupe **Administration** avec **Admin**.
+- **Compteurs** à côté des entrées : nombre de mails du compte (Mails), nombre de règles actives (Règles & libellés), « N en cours » (Activité).
+- **En-tête** : cloche des [notifications](notifications.md) et menu utilisateur (avatar) : **Langue**, **Mode sombre**, **Se déconnecter**.
 
-> 📸 *Capture d'écran suggérée : vue d'ensemble de l'interface avec la sidebar, le header et le sélecteur de compte en évidence*
+### Sur mobile
 
----
+L'en-tête garde la cloche et l'avatar ; le menu de l'avatar contient en plus le choix du **Compte Gmail**. Une barre en bas d'écran donne accès à **Accueil** (Vue d'ensemble), **Mails**, **Nettoyage**, **Archives** et **Plus**.
 
-## Premiers pas
+La page **Plus** regroupe le reste :
 
-Si vous venez d'installer Nid, commencez par le guide [**Premiers pas**](first-steps.md) qui vous accompagne dans :
+- **Outils** : Règles & libellés, Activité (avec le nombre de tâches en cours) ;
+- **Paramètres** : les cinq sections, chacune avec un résumé (« 2FA activée », « 1 action requise », « Import, export »…) ;
+- **Administration** (admins uniquement) : « Admin de l'instance » ;
+- en bas : « Connecté(e) en tant que … » et **Se déconnecter de Nid**.
 
-1. La création de votre compte
-2. La connexion de votre premier compte Gmail
-3. La découverte du dashboard
-4. Votre première opération de nettoyage
+### Palette de commandes
+
+`⌘K` (Mac) ou `Ctrl+K` ouvre la palette « Aller à… » : toutes les pages de la navigation, l'action **Nouvelle règle**, et sous **Autres pages** la page [Pièces jointes](attachments.md).
+
+### Anciennes adresses
+
+Les anciennes pages redirigent vers leur nouvel emplacement : `/dashboard`, `/analytics`, `/insights` → Vue d'ensemble ; `/unified` → Mails, « Tous les comptes » ; `/saved-searches` → Mails ; `/unsubscribe` → Nettoyage ; `/expiration` → Règles & libellés, onglet Libellés ; `/archive` → Archives ; `/sharing` → Archives, onglet Partages ; `/jobs` → Activité ; `/privacy` → Paramètres › Compte ; `/ops` → Paramètres › Données.

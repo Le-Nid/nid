@@ -1,4 +1,4 @@
-# First steps
+# First Steps
 
 This guide walks you through your first minutes with Nid.
 
@@ -6,29 +6,23 @@ This guide walks you through your first minutes with Nid.
 
 ## Create your account
 
-Open the application in your browser (default: [http://localhost:3000](http://localhost:3000)).
-
-Two account creation options are available:
+Open the app in your browser (default: [http://localhost:3000](http://localhost:3000)). The sign-in screen has two tabs: **Sign in** and **Create account**.
 
 ### Local account
 
-1. Click **Create an account**
-2. Enter your email and a password (minimum 8 characters)
-3. Click **Sign up**
+1. Open the **Create account** tab
+2. Enter your email and a password (8 characters minimum)
+3. Confirm with **Create account**
 
-### Sign in with Google (SSO)
+### Sign in with a provider
 
-1. Click **Sign in with Google**
-2. Choose your Google account
-3. Grant access
-
-Your Google name and avatar are retrieved automatically.
-
-> 📸 *Suggested screenshot: login page with both options (form + Google SSO button)*
+If the administrator configured them, **Sign in with Google** buttons (or Microsoft, Discord, Facebook, LinkedIn, **Sign in via SSO**) appear under the form. Your name and avatar are fetched automatically.
 
 ::: tip Account merging
 If you first create a local account and then sign in with Google using the same email, both accounts are automatically merged.
 :::
+
+If [2FA](settings.md#security) is on, a **Two-step verification** screen then asks for the 6-digit code from your authenticator app.
 
 ---
 
@@ -59,99 +53,54 @@ Log out and log back in for the new role to take effect.
 
 ### Option C — Via the interface
 
-An existing administrator can promote other users from **Administration** → **Users** → **Change role**.
-
-::: info Difference between roles
-- **User**: full access to their own data (emails, archives, rules, etc.)
-- **Administrator**: access to all users' data + quota and role management
-:::
+An existing administrator can change a user's **Role** from [Admin › Users](admin.md#users).
 
 ---
 
 ## Connect a Gmail account
 
-Once logged in, you need to link your Gmail mailbox so the application can access it.
+As long as no Gmail account is connected, the Overview shows "No Gmail account connected" with the **Connect a Gmail account** link.
 
-1. Go to **Settings** (⚙️ icon in the sidebar)
-2. In the **Gmail accounts** section, click **Connect a Gmail account**
-3. Google will ask you to authorize three types of access:
-    - Reading and modifying your emails
-    - Managing your labels
-    - Reading your email address
-4. Click **Allow**
-5. You are redirected to Settings with a confirmation
-
-> 📸 *Suggested screenshot: Settings page with the "Connect a Gmail account" button and the list of connected accounts*
+1. Go to **Settings › Gmail accounts** (on mobile: **More › Gmail accounts**)
+2. Click **Add a Gmail account**
+3. Allow access in the Google window (requested access: `gmail.modify`, `gmail.labels`)
+4. Back in Nid, a message confirms "Gmail account connected: …"
 
 ::: warning Google warning screen
-If your Google Cloud project is in "Test" mode, a warning screen will appear. Click **Advanced settings** → **Go to nid (unsafe)**. This is normal for personal self-hosted use.
+If your Google Cloud project is in "Testing" mode, a warning screen appears. Click **Advanced** → **Go to nid (unsafe)**. This is expected for personal self-hosted use.
 :::
 
-### Adding more Gmail accounts
-
-Repeat the process to connect additional accounts. You can manage up to 5 accounts by default (configurable by the administrator).
-
-Each account appears in the **account selector** at the top of the sidebar. Select an account to display its data across all sections of the application.
-
-> 📸 *Suggested screenshot: Gmail account selector in the sidebar with multiple accounts listed*
+Repeat for other accounts, within the limit set by the administrator (shown as "N / max accounts"). Pick the active account in the sidebar's **Gmail Account** selector (on mobile: the avatar menu). Every page shows that account's data.
 
 ---
 
-## Explore the Dashboard
+## Your first cleanup
 
-After connecting your Gmail, the **Dashboard** automatically loads your mailbox statistics:
+1. Open **Cleanup** and click **Scan the mailbox**: Nid groups your newsletters and mailing-list mails by sender (the scan runs in the background, you can leave the page).
+2. Sort by **Size** or **Never opened**.
+3. On a sender, click **Delete all**: its mails go to the Gmail trash.
+4. A toast "Deleting N emails in 10 s" appears with **Undo**: you have 10 seconds to change your mind.
 
-- **Top senders**: who sends you the most emails and takes up the most space
-- **Largest emails**: quickly identify emails to delete first
-- **Timeline**: email volume evolution by month
-- **Label distribution**: distribution of your Gmail labels
+Details are in [Cleanup](cleanup.md). To act on any Gmail search, see [Mail](mails.md).
 
-> 📸 *Suggested screenshot: full Dashboard page with the 4 charts*
-
-The initial loading may take a few seconds depending on the size of your mailbox.
-
----
-
-## Your first cleanup operation
-
-Try a first bulk deletion operation:
-
-1. Open **My emails** in the sidebar
-2. Use the search bar to filter (e.g.: `from:newsletter@example.com`)
-3. Check the box at the top of the table to select all results
-4. Click **Delete (trash)** in the action bar
-5. A **job** is created — a modal window shows real-time progress
-
-> 📸 *Suggested screenshot: My emails page with selected emails and the bulk action bar visible*
-
-> 📸 *Suggested screenshot: job progress modal with progress bar*
-
-::: tip Trash vs permanent deletion
-Deletion sends emails to the **Gmail trash** (recoverable for 30 days). Permanent deletion is irreversible — use it with caution.
+::: tip Gmail trash
+"Delete" moves mails to the **Gmail trash**, where Gmail keeps them 30 days before erasing them.
 :::
 
 ---
 
-## Your first archive
+## Your first NAS backup
 
-To back up emails to your NAS:
+1. In **Mail**, run a search (e.g. `older_than:1y`)
+2. Click **Save all to the NAS** (or select mails then **Save to the NAS**)
+3. Progress shows on the page and in [Activity](activity.md)
 
-1. In **My emails**, filter the emails to archive
-2. Select them or click **Archive all** to archive all results
-3. An archiving job is created
-4. The EML files are saved to the archives folder
-
-Then check the **Archives** section to find your archived emails with full-text search.
-
-> 📸 *Suggested screenshot: Archives section with the search bar and the list of archived emails*
+Saved mails end up in [Archives](archives.md), with full-text search. For regular backups, turn on the account's **Automatic backup** in [Settings › Gmail accounts](settings.md#gmail-accounts).
 
 ---
 
 ## What's next?
 
-Now that you are up and running, explore the other features:
-
-- [**Automatic rules**](rules.md) — automate recurring cleanup
-- [**Newsletters**](newsletters.md) — identify and clean up newsletters in bulk
-- [**Analytics**](analytics.md) — understand your email habits
-- [**Settings**](settings.md) — enable 2FA, configure webhooks, change the language
+- [**Rules & labels**](rules.md) — automate sorting and cleanup
+- [**Overview**](overview.md) — your account status and suggestions
+- [**Settings**](settings.md) — 2FA, notifications, import/export

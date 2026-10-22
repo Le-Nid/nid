@@ -1,0 +1,79 @@
+# Archives
+
+The **Archives** page (`/archives`) gives access to the local copy of your mails, saved on the NAS in EML format. It stays available even when the mails were deleted from Gmail, and even when the Gmail account was disconnected.
+
+Four tabs: **Mails**, **Trash**, **Retention**, **Shares**.
+
+---
+
+## Header and backup
+
+- Status: "Last backup … ago · N mails" (or "No backup yet").
+- **Back up to the NAS now**: saves the account's mails not archived yet; progress shows under the header and in [Activity](activity.md).
+- **Export (.mbox)**: downloads the account's archives as mbox (readable by Thunderbird or Apple Mail). When a search or filter is active, only the loaded results are exported.
+
+Other ways to fill the archives: **Save to the NAS** in [Mail](mails.md), an account's **Automatic backup** in [Settings › Gmail accounts](settings.md#gmail-accounts), rules "Save to the NAS then delete", and the mbox / IMAP import in [Settings › Data](settings.md#data).
+
+---
+
+## Mails tab: search
+
+- **Label tree** (on the left on desktop): **All mails** then the labels that hold archived mails, with their count.
+- **Full-text search**: "Search the archives (subject, sender, content…)". Matching terms are highlighted in the extract.
+- **Filters**: **Sender**, period (**From** / **To**), **With attachment**. On mobile they sit in the **Filters (N)** panel with the **Label**, then **Show results**.
+
+Results ("N results") show **Subject**, **Extract**, **Date**, **Sender**, **Size**. **Clear search and filters** goes back to the full list.
+
+### Actions
+
+- A row's `⋯` menu: **Open**, **Share**, **Delete**.
+- Selecting several rows: **Export .mbox**, **Delete**.
+
+**Delete** moves the archives to the archive trash, with a toast "Deleting N archives in 10 s" and **Undo**.
+
+### Archive reader
+
+**Open** shows the archived mail: headers, body (remote images blocked, as in [Mail](mails.md#read-a-mail)), downloadable attachments and **Conversation**. Actions: **Share**, **Delete**.
+
+An encrypted archived mail shows "This mail is encrypted: its content cannot be read here." Archive encryption is not configured from the interface.
+
+---
+
+## Share a mail
+
+**Share** opens "Share this mail": a temporary link, readable without a Nid account.
+
+1. Pick how long it is **Valid for**: 1 hour, 24 hours, 3 days, 7 days or 30 days.
+2. **Create link**, then copy it.
+
+The window also lists the active links of that mail ("Expires on …") with copy and revoke buttons.
+
+Whoever opens the link sees the mail ("Email shared via temporary link"), remote images blocked. An expired or revoked link, or one that reached its access limit, shows "Link not found".
+
+### Shares tab
+
+All your active links: **Subject**, **Sender**, **Expires on**, **Accesses** (opens / limit), copy, revoke. The number of active links is also shown in [Settings › Security](settings.md#security).
+
+---
+
+## Trash tab
+
+Deleted archives stay here before being erased from the NAS.
+
+- "N mails in the trash", with the **Deleted on** date.
+- **Restore** one mail, or select several then **Restore**.
+- **Empty the trash**: after confirmation, permanently deletes the mails and their attachments from the NAS. Cannot be undone.
+- Automatic purge: "Mails in the trash are permanently deleted after N days" (or "Automatic trash purge is off."). Administrators set **Automatic purge** and **Days before purge** here for the whole instance (see also [Admin › System](admin.md#system)).
+
+---
+
+## Retention tab
+
+"Deletes archives older than a given age, for one label or all."
+
+- **New policy**: **Name**, **Label** (or **All labels**), **Delete after (days)**.
+- The list shows **Name**, **Label**, **Age** ("Older than N days") and **Last run** (with the number of archives deleted).
+- **Run now** applies every policy.
+- A policy's menu: edit, delete (after confirmation; archives already deleted do not come back).
+
+With no policy, archives are kept with no time limit.

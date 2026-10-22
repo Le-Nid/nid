@@ -202,7 +202,7 @@ Sauvegardez simplement le dossier monté (ex. `/mnt/nas/gmail-archives/`). Les f
 
 ### Configuration applicative
 
-Utilisez la fonction d'[export de configuration](../guide/settings.md#export--import-de-configuration) intégrée pour sauvegarder vos règles et webhooks au format JSON.
+Utilisez la fonction d'[export de configuration](../guide/settings.md#configuration) intégrée pour sauvegarder vos règles et webhooks au format JSON.
 
 ---
 

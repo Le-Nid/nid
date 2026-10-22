@@ -1,74 +1,59 @@
 # Administration
 
-La page **Administration** est réservée aux utilisateurs ayant le rôle **admin**. Elle permet de gérer les utilisateurs, de surveiller les jobs et de consulter les statistiques système.
+La page **Admin** (`/admin`) est réservée aux utilisateurs ayant le rôle **admin** : l'entrée n'apparaît que pour eux (groupe **Administration** de la barre latérale, ou **Plus › Administration** sur mobile), et l'adresse renvoie les autres vers la Vue d'ensemble.
+
+Trois onglets : **Utilisateurs**, **Système**, **Audit**.
 
 ---
 
-## Gestion des utilisateurs
+## Utilisateurs
 
-### Liste des utilisateurs
+Recherche par **Email ou nom**, puis la liste paginée :
 
-Le tableau affiche tous les utilisateurs de l'instance avec :
+| Colonne | Contenu |
+|---|---|
+| **Utilisateur** | email et nom |
+| **Rôle** | Admin ou Utilisateur |
+| **Statut** | Actif ou Désactivé |
+| **Comptes Gmail** | « N / max comptes » |
+| **Stockage** | archives utilisées / quota |
+| **Dernière connexion** | date, ou « Jamais connecté » |
 
-- Email, nom d'affichage, avatar
-- Rôle (user / admin)
-- Nombre de comptes Gmail connectés
-- Espace de stockage utilisé
-- Date de dernière connexion
-- Statut (actif / inactif)
+**Modifier** ouvre « Modifier l'utilisateur » :
 
-La liste est paginée et permet la recherche par email ou nom.
-
-> 📸 *Capture d'écran suggérée : tableau des utilisateurs avec les colonnes mentionnées*
-
-### Modifier un utilisateur
-
-Cliquez sur un utilisateur pour modifier :
-
-- **Rôle** : promouvoir en admin ou rétrograder en user
-- **Quotas** :
-    - Nombre maximal de comptes Gmail (défaut : 5)
-    - Quota de stockage des archives (défaut : 1 Go)
-- **Statut** : activer ou désactiver le compte
-
-> 📸 *Capture d'écran suggérée : formulaire de modification d'un utilisateur avec les champs rôle, quotas et statut*
+- **Rôle** : Utilisateur ou Admin ;
+- **Compte actif** : un compte désactivé ne peut plus se connecter (« Ce compte a été désactivé ») ;
+- **Comptes Gmail maximum** ;
+- **Quota de stockage (Go)**.
 
 ---
 
-## Jobs globaux
+## Système
 
-L'onglet **Jobs** affiche les jobs de **tous les utilisateurs** avec :
+« Réglages de l'instance Nid, pour tous les utilisateurs. »
 
-- L'utilisateur qui a lancé le job
-- Le type et le statut
-- La progression
-- La date de création
+### Corbeille des archives
 
-Les administrateurs peuvent annuler n'importe quel job en cours.
+- **Durée maximale dans la corbeille** : 7, 30 ou 90 jours.
+- Volume actuel (« N mails · taille ») et date de la prochaine purge (ou « purge automatique désactivée »).
+- **Vider la corbeille maintenant…** : après confirmation (« Vider définitivement la corbeille ? »), supprime du NAS les mails de la corbeille **pour tous les utilisateurs**. Irréversible.
+
+### Intégrité des archives
+
+Vérifie que les fichiers du NAS correspondent à l'index : « Archives intègres », ou le nombre de fichiers manquants, corrompus et orphelins. Affiche le dernier contrôle et le nombre de mails vérifiés. « Contrôle automatique chaque jour à 3 h. » ; **Lancer un contrôle** en lance un tout de suite.
+
+En cas de problème, l'événement **Alerte d'intégrité** est notifié (voir [Notifications](notifications.md)).
+
+### Quota API Gmail
+
+Consommation du projet Google de l'instance, tous comptes confondus : **Unités aujourd'hui**, **Pic par utilisateur** (unités par seconde / limite), **Réponses 429 sur 24 h**.
+
+### Tâches de tous les utilisateurs
+
+Les 20 tâches les plus récentes de l'instance : **Tâche**, **Utilisateur**, **Statut**, **Créée**.
 
 ---
 
-## Statistiques système
+## Audit
 
-L'onglet **Statistiques** affiche :
-
-- Nombre total d'utilisateurs
-- Nombre de comptes Gmail connectés
-- Espace de stockage total utilisé
-- Nombre de jobs en cours
-
-> 📸 *Capture d'écran suggérée : tableau de bord admin avec les statistiques système*
-
----
-
-## Vérification d'intégrité
-
-Les administrateurs peuvent vérifier la cohérence entre les fichiers EML sur le NAS et l'index PostgreSQL :
-
-- **Fichiers manquants** : référencés en base mais absents du disque
-- **Fichiers orphelins** : présents sur le disque sans enregistrement en base
-- **Fichiers corrompus** : fichiers vides (0 octets)
-
-La vérification peut être lancée manuellement ou s'exécute automatiquement **chaque nuit à 3h**. En cas de problème, un événement webhook `integrity.failed` est déclenché.
-
-> 📸 *Capture d'écran suggérée : résultat d'une vérification d'intégrité (statut sain / problèmes détectés)*
+Journal de l'instance, filtrable par **Utilisateur** (email) et par **Action** (ou **Toutes les actions**). Colonnes : **Date**, **Utilisateur**, **Action**, **Cible**.

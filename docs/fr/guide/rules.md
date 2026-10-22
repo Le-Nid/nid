@@ -1,124 +1,85 @@
-# Règles automatiques
+# Règles & libellés
 
-Les règles vous permettent d'automatiser le nettoyage et l'organisation de votre boîte Gmail. Définissez des conditions et des actions — Nid les exécute pour vous.
+La page **Règles & libellés** (`/rules`) automatise le tri de votre boîte : chaque règle applique une action aux mails qui lui correspondent. Elle a deux onglets : **Règles** et **Libellés** (`/rules?tab=labels`).
 
 ---
 
-## Vue d'ensemble
+## Onglet Règles
 
-Une règle se compose de :
+La liste affiche pour chaque règle :
 
-- **Conditions** : quels mails cibler (expéditeur, objet, taille, etc.)
-- **Action** : que faire avec ces mails (supprimer, archiver, labelliser, etc.)
-- **Planification** : quand exécuter la règle (manuellement, quotidiennement, hebdomadairement, etc.)
+- **Nom** ;
+- **Conditions**, en clair (« de news@exemple.fr, de plus de 30 jours ») ;
+- **Action** (« Appliquer un libellé « Factures » »…) ;
+- **Dernière exécution** (ou « Jamais exécutée ») ;
+- **Active** : interrupteur pour suspendre ou réactiver la règle.
 
-> 📸 *Capture d'écran suggérée : page Règles avec la liste des règles configurées (nom, conditions résumées, action, planification, toggle actif/inactif)*
+Le menu `⋯` d'une règle propose :
+
+- **Exécuter** : lance la règle tout de suite sur les mails déjà reçus. Un toast « Exécution de « … » » permet d'**Annuler** pendant 10 s ; la suite se suit dans [Activité](activity.md).
+- **Modifier** : ouvre le formulaire.
+- **Supprimer** : après confirmation (« La règle ne s'exécutera plus. Les mails déjà traités restent tels quels. »).
+
+Sans règle, la page invite à en créer une ou à partir d'un modèle de l'onglet Libellés.
 
 ---
 
 ## Créer une règle
 
-1. Dans **Règles**, cliquez sur **Créer une règle**
-2. Renseignez les champs du formulaire
+Le bouton **Nouvelle règle** (aussi dans la palette `⌘K`) ouvre le formulaire. Il s'ouvre aussi pré-rempli depuis :
 
-> 📸 *Capture d'écran suggérée : formulaire de création de règle (modal) avec les champs conditions, action et planification*
+- [Mails](mails.md) : **Créer une règle** dans l'en-tête (recherche courante), la barre de sélection ou le lecteur ;
+- [Nettoyage](cleanup.md) et les suggestions de la [Vue d'ensemble](overview.md) : **Toujours faire ça** ;
+- l'onglet Libellés : **Créer une règle** sur un libellé.
 
-### Conditions
+### Champs
 
-Vous pouvez combiner plusieurs conditions. **Toutes les conditions** doivent être remplies pour qu'un mail soit ciblé (logique ET).
-
-| Champ | Description | Exemple |
-|---|---|---|
-| `from` | Expéditeur | `newsletter@example.com` |
-| `to` | Destinataire | `mon-alias@gmail.com` |
-| `subject` | Objet du mail | `promotion` |
-| `has_attachment` | Présence de pièce jointe | `true` / `false` |
-| `size_gt` | Taille minimale (en octets) | `5242880` (5 Mo) |
-| `older_than` | Ancienneté minimale | `30d`, `6m`, `1y` |
-| `label` | Label Gmail | `INBOX`, `SPAM`, `Label_123` |
-| `is_unread` | Non lu | `true` / `false` |
-
-Opérateurs disponibles : `contains` (contient), `equals` (exact), `not_contains` (ne contient pas), `gt` (supérieur), `lt` (inférieur).
-
-### Actions
-
-| Action | Description |
+| Champ | Contenu |
 |---|---|
-| **Mettre à la corbeille** | Envoie les mails à la corbeille Gmail |
-| **Supprimer définitivement** | Suppression irréversible |
-| **Archiver (Gmail)** | Retire de la boîte de réception |
-| **Archiver sur NAS** | Sauvegarde en EML sur votre NAS |
-| **Ajouter un label** | Applique un label Gmail |
-| **Retirer un label** | Retire un label Gmail |
-| **Marquer comme lu** | Marque les mails comme lus |
-| **Marquer comme non lu** | Marque les mails comme non lus |
+| **Nom** | proposé automatiquement (« Mails de … ») |
+| **Quand un mail arrive de** | adresse ou domaine, par exemple `news@exemple.fr` |
+| **Autres conditions (conservées)** | conditions d'une règle existante que le formulaire ne sait pas modifier ; elles sont gardées telles quelles |
+| **Et qu'il a plus de** | Aucune limite, 7 jours, 30 jours, 6 mois |
+| **Alors** | Sauvegarder sur le NAS puis supprimer · Archiver (retirer de la boîte) · Supprimer · Appliquer un libellé (+ choix du **Libellé**) |
+| **Exécution** | Manuelle, Quotidienne (par défaut), Hebdomadaire |
+| **Appliquer aussi aux mails déjà reçus** | lance la règle dès l'enregistrement (avec le même toast d'annulation) |
 
-### Planifications
+Un expéditeur est obligatoire : « une règle basée sur la seule durée viserait toute la boîte ».
 
-| Option | Description |
-|---|---|
-| **Manuel** | Exécution uniquement à la demande |
-| **Toutes les heures** | S'exécute chaque heure |
-| **Quotidien** | S'exécute une fois par jour |
-| **Hebdomadaire** | S'exécute chaque lundi |
-| **Mensuel** | S'exécute le 1er de chaque mois |
+### Aperçu
+
+Sous le formulaire, Nid calcule les mails concernés : « 143 mails concernés · 58 Mo », quelques **Exemples**, et le lien **Voir les 143 mails** qui ouvre [Mails](mails.md) avec la recherche correspondante.
+
+**Créer la règle** (ou **Enregistrer** en modification) valide.
 
 ---
 
-## Templates de règles
+## Onglet Libellés
 
-Pour démarrer rapidement, Nid propose une **bibliothèque de templates** pré-configurés.
+« Vos libellés Gmail, synchronisés avec leurs couleurs, et des modèles prêts à l'emploi. »
 
-1. Cliquez sur **Templates** en haut de la page Règles
-2. Parcourez les modèles par catégorie :
-    - **Nettoyage** : supprimer les mails promotionnels, les vieilles notifications
-    - **Archive** : archiver les factures, les mails anciens
-    - **Organisation** : labelliser automatiquement par expéditeur
-3. Cliquez sur **Utiliser** sur un template
-4. La règle est créée — modifiez-la si nécessaire puis activez-la
+### Libellés Gmail
 
-> 📸 *Capture d'écran suggérée : drawer/panneau des templates de règles avec les 3 catégories*
+L'arbre des libellés du compte, avec leur couleur Gmail et le nombre de mails archivés. Les libellés imbriqués (`Factures/EDF`) sont affichés en arbre.
 
-Exemples de templates :
+- **Nouveau libellé** : crée le libellé dans Gmail. Utilisez « / » pour l'imbriquer, par exemple `Factures/EDF`.
+- Menu d'un libellé :
+  - **Renommer** ;
+  - **Couleur** (palette Gmail : Rouge, Orange, Jaune, Vert, Turquoise, Bleu, Violet, Rose, Gris) ;
+  - **Créer une règle** qui applique ce libellé ;
+  - **Voir les mails** : ouvre [Mails](mails.md) filtré sur ce libellé ;
+  - **Supprimer** : après confirmation ; le libellé est retiré de Gmail et des mails qui le portent, les mails ne sont pas supprimés.
 
-- "Nettoyer les notifications GitHub > 30 jours"
-- "Archiver les factures de plus de 3 mois"
-- "Supprimer les newsletters non lues > 30 jours"
+### Catégories Gmail
 
----
+Promotions, Réseaux sociaux, Mises à jour, Forums : « Attribuées par Gmail, non modifiables. »
 
-## Prévisualiser une règle
+### Modèles
 
-Avant d'exécuter une règle, vous pouvez la **prévisualiser** :
+« Un clic crée le libellé Gmail et la règle qui le remplit. »
 
-1. Cliquez sur **Prévisualiser** sur une règle existante
-2. Nid affiche la liste des mails qui correspondent aux conditions
-3. Vérifiez que les mails ciblés sont bien ceux que vous attendez
-4. Cliquez sur **Exécuter** pour lancer la règle
+- Libellés : **Factures**, **Livraisons**, **Banque**, **Billets & voyages** — chaque modèle crée le libellé et une règle quotidienne qui l'applique selon des mots-clés de l'objet (bouton **Créer le libellé et la règle**).
+- Expiration : **Codes OTP (expire après 1 jour)**, **Promotions (expire après 7 jours)** — une règle qui supprime ces mails une fois l'âge dépassé (bouton **Activer**). Ces modèles remplacent l'ancienne page « Expiration des emails ».
+- **Autres modèles** : nettoyage (notifications GitHub, newsletters non lues, promotions, réseaux sociaux), archivage (mails anciens, factures, gros mails) et organisation (marquer comme lus les vieux mails…), bouton **Activer**.
 
-> 📸 *Capture d'écran suggérée : résultat de la prévisualisation d'une règle avec la liste des mails qui matchent*
-
----
-
-## Exécuter une règle
-
-### Exécution manuelle
-
-Cliquez sur **Exécuter** sur une règle pour la lancer immédiatement. Un job est créé avec suivi en temps réel.
-
-### Exécution planifiée
-
-Si une planification est configurée (quotidien, hebdomadaire, etc.), la règle s'exécute automatiquement. Le champ **Dernière exécution** indique quand la règle a été exécutée pour la dernière fois.
-
----
-
-## Activer / désactiver une règle
-
-Le **toggle** à côté de chaque règle permet de l'activer ou la désactiver sans la supprimer. Une règle désactivée n'est pas exécutée lors des planifications automatiques.
-
----
-
-## Modifier et supprimer
-
-- Cliquez sur une règle pour ouvrir le formulaire d'édition
-- Le bouton **Supprimer** supprime définitivement la règle
+Un modèle déjà utilisé affiche **Déjà actif** et le bouton **Modifier la règle**.
