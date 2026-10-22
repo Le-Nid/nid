@@ -44,13 +44,16 @@ logger.warn('something unusual happened')
 | Module | File | Logged Operations |
 |--------|------|-------------------|
 | `archive` | `archive/archive.service.ts` | Email archiving, attachment extraction |
+| `archive-routes` | `routes/archive.ts` | Archive routes (export, trash) |
+| `body-text` | `archive/body-text.ts` | EML text extraction, backfill |
+| `trash` | `archive/trash.service.ts` | Archive trash, purge |
 | `rules` | `rules/rules.service.ts` | Rules CRUD, execution |
 | `oauth` | `auth/oauth.service.ts` | Token exchange, refresh |
 | `social-auth` | `auth/social.service.ts` | Multi-provider auth |
 | `gmail` | `gmail/gmail.service.ts` | Gmail API calls |
 | `gmail-throttle` | `gmail/gmail-throttle.ts` | Rate limiting, retries |
 | `worker` | `jobs/workers/unified.worker.ts` | Job dispatch |
-| `scheduler` | `jobs/scheduler.ts` | Rule scheduling |
+| `scheduler` | `jobs/scheduler.ts` | Scheduled tasks (rules, backups, integrity, purge…) |
 | `db` | `db/index.ts` | Migrations |
 | `analytics` | `analytics/analytics.service.ts` | Heatmap, scores, suggestions |
 | `dedup` | `archive/dedup.service.ts` | Attachment deduplication |
@@ -59,7 +62,6 @@ logger.warn('something unusual happened')
 | `integrity` | `archive/integrity.service.ts` | Integrity verification |
 | `retention` | `archive/retention.service.ts` | Retention policies |
 | `sharing` | `archive/sharing.service.ts` | Temporary sharing |
-| `storage` | `storage/storage.service.ts` | Storage backend (local/S3) |
 | `quota` | `gmail/quota.service.ts` | API quota tracking |
 | `reports` | `reports/report.service.ts` | Weekly reports |
 | `report-scheduler` | `reports/report.scheduler.ts` | Report scheduling |
@@ -67,6 +69,7 @@ logger.warn('something unusual happened')
 | `webhook` | `webhooks/webhook.service.ts` | Webhook dispatch |
 | `audit` | `audit/audit.service.ts` | Audit log |
 | `expiration` | `expiration/expiration.service.ts` | Email expiration |
+| `labels` | `labels/labels.service.ts` | Gmail label sync |
 | `encryption` | `privacy/encryption.service.ts` | Archive encryption |
 | `unsubscribe` | `unsubscribe/unsubscribe.service.ts` | Newsletter scan |
 | `job-sse` | `routes/job-sse.ts` | SSE broadcast |
@@ -75,7 +78,7 @@ logger.warn('something unusual happened')
 ### Fastify Error Handling
 
 The global error handler (`plugins/index.ts`) automatically logs:
-- **Zod validation errors** (`warn` level) with details
+- **Zod validation errors** (`warn` level) with details, `400` response
 - **Client errors** (4xx, `warn` level)
 - **Server errors** (5xx, `error` level) with the URL, method, and user ID
 
@@ -90,7 +93,7 @@ import { createLogger } from '../utils/logger'
 
 const logger = createLogger('mon-composant')
 
-logger.info('Action effectuée', { page: 'dashboard' })
+logger.info('Action done', { page: 'overview' })
 logger.error('Erreur API', { url, status })
 ```
 

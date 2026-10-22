@@ -1,87 +1,188 @@
 # Architecture Frontend
 
+La spécification de l'interface (navigation, pages, composants) est `design/ui-redesign.md`.
+
 ## Stack
 
 | Librairie | Rôle |
 |---|---|
-| `react 19` | UI, Server Components prêts mais non utilisés (SPA classique) |
-| `react-router v7` | Routing client-side |
-| `antd v6` | Composants UI (Table, Form, Chart, Layout, etc.) |
-| `@ant-design/charts` | Graphiques dashboard (basé sur G2) |
-| `lucide-react` | Icônes SVG cohérentes (remplace les emojis et icônes Ant Design) |
-| `zustand` | State management global (stores légers) |
-| `axios` | Client HTTP avec intercepteurs JWT |
-| `dayjs` | Manipulation de dates (requis par Ant Design) |
-| `react-i18next` | Internationalisation (hooks `useTranslation`) |
-| `i18next` | Moteur i18n, détection automatique de la langue |
-| `i18next-browser-languagedetector` | Détection de la langue du navigateur |
-| `vite` | Bundler, HMR en dev |
+| `react 19` + `react-dom` | UI (SPA, chargement des pages en `lazy()`) |
+| `react-router 7` | Routing client-side |
+| `vite 8` + `@vitejs/plugin-react` | Bundler, HMR en dev, proxy `/api` → `localhost:4000` |
+| `tailwindcss 4` (`@tailwindcss/vite`) | Styles utilitaires, thème clair/sombre par variables CSS |
+| `radix-ui` + shadcn/ui | Primitives accessibles ; composants shadcn vendorisés dans `src/components/ui/` |
+| `@tanstack/react-table 9` | Tableaux (tri, sélection, colonnes visibles) via `DataList` |
+| `@tanstack/react-query 5` | Données serveur (cache, invalidation) |
+| `zustand 5` | State client (session, thème) |
+| `axios` | Client HTTP (cookie httpOnly, intercepteur 401) |
+| `sonner` | Toasts (dont le toast d'annulation) |
+| `cmdk` | Palette de commandes ⌘K |
+| `lucide-react`, `@icons-pack/react-simple-icons` | Icônes |
+| `dayjs` | Dates relatives |
+| `i18next`, `react-i18next`, `i18next-browser-languagedetector` | Internationalisation fr/en |
+| `vite-plugin-pwa` | Manifest + service worker |
+| `@fontsource-variable/geist`, `geist-mono` | Polices |
 
 ---
 
-## Structure des stores Zustand
+## Structure de `src/`
+
+```
+src/
+├── App.tsx                ← Routes, ProtectedRoute, AdminRoute, redirections
+├── main.tsx               ← QueryClient, BrowserRouter, ErrorBoundary, registerSW
+├── api/
+│   ├── client.ts          ← Instance axios (withCredentials, intercepteur 401)
+│   └── index.ts           ← Endpoints groupés par module (jobsApi, rulesApi…)
+├── components/
+│   ├── app/               ← Composants applicatifs (AppShell, DataList, MailViewer…)
+│   ├── ui/                ← shadcn/ui vendorisé (button, dialog, sheet, sidebar, table…)
+│   └── ErrorBoundary.tsx
+├── hooks/
+│   ├── queries.ts         ← Hooks React Query + query key factories
+│   ├── useJobSSE.ts       ← Suivi d'un job (SSE)
+│   ├── useLiveCounters.ts ← Compteurs live (SSE)
+│   ├── useGlobalJobNotifier.tsx, useMailActions.ts, useKeyboardShortcuts.ts
+│   ├── useAccount.ts, use-mobile.ts
+├── pages/                 ← Une page par route + sous-dossiers d'onglets
+│   ├── admin/ archives/ cleanup/ overview/ rules/ settings/
+├── store/                 ← auth.store.ts, theme.store.ts
+├── i18n/                  ← index.ts + locales/fr.json, en.json
+├── lib/utils.ts           ← cn() (clsx + tailwind-merge)
+├── styles/, types/, utils/  ← format, gmail, download, logger…
+└── __tests__/             ← Tests Vitest + setup.ts
+```
+
+---
+
+## Stores Zustand
+
+Les données serveur passent par React Query ; Zustand ne garde que l'état client.
 
 ### `auth.store.ts`
 
-Gère :
-- Token JWT (persisté dans `localStorage`)
-- Profil utilisateur local (email, rôle, display_name, avatar_url, quotas)
-- Liste des comptes Gmail connectés
-- Compte Gmail actif (sélecteur sidebar)
-- Connexion via Google SSO (`loginWithToken`)
+- `user` (email, rôle, display_name, avatar_url, quotas, `totp_enabled`), `isAuthenticated`, `initialLoading`
+- `gmailAccounts` (avec `backup_enabled`, `backup_interval`, `needs_reauth`) et `activeAccountId` (persisté dans `localStorage`)
+- Actions : `login`, `register`, `loginWithSsoCode`, `logout`, `fetchMe`, `setActiveAccount`
 
-```typescript
-const { token, user, gmailAccounts, activeAccountId } = useAuthStore()
-// user.role: 'user' | 'admin'
-// user.display_name, user.avatar_url: depuis Google SSO
-// user.max_gmail_accounts, user.storage_quota_bytes: quotas
-```
+Aucun token n'est stocké côté client : la session est un cookie httpOnly. `App.tsx` appelle `fetchMe()` au montage pour restaurer la session.
+
+### `theme.store.ts`
+
+Mode `light` / `dark` ; préférence `system` (rien en `localStorage`) = suit `prefers-color-scheme`. Importé dans `main.tsx` pour appliquer la classe `.dark` avant le premier rendu.
 
 ---
 
 ## Routing
 
 ```
-/login              → LoginPage (non protégée, gère la 2FA TOTP)
-/                   → Redirect → /dashboard
-/dashboard          → DashboardPage 🔒
-/mails              → MailManagerPage 🔒
-/archive            → ArchivePage 🔒
-/rules              → RulesPage 🔒 (inclut le drawer Templates)
-/jobs               → JobsPage 🔒
-/settings           → SettingsPage 🔒 (profil, Gmail, 2FA, audit log)
-/admin              → AdminPage 🔒🛡️ (admin uniquement)
-/unsubscribe        → UnsubscribePage 🔒
-/attachments        → AttachmentsPage 🔒
-/insights           → InsightsPage 🔒
-/privacy            → PrivacyPage 🔒 (pixels espions, PII, chiffrement)
+/login              → Login (non protégée, 2FA TOTP)
+/shared/:token      → SharedMail (lien de partage public)
+/                   → AppShell 🔒, puis :
+  /overview         → Vue d'ensemble          (RequireGmailAccess)
+  /mails            → Mails                   (RequireGmailAccess)
+  /cleanup          → Nettoyage               (RequireGmailAccess)
+  /rules            → Règles                  (RequireGmailAccess)
+  /archives         → Archives
+  /attachments      → Pièces jointes
+  /activity         → Activité (jobs)
+  /settings/:section→ Paramètres (account, gmail, security, notifications, data)
+  /more             → Plus (menu mobile)
+  /admin            → Administration 🛡️ (AdminRoute)
 ```
+
+- `ProtectedRoute` attend `initialLoading` puis redirige vers `/login` si non authentifié.
+- `AdminRoute` redirige vers `/overview` si `user.role !== 'admin'`.
+- `RequireGmailAccess` : sur un compte Gmail déconnecté, les pages qui appellent Gmail proposent la reconnexion au lieu d'échouer.
+
+### Redirections des anciennes URL
+
+| Ancienne URL | Cible |
+|---|---|
+| `/`, `/dashboard`, `/analytics`, `/insights` | `/overview` |
+| `/archive` | `/archives` |
+| `/jobs` | `/activity` |
+| `/settings` | `/settings/account` |
+| `/ops` | `/settings/data` |
+| `/unsubscribe` | `/cleanup?tab=senders` |
+| `/expiration` | `/rules?tab=labels` |
+| `/sharing` | `/archives?tab=shares` |
+| `/privacy` | `/settings/account` |
+| `/unified` | `/mails?account=all` |
+| `/saved-searches` | `/mails` |
+
+Les redirections gardent la query string (ex. `/settings?gmail=connected` au retour OAuth).
+
+---
+
+## AppShell et navigation
+
+`components/app/AppShell.tsx` est le layout de toutes les pages authentifiées :
+
+- **≥ 768 px** : `AppSidebar` (shadcn `Sidebar`, 15rem) avec les entrées de `components/app/nav.ts` et leurs badges live.
+- **< 768 px** (`useIsMobile`) : `BottomNav` (Vue d'ensemble, Mails, Nettoyage, Archives, Plus) ; `/more` regroupe le reste.
+- En-tête : `NotificationBell` + menu utilisateur (comptes, thème, langue, déconnexion).
+- `CommandPalette` (⌘K, `cmdk`), `Toaster` sonner, `useGlobalJobNotifier()` (toast à la fin d'un job, selon les préférences).
+- `useLiveCounters()` ouvre **une** connexion SSE par onglet ; les pages lisent les compteurs via `useOutletContext()`.
+
+`nav.ts` définit les entrées (`NAV`), les préfixes qui les allument (anciennes pages incluses), les badges (`navBadge` : total de mails, règles actives, jobs actifs) et `visibleNav(role)` (Administration réservée aux admins).
+
+---
+
+## Listes : `DataList`
+
+`components/app/DataList.tsx` rend une instance TanStack Table en `<table>` (≥ md) ou en cartes (mobile). Les pages créent la table avec `useTable({ features: dataListFeatures, ... })` :
+
+- `dataListFeatures` = sélection de lignes, tri, visibilité des colonnes, `columnMeta`.
+- `meta.mobile` place chaque colonne sur la carte mobile (`title`, `subtitle`, `meta`, `leading`, `menu`, `hidden`).
+- Props : `table`, `rowLabel` (nom accessible de la case à cocher), `onRowOpen`, `empty`, `isLoading` (squelettes).
+- Tri annoncé par `aria-sort`, menu de colonnes visibles.
+
+---
+
+## Données serveur (React Query)
+
+`QueryClient` (dans `main.tsx`) : `staleTime` 5 min, `gcTime` 10 min, `retry: 1`, pas de refetch au focus.
+
+`hooks/queries.ts` regroupe les hooks et les factories de clés :
+
+```typescript
+queryKeys.dashboard(accountId)       // ['dashboard', accountId]
+queryKeys.rules(accountId)           // ['rules', accountId]
+queryKeys.ruleStats(accountId)       // ['rules', accountId, 'stats'] — invalidée avec rules
+queryKeys.jobs(params)               // ['jobs', params]
+```
+
+---
+
+## Temps réel (SSE)
+
+| Hook | Endpoint | Usage |
+|---|---|---|
+| `useJobSSE(jobId)` | `GET /api/jobs/:jobId/events` | Progression d'un job ; ferme le flux sur `completed`/`failed`/`cancelled`, reconnexion avec backoff (5 essais max). Utilisé par `JobProgressInline`. |
+| `useLiveCounters()` | `GET /api/events` | Événement `counters` (`mails` par compte, `activeRules`, `activeJobs`) ; l'`EventSource` se reconnecte seul. |
+
+Les deux envoient le cookie (`withCredentials: true`) ; aucun token dans l'URL.
+
+### Fenêtre d'annulation
+
+Corbeille et archivage (Mails, Nettoyage), suppression des mails d'un expéditeur et exécution manuelle d'une règle sont enfilés avec un délai serveur (`delayMs`, 10 s par défaut, voir [Jobs](jobs.md#fenetre-d-annulation)). `UndoToast` affiche un compte à rebours et annule le job via `DELETE /api/jobs/:id`. `useMailActions` masque les lignes de façon optimiste jusqu'à la fin du job ou l'annulation ; les autres actions (lu/non lu, libellés) partent avec `delayMs: 0`.
 
 ### Raccourcis clavier
 
-La page **MailManager** intègre le hook `useKeyboardShortcuts` qui capture les touches `j/k` (navigation), `Enter/o` (ouvrir), `e` (archiver), `#` (corbeille), `r/u` (lu/non lu), `/` (recherche), `Escape` (désélectionner). Les raccourcis sont désactivés dans les champs de saisie.
-
-### Actions de masse
-
-La page **MailManager** propose un bouton **« Tout archiver »** qui lance un archivage différentiel de tous les mails correspondant à la requête en cours, sans sélection manuelle. L’opération est asynchrone (job BullMQ) avec suivi SSE.
-
-Le chargement des métadonnées (sujet, expéditeur, taille) utilise le endpoint **batch** (`POST /messages/batch`) pour récupérer jusqu'à 100 messages en un seul appel, évitant les erreurs 429.
-
-Le composant `ProtectedRoute` vérifie la présence du token JWT. Si absent, redirect vers `/login`.
-
-Le composant `AdminRoute` vérifie que `user.role === 'admin'`. Si non-admin, redirect vers `/dashboard`.
+La page **Mails** utilise `useKeyboardShortcuts` : `j`/`k` (navigation), `o` (ouvrir), `e` (archiver), `#` (corbeille), `r`/`u` (lu/non lu), `/` (recherche), `Escape` (désélectionner). Désactivés dans les champs, menus et dialogues, et désactivables par l'utilisateur (`localStorage` `nid.mailShortcuts`).
 
 ---
 
 ## Client HTTP (axios)
 
-`src/api/client.ts` configure un client axios avec :
+`src/api/client.ts` :
 
-- `baseURL` depuis `VITE_API_URL`
-- Injection automatique du JWT en header `Authorization: Bearer`
-- Redirect automatique vers `/login` si réponse 401
+- `baseURL` depuis `VITE_API_URL` (vide par défaut : même origine)
+- `withCredentials: true` : le cookie httpOnly `token` part avec chaque requête
+- Sur 401 (hors `/auth/me`), redirection vers `/login` ; 5xx et erreurs réseau loguées
 
-Toutes les pages font leurs appels via ce client, jamais via `fetch` directement.
+Les appels passent par ce client (via `api/index.ts`), jamais par `fetch`. Exceptions : les `EventSource` SSE.
 
 ---
 
@@ -95,91 +196,41 @@ En production (Dockerfile multi-stage), le build Vite est servi par Nginx qui pr
 
 ---
 
-## Icônes (Lucide React)
+## Internationalisation (i18n)
 
-Toutes les icônes de l'application utilisent [Lucide React](https://lucide.dev/), une bibliothèque d'icônes SVG open source. Les emojis et les icônes Ant Design ont été remplacés pour un rendu professionnel uniforme.
+Français (langue de repli) et anglais, via `react-i18next`.
 
-### Utilisation
+`src/i18n/index.ts` initialise i18next avec `LanguageDetector` (ordre : `localStorage` puis navigateur, clé `i18nextLng`) et `fallbackLng: 'fr'`. Les traductions sont dans `src/i18n/locales/fr.json` et `en.json`, clés imbriquées par domaine (`shell.*`, `mails.*`, `rules.*`…).
 
 ```tsx
-import { Mail, Archive, Trash2, Settings } from 'lucide-react'
-
-<Mail size={16} />
-<Archive className="icon-muted" />
+const { t } = useTranslation();
+return <h1>{t('mails.title')}</h1>;
 ```
 
-### Conventions
-
-- **Taille** : `16` dans les menus et boutons, `20-24` dans les titres et cartes
-- **Dark mode** : les icônes héritent de `currentColor` et s'adaptent automatiquement au thème
-- **i18n** : les clés de traduction référencent des icônes Lucide (pas d'emojis) pour un rendu identique sur toutes les plateformes
+`main.tsx` synchronise `<html lang>` avec la langue active. La langue se change depuis le menu utilisateur.
 
 ---
 
-## Internationalisation (i18n)
+## Tests
 
-L'application est entièrement traduite en **français** (langue par défaut) et **anglais**, grâce à `react-i18next`.
+### Unitaires (Vitest)
 
-### Configuration
+- `npm run test` (`vitest run`), environnement `jsdom`, `globals: true`
+- Tests dans `src/__tests__/` (`*.test.ts(x)`), mocks globaux dans `setup.ts` (axios, `localStorage`, `matchMedia`, `ResizeObserver`)
+- Testing Library (`@testing-library/react`, `user-event`, `jest-dom`)
 
-Le fichier `src/i18n/index.ts` initialise i18next avec :
+### End-to-end (Playwright)
 
-- **`LanguageDetector`** — détecte la langue du navigateur au premier chargement
-- **`fallbackLng: 'fr'`** — français par défaut si la langue n'est pas supportée
-- **Persistance `localStorage`** — clé `i18nextLng`, le choix de l'utilisateur est mémorisé
+- `npm run e2e` (`playwright test`), specs dans `frontend/e2e/`
+- API simulée par `e2e/mock-api.ts` + `e2e/fixtures/` : pas de backend requis ; Vite démarré sur le port `PW_PORT` (3100 par défaut)
+- Deux projets : `desktop` (1280×800) et `mobile` (iPhone 13), locale `fr-FR`
+- `a11y.spec.ts` lance axe-core (`@axe-core/playwright`) sur chaque page. **Ratchet** : avec `E2E_A11Y_STRICT=1` (activé en CI), une page échoue si elle a plus de violations que dans `e2e/a11y-baseline.json`. Mise à jour du baseline après correction : `E2E_A11Y_UPDATE=1 npx playwright test a11y --workers=1`.
 
-### Fichiers de traduction
+---
 
-```
-src/i18n/
-├── index.ts              ← Configuration i18next
-└── locales/
-    ├── fr.json           ← ~370+ clés, namespace plat
-    └── en.json           ← Traductions anglaises (même structure)
-```
+## Logs
 
-Les clés sont organisées par domaine fonctionnel dans un namespace plat :
-
-```json
-{
-  "dashboard.title": "Tableau de bord",
-  "mails.search": "Rechercher...",
-  "rules.create": "Créer une règle",
-  "jobs.bulkOperation": "Opération groupée",
-  "settings.profile": "Profil",
-  "admin.users": "Utilisateurs"
-}
-```
-
-### Sélecteur de langue
-
-Un sélecteur `<Select>` est intégré dans la barre de navigation (`AppLayout.tsx`), entre la cloche de notifications et le toggle thème sombre. Il affiche les drapeaux 🇫🇷 / 🇬🇧 et appelle `i18n.changeLanguage()` au changement.
-
-### Intégration Ant Design et dayjs
-
-- **Ant Design** : la locale du `ConfigProvider` est synchronisée dynamiquement (`frFR` / `enUS`) dans `main.tsx` en fonction de la langue active.
-- **dayjs** : la locale est changée dynamiquement dans les composants qui affichent des dates relatives (Rules, Jobs, NotificationBell).
-- **`<html lang>`** : l'attribut `lang` du document est mis à jour via un `useEffect` dans `main.tsx`.
-
-### Utilisation dans les composants
-
-Toutes les pages et composants utilisent le hook `useTranslation()` :
-
-```tsx
-import { useTranslation } from 'react-i18next';
-
-function MaPage() {
-  const { t } = useTranslation();
-  return <h1>{t('dashboard.title')}</h1>;
-}
-```
-
-### Pages et composants traduits
-
-Toutes les pages et composants de l'application sont traduits :
-
-- **Pages** : Login, Dashboard, MailManager, Jobs, Archive, Rules, Settings, Admin, Unsubscribe, Attachments, Insights, Privacy
-- **Composants** : AppLayout, BulkActionBar, NotificationBell, MailViewer, GmailSearchInput, RuleFormModal, JobProgressModal
+Voir [Logging](logging.md#frontend) : `utils/logger.ts`, `ErrorBoundary`, intercepteur axios, erreurs globales dans `main.tsx`.
 
 ## PWA (Progressive Web App)
 
@@ -205,23 +256,15 @@ nginx sert `sw.js` et `manifest.webmanifest` avec `Cache-Control: no-cache` pour
 
 Sur Chrome/Edge (desktop et mobile), un bouton "Installer" apparaît dans la barre d'URL. Sur Safari iOS, utiliser "Ajouter à l'écran d'accueil" depuis le menu de partage.
 
-## Navigation responsive (mobile)
+## Responsive (mobile)
 
-L'application adopte une approche **responsive** (pas d'app native séparée) via le breakpoint system d'Ant Design (`Grid.useBreakpoint`).
+Une seule app responsive, point de rupture `768px` (`useIsMobile`, aligné sur `md` de Tailwind) :
 
-### Comportement par taille d'écran
-
-| Écran | Navigation | Contenu |
+| Écran | Navigation | Listes |
 |---|---|---|
-| **Desktop** (≥ 768px) | Sidebar fixe collapsible (220px / 64px) | Padding 24px |
-| **Mobile** (< 768px) | Drawer glissant depuis la gauche (280px) | Padding 12px |
+| **Desktop** (≥ 768px) | Sidebar fixe | Tableaux |
+| **Mobile** (< 768px) | Barre du bas + page « Plus » | Cartes (`DataList`) |
 
-### Adaptations mobiles
-
-- **Hamburger menu** : bouton ☰ dans le header pour ouvrir le drawer de navigation.
-- **Fermeture auto** : le drawer se ferme après chaque navigation.
-- **User menu compact** : nom et badge admin masqués sur mobile, seul l'avatar reste visible.
-- **Touch-friendly** : items de menu 44px minimum (accessibilité WCAG 2.5.8).
-- **Safe areas** : support des encoches (notch) via `env(safe-area-inset-*)` pour le mode PWA standalone.
-- **Tables scrollables** : scroll horizontal natif sur les tableaux Ant Design.
-- **Modals plein écran** : les modals occupent quasi-toute la largeur sur mobile.
+- **Safe areas** : `env(safe-area-inset-*)` pour l'en-tête, la barre du bas et les toasts (mode PWA standalone).
+- **Toasts** : placés au-dessus de la barre du bas sur mobile.
+- **Lien d'évitement** : `#main-content` (dans `index.html`) cible le `<main>` de l'AppShell.
