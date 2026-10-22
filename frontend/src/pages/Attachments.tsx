@@ -25,7 +25,9 @@ type LiveAttachment = { messageId: string; filename: string; mimeType: string; s
 const PAGE_SIZE = 50
 const LIVE_PARAMS = { maxResults: 200 }
 
-const isPreviewable = (mime: string | null) => !!mime && (mime.startsWith('image/') || mime === 'application/pdf')
+// Same list as INLINE_SAFE_MIME in backend/src/routes/attachments.ts (SVG excluded: XSS)
+const PREVIEWABLE_MIME = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'application/pdf'])
+const isPreviewable = (mime: string | null) => !!mime && PREVIEWABLE_MIME.has(mime.split(';')[0].trim().toLowerCase())
 
 function fileIcon(mime: string | null) {
   if (mime?.startsWith('image/')) return FileImage
