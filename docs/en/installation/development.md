@@ -118,7 +118,7 @@ Tests use Vitest with a test PostgreSQL database. The `src/__tests__/setup.ts` f
 
 1. Create `frontend/src/i18n/locales/xx.json` (copy of `fr.json`)
 2. Import the file in `frontend/src/i18n/index.ts`
-3. Add the Ant Design locale in `frontend/src/main.tsx`
+3. Add the option to the language selectors (`components/app/AppShell.tsx`, `pages/settings/AccountSection.tsx`)
 
 ---
 

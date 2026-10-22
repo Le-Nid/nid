@@ -61,7 +61,7 @@ Check the [first steps guide](guide/first-steps.md) to create your account and c
 ## Tech Stack
 
 ```
-Frontend   →  React 19 + Ant Design + react-i18next
+Frontend   →  React 19 + shadcn/ui (Radix) + Tailwind v4 + react-i18next
 Backend    →  Fastify + TypeScript
 Auth       →  Local JWT + OAuth2 Gmail + Multi-provider SSO
 Database   →  PostgreSQL 16 (Kysely)

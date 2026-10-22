@@ -70,7 +70,7 @@ nid/
 - **Pages** : une page = un fichier dans `src/pages/`
 - **State global** : Zustand (`src/store/`)
 - **Appels API** : toujours via `src/api/client.ts` (axios configuré avec JWT)
-- **Composants** : Ant Design en priorité, custom seulement si nécessaire
+- **Composants** : composants maison de `src/components/app/` puis primitives shadcn/Radix de `src/components/ui/` (vendorisées, ne pas modifier), styles Tailwind v4
 - **i18n** : tout texte visible doit passer par `t('clé')` — jamais de chaînes en dur dans le JSX
 
 ---
@@ -111,8 +111,8 @@ admin.users           → Onglet utilisateurs admin
    import xx from './locales/xx.json';
    resources: { fr: { translation: fr }, en: { translation: en }, xx: { translation: xx } }
    ```
-4. Dans `frontend/src/main.tsx`, ajoutez la locale Ant Design correspondante
-5. Dans `frontend/src/components/AppLayout.tsx`, ajoutez l'option au sélecteur de langue
+4. Ajoutez l'option aux sélecteurs de langue : menu utilisateur (`frontend/src/components/app/AppShell.tsx`) et Paramètres › Compte (`frontend/src/pages/settings/AccountSection.tsx`)
+5. Dans `frontend/src/main.tsx`, étendez le calcul de `<html lang>`
 
 ---
 
@@ -155,7 +155,7 @@ Corrigez les vulnérabilités critiques et hautes immédiatement. Utilisez `npm 
 
 ### Icônes
 
-- Utiliser **Lucide React** (`lucide-react`) pour toutes les icônes — pas d'emojis ni d'icônes Ant Design
+- Utiliser **Lucide React** (`lucide-react`) pour toutes les icônes — pas d'emojis
 - Les icônes doivent être compatibles dark mode (utiliser `currentColor`)
 
 ---

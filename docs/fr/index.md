@@ -77,7 +77,7 @@ Consultez le [guide des premiers pas](guide/first-steps.md) pour créer votre co
 ## Stack technique
 
 ```
-Frontend   →  React 19 + Ant Design + react-i18next
+Frontend   →  React 19 + shadcn/ui (Radix) + Tailwind v4 + react-i18next
 Backend    →  Fastify + TypeScript
 Auth       →  JWT local + OAuth2 Gmail + SSO multi-providers
 Base de données  →  PostgreSQL 16 (Kysely)
