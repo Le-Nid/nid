@@ -79,8 +79,8 @@ export default function App() {
   return (
     <Suspense fallback={<RouteFallback />}>
       <Routes>
-        <Route path="/login" element={<LegacyAntd><LoginPage /></LegacyAntd>} />
-        <Route path="/shared/:token" element={<LegacyAntd><SharedMailPage /></LegacyAntd>} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/shared/:token" element={<SharedMailPage />} />
         <Route
           path="/"
           element={

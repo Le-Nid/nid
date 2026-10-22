@@ -86,7 +86,12 @@
     "social_discord": "Se connecter avec Discord",
     "social_facebook": "Se connecter avec Facebook",
     "social_linkedin": "Se connecter avec LinkedIn",
-    "social_keycloak": "Se connecter via SSO"
+    "social_keycloak": "Se connecter via SSO",
+    "errorEmail": "Saisissez une adresse email valide",
+    "errorPassword": "Saisissez votre mot de passe",
+    "errorPasswordMin": "Le mot de passe doit contenir au moins {{count}} caractères",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe"
   },
   "labels": {
     "INBOX": "Boîte de réception",
@@ -928,7 +933,6 @@
     "notFoundDesc": "Ce lien de partage est invalide, a expiré ou a atteint sa limite d'accès.",
     "to": "À",
     "sharedLink": "Mail partagé via lien temporaire",
-    "emailContent": "Contenu de l'email",
     "noContent": "Aucun contenu disponible",
     "poweredBy": "Nid — Partage temporaire d'archive"
   },

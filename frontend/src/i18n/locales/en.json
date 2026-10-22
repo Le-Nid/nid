@@ -86,7 +86,12 @@
     "social_discord": "Sign in with Discord",
     "social_facebook": "Sign in with Facebook",
     "social_linkedin": "Sign in with LinkedIn",
-    "social_keycloak": "Sign in via SSO"
+    "social_keycloak": "Sign in via SSO",
+    "errorEmail": "Enter a valid email address",
+    "errorPassword": "Enter your password",
+    "errorPasswordMin": "Password must be at least {{count}} characters",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "labels": {
     "INBOX": "Inbox",
@@ -928,7 +933,6 @@
     "notFoundDesc": "This share link is invalid, has expired, or reached its access limit.",
     "to": "To",
     "sharedLink": "Email shared via temporary link",
-    "emailContent": "Email content",
     "noContent": "No content available",
     "poweredBy": "Nid — Temporary archive sharing"
   },
