@@ -32,14 +32,16 @@ export function useMailActions(accountId: string | null, refreshKey: (accountId:
   const undo = (key: number, jobId: string) =>
     jobsApi.cancel(jobId).then(() => drop(key), () => toast.error(t('mails.undoFailed')))
 
-  const run = async (action: MailAction, target: Target, opts: { count: number; hidden: string[]; labelId?: string; label?: string }) => {
-    if (!accountId) return
+  // opts.accountId overrides the hook's: « Tous les comptes » runs one action per account
+  const run = async (action: MailAction, target: Target, opts: { count: number; hidden: string[]; labelId?: string; label?: string; accountId?: string }) => {
+    const account = opts.accountId ?? accountId
+    if (!account) return
     const key = nextKey.current++
     const label = opts.label ?? t(`mails.job.${action}`, { count: opts.count })
     const undoable = UNDOABLE.has(action)
-    setPending((list) => [...list, { key, accountId, jobId: null, label, hidden: undoable ? opts.hidden : [] }])
+    setPending((list) => [...list, { key, accountId: account, jobId: null, label, hidden: undoable ? opts.hidden : [] }])
     try {
-      const { jobId } = await launch(accountId, action, target, opts.labelId)
+      const { jobId } = await launch(account, action, target, opts.labelId)
       setPending((list) => list.map((p) => (p.key === key ? { ...p, jobId } : p)))
       if (undoable) {
         showUndoToast({ message: label, description: t(`mails.undoDescription.${action}`), onUndo: () => void undo(key, jobId) })
@@ -53,7 +55,11 @@ export function useMailActions(accountId: string | null, refreshKey: (accountId:
   const done = async (entry: Pending, job: JobState) => {
     if (job.status === 'failed') toast.error(t('mails.jobFailed'))
     // Keep the rows hidden until the refetched list no longer has them
-    await qc.invalidateQueries({ queryKey: refreshKey(entry.accountId) })
+    // « Tous les comptes » (['unified']) lists every account's mails too
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: refreshKey(entry.accountId) }),
+      qc.invalidateQueries({ queryKey: ['unified'] }),
+    ])
     drop(entry.key)
   }
 
