@@ -439,37 +439,35 @@ async function handlePrivacy(job: Job) {
     .execute()
 
   try {
-    if (action === 'encrypt_archives') {
-      const passphrase = job.data.passphrase
-      if (!passphrase) throw new Error('Passphrase required')
+    const passphrase = job.data.passphrase
+    if (!passphrase) throw new Error('Passphrase required')
 
-      const result = await encryptArchives(accountId, passphrase, {
-        onProgress: async (done: number, total: number) => {
-          const progress = Math.round((done / total) * 100)
-          await job.updateProgress(progress)
-          if (done % 10 === 0) {
-            await db.updateTable('jobs')
-              .set({ progress, processed: done, total })
-              .where('bullmq_id', '=', String(job.id))
-              .execute()
-          }
-        },
+    const result = await encryptArchives(accountId, passphrase, {
+      onProgress: async (done: number, total: number) => {
+        const progress = Math.round((done / total) * 100)
+        await job.updateProgress(progress)
+        if (done % 10 === 0) {
+          await db.updateTable('jobs')
+            .set({ progress, processed: done, total })
+            .where('bullmq_id', '=', String(job.id))
+            .execute()
+        }
+      },
+    })
+
+    await db.updateTable('jobs')
+      .set({ status: 'completed', progress: 100, processed: result.encrypted, total: result.encrypted, completed_at: new Date() })
+      .where('bullmq_id', '=', String(job.id))
+      .execute()
+
+    if (userId) {
+      await notify({
+        userId,
+        category: 'job_completed',
+        title: 'Chiffrement terminé',
+        body: `${result.encrypted} archive(s) chiffrée(s).`,
+        data: { jobId: String(job.id), ...result },
       })
-
-      await db.updateTable('jobs')
-        .set({ status: 'completed', progress: 100, processed: result.encrypted, total: result.encrypted, completed_at: new Date() })
-        .where('bullmq_id', '=', String(job.id))
-        .execute()
-
-      if (userId) {
-        await notify({
-          userId,
-          category: 'job_completed',
-          title: 'Chiffrement terminé',
-          body: `${result.encrypted} archive(s) chiffrée(s).`,
-          data: { jobId: String(job.id), ...result },
-        })
-      }
     }
   } catch (err) {
     await db.updateTable('jobs')

@@ -301,6 +301,20 @@ describe('unified worker handlers', () => {
     expect(mockEncryptArchives).toHaveBeenCalled()
   })
 
+  it('reports encryption progress, every 10 archives, and skips the notification without a user', async () => {
+    mockEncryptArchives.mockImplementationOnce(async (_accountId: string, _passphrase: string, { onProgress }: any) => {
+      await onProgress(5, 20)
+      await onProgress(10, 20)
+      return { encrypted: 20 }
+    })
+    const job = makeJob('encrypt_archives', { accountId: 'acc-1', action: 'encrypt_archives', passphrase: 'secret' })
+    mockNotify.mockClear()
+    await processJob(job)
+    expect(job.updateProgress).toHaveBeenCalledWith(25)
+    expect(job.updateProgress).toHaveBeenCalledWith(50)
+    expect(mockNotify).not.toHaveBeenCalled()
+  })
+
   it('handles encrypt_archives without passphrase', async () => {
     const job = makeJob('encrypt_archives', {
       accountId: 'acc-1',
