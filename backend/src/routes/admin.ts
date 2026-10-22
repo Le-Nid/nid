@@ -5,12 +5,23 @@ import { sql } from 'kysely'
 import { escapeIlike, notFound } from '../utils/db'
 import { extractPagination } from '../utils/pagination'
 import { authPresets } from '../utils/auth'
+import { getInstanceQuotaStats } from '../gmail/quota.service'
+import { emptyAllArchiveTrash, getArchiveTrashSummary } from '../archive/trash.service'
+import { getLastIntegrityCheck } from '../archive/integrity.service'
+import { logAudit } from '../audit/audit.service'
 
 const updateUserSchema = z.object({
   role: z.enum(['admin', 'user']).optional(),
   is_active: z.boolean().optional(),
   max_gmail_accounts: z.number().int().min(1).max(50).optional(),
   storage_quota_bytes: z.number().int().min(0).optional(),
+})
+
+const auditQuerySchema = z.object({
+  user: z.string().trim().max(255).optional(),
+  action: z.string().max(64).optional(),
+  page: z.string().optional(),
+  limit: z.string().optional(),
 })
 
 export async function adminRoutes(app: FastifyInstance) {
@@ -199,5 +210,46 @@ export async function adminRoutes(app: FastifyInstance) {
         totalSizeBytes: Number(ar.total_size ?? 0),
       },
     }
+  })
+
+  // ─── Quota Gmail API de l'instance (B13) ───────────────────
+  app.get('/quota', adminAuth, async () => getInstanceQuotaStats())
+
+  // ─── Journal d'audit de l'instance (B14) ───────────────────
+  app.get('/audit', adminAuth, async (request) => {
+    const { user, action, ...paginationQuery } = auditQuerySchema.parse(request.query)
+    const { page, limit: lim, offset } = extractPagination(paginationQuery)
+
+    let base = db.selectFrom('audit_logs').leftJoin('users', 'users.id', 'audit_logs.user_id')
+    if (user) base = base.where('users.email', 'ilike', `%${escapeIlike(user)}%`)
+    if (action) base = base.where('audit_logs.action', '=', action)
+
+    const logs = await base
+      .select([
+        'audit_logs.id', 'audit_logs.user_id', 'users.email as user_email', 'audit_logs.action',
+        'audit_logs.target_type', 'audit_logs.target_id', 'audit_logs.details', 'audit_logs.created_at',
+      ])
+      .orderBy('audit_logs.created_at', 'desc')
+      .limit(lim)
+      .offset(offset)
+      .execute()
+    const counted = await base.select((eb) => eb.fn.countAll<string>().as('count')).executeTakeFirst()
+    // Choices of the action filter
+    const actions = await db.selectFrom('audit_logs').select('action').distinct().orderBy('action').execute()
+
+    return { logs, total: Number(counted?.count ?? 0), page, limit: lim, actions: actions.map((a) => a.action) }
+  })
+
+  // ─── Système : corbeille et intégrité de l'instance (B15) ───
+  app.get('/system', adminAuth, async () => ({
+    trash: await getArchiveTrashSummary(),
+    integrity: await getLastIntegrityCheck(),
+  }))
+
+  // ─── Vider la corbeille des archives de tous les comptes (B15) ─
+  app.delete('/archive-trash', adminAuth, async (request) => {
+    const result = await emptyAllArchiveTrash()
+    await logAudit(request.user.sub, 'admin.empty_archive_trash', { details: result, ipAddress: request.ip })
+    return result
   })
 }

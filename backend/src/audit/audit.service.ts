@@ -23,6 +23,7 @@ export type AuditAction =
   | 'archive.export_zip'
   | 'newsletter.delete'
   | 'admin.update_user'
+  | 'admin.empty_archive_trash'
   | 'user.2fa_enable'
   | 'user.2fa_disable'
 

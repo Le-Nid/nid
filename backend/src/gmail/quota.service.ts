@@ -1,6 +1,7 @@
 import { getDb } from '../db'
 import { sql } from 'kysely'
 import { createLogger } from '../logger'
+import { rateLimitedLast24h } from './gmail-throttle'
 
 const logger = createLogger('quota')
 
@@ -137,6 +138,42 @@ export async function getQuotaStats(accountId: string) {
       units: Number(r.units),
       calls: Number(r.calls),
     })),
+  }
+}
+
+// Gmail API defaults: 1 billion units / project / day, 250 units / user / second
+const DAILY_PROJECT_LIMIT = 1_000_000_000
+const PER_USER_SECOND_LIMIT = 250
+
+/**
+ * Instance-wide quota (B13, Admin > Système): units of the day (UTC), busiest
+ * mailbox-second of the day, rate-limited responses retried over 24 h.
+ */
+export async function getInstanceQuotaStats() {
+  const db = getDb()
+  const day = await sql<{ units: number; calls: number }>`
+    SELECT COALESCE(SUM(quota_units), 0)::int AS units, COUNT(*)::int AS calls
+    FROM gmail_api_usage
+    WHERE recorded_at >= date_trunc('day', now())
+  `.execute(db)
+  const peak = await sql<{ email: string; units: number }>`
+    SELECT ga.email, s.units
+    FROM (
+      SELECT gmail_account_id, SUM(quota_units)::int AS units
+      FROM gmail_api_usage
+      WHERE recorded_at >= date_trunc('day', now())
+      GROUP BY gmail_account_id, date_trunc('second', recorded_at)
+    ) s
+    JOIN gmail_accounts ga ON ga.id = s.gmail_account_id
+    ORDER BY s.units DESC
+    LIMIT 1
+  `.execute(db)
+  const top = peak.rows[0]
+
+  return {
+    day: { units: Number(day.rows[0]?.units ?? 0), calls: Number(day.rows[0]?.calls ?? 0), limit: DAILY_PROJECT_LIMIT },
+    peakPerSecond: { units: Number(top?.units ?? 0), account: top?.email ?? null, limit: PER_USER_SECOND_LIMIT },
+    rateLimited24h: await rateLimitedLast24h(),
   }
 }
 

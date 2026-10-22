@@ -124,9 +124,23 @@ const ROUTES: [string, RegExp, Handler][] = [
   ['POST', /^\/api\/gmail\/[^/]+\/labels$/, { id: 'Label_new', name: 'Nouveau', type: 'user' }],
   ['PATCH', /^\/api\/gmail\/[^/]+\/labels\/[^/]+$/, (req: Request) => ({ id: 'Label_1', ...req.postDataJSON() })],
   ['DELETE', /^\/api\/gmail\/[^/]+\/labels\/[^/]+$/, {}],
-  ['GET', /^\/api\/admin\/stats$/, admin.stats],
   ['GET', /^\/api\/admin\/users$/, admin.users],
+  ['PATCH', /^\/api\/admin\/users\/[^/]+$/, (req: Request) => ({ id: 'u2', ...req.postDataJSON() })],
   ['GET', /^\/api\/admin\/jobs$/, admin.jobs],
+  ['GET', /^\/api\/admin\/system$/, admin.system],
+  ['GET', /^\/api\/admin\/quota$/, admin.quota],
+  ['GET', /^\/api\/admin\/audit$/, (req: Request) => {
+    const params = new URL(req.url()).searchParams
+    const action = params.get('action')
+    const email = params.get('user')
+    const logs = admin.audit.logs
+      .filter((l: { action: string }) => !action || l.action === action)
+      .filter((l: { user_email: string }) => !email || l.user_email.includes(email))
+    return { ...admin.audit, logs, total: logs.length }
+  }],
+  ['DELETE', /^\/api\/admin\/archive-trash$/, { deleted: admin.system.trash.count, sizeBytes: admin.system.trash.sizeBytes }],
+  ['PUT', /^\/api\/archive\/config\/trash$/, { ok: true }],
+  ['POST', /^\/api\/integrity\/check\/async$/, { jobId: 'job-integrity' }],
   ['GET', /^\/api\/audit$/, settings.audit],
   ['GET', /^\/api\/webhooks$/, settings.webhooks],
   ['GET', /^\/api\/saved-searches$/, []],

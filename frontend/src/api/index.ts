@@ -171,6 +171,21 @@ export const adminApi = {
 
   listJobs: (params: Record<string, any> = {}) =>
     api.get('/api/admin/jobs', { params }).then((r) => r.data),
+
+  /** Instance Gmail API quota (B13). */
+  getQuota: () =>
+    api.get('/api/admin/quota').then((r) => r.data),
+
+  /** Instance audit log (B14): `user` = email substring, `action` = exact action. */
+  listAudit: (params: Record<string, any> = {}) =>
+    api.get('/api/admin/audit', { params }).then((r) => r.data),
+
+  /** Instance archive trash volume and last integrity check (B15). */
+  getSystem: () =>
+    api.get('/api/admin/system').then((r) => r.data),
+
+  emptyArchiveTrash: () =>
+    api.delete('/api/admin/archive-trash').then((r) => r.data),
 }
 
 // ─── Unsubscribe ──────────────────────────────────────────
@@ -285,6 +300,10 @@ export const webhooksApi = {
 export const integrityApi = {
   check: (accountId?: string) =>
     api.get('/api/integrity/check', { params: accountId ? { accountId } : {} }).then((r) => r.data),
+
+  /** Whole-instance check as a job: `{ jobId }`. */
+  checkAsync: () =>
+    api.post('/api/integrity/check/async').then((r) => r.data),
 }
 
 // ─── Config Export/Import ─────────────────────────────────

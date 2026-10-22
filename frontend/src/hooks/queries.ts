@@ -4,8 +4,8 @@ import {
   adminApi, unsubscribeApi, attachmentsApi,
   analyticsApi, notificationsApi,
   auditApi, webhooksApi, savedSearchesApi, unifiedApi, archiveThreadsApi,
-  retentionApi, quotaApi, importApi,
-  sharingApi, labelsApi, gmailAccountsApi, twoFactorApi, configApi,
+  retentionApi, importApi,
+  sharingApi, labelsApi, gmailAccountsApi, twoFactorApi, configApi, integrityApi,
 } from '../api'
 import { useAuthStore } from '../store/auth.store'
 
@@ -35,9 +35,11 @@ export const queryKeys = {
   ruleStats: (accountId: string) => ['rules', accountId, 'stats'] as const,
   jobs: (params?: Record<string, any>) => ['jobs', params] as const,
   admin: {
-    stats: () => ['admin', 'stats'] as const,
     users: (params?: Record<string, any>) => ['admin', 'users', params] as const,
     jobs: (params?: Record<string, any>) => ['admin', 'jobs', params] as const,
+    quota: () => ['admin', 'quota'] as const,
+    audit: (params?: Record<string, any>) => ['admin', 'audit', params] as const,
+    system: () => ['admin', 'system'] as const,
   },
   unsubscribe: (accountId: string) => ['unsubscribe', accountId] as const,
   attachments: {
@@ -56,7 +58,6 @@ export const queryKeys = {
   audit: (params?: Record<string, any>) => ['audit', params] as const,
   webhooks: () => ['webhooks'] as const,
   retention: () => ['retention'] as const,
-  quota: (accountId: string) => ['quota', accountId] as const,
   shares: () => ['shares'] as const,
 }
 
@@ -323,17 +324,11 @@ export function useRetryJob() {
 
 // ─── Admin ────────────────────────────────────────────────
 
-export function useAdminStats() {
-  return useQuery({
-    queryKey: queryKeys.admin.stats(),
-    queryFn: () => adminApi.getStats(),
-  })
-}
-
 export function useAdminUsers(params: Record<string, any>) {
   return useQuery({
     queryKey: queryKeys.admin.users(params),
     queryFn: () => adminApi.listUsers(params),
+    placeholderData: (previous) => previous, // no skeleton flash between pages and keystrokes
   })
 }
 
@@ -351,6 +346,45 @@ export function useUpdateAdminUser() {
       adminApi.updateUser(userId, updates),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'users'] }),
   })
+}
+
+export function useAdminQuota() {
+  return useQuery({
+    queryKey: queryKeys.admin.quota(),
+    queryFn: () => adminApi.getQuota(),
+    refetchInterval: 30_000,
+  })
+}
+
+export function useAdminAudit(params: Record<string, any>) {
+  return useQuery({
+    queryKey: queryKeys.admin.audit(params),
+    queryFn: () => adminApi.listAudit(params),
+    placeholderData: (previous) => previous,
+  })
+}
+
+export function useAdminSystem() {
+  return useQuery({
+    queryKey: queryKeys.admin.system(),
+    queryFn: () => adminApi.getSystem(),
+  })
+}
+
+/** Instance trash (B15); per-account trash lists are stale afterwards too. */
+export function useEmptyInstanceTrash() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => adminApi.emptyArchiveTrash(),
+    onSuccess: () => Promise.all([
+      qc.invalidateQueries({ queryKey: queryKeys.admin.system() }),
+      qc.invalidateQueries({ queryKey: ['archive'] }),
+    ]),
+  })
+}
+
+export function useRunIntegrityCheck() {
+  return useMutation({ mutationFn: () => integrityApi.checkAsync() })
 }
 
 // ─── Unsubscribe ──────────────────────────────────────────
@@ -578,17 +612,6 @@ export function useRunRetention() {
   return useMutation({
     mutationFn: () => retentionApi.run(),
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.retention() }),
-  })
-}
-
-// ─── Quota ────────────────────────────────────────────────
-
-export function useQuotaStats(accountId: string | null) {
-  return useQuery({
-    queryKey: queryKeys.quota(accountId!),
-    queryFn: () => quotaApi.getStats(accountId!),
-    enabled: !!accountId,
-    refetchInterval: 30_000,
   })
 }
 

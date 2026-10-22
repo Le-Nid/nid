@@ -89,7 +89,9 @@ vi.mock('../archive/trash.service', () => ({
 const mockCheckIntegrity = vi.fn()
 vi.mock('../archive/integrity.service', () => ({
   checkArchiveIntegrity: (...args: any[]) => mockCheckIntegrity(...args),
+  saveIntegrityResult: (...args: any[]) => mockSaveIntegrity(...args),
 }))
+const mockSaveIntegrity = vi.fn()
 
 const mockLogAudit = vi.fn()
 vi.mock('../audit/audit.service', () => ({ logAudit: (...args: any[]) => mockLogAudit(...args) }))

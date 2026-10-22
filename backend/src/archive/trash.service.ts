@@ -4,6 +4,65 @@ import { createLogger } from '../logger'
 
 const logger = createLogger('trash')
 
+/** Instance trash settings (system_config), with the defaults the purge applies. */
+async function getTrashConfig(): Promise<{ retentionDays: number; purgeEnabled: boolean }> {
+  const db = getDb()
+  const read = async (key: string) =>
+    (await db.selectFrom('system_config').select('value').where('key', '=', key).executeTakeFirst())?.value
+  const retention = await read('archive_trash_retention_days')
+  const enabled = await read('archive_trash_purge_enabled')
+  // A missing row means the default; jsonb `false` is a real value
+  return {
+    retentionDays: retention === undefined ? 30 : Number(JSON.parse(String(retention))),
+    purgeEnabled: enabled === undefined ? true : Boolean(JSON.parse(String(enabled))),
+  }
+}
+
+/** Archive trash of every account (B15): volume and when its oldest mail gets purged. */
+export async function getArchiveTrashSummary() {
+  const row = await getDb()
+    .selectFrom('archived_mails')
+    .select((eb) => [
+      eb.fn.countAll<string>().as('count'),
+      eb.fn.sum<string>('size_bytes').as('size'),
+      eb.fn.min<Date>('deleted_at').as('oldest'),
+    ])
+    .where('deleted_at', 'is not', null)
+    .executeTakeFirst()
+  const { retentionDays, purgeEnabled } = await getTrashConfig()
+  const oldest = row?.oldest ? new Date(row.oldest).getTime() : null
+  return {
+    count: Number(row?.count ?? 0),
+    sizeBytes: Number(row?.size ?? 0),
+    retentionDays,
+    purgeEnabled,
+    nextPurgeAt: purgeEnabled && oldest !== null ? new Date(oldest + retentionDays * 86_400_000).toISOString() : null,
+  }
+}
+
+const EMPTY_BATCH = 1000 // keeps each `IN (...)` well under Postgres' bind parameter limit
+
+/** Permanently delete the archive trash of every account (B15), by batches. */
+export async function emptyAllArchiveTrash(): Promise<{ deleted: number; sizeBytes: number }> {
+  const db = getDb()
+  let deleted = 0
+  let sizeBytes = 0
+  for (;;) {
+    const mails = await db
+      .selectFrom('archived_mails')
+      .select(['id', 'eml_path', 'size_bytes'])
+      .where('deleted_at', 'is not', null)
+      .limit(EMPTY_BATCH)
+      .execute()
+    await deleteArchivedMails(mails)
+    deleted += mails.length
+    sizeBytes += mails.reduce((sum, m) => sum + Number(m.size_bytes ?? 0), 0)
+    if (mails.length < EMPTY_BATCH) break
+  }
+  logger.info(`Emptied the instance archive trash: ${deleted} mail(s) permanently deleted`)
+  return { deleted, sizeBytes }
+}
+
 /**
  * Permanently delete archived mails that have been in the trash
  * longer than the configured retention period.
@@ -11,26 +70,12 @@ const logger = createLogger('trash')
 export async function purgeArchiveTrash(): Promise<{ deleted: number }> {
   const db = getDb()
 
-  // Read config
-  const retentionConfig = await db
-    .selectFrom('system_config')
-    .select('value')
-    .where('key', '=', 'archive_trash_retention_days')
-    .executeTakeFirst()
-
-  const enabledConfig = await db
-    .selectFrom('system_config')
-    .select('value')
-    .where('key', '=', 'archive_trash_purge_enabled')
-    .executeTakeFirst()
-
-  const enabled = enabledConfig ? JSON.parse(String(enabledConfig.value)) : true
-  if (!enabled) {
+  const { retentionDays, purgeEnabled } = await getTrashConfig()
+  if (!purgeEnabled) {
     logger.info('Archive trash purge is disabled')
     return { deleted: 0 }
   }
 
-  const retentionDays = retentionConfig ? Number(JSON.parse(String(retentionConfig.value))) : 30
   const cutoff = new Date()
   cutoff.setDate(cutoff.getDate() - retentionDays)
 

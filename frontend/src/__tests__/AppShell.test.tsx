@@ -78,6 +78,7 @@ describe('routes', () => {
     ['/unsubscribe', '/cleanup?tab=senders'],
     ['/expiration', '/rules?tab=labels'],
     ['/sharing', '/archives?tab=shares'],
+    ['/ops', '/settings/data'],
   ])('redirects %s to %s, keeping the query string', async (from, to) => {
     renderAt(from)
     expect(await landedOn(to)).toBeInTheDocument()

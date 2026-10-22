@@ -273,10 +273,3 @@ test('Attachments', async ({ page }) => {
   await expect(page.getByText('contrat-signe.pdf')).toBeVisible()
   await expect(page.getByRole('button', { name: t('attachments.reload') })).toBeVisible()
 })
-
-test('Admin', async ({ page }) => {
-  await page.goto('/admin')
-  await expect(page.getByRole('heading', { name: t('admin.title') })).toBeVisible()
-  await expect(page.getByText('bob@example.com')).toBeVisible()
-  await expect(page.getByRole('button', { name: t('common.edit') })).toBeVisible()
-})

@@ -10,7 +10,7 @@
     "settings": 0,
     "cleanup": 0,
     "attachments": 7,
-    "admin": 7,
+    "admin": 0,
     "more": 0
   },
   "mobile": {
@@ -24,7 +24,7 @@
     "settings": 0,
     "cleanup": 0,
     "attachments": 6,
-    "admin": 7,
+    "admin": 0,
     "more": 0
   }
 }
