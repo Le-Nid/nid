@@ -834,7 +834,10 @@
     "view": "Voir",
     "dedupSaved": "Espace économisé",
     "dedupDetails": "{{duplicates}} fichier(s) dupliqué(s), {{saved}} économisés",
-    "dedupBackfill": "Analyser"
+    "dedupBackfill": "Analyser",
+    "searchLabel": "Rechercher dans les pièces jointes archivées",
+    "viewName": "Voir {{name}}",
+    "downloadName": "Télécharger {{name}}"
   },
   "bulk": {
     "selected": "{{count}} mail(s) sélectionné(s)",
@@ -864,7 +867,13 @@
     "markAllRead": "Tout marquer lu",
     "clearRead": "Supprimer lues",
     "clearReadConfirm": "Supprimer toutes les notifications lues ?",
-    "empty": "Aucune notification"
+    "empty": "Aucune notification",
+    "bellUnread_one": "Notifications, {{count}} non lue",
+    "bellUnread_other": "Notifications, {{count}} non lues",
+    "markRead": "Marquer comme lue",
+    "delete": "Supprimer la notification « {{title}} »",
+    "clearReadDescription_one": "{{count}} notification lue sera supprimée définitivement.",
+    "clearReadDescription_other": "{{count}} notifications lues seront supprimées définitivement."
   },
   "operators": {
     "from": "Expéditeur",
@@ -1287,5 +1296,9 @@
     "empty": "Aucune tâche",
     "emptyDescription": "Les tâches lancées depuis Mails, Nettoyage, Règles ou Archives apparaissent ici.",
     "loadError": "Impossible de charger l'activité"
+  },
+  "errorBoundary": {
+    "title": "Une erreur inattendue s'est produite",
+    "retry": "Réessayer"
   }
 }

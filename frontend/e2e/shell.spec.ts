@@ -155,3 +155,14 @@ test.describe('command palette', () => {
     await expect(palette).toBeHidden()
   })
 })
+
+test('notification bell opens its list and closes with Escape', async ({ page }) => {
+  await page.goto('/overview')
+  const bell = page.getByRole('button', { name: t('notifications.title') })
+  await bell.click()
+  const panel = page.getByRole('dialog')
+  await expect(panel.getByText(t('notifications.empty'))).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(panel).toBeHidden()
+  await expect(bell).toBeFocused()
+})

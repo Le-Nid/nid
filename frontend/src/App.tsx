@@ -92,7 +92,6 @@ export default function App() {
           <Route element={<LegacyPages />}>
             {/* New routes (§3.1), rendering the legacy page until its lot lands */}
             {/* Legacy routes whose destination does not exist yet: redirected in their lot (§3.3) */}
-            <Route path="attachments" element={<AttachmentsPage />} />
             <Route path="saved-searches" element={<SavedSearchesPage />} />
             <Route path="unified" element={<UnifiedInboxPage />} />
           </Route>
@@ -102,6 +101,7 @@ export default function App() {
           <Route path="cleanup" element={<RequireGmailAccess title="cleanup.title"><Suspense fallback={<RouteFallback />}><CleanupPage /></Suspense></RequireGmailAccess>} />
           <Route path="rules" element={<RequireGmailAccess title="rules.title"><Suspense fallback={<RouteFallback />}><RulesPage /></Suspense></RequireGmailAccess>} />
           <Route path="archives" element={<Suspense fallback={<RouteFallback />}><ArchivesPage /></Suspense>} />
+          <Route path="attachments" element={<Suspense fallback={<RouteFallback />}><AttachmentsPage /></Suspense>} />
           <Route path="activity" element={<Suspense fallback={<RouteFallback />}><ActivityPage /></Suspense>} />
           <Route path="settings/:section" element={<Suspense fallback={<RouteFallback />}><SettingsPage /></Suspense>} />
           <Route path="more" element={<Suspense fallback={<RouteFallback />}><MorePage /></Suspense>} />

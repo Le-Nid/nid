@@ -834,7 +834,10 @@
     "view": "View",
     "dedupSaved": "Space saved",
     "dedupDetails": "{{duplicates}} duplicate file(s), {{saved}} saved",
-    "dedupBackfill": "Analyze"
+    "dedupBackfill": "Analyze",
+    "searchLabel": "Search archived attachments",
+    "viewName": "View {{name}}",
+    "downloadName": "Download {{name}}"
   },
   "bulk": {
     "selected": "{{count}} email(s) selected",
@@ -864,7 +867,13 @@
     "markAllRead": "Mark all as read",
     "clearRead": "Clear read",
     "clearReadConfirm": "Delete all read notifications?",
-    "empty": "No notifications"
+    "empty": "No notifications",
+    "bellUnread_one": "Notifications, {{count}} unread",
+    "bellUnread_other": "Notifications, {{count}} unread",
+    "markRead": "Mark as read",
+    "delete": "Delete notification “{{title}}”",
+    "clearReadDescription_one": "{{count}} read notification will be permanently deleted.",
+    "clearReadDescription_other": "{{count}} read notifications will be permanently deleted."
   },
   "operators": {
     "from": "Sender",
@@ -1287,5 +1296,9 @@
     "empty": "No tasks",
     "emptyDescription": "Tasks started from Mails, Cleanup, Rules or Archives show up here.",
     "loadError": "Could not load the activity"
+  },
+  "errorBoundary": {
+    "title": "An unexpected error occurred",
+    "retry": "Try again"
   }
 }

@@ -24,7 +24,7 @@ vi.mock('../pages/Rules', probe)
 vi.mock('../pages/Admin', probe)
 vi.mock('../pages/Cleanup', probe)
 vi.mock('../hooks/useGlobalJobNotifier', () => ({ useGlobalJobNotifier: vi.fn() }))
-vi.mock('../components/NotificationBell', () => ({ default: () => null }))
+vi.mock('../components/app/NotificationBell', () => ({ default: () => null }))
 
 let mobile = false
 const logout = vi.fn(() => Promise.resolve())
