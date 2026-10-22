@@ -23,7 +23,7 @@ export default defineConfig({
         start_url: '/',
         display: 'standalone',
         theme_color: '#ffffff', // light --background (§4.5); main.tsx switches the meta tag in dark mode
-        background_color: '#ffffff', // antd light layout background
+        background_color: '#ffffff',
         icons: [
           { src: '/nid-pwa-192.png', sizes: '192x192', type: 'image/png' },
           { src: '/nid-pwa-512.png', sizes: '512x512', type: 'image/png' },
@@ -64,10 +64,6 @@ export default defineConfig({
             id.includes('/react-router-dom/')
           ) {
             return 'react-vendor'
-          }
-
-          if (id.includes('/antd/') || id.includes('/@ant-design/icons/')) {
-            return 'antd-vendor'
           }
 
           if (id.includes('/axios/') || id.includes('/dayjs/') || id.includes('/zustand/')) {

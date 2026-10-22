@@ -6,7 +6,7 @@ import {
   Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from '@/components/ui/command'
 import { useAuthStore } from '@/store/auth.store'
-import { LEGACY_PAGES, visibleNav } from './nav'
+import { OTHER_PAGES, visibleNav } from './nav'
 
 /** ⌘K / Ctrl+K — navigation, plus « Nouvelle règle » (I3). */
 export default function CommandPalette({ open, onOpenChange }: Readonly<{ open: boolean; onOpenChange: (open: boolean) => void }>) {
@@ -50,8 +50,8 @@ export default function CommandPalette({ open, onOpenChange }: Readonly<{ open: 
               {t('rules.newRule')}
             </CommandItem>
           </CommandGroup>
-          <CommandGroup heading={t('shell.legacyPages')}>
-            {LEGACY_PAGES.map((p) => (
+          <CommandGroup heading={t('shell.otherPages')}>
+            {OTHER_PAGES.map((p) => (
               <CommandItem key={p.to} onSelect={() => go(p.to)}>
                 <CornerDownRight aria-hidden="true" />
                 {t(p.labelKey)}
