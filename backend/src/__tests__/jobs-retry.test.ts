@@ -1,11 +1,13 @@
 import Fastify from 'fastify'
 
 const mockExecuteTakeFirst = vi.fn()
+const mockExecute = vi.fn()
 const whereCalls: unknown[][] = []
 const chainable: any = () => {
   const chain: any = new Proxy({}, {
     get: (_t, prop) => {
       if (prop === 'executeTakeFirst') return mockExecuteTakeFirst
+      if (prop === 'execute') return mockExecute
       return (...args: any[]) => {
         if (prop === 'where') {
           whereCalls.push(args)
@@ -71,5 +73,33 @@ describe('POST /api/jobs/:jobId/retry (B11)', () => {
     const res = await (await app()).inject({ method: 'POST', url: '/import_imap-old/retry' })
     expect(res.statusCode).toBe(409)
     expect(mockEnqueueJob).not.toHaveBeenCalled()
+  })
+})
+
+describe('GET /api/jobs (Activité chips, §7.6)', () => {
+  it('returns the plain list by default, for the last 30 days only', async () => {
+    mockExecute.mockResolvedValueOnce([{ id: 'j1' }])
+    const res = await (await app()).inject({ method: 'GET', url: '/' })
+    expect(res.json()).toEqual([{ id: 'j1' }])
+    expect(whereCalls).toContainEqual(['user_id', '=', 'u1'])
+    expect(whereCalls.some(([col, op]) => col === 'created_at' && op === '>')).toBe(true)
+  })
+
+  it('filters on a comma list of statuses and adds the per-status counts', async () => {
+    mockExecute
+      .mockResolvedValueOnce([{ id: 'j1', status: 'scheduled' }])
+      .mockResolvedValueOnce([{ status: 'scheduled', count: '2' }, { status: 'failed', count: '1' }])
+    const res = await (await app()).inject({ method: 'GET', url: '/?status=scheduled,pending&withCounts=true&limit=20' })
+    expect(res.statusCode).toBe(200)
+    expect(res.json()).toEqual({ jobs: [{ id: 'j1', status: 'scheduled' }], counts: { scheduled: 2, failed: 1 } })
+    expect(whereCalls).toContainEqual(['status', 'in', ['scheduled', 'pending']])
+  })
+
+  it('rejects an unknown status or a malformed account id', async () => {
+    const a = await app()
+    for (const url of ['/?status=done', '/?accountId=acc-1', '/?limit=0']) {
+      expect((await a.inject({ method: 'GET', url })).statusCode).not.toBe(200)
+    }
+    expect(mockExecute).not.toHaveBeenCalled()
   })
 })

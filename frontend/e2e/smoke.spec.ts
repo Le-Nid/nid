@@ -157,13 +157,6 @@ test('Archive', async ({ page }) => {
   await expect(page.getByText('Édition du matin archivée')).toBeVisible()
 })
 
-test('Jobs', async ({ page }) => {
-  await page.goto('/jobs')
-  await expect(page.getByRole('heading', { name: t('jobs.title') })).toBeVisible()
-  await expect(page.getByRole('row', { name: new RegExp(`${t('jobs.archiveMails')}.*${t('jobs.completed')}`) })).toBeVisible()
-  await expect(page.getByRole('button', { name: t('common.refresh') })).toBeVisible()
-})
-
 test('Settings', async ({ page }) => {
   await page.goto('/settings')
   await expect(page.getByRole('heading', { name: t('settings.title') })).toBeVisible()

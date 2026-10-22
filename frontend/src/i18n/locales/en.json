@@ -471,19 +471,6 @@
     }
   },
   "jobs": {
-    "title": "Jobs",
-    "filterStatus": "Filter by status",
-    "autoRefresh": "Auto-refresh every 5s",
-    "noJobs": "No jobs",
-    "type": "Type",
-    "status": "Status",
-    "progress": "Progress",
-    "account": "Account",
-    "created": "Created",
-    "duration": "Duration",
-    "errorCol": "Error",
-    "followRealtime": "Follow in real time",
-    "cancelJob": "Cancel",
     "pending": "Pending",
     "active": "Running",
     "completed": "Completed",
@@ -493,14 +480,16 @@
     "archiveMails": "NAS archiving",
     "runRule": "Auto rule",
     "scanUnsubscribe": "Newsletter scan",
-    "durationSeconds": "{{diff}}s",
-    "progressCount": "{{processed}} / {{total}}",
     "purgeArchiveTrash": "Archive trash purge",
-    "trashConfig": "Archive trash configuration",
-    "trashRetentionDays": "Days before permanent deletion",
-    "trashPurgeEnabled": "Automatic purge enabled",
-    "trashConfigSaved": "Trash configuration saved",
-    "trashConfigError": "Error saving configuration"
+    "scheduled": "Scheduled",
+    "integrityCheck": "Integrity check",
+    "scanTracking": "Tracker scan",
+    "scanPii": "Personal data scan",
+    "encryptArchives": "Archive encryption",
+    "importMbox": "Mbox import",
+    "importImap": "IMAP import",
+    "applyRetention": "Retention run",
+    "backfillBodyText": "Archive full-text indexing"
   },
   "jobModal": {
     "reconnecting": "Reconnecting…",
@@ -1170,5 +1159,51 @@
       "empty": "No running job",
       "loadError": "Could not load the running jobs."
     }
+  },
+  "activity": {
+    "title": "Activity",
+    "description": "Everything you and your rules started, live.",
+    "account": "Gmail account",
+    "allAccounts": "All accounts",
+    "system": "Instance",
+    "filterLabel": "Filter by status",
+    "chip": {
+      "all": "All",
+      "waiting": "Waiting",
+      "active": "Running",
+      "failed": "Failed",
+      "completed": "Completed"
+    },
+    "col": {
+      "status": "Status",
+      "task": "Task",
+      "progress": "Progress / result",
+      "duration": "Duration"
+    },
+    "origin": {
+      "rule": "Rule",
+      "sender": "Cleanup › {{sender}}",
+      "query": "Mails › {{query}}",
+      "retry": "Retry"
+    },
+    "action": {
+      "cancel": "Cancel",
+      "retry": "Retry",
+      "details": "Details",
+      "view": "View"
+    },
+    "cancelFailed": "Could not cancel the task",
+    "retried": "Task restarted",
+    "retryFailed": "Could not restart the task",
+    "retryCredentials": "This task needs credentials that are not stored: start it again from its page.",
+    "details": {
+      "started": "Started {{when}}",
+      "noError": "No error details."
+    },
+    "footer": "{{count}} of {{total}} · history kept for 30 days",
+    "more": "Show more",
+    "empty": "No tasks",
+    "emptyDescription": "Tasks started from Mails, Cleanup, Rules or Archives show up here.",
+    "loadError": "Could not load the activity"
   }
 }

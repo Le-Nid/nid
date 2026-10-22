@@ -471,36 +471,25 @@
     }
   },
   "jobs": {
-    "title": "Jobs",
-    "filterStatus": "Filtrer par statut",
-    "autoRefresh": "Actualisation auto toutes les 5s",
-    "noJobs": "Aucun job",
-    "type": "Type",
-    "status": "Statut",
-    "progress": "Progression",
-    "account": "Compte",
-    "created": "Créé",
-    "duration": "Durée",
-    "errorCol": "Erreur",
-    "followRealtime": "Suivre en temps réel",
-    "cancelJob": "Annuler",
     "pending": "En attente",
     "active": "En cours",
     "completed": "Terminé",
     "failed": "Échoué",
     "cancelled": "Annulé",
-    "bulkOperation": "Opération bulk",
+    "bulkOperation": "Opération groupée",
     "archiveMails": "Archivage NAS",
     "runRule": "Règle auto",
     "scanUnsubscribe": "Scan newsletters",
-    "durationSeconds": "{{diff}}s",
-    "progressCount": "{{processed}} / {{total}}",
     "purgeArchiveTrash": "Purge corbeille archives",
-    "trashConfig": "Configuration corbeille archives",
-    "trashRetentionDays": "Délai avant suppression définitive (jours)",
-    "trashPurgeEnabled": "Purge automatique activée",
-    "trashConfigSaved": "Configuration de la corbeille sauvegardée",
-    "trashConfigError": "Erreur lors de la sauvegarde"
+    "scheduled": "Planifié",
+    "integrityCheck": "Vérification d'intégrité",
+    "scanTracking": "Analyse des traceurs",
+    "scanPii": "Analyse des données personnelles",
+    "encryptArchives": "Chiffrement des archives",
+    "importMbox": "Import mbox",
+    "importImap": "Import IMAP",
+    "applyRetention": "Application de la rétention",
+    "backfillBodyText": "Indexation du texte des archives"
   },
   "jobModal": {
     "reconnecting": "Reconnexion…",
@@ -1170,5 +1159,51 @@
       "empty": "Aucun job en cours",
       "loadError": "Impossible de charger les jobs en cours."
     }
+  },
+  "activity": {
+    "title": "Activité",
+    "description": "Tout ce que vous et vos règles avez lancé, en direct.",
+    "account": "Compte Gmail",
+    "allAccounts": "Tous les comptes",
+    "system": "Instance",
+    "filterLabel": "Filtrer par statut",
+    "chip": {
+      "all": "Toutes",
+      "waiting": "En attente",
+      "active": "En cours",
+      "failed": "Échouées",
+      "completed": "Terminées"
+    },
+    "col": {
+      "status": "Statut",
+      "task": "Tâche",
+      "progress": "Progression / résultat",
+      "duration": "Durée"
+    },
+    "origin": {
+      "rule": "Règle",
+      "sender": "Nettoyage › {{sender}}",
+      "query": "Mails › {{query}}",
+      "retry": "Relance"
+    },
+    "action": {
+      "cancel": "Annuler",
+      "retry": "Relancer",
+      "details": "Détails",
+      "view": "Voir"
+    },
+    "cancelFailed": "Impossible d'annuler la tâche",
+    "retried": "Tâche relancée",
+    "retryFailed": "Impossible de relancer la tâche",
+    "retryCredentials": "Cette tâche demande des identifiants non conservés : relancez-la depuis sa page.",
+    "details": {
+      "started": "Lancée {{when}}",
+      "noError": "Aucun détail d'erreur."
+    },
+    "footer": "{{count}} sur {{total}} · historique conservé 30 jours",
+    "more": "Afficher plus",
+    "empty": "Aucune tâche",
+    "emptyDescription": "Les tâches lancées depuis Mails, Nettoyage, Règles ou Archives apparaissent ici.",
+    "loadError": "Impossible de charger l'activité"
   }
 }

@@ -10,8 +10,12 @@
 
 | Param | Description |
 |---|---|
-| `status` | Filtrer par statut (`pending`, `scheduled`, `active`, `completed`, `failed`, `cancelled`) |
-| `accountId` | Filtrer par compte Gmail |
+| `status` | Filtrer par statut, liste séparée par des virgules (`pending`, `scheduled`, `active`, `completed`, `failed`, `cancelled`) |
+| `accountId` | Filtrer par compte Gmail (UUID) ; absent = tous les comptes |
+| `limit` | Nombre de jobs (1–500, défaut 50) |
+| `withCounts` | `true` : réponse `{ jobs, counts }`, `counts` = nombre de jobs par statut pour le même compte (`{ "failed": 1, ... }`) |
+
+Seuls les jobs des 30 derniers jours sont renvoyés.
 
 **Réponse**
 ```json

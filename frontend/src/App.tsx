@@ -11,7 +11,7 @@ const OverviewPage = lazy(() => import("./pages/Overview"));
 const MailsPage = lazy(() => import("./pages/Mails"));
 const ArchivesPage = lazy(() => import("./pages/Archives"));
 const SettingsPage = lazy(() => import("./pages/Settings"));
-const JobsPage = lazy(() => import("./pages/Jobs"));
+const ActivityPage = lazy(() => import("./pages/Activity"));
 const RulesPage = lazy(() => import("./pages/Rules"));
 const AdminPage = lazy(() => import("./pages/Admin"));
 const CleanupPage = lazy(() => import("./pages/Cleanup"));
@@ -91,7 +91,6 @@ export default function App() {
         >
           <Route element={<LegacyPages />}>
             {/* New routes (§3.1), rendering the legacy page until its lot lands */}
-            <Route path="activity" element={<JobsPage />} />
             <Route path="settings/:section" element={<SettingsPage />} />
             <Route path="admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
             {/* Legacy routes whose destination does not exist yet: redirected in their lot (§3.3) */}
@@ -107,6 +106,7 @@ export default function App() {
           <Route path="cleanup" element={<Suspense fallback={<RouteFallback />}><CleanupPage /></Suspense>} />
           <Route path="rules" element={<Suspense fallback={<RouteFallback />}><RulesPage /></Suspense>} />
           <Route path="archives" element={<Suspense fallback={<RouteFallback />}><ArchivesPage /></Suspense>} />
+          <Route path="activity" element={<Suspense fallback={<RouteFallback />}><ActivityPage /></Suspense>} />
           {/* §3.3 redirects whose target exists in L0 */}
           <Route index element={<Redirect to="/overview" />} />
           <Route path="dashboard" element={<Redirect to="/overview" />} />

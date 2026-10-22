@@ -17,7 +17,7 @@ test.describe('redirects (§3.3)', () => {
     ['/analytics', '/overview', 'overview.top.title'],
     ['/insights', '/overview', 'overview.top.title'],
     ['/archive', '/archives', 'archives.title'],
-    ['/jobs', '/activity', 'jobs.title'],
+    ['/jobs', '/activity', 'activity.title'],
     ['/settings', '/settings/account', 'settings.title'],
   ]
   for (const [from, to, heading] of REDIRECTS) {
@@ -119,7 +119,7 @@ test.describe('mobile bottom bar', () => {
     await sheet.getByRole('link', { name: t('shell.activity') }).click()
     await expect(page).toHaveURL(/\/activity$/)
     await expect(sheet).toBeHidden()
-    await expect(page.getByRole('heading', { name: t('jobs.title') })).toBeVisible()
+    await expect(page.getByRole('heading', { name: t('activity.title') })).toBeVisible()
   })
 
   test('"Plus" hides Admin for non-admins', async ({ page }) => {
