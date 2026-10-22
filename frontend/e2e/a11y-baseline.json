@@ -7,10 +7,11 @@
     "rules": 0,
     "labels": 0,
     "activity": 0,
-    "settings": 48,
+    "settings": 0,
     "cleanup": 0,
     "attachments": 7,
-    "admin": 7
+    "admin": 7,
+    "more": 0
   },
   "mobile": {
     "login": 3,
@@ -20,9 +21,10 @@
     "rules": 0,
     "labels": 0,
     "activity": 0,
-    "settings": 43,
+    "settings": 0,
     "cleanup": 0,
     "attachments": 6,
-    "admin": 7
+    "admin": 7,
+    "more": 0
   }
 }

@@ -23,7 +23,7 @@ import { MailViewer, type ViewerAction } from '@/components/app/MailViewer'
 import { RuleSheet, type RuleSheetTarget } from '@/components/app/RuleSheet'
 import { useAccount } from '@/hooks/useAccount'
 import { useCreateSavedSearch, useGmailMessages, useLabels, useSavedSearches } from '@/hooks/queries'
-import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
+import { useKeyboardShortcuts, useShortcutsPref } from '@/hooks/useKeyboardShortcuts'
 import { useMailActions, type MailAction, type Target } from '@/hooks/useMailActions'
 import { formatBytes, formatEmail, formatSender } from '@/utils/format'
 import { toBadge, type ApiLabel } from '@/utils/gmail'
@@ -48,17 +48,8 @@ const QUICK: [key: string, query: string][] = [
   ['promotions', 'category:promotions older_than:6m'], ['social', 'category:social'], ['old', 'older_than:1y'],
   ['spam', 'in:spam'], ['trash', 'in:trash'],
 ]
-const SHORTCUTS_KEY = 'nid.mailShortcuts'
 // A search that is just one sender (« from:x@y.fr ») prefills « Créer une règle »
 const searchSender = (q: string) => /^from:(\S+)$/.exec(q.trim())?.[1]
-
-function readShortcutsPref() {
-  try {
-    return localStorage.getItem(SHORTCUTS_KEY) !== 'off'
-  } catch {
-    return true
-  }
-}
 
 function SenderCell({ mail }: Readonly<{ mail: Mail }>) {
   const { t } = useTranslation()
@@ -193,7 +184,7 @@ export default function MailsPage() {
   const [viewing, setViewing] = useState<string | null>(null)
   const [pickingLabel, setPickingLabel] = useState(false)
   const [ruleTarget, setRuleTarget] = useState<RuleSheetTarget | null>(null)
-  const [shortcutsOn, setShortcutsOn] = useState(readShortcutsPref)
+  const [shortcutsOn, setShortcutsOn] = useShortcutsPref()
   const pageRef = useRef<HTMLDivElement>(null)
 
   // Selection and reader belong to one list: reset when the account or the search changes (§6.4)
@@ -312,14 +303,7 @@ export default function MailsPage() {
     '/': () => pageRef.current?.querySelector<HTMLInputElement>('input[type="search"]')?.focus(),
     Escape: clearSelection,
   }, shortcutsOn && !viewing && !pickingLabel && !ruleTarget)
-  const toggleShortcuts = () => {
-    setShortcutsOn(!shortcutsOn)
-    try {
-      localStorage.setItem(SHORTCUTS_KEY, shortcutsOn ? 'off' : 'on')
-    } catch {
-      // Storage blocked: the choice lasts until the page reloads
-    }
-  }
+  const toggleShortcuts = () => setShortcutsOn(!shortcutsOn)
 
   return (
     <div ref={pageRef} className="mx-auto flex w-full max-w-[1180px] flex-col gap-4 p-4 md:px-6 md:pt-8">

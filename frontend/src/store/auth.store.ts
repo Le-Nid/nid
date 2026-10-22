@@ -9,12 +9,18 @@ interface User {
   avatar_url?: string | null
   max_gmail_accounts?: number
   storage_quota_bytes?: number
+  totp_enabled?: boolean
 }
 
-interface GmailAccount {
+export interface GmailAccount {
   id: string
   email: string
   is_active: boolean
+  backup_enabled?: boolean
+  backup_interval?: '1h' | '6h' | '24h'
+  /** « Action requise »: Google refused the refresh token, the account must be reconnected. */
+  needs_reauth?: boolean
+  last_sync_at?: string | null
 }
 
 interface AuthState {

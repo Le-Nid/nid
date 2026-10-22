@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 // Typing places and widgets with their own keys (menu typeahead, dialogs) keep every key
 const OWNS_KEYS = 'input, textarea, select, [contenteditable="true"], [role="menu"], [role="dialog"], [role="listbox"]'
@@ -26,4 +26,26 @@ export function useKeyboardShortcuts(handlers: Record<string, () => void>, enabl
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [enabled])
+}
+
+const SHORTCUTS_KEY = 'nid.mailShortcuts'
+
+/** R3 « Raccourcis clavier à une touche » (Mails, Paramètres > Compte): on by default, remembered per browser. */
+export function useShortcutsPref() {
+  const [on, setOn] = useState(() => {
+    try {
+      return localStorage.getItem(SHORTCUTS_KEY) !== 'off'
+    } catch {
+      return true
+    }
+  })
+  const set = (next: boolean) => {
+    setOn(next)
+    try {
+      localStorage.setItem(SHORTCUTS_KEY, next ? 'on' : 'off')
+    } catch {
+      // Storage blocked: the choice lasts until the page reloads
+    }
+  }
+  return [on, set] as const
 }

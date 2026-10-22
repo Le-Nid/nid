@@ -19,6 +19,7 @@ vi.mock('../pages/Mails', probe)
 vi.mock('../pages/Archives', probe)
 vi.mock('../pages/Settings', probe)
 vi.mock('../pages/Activity', probe)
+vi.mock('../pages/More', probe)
 vi.mock('../pages/Rules', probe)
 vi.mock('../pages/Admin', probe)
 vi.mock('../pages/Cleanup', probe)
@@ -189,35 +190,24 @@ describe('mobile bottom bar', () => {
     renderAt('/mails')
     await landedOn('/mails')
     const bar = screen.getByRole('navigation', { name: 'Navigation principale' })
-    expect(within(bar).getAllByRole('link').map((l) => l.textContent)).toEqual(['Accueil', 'Mails', 'Nettoyage', 'Archives'])
+    expect(within(bar).getAllByRole('link').map((l) => l.textContent)).toEqual(['Accueil', 'Mails', 'Nettoyage', 'Archives', 'Plus'])
     expect(within(bar).getByRole('link', { name: 'Mails' })).toHaveAttribute('aria-current', 'page')
-    expect(within(bar).getByRole('button', { name: 'Plus' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Réduire la barre latérale' })).not.toBeInTheDocument()
   })
 
-  it('opens the Plus sheet with the other entries and logout', async () => {
+  it('Plus opens /more and stays lit on the pages it leads to', async () => {
     renderAt('/rules')
     await landedOn('/rules')
-    await userEvent.click(screen.getByRole('button', { name: 'Plus' }))
-    const sheet = await screen.findByRole('dialog', { name: 'Plus' })
-    expect(within(sheet).getAllByRole('link').map((l) => l.textContent)).toEqual(['Règles & libellés', 'Activité', 'Paramètres', 'Admin'])
-    expect(within(sheet).getByRole('link', { name: 'Règles & libellés' })).toHaveAttribute('aria-current', 'page')
-
-    await userEvent.click(within(sheet).getByRole('link', { name: 'Activité' }))
-    expect(await landedOn('/activity')).toBeInTheDocument()
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    const plus = screen.getByRole('link', { name: 'Plus' })
+    expect(plus).toHaveAttribute('aria-current', 'page')
+    await userEvent.click(plus)
+    expect(await landedOn('/more')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Plus' })).toHaveAttribute('aria-current', 'page')
   })
 
-  it('has no Admin entry for other users, and logs out from the sheet', async () => {
-    login('user')
-    renderAt('/overview')
-    await landedOn('/overview')
-    await userEvent.click(screen.getByRole('button', { name: 'Plus' }))
-    const sheet = await screen.findByRole('dialog', { name: 'Plus' })
-    expect(within(sheet).queryByRole('link', { name: 'Admin' })).not.toBeInTheDocument()
-    await userEvent.click(within(sheet).getByRole('button', { name: 'Se déconnecter' }))
-    expect(logout).toHaveBeenCalled()
-    expect(await landedOn('/login')).toBeInTheDocument()
+  it('/privacy goes to Paramètres > Compte', async () => {
+    renderAt('/privacy')
+    expect(await landedOn('/settings/account')).toBeInTheDocument()
   })
 })
 
@@ -280,17 +270,6 @@ describe('live counters (B3, D6)', () => {
     expect(screen.getByRole('link', { name: 'Mails' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Activité' })).toBeInTheDocument()
     expect(status).toHaveTextContent('')
-  })
-
-  it('shows the badges in the mobile Plus sheet', async () => {
-    mobile = true
-    renderAt('/overview')
-    await landedOn('/overview')
-    await push({ mails: {}, activeRules: 1, activeJobs: 1 })
-    await userEvent.click(screen.getByRole('button', { name: 'Plus' }))
-    const sheet = await screen.findByRole('dialog')
-    expect(within(sheet).getByRole('link', { name: 'Activité 1 en cours' })).toBeInTheDocument()
-    expect(within(sheet).getByRole('link', { name: 'Règles & libellés 1' })).toBeInTheDocument()
   })
 
   it('closes the stream when the shell unmounts', async () => {

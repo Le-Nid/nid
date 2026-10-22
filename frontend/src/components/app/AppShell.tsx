@@ -105,7 +105,7 @@ export default function AppShell() {
             <Outlet context={counters} />
           </main>
         </div>
-        {isMobile && <BottomNav counters={counters} />}
+        {isMobile && <BottomNav />}
         <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
         {/* Mobile: above the bottom bar (52 px + safe area) */}
         <Toaster containerAriaLabel={t('undoToast.region')} mobileOffset={{ bottom: 'calc(60px + max(22px, env(safe-area-inset-bottom)))' }} />

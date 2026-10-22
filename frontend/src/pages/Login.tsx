@@ -83,7 +83,7 @@ export default function LoginPage() {
     setLoading(true); setError(null)
     try {
       await register(values.email, values.password)
-      navigate('/settings/account')
+      navigate('/settings/gmail')
     } catch (e: unknown) {
       const axiosErr = e as { response?: { data?: { error?: string } } }
       setError(axiosErr.response?.data?.error ?? t('login.errorRegister'))

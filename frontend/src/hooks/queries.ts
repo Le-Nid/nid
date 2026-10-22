@@ -2,11 +2,12 @@ import { keepPreviousData, useQuery, useInfiniteQuery, useMutation, useQueryClie
 import {
   dashboardApi, gmailApi, archiveApi, rulesApi, jobsApi,
   adminApi, unsubscribeApi, attachmentsApi,
-  analyticsApi, privacyApi, notificationsApi,
+  analyticsApi, notificationsApi,
   auditApi, webhooksApi, savedSearchesApi, unifiedApi, archiveThreadsApi,
   retentionApi, quotaApi, importApi,
-  sharingApi, labelsApi,
+  sharingApi, labelsApi, gmailAccountsApi, twoFactorApi, configApi,
 } from '../api'
+import { useAuthStore } from '../store/auth.store'
 
 // ─── Query key factories ──────────────────────────────────
 
@@ -49,15 +50,6 @@ export const queryKeys = {
   analytics: {
     suggestions: (accountId: string) => ['analytics', accountId, 'suggestions'] as const,
   },
-  privacy: {
-    trackingStats: (accountId: string) => ['privacy', accountId, 'tracking', 'stats'] as const,
-    trackedMessages: (accountId: string, params?: Record<string, any>) =>
-      ['privacy', accountId, 'tracking', 'messages', params] as const,
-    piiStats: (accountId: string) => ['privacy', accountId, 'pii', 'stats'] as const,
-    piiFindings: (accountId: string, params?: Record<string, any>) =>
-      ['privacy', accountId, 'pii', 'findings', params] as const,
-    encryption: (accountId: string) => ['privacy', accountId, 'encryption'] as const,
-  },
   notifications: {
     preferences: () => ['notifications', 'preferences'] as const,
   },
@@ -97,11 +89,14 @@ export function useLabels(accountId: string | null) {
   })
 }
 
-/** Label edits go to Gmail; the synced list (`['labels']`) is refetched after each. */
-function useLabelMutation<T>(fn: (input: T) => Promise<unknown>) {
+/** A mutation that refetches `queryKey` once it succeeded. */
+function useInvalidatingMutation<T>(fn: (input: T) => Promise<unknown>, queryKey: readonly unknown[]) {
   const qc = useQueryClient()
-  return useMutation({ mutationFn: fn, onSuccess: () => qc.invalidateQueries({ queryKey: ['labels'] }) })
+  return useMutation({ mutationFn: fn, onSuccess: () => qc.invalidateQueries({ queryKey }) })
 }
+
+/** Label edits go to Gmail; the synced list (`['labels']`) is refetched after each. */
+const useLabelMutation = <T,>(fn: (input: T) => Promise<unknown>) => useInvalidatingMutation(fn, ['labels'])
 
 export const useCreateLabel = (accountId: string) =>
   useLabelMutation((name: string) => gmailApi.createLabel(accountId, name))
@@ -419,48 +414,6 @@ export function useDismissSuggestion() {
   })
 }
 
-// ─── Privacy ──────────────────────────────────────────────
-
-export function useTrackingStats(accountId: string | null) {
-  return useQuery({
-    queryKey: queryKeys.privacy.trackingStats(accountId!),
-    queryFn: () => privacyApi.getTrackingStats(accountId!),
-    enabled: !!accountId,
-  })
-}
-
-export function useTrackedMessages(accountId: string | null, params: Record<string, any>) {
-  return useQuery({
-    queryKey: queryKeys.privacy.trackedMessages(accountId!, params),
-    queryFn: () => privacyApi.listTrackedMessages(accountId!, params),
-    enabled: !!accountId,
-  })
-}
-
-export function usePiiStats(accountId: string | null) {
-  return useQuery({
-    queryKey: queryKeys.privacy.piiStats(accountId!),
-    queryFn: () => privacyApi.getPiiStats(accountId!),
-    enabled: !!accountId,
-  })
-}
-
-export function usePiiFindings(accountId: string | null, params: Record<string, any>) {
-  return useQuery({
-    queryKey: queryKeys.privacy.piiFindings(accountId!, params),
-    queryFn: () => privacyApi.listPiiFindings(accountId!, params),
-    enabled: !!accountId,
-  })
-}
-
-export function useEncryptionStatus(accountId: string | null) {
-  return useQuery({
-    queryKey: queryKeys.privacy.encryption(accountId!),
-    queryFn: () => privacyApi.getEncryptionStatus(accountId!),
-    enabled: !!accountId,
-  })
-}
-
 // ─── Notifications ────────────────────────────────────────
 
 export function useNotificationPreferences() {
@@ -469,6 +422,44 @@ export function useNotificationPreferences() {
     queryFn: () => notificationsApi.getPreferences(),
   })
 }
+
+/** Optimistic: a switch flips at once and flips back if the server refuses (§6.5). */
+export function useUpdateNotificationPreferences() {
+  const qc = useQueryClient()
+  const queryKey = queryKeys.notifications.preferences()
+  return useMutation({
+    mutationFn: (prefs: Record<string, boolean | string>) => notificationsApi.updatePreferences(prefs),
+    onMutate: async (prefs) => {
+      await qc.cancelQueries({ queryKey })
+      const previous = qc.getQueryData(queryKey)
+      qc.setQueryData(queryKey, (old: object | undefined) => ({ ...old, ...prefs }))
+      return { previous }
+    },
+    onError: (_err, _prefs, context) => qc.setQueryData(queryKey, context?.previous),
+    onSettled: () => qc.invalidateQueries({ queryKey }),
+  })
+}
+
+// ─── Account (/api/auth/me: Gmail accounts, 2FA) ──────────
+
+/** Changes what `/api/auth/me` returns: the auth store refetches it. */
+function useMeMutation<T>(fn: (input: T) => Promise<unknown>) {
+  return useMutation({ mutationFn: fn, onSuccess: () => useAuthStore.getState().fetchMe() })
+}
+
+export const useUpdateGmailAccount = () =>
+  useMeMutation(({ id, ...body }: { id: string } & Parameters<typeof gmailAccountsApi.update>[1]) => gmailAccountsApi.update(id, body))
+export const useToggleGmailAccount = () => useMeMutation(gmailAccountsApi.toggle)
+export const useDisconnectGmailAccount = () => useMeMutation(gmailAccountsApi.disconnect)
+/** « Synchroniser maintenant »: labels read again from Gmail; last_sync_at comes back with /me. */
+export const useSyncGmailAccount = () => useMeMutation(labelsApi.sync)
+
+export const useTwoFactorSetup = () => useMutation({ mutationFn: twoFactorApi.setup })
+export const useTwoFactorEnable = () => useMeMutation(twoFactorApi.enable)
+export const useTwoFactorDisable = () => useMeMutation(twoFactorApi.disable)
+
+export const useExportConfig = () => useMutation({ mutationFn: configApi.exportConfig })
+export const useImportConfig = () => useMeMutation(configApi.importConfig)
 
 // ─── Audit ────────────────────────────────────────────────
 
@@ -487,6 +478,11 @@ export function useWebhooks() {
     queryFn: () => webhooksApi.list(),
   })
 }
+
+export const useCreateWebhook = () => useInvalidatingMutation(webhooksApi.create, queryKeys.webhooks())
+export const useToggleWebhook = () => useInvalidatingMutation(webhooksApi.toggle, queryKeys.webhooks())
+export const useDeleteWebhook = () => useInvalidatingMutation(webhooksApi.remove, queryKeys.webhooks())
+export const useTestWebhook = () => useMutation({ mutationFn: webhooksApi.test })
 
 // ─── Saved Searches ───────────────────────────────────────
 

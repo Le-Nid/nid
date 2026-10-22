@@ -2,11 +2,11 @@ import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { createColumnHelper, useTable } from '@tanstack/react-table'
-import { Switch } from 'radix-ui'
 import { toast } from 'sonner'
 import { Plus, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { RowMenu } from '@/components/app/RowMenu'
+import { Toggle } from '@/components/app/Toggle'
 import { DataList, dataListFeatures } from '@/components/app/DataList'
 import { ConfirmDialog } from '@/components/app/ConfirmDialog'
 import { EmptyState } from '@/components/app/EmptyState'
@@ -34,17 +34,7 @@ function RuleMenu({ rule, on }: Readonly<{ rule: Rule; on: Handlers }>) {
 
 function ActiveSwitch({ rule, onToggle }: Readonly<{ rule: Rule; onToggle: (r: Rule) => void }>) {
   const { t } = useTranslation()
-  return (
-    <Switch.Root
-      checked={rule.is_active}
-      onCheckedChange={() => onToggle(rule)}
-      aria-label={t('rules.toggle', { name: rule.name })}
-      // Hit area grown to 44 px (A1) around a 20 px track; z-10 keeps it above the card's stretched button
-      className="relative z-10 inline-flex h-5 w-9 shrink-0 items-center rounded-full bg-input transition-colors before:absolute before:-inset-3 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none data-[state=checked]:bg-primary motion-reduce:transition-none"
-    >
-      <Switch.Thumb className="block size-4 translate-x-0.5 rounded-full bg-background shadow transition-transform data-[state=checked]:translate-x-[18px] motion-reduce:transition-none" />
-    </Switch.Root>
-  )
+  return <Toggle checked={rule.is_active} onCheckedChange={() => onToggle(rule)} aria-label={t('rules.toggle', { name: rule.name })} />
 }
 
 const col = createColumnHelper<typeof dataListFeatures, Rule>()

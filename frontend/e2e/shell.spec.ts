@@ -18,7 +18,8 @@ test.describe('redirects (§3.3)', () => {
     ['/insights', '/overview', 'overview.top.title'],
     ['/archive', '/archives', 'archives.title'],
     ['/jobs', '/activity', 'activity.title'],
-    ['/settings', '/settings/account', 'settings.title'],
+    ['/settings', '/settings/account', 'settings.profile'],
+    ['/privacy', '/settings/account', 'settings.profile'],
   ]
   for (const [from, to, heading] of REDIRECTS) {
     test(`${from} → ${to}`, async ({ page }) => {
@@ -104,31 +105,27 @@ test.describe('mobile bottom bar', () => {
     await expect(nav.getByRole('link', { name: t('shell.mails') })).toHaveAttribute('aria-current', 'page')
   })
 
-  test('"Plus" opens a sheet with the other destinations', async ({ page }) => {
+  test('"Plus" opens the /more page with the other destinations', async ({ page }) => {
     await page.goto('/overview')
-    const more = mainNav(page).getByRole('button', { name: t('shell.more') })
-    await expect(more).toHaveAttribute('aria-haspopup', 'dialog')
-    await more.click()
+    await mainNav(page).getByRole('link', { name: t('shell.more') }).click()
+    await expect(page).toHaveURL(/\/more$/)
+    await expect(page.getByRole('heading', { level: 1, name: t('shell.more') })).toBeVisible()
+    await expect(mainNav(page).getByRole('link', { name: t('shell.more') })).toHaveAttribute('aria-current', 'page')
 
-    const sheet = page.getByRole('dialog', { name: t('shell.more') })
-    await expect(sheet.getByRole('link', { name: t('shell.rules') })).toBeVisible()
-    await expect(sheet.getByRole('link', { name: t('shell.settings') })).toBeVisible()
-    await expect(sheet.getByRole('link', { name: t('shell.admin') })).toBeVisible()
-    await expect(sheet.getByRole('button', { name: t('shell.logout') })).toBeVisible()
-
-    await sheet.getByRole('link', { name: t('shell.activity') }).click()
+    const main = page.getByRole('main')
+    await expect(main.getByRole('link', { name: t('shell.rules') })).toBeVisible()
+    await expect(main.getByRole('region', { name: t('shell.administration') })).toBeVisible()
+    await main.getByRole('link', { name: t('shell.activity') }).click()
     await expect(page).toHaveURL(/\/activity$/)
-    await expect(sheet).toBeHidden()
     await expect(page.getByRole('heading', { name: t('activity.title') })).toBeVisible()
+    await expect(mainNav(page).getByRole('link', { name: t('shell.more') })).toHaveAttribute('aria-current', 'page')
   })
 
   test('"Plus" hides Admin for non-admins', async ({ page }) => {
     await asNonAdmin(page)
-    await page.goto('/overview')
-    await mainNav(page).getByRole('button', { name: t('shell.more') }).click()
-    const sheet = page.getByRole('dialog', { name: t('shell.more') })
-    await expect(sheet.getByRole('link', { name: t('shell.activity') })).toBeVisible()
-    await expect(sheet.getByRole('link', { name: t('shell.admin') })).toHaveCount(0)
+    await page.goto('/more')
+    await expect(page.getByRole('main').getByRole('link', { name: t('shell.activity') })).toBeVisible()
+    await expect(page.getByRole('region', { name: t('shell.administration') })).toHaveCount(0)
   })
 })
 

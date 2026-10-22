@@ -198,7 +198,7 @@ describe('OverviewPage', () => {
   it('without a Gmail account: an empty state pointing to the settings', async () => {
     account.id = null
     setup()
-    expect(screen.getByRole('link', { name: 'Connecter un compte Gmail' })).toHaveAttribute('href', '/settings/account')
+    expect(screen.getByRole('link', { name: 'Connecter un compte Gmail' })).toHaveAttribute('href', '/settings/gmail')
     expect(dashboardApi.getStats).not.toHaveBeenCalled()
   })
 })

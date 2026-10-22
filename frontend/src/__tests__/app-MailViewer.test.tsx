@@ -3,10 +3,10 @@ import userEvent from '@testing-library/user-event'
 import { toast } from 'sonner'
 import i18n from '../i18n'
 import { MailViewer } from '../components/app/MailViewer'
-import { useArchiveMail, useArchiveThread, useGmailMessage } from '../hooks/queries'
+import { useArchiveMail, useArchiveThread, useGmailMessage, useNotificationPreferences } from '../hooks/queries'
 import { gmailApi } from '../api'
 
-vi.mock('../hooks/queries', () => ({ useGmailMessage: vi.fn(), useArchiveMail: vi.fn(), useArchiveThread: vi.fn() }))
+vi.mock('../hooks/queries', () => ({ useGmailMessage: vi.fn(), useArchiveMail: vi.fn(), useArchiveThread: vi.fn(), useNotificationPreferences: vi.fn(() => ({ data: undefined })) }))
 vi.mock('../api', () => ({
   gmailApi: { getAttachment: vi.fn() },
   archiveApi: { downloadAttachment: (acc: string, id: string) => `/api/archive/${acc}/attachments/${id}/download` },
@@ -65,6 +65,15 @@ describe('MailViewer', () => {
 
     await userEvent.click(within(dialog).getByRole('button', { name: 'Afficher' }))
     expect(frame.getAttribute('srcdoc')).toContain('img-src * data: blob:;')
+    expect(within(dialog).queryByText(/Images distantes bloquées/)).not.toBeInTheDocument()
+  })
+
+  it('loads remote content at once when the user allows it (B10)', () => {
+    vi.mocked(useNotificationPreferences).mockReturnValueOnce({ data: { remote_images: 'allow' } } as never)
+    query({ data: MAIL })
+    renderViewer()
+    const dialog = screen.getByRole('dialog', { name: 'Facture' })
+    expect(within(dialog).getByTitle('Contenu du mail').getAttribute('srcdoc')).toContain('img-src * data: blob:;')
     expect(within(dialog).queryByText(/Images distantes bloquées/)).not.toBeInTheDocument()
   })
 

@@ -12,11 +12,11 @@ const MailsPage = lazy(() => import("./pages/Mails"));
 const ArchivesPage = lazy(() => import("./pages/Archives"));
 const SettingsPage = lazy(() => import("./pages/Settings"));
 const ActivityPage = lazy(() => import("./pages/Activity"));
+const MorePage = lazy(() => import("./pages/More"));
 const RulesPage = lazy(() => import("./pages/Rules"));
 const AdminPage = lazy(() => import("./pages/Admin"));
 const CleanupPage = lazy(() => import("./pages/Cleanup"));
 const AttachmentsPage = lazy(() => import("./pages/Attachments"));
-const PrivacyPage = lazy(() => import("./pages/Privacy"));
 const SavedSearchesPage = lazy(() => import("./pages/SavedSearches"));
 const UnifiedInboxPage = lazy(() => import("./pages/UnifiedInbox"));
 const OpsResiliencePage = lazy(() => import("./pages/OpsResilience"));
@@ -91,11 +91,9 @@ export default function App() {
         >
           <Route element={<LegacyPages />}>
             {/* New routes (§3.1), rendering the legacy page until its lot lands */}
-            <Route path="settings/:section" element={<SettingsPage />} />
             <Route path="admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
             {/* Legacy routes whose destination does not exist yet: redirected in their lot (§3.3) */}
             <Route path="attachments" element={<AttachmentsPage />} />
-            <Route path="privacy" element={<PrivacyPage />} />
             <Route path="saved-searches" element={<SavedSearchesPage />} />
             <Route path="unified" element={<UnifiedInboxPage />} />
             <Route path="ops" element={<OpsResiliencePage />} />
@@ -107,6 +105,8 @@ export default function App() {
           <Route path="rules" element={<Suspense fallback={<RouteFallback />}><RulesPage /></Suspense>} />
           <Route path="archives" element={<Suspense fallback={<RouteFallback />}><ArchivesPage /></Suspense>} />
           <Route path="activity" element={<Suspense fallback={<RouteFallback />}><ActivityPage /></Suspense>} />
+          <Route path="settings/:section" element={<Suspense fallback={<RouteFallback />}><SettingsPage /></Suspense>} />
+          <Route path="more" element={<Suspense fallback={<RouteFallback />}><MorePage /></Suspense>} />
           {/* §3.3 redirects whose target exists in L0 */}
           <Route index element={<Redirect to="/overview" />} />
           <Route path="dashboard" element={<Redirect to="/overview" />} />
@@ -118,6 +118,7 @@ export default function App() {
           <Route path="unsubscribe" element={<Navigate to="/cleanup?tab=senders" replace />} />
           <Route path="expiration" element={<Navigate to="/rules?tab=labels" replace />} />
           <Route path="sharing" element={<Navigate to="/archives?tab=shares" replace />} />
+          <Route path="privacy" element={<Navigate to="/settings/account" replace />} />
         </Route>
       </Routes>
     </Suspense>

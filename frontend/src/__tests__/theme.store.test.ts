@@ -48,6 +48,15 @@ describe('useThemeStore', () => {
     expect(fresh.getState().mode).toBe('dark')
   })
 
+  it('setPref stores light/dark and forgets the choice for system', () => {
+    useThemeStore.getState().setPref('dark')
+    expect(useThemeStore.getState()).toMatchObject({ pref: 'dark', mode: 'dark' })
+    expect(localStorage.setItem).toHaveBeenCalledWith('theme', 'dark')
+    useThemeStore.getState().setPref('system')
+    expect(useThemeStore.getState()).toMatchObject({ pref: 'system', mode: 'light' })
+    expect(localStorage.removeItem).toHaveBeenCalledWith('theme')
+  })
+
   it('puts the .dark class on <html> in dark mode', () => {
     useThemeStore.getState().toggle()
     expect(document.documentElement).toHaveClass('dark')

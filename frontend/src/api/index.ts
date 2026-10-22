@@ -46,6 +46,21 @@ export const gmailApi = {
 // ─── Labels (synced `gmail_labels`, B4) ───────────────────
 export const labelsApi = {
   list: (accountId: string) => api.get(`/api/labels/${accountId}`).then((r) => r.data),
+  /** « Synchroniser maintenant »: labels and their counts, read again from Gmail. */
+  sync: (accountId: string) => api.post(`/api/labels/${accountId}/sync`).then((r) => r.data),
+}
+
+// ─── Gmail accounts (Paramètres > Comptes Gmail) ──────────
+export type BackupInterval = '1h' | '6h' | '24h'
+
+export const gmailAccountsApi = {
+  /** Google consent URL; the callback adds the account or refreshes its tokens (« Reconnecter »). */
+  connectUrl: () => api.get('/api/auth/gmail/connect').then((r) => r.data as { url: string }),
+  /** B12: automatic NAS backup. */
+  update: (accountId: string, body: { backup_enabled?: boolean; backup_interval?: BackupInterval }) =>
+    api.patch(`/api/auth/gmail/${accountId}`, body).then((r) => r.data),
+  toggle: (accountId: string) => api.patch(`/api/auth/gmail/${accountId}/toggle`).then((r) => r.data),
+  disconnect: (accountId: string) => api.delete(`/api/auth/gmail/${accountId}`).then((r) => r.data),
 }
 
 // ─── Archive ──────────────────────────────────────────────
@@ -222,7 +237,8 @@ export const notificationsApi = {
   getPreferences: () =>
     api.get('/api/notifications/preferences').then((r) => r.data),
 
-  updatePreferences: (prefs: Record<string, boolean>) =>
+  /** Notification switches, plus the reader's `remote_images: 'block' | 'allow'` (B10). */
+  updatePreferences: (prefs: Record<string, boolean | string>) =>
     api.put('/api/notifications/preferences', prefs).then((r) => r.data),
 }
 
@@ -249,7 +265,7 @@ export const webhooksApi = {
   list: () =>
     api.get('/api/webhooks').then((r) => r.data),
 
-  create: (data: { name: string; url: string; type: string; events: string[] }) =>
+  create: (data: { name: string; url: string; type: string; events: string[]; auth_user?: string; auth_password?: string }) =>
     api.post('/api/webhooks', data).then((r) => r.data),
 
   update: (id: string, data: Record<string, any>) =>

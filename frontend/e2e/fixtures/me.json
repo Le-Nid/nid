@@ -8,6 +8,16 @@
     "max_gmail_accounts": 3,
     "storage_quota_bytes": 5368709120
   },
-  "gmailAccounts": [{ "id": "acc-1", "email": "alice@gmail.com", "is_active": true }],
+  "gmailAccounts": [
+    {
+      "id": "acc-1",
+      "email": "alice@gmail.com",
+      "is_active": true,
+      "backup_enabled": true,
+      "backup_interval": "24h",
+      "needs_reauth": false,
+      "last_sync_at": "2026-10-20T08:00:00Z"
+    }
+  ],
   "storageUsedBytes": 1048576
 }
