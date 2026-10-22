@@ -70,7 +70,7 @@ nid/
 - **Pages**: one page = one file in `src/pages/`
 - **Global state**: Zustand (`src/store/`)
 - **API calls**: always via `src/api/client.ts` (axios configured with JWT)
-- **Components**: Ant Design first, custom only if necessary
+- **Components**: house components from `src/components/app/` first, then the shadcn/Radix primitives in `src/components/ui/` (vendored, do not edit), Tailwind v4 styles
 - **i18n**: all visible text must go through `t('key')` — never hardcode strings in JSX
 
 ---
@@ -111,8 +111,8 @@ admin.users           → Admin users tab
    import xx from './locales/xx.json';
    resources: { fr: { translation: fr }, en: { translation: en }, xx: { translation: xx } }
    ```
-4. In `frontend/src/main.tsx`, add the corresponding Ant Design locale
-5. In `frontend/src/components/AppLayout.tsx`, add the option to the language selector
+4. Add the option to the language selectors: user menu (`frontend/src/components/app/AppShell.tsx`) and Settings › Account (`frontend/src/pages/settings/AccountSection.tsx`)
+5. In `frontend/src/main.tsx`, extend the `<html lang>` computation
 
 ---
 
@@ -155,7 +155,7 @@ Fix critical and high vulnerabilities immediately. Use `npm audit fix` for autom
 
 ### Icons
 
-- Use **Lucide React** (`lucide-react`) for all icons — no emojis or Ant Design icons
+- Use **Lucide React** (`lucide-react`) for all icons — no emojis
 - Icons must be dark mode compatible (use `currentColor`)
 
 ---

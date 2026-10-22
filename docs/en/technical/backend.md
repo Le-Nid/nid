@@ -4,144 +4,160 @@
 
 | Library | Role |
 |---|---|
-| `fastify` | HTTP framework, performant and TypeScript-first |
-| `@fastify/jwt` | JWT auth (access token on every request) |
-| `@fastify/cors` | CORS configured for `FRONTEND_URL` only |
-| `@fastify/swagger` | Automatic OpenAPI generation |
-| `@fastify/rate-limit` | 100 req/min per IP by default |
-| `googleapis` | Official Gmail API v1 client |
-| `bullmq` | Async job queue (Redis-backed) |
-| `postgres` | Lightweight typed PostgreSQL client |
-| `ioredis` | Redis client (BullMQ + cache) |
+| `fastify 5` | HTTP framework, TypeScript-first |
+| `@fastify/jwt` + `@fastify/cookie` | JWT auth (HS256) read from the httpOnly `token` cookie or the `Authorization` header |
+| `@fastify/cors` | CORS restricted to `FRONTEND_URL` |
+| `@fastify/rate-limit` | 100 req/min per IP by default, stricter limits per route |
+| `@fastify/multipart` | Uploads (mbox import) |
+| `@fastify/swagger` + `@fastify/swagger-ui` | OpenAPI, UI at `/docs` |
+| `kysely` + `pg` | Typed SQL queries, in-code migrations |
+| `bullmq` + `ioredis` | Job queue (Redis), SSE pub/sub, JWT blacklist |
+| `googleapis` | Official Gmail API v1 client + Gmail OAuth2 |
+| `arctic` | OAuth2 for login providers (Google, Microsoft, Discord, Facebook, LinkedIn, Keycloak) |
 | `zod` | Input validation |
-| `mailparser` | EML parsing for reading archives |
+| `mailparser` | EML parsing |
+| `imapflow` | IMAP import |
+| `archiver` | ZIP export |
 | `bcrypt` | Password hashing |
-| `otplib` | TOTP code generation and verification (2FA) |
-| `qrcode` | QR code generation for 2FA setup |
+| `otplib` + `qrcode` | TOTP 2FA |
+| `pino` + `pino-pretty` | Structured logs |
+| `@modelcontextprotocol/sdk` | MCP server (`src/mcp-server.ts`) |
+
+The build uses Vite in ESM (`"type": "module"`, `build.lib.formats: ['es']`); `vite.config.mcp.ts` builds the MCP server separately (`npm run build:mcp`, `npm run start:mcp`, stdio transport).
 
 ---
 
-## Fastify Plugin Structure
+## Code Layout
 
 ```
-src/plugins/
-├── index.ts      ← Registration of all plugins (order matters)
-├── db.ts         ← PostgreSQL connection, app.db decorator
-└── redis.ts      ← Redis connection, app.redis decorator
+src/
+├── index.ts            ← bootstrap: plugins, routes, worker, schedulers, graceful shutdown
+├── config.ts           ← Environment variables
+├── logger.ts           ← createLogger(name)
+├── plugins/            ← index.ts (cors, cookie, jwt, rate-limit, multipart, swagger, decorators), db.ts, redis.ts
+├── routes/             ← One file per module, registered under /api/<module> in routes/index.ts
+├── db/                 ← index.ts (Kysely + Migrator), types.ts, migrations/001…009
+├── jobs/               ← queue.ts (enqueueJob), scheduler.ts, workers/unified.worker.ts
+├── events/             ← events.service.ts (per-user SSE stream, Redis pub/sub)
+├── gmail/              ← gmail.service.ts, gmail-throttle.ts, quota.service.ts
+├── auth/               ← oauth.service.ts (Gmail), social.service.ts (Arctic login)
+├── archive/            ← archive, body-text, dedup, export, import, integrity, retention, sharing, trash
+├── rules/  labels/  unsubscribe/  expiration/  analytics/  dashboard/ (cache)
+├── notifications/      ← notify.ts, notification-prefs.service.ts
+├── webhooks/  audit/  reports/  privacy/ (encryption.service.ts)  storage/
+├── utils/              ← auth.ts (authPresets), db.ts, pagination.ts
+└── mcp-server.ts
 ```
 
-The `app.authenticate` decorator is defined in `plugins/index.ts` and used as a `preHandler` on all protected routes:
+Business logic goes into a service (`src/{module}/{module}.service.ts`) as soon as it has more than one consumer (route, MCP, scheduler, worker) or needs a transaction; a trivial single-consumer CRUD can stay in the route.
+
+---
+
+## Authentication and Decorators
+
+`plugins/index.ts` defines three decorators:
+
+- **`app.authenticate`** — verifies the JWT (cookie or header), rejects a token found in the Redis blacklist and a disabled user.
+- **`app.requireAccountOwnership`** — checks that the `:accountId` route parameter belongs to the authenticated user (lookup in `gmail_accounts`).
+- **`app.requireAdmin`** — checks that `role === 'admin'`.
+
+Routes combine them through `authPresets(app)` (`utils/auth.ts`):
 
 ```typescript
-app.get('/route-protegee', { preHandler: [app.authenticate] }, async (req) => {
-  const { sub: userId, role } = req.user as { sub: string; role: string }
+const { auth, accountAuth, adminAuth } = authPresets(app)
+// auth        = { preHandler: [app.authenticate] }
+// accountAuth = { preHandler: [app.authenticate, app.requireAccountOwnership] }
+// adminAuth   = { preHandler: [app.authenticate, app.requireAdmin] }
+
+app.get('/:accountId/mails', accountAuth, async (request) => {
+  const userId = request.user.sub
   // ...
 })
 ```
 
-Two additional decorators ensure multi-user isolation:
-
-- **`app.requireAccountOwnership`** — Verifies that the route's `:accountId` parameter belongs to the authenticated user (lookup in `gmail_accounts`). Used on all Gmail, archive, dashboard, and rules routes.
-- **`app.requireAdmin`** — Verifies that `role === 'admin'` in the JWT payload. Used on all `/api/admin/*` routes.
-
-```typescript
-// Example: route isolated by account
-app.get('/mails/:accountId', {
-  preHandler: [app.authenticate, app.requireAccountOwnership]
-}, handler)
-
-// Example: admin route
-app.get('/admin/users', {
-  preHandler: [app.authenticate, app.requireAdmin]
-}, handler)
-```
+The global error handler answers `400 { error, details }` for a `ZodError`.
 
 ---
 
 ## OAuth2 Token Management
 
-Two Google OAuth2 flows coexist:
+Two OAuth2 flows coexist:
 
-1. **Gmail OAuth2** — To connect a Gmail account (scopes `gmail.modify`, `gmail.labels`, `userinfo.email`). Tokens are stored encrypted in `gmail_accounts`.
-2. **Google SSO** — For user authentication (scopes `openid`, `userinfo.email`, `userinfo.profile`). Creates or merges a user account based on the `google_id`. The dedicated redirect URI is configured via `GOOGLE_SSO_REDIRECT_URI`.
+1. **Gmail OAuth2** (`auth/oauth.service.ts`, `googleapis`) — connects a Gmail account (scopes `gmail.modify`, `gmail.labels`, `userinfo.email`, `prompt: 'consent'`). Tokens are stored in `gmail_accounts` (`access_token`, `refresh_token`, `token_expiry`), in plain text.
+2. **Social login** (`auth/social.service.ts`, `arctic`) — authenticates the user (Google and optional providers). The state and the PKCE code verifier are kept 5 min in Redis.
 
-Google tokens are stored encrypted in the database (`gmail_accounts` table). Refresh is automatic via the Google client `tokens` event:
+Gmail refresh is automatic through the Google client's `tokens` event:
 
 ```typescript
 oauth2Client.on('tokens', async (tokens) => {
-  // Mise à jour automatique access_token + expiry en base
+  // Updates access_token + token_expiry, resets auth_error_at to NULL
 })
 ```
 
-::: warning Refresh token
-Google only returns the `refresh_token` on the **first** consent (`prompt: 'consent'`). If a user reconnects the same account, the previous refresh_token is preserved via `COALESCE` in SQL. Never overwrite an existing refresh_token with `null`.
-:::
+An expired token is refreshed before the first call; when Google refuses the refresh token (`invalid_grant`), `gmail_accounts.auth_error_at` is set and the UI shows "Action required" (reconnect). Disconnecting an account is soft: `is_active = false`, tokens set to `NULL`, archives kept.
 
-Google SSO uses `prompt: 'select_account'` to allow the user to choose their account without re-requesting consent on every login.
+::: warning Refresh token
+Google only returns the `refresh_token` on the **first** consent. When a user reconnects the same account, the old refresh_token is kept via `COALESCE` in SQL. Never overwrite an existing refresh_token with `null` on reconnection.
+:::
 
 ---
 
 ## Gmail API Throttling
 
-The Gmail API quota is **250 units/user/second**. Each `messages.get` costs 5 units.
+The Gmail API quota is **250 units/user/second**; most calls cost 5 units.
 
-The conservative configuration adopted:
+`gmail/gmail-throttle.ts` provides:
+
+- `gmailRetry()` — up to 5 attempts with exponential backoff + jitter (1 s → 60 s max) on 429, 500, 503 and 403 `rateLimitExceeded` / `userRateLimitExceeded`
+- `accountSemaphore()` / `withAccountLimit()` — **at most 5 concurrent calls per account**, shared between routes and the worker
+- `limitConcurrency()` — generic per-call limiter
+
+Batch settings (`config.ts`):
 
 ```typescript
-GMAIL_BATCH_SIZE: 100,   // 100 messages.get en parallèle = 500 unités
-GMAIL_THROTTLE_MS: 500,  // Pause 500ms entre chaque batch → ~1000 unités/sec max
+GMAIL_BATCH_SIZE: 25,     // messages per batch
+GMAIL_CONCURRENCY: 10,    // parallel calls within a batch
+GMAIL_THROTTLE_MS: 1_000, // pause between two batches
 ```
 
-With throttling, we stay at ~1,000 units/sec which exceeds the quota if multiple users are active simultaneously. In production with multiple accounts, reduce `GMAIL_BATCH_SIZE` to 50 or increase `GMAIL_THROTTLE_MS` to 1000ms.
+Bulk actions on a Gmail query are capped at `BULK_QUERY_MAX` (50,000 by default).
 
 ---
 
-## Unified Worker Startup
+## Unified Worker and Schedulers
 
-A **unified worker** (`unified.worker.ts`) listens on the `nid` queue and dispatches each job by `job.name` via a `switch`. This prevents multiple workers listening on the same queue from stealing each other's jobs.
+`index.ts` starts, in the same process as the API:
 
-Each worker injects the `user_id` into the `jobs` table to ensure per-user data isolation.
+- **`startUnifiedWorker()`** — a single BullMQ worker (concurrency 3) on the `nid` queue, dispatching on `job.name`. A single worker prevents several workers on the same queue from stealing each other's jobs.
+- **`startRuleScheduler()`** (`jobs/scheduler.ts`) — 60 s tick: scheduled rules, NAS backups, integrity, purge, labels, expirations, shares.
+- **`startReportScheduler()`** (`reports/report.scheduler.ts`) — weekly report on Mondays.
 
-```typescript
-import { startUnifiedWorker } from './jobs/workers/unified.worker'
-
-// Dans bootstrap()
-startUnifiedWorker()
-```
-
-Job types handled: `bulk_operation`, `archive_mails`, `run_rule`, `scan_unsubscribe`, `encrypt_archives`.
+On `SIGTERM`/`SIGINT`, the worker is closed before the HTTP server. Job types, triggers and lifecycle: see [Jobs & Queue](jobs.md).
 
 ---
 
-## Privacy & Security Module
+## Archive Encryption
 
-The privacy module (`src/privacy/`) contains three independent services:
-
-```
-src/privacy/
-├── tracking.service.ts    ← Détection de pixels espions
-├── pii.service.ts         ← Scanner de données sensibles (PII)
-└── encryption.service.ts  ← Chiffrement AES-256-GCM des archives
-```
-
-### Archive Encryption
-
-Encryption uses native Node.js `crypto`, with no external dependency:
+`privacy/encryption.service.ts` uses native Node.js `crypto`:
 
 - **Algorithm**: AES-256-GCM (confidentiality + integrity)
 - **Key derivation**: PBKDF2 (SHA-512, 100,000 iterations, random 32-byte salt)
 - **Storage**: only a scrypt hash of the passphrase is stored in the database (`users.encryption_key_hash`), never the passphrase itself
-- **Idempotency**: already encrypted files are detected by magic bytes `GMENC01` and skipped
-- **On-the-fly decryption**: via the `decrypt-mail` endpoint, the file remains encrypted on disk
+- **Idempotency**: already-encrypted files are detected by the `GMENC01` magic bytes and skipped
+- **On-the-fly decryption**: via `POST /api/privacy/:accountId/encryption/decrypt-mail`, the file stays encrypted on disk
+
+Encryption runs in the `encrypt_archives` job. The passphrase travels in the BullMQ payload but is not copied into the `jobs` table.
 
 ---
 
 ## EML and MIME Decoding
 
-The archiving service retrieves emails in `raw` format (complete EML encoded in URL-safe base64). Since this format doesn't populate `payload.headers`, headers (Subject, From, To, Date) are parsed directly from the raw EML content.
+The archive service fetches emails in `raw` format (full EML encoded as URL-safe base64). Since this format does not populate `payload.headers`, the headers (Subject, From, To, Date) are parsed directly from the raw EML content.
 
-Subjects using RFC 2047 encoding (`=?UTF-8?B?...?=`, `=?UTF-8?Q?...?=`) are decoded by the `decodeMimeWords()` function which handles:
+Subjects using RFC 2047 encoding (`=?UTF-8?B?...?=`, `=?UTF-8?Q?...?=`) are decoded by the `decodeMimeWords()` function, which handles:
 
 - **Base64** (`?B?`) — standard decoding
 - **Quoted-Printable** (`?Q?`) — replacement of `=XX` and `_` (space)
 - **Multiple charsets** — via `TextDecoder` (UTF-8, ISO-8859-1, etc.)
+
+The plain-text body is extracted into `archived_mails.body_text` (`archive/body-text.ts`) for full-text search.

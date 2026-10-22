@@ -15,7 +15,7 @@ Returns the authenticated user's notifications, paginated.
 | Param | Default | Description |
 |---|---|---|
 | `page` | `1` | Page number |
-| `limit` | `20` | Results per page |
+| `limit` | `20` | Results per page (max 100) |
 | `unread_only` | — | `1` or `true` to show only unread notifications |
 
 **Response 200**
@@ -49,20 +49,20 @@ Marks a notification as read.
 
 **Response 200**
 ```json
-{ "success": true }
+{ "ok": true }
 ```
 
 ---
 
 ## Mark all as read
 
-### POST /api/notifications/read-all 🔒
+### PATCH /api/notifications/read-all 🔒
 
 Marks all of the user's notifications as read.
 
 **Response 200**
 ```json
-{ "updated": 5 }
+{ "ok": true }
 ```
 
 ---
@@ -122,7 +122,8 @@ Returns the user's notification preferences. If no preferences are set, default 
   "job_failed_toast": true,
   "rule_executed_toast": false,
   "quota_warning_toast": false,
-  "integrity_alert_toast": false
+  "integrity_alert_toast": false,
+  "remote_images": "block"
 }
 ```
 
@@ -143,11 +144,13 @@ Each notification type has two independent channels:
 | `integrity_alert` | `true` | 🔔 In-app | Integrity issue |
 | `integrity_alert_toast` | `false` | 💬 Toast | |
 
+`remote_images` (`block` by default, or `allow`) is not a notification preference: it controls loading remote images in the email reader, stored with the other user preferences.
+
 ---
 
 ### PUT /api/notifications/preferences 🔒
 
-Updates one or more preferences. Only the provided keys are modified.
+Updates one or more preferences. Only the provided keys are modified; unknown keys or wrong types (boolean expected, `block`/`allow` for `remote_images`) are ignored.
 
 **Body**
 

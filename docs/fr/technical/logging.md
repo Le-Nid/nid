@@ -44,13 +44,16 @@ logger.warn('something unusual happened')
 | Module | Fichier | Opérations loggées |
 |--------|---------|-------------------|
 | `archive` | `archive/archive.service.ts` | Archivage de mails, extraction PJ |
+| `archive-routes` | `routes/archive.ts` | Routes archives (export, corbeille) |
+| `body-text` | `archive/body-text.ts` | Extraction du texte des EML, backfill |
+| `trash` | `archive/trash.service.ts` | Corbeille archives, purge |
 | `rules` | `rules/rules.service.ts` | CRUD règles, exécution |
 | `oauth` | `auth/oauth.service.ts` | Échange de tokens, refresh |
 | `social-auth` | `auth/social.service.ts` | Auth multi-provider |
 | `gmail` | `gmail/gmail.service.ts` | Appels Gmail API |
 | `gmail-throttle` | `gmail/gmail-throttle.ts` | Rate limiting, retries |
 | `worker` | `jobs/workers/unified.worker.ts` | Dispatch des jobs |
-| `scheduler` | `jobs/scheduler.ts` | Planification des règles |
+| `scheduler` | `jobs/scheduler.ts` | Tâches planifiées (règles, sauvegardes, intégrité, purge…) |
 | `db` | `db/index.ts` | Migrations |
 | `analytics` | `analytics/analytics.service.ts` | Heatmap, scores, suggestions |
 | `dedup` | `archive/dedup.service.ts` | Déduplication PJ |
@@ -59,7 +62,6 @@ logger.warn('something unusual happened')
 | `integrity` | `archive/integrity.service.ts` | Vérification intégrité |
 | `retention` | `archive/retention.service.ts` | Politiques de rétention |
 | `sharing` | `archive/sharing.service.ts` | Partage temporaire |
-| `storage` | `storage/storage.service.ts` | Backend stockage (local/S3) |
 | `quota` | `gmail/quota.service.ts` | Suivi quota API |
 | `reports` | `reports/report.service.ts` | Rapports hebdo |
 | `report-scheduler` | `reports/report.scheduler.ts` | Planification rapports |
@@ -67,6 +69,7 @@ logger.warn('something unusual happened')
 | `webhook` | `webhooks/webhook.service.ts` | Dispatch webhooks |
 | `audit` | `audit/audit.service.ts` | Audit log |
 | `expiration` | `expiration/expiration.service.ts` | Expiration des mails |
+| `labels` | `labels/labels.service.ts` | Synchro des libellés Gmail |
 | `encryption` | `privacy/encryption.service.ts` | Chiffrement archives |
 | `unsubscribe` | `unsubscribe/unsubscribe.service.ts` | Scan newsletters |
 | `job-sse` | `routes/job-sse.ts` | SSE broadcast |
@@ -75,7 +78,7 @@ logger.warn('something unusual happened')
 ### Gestion des erreurs Fastify
 
 Le handler d'erreur global (`plugins/index.ts`) logue automatiquement :
-- Les **erreurs de validation Zod** (niveau `warn`) avec les détails
+- Les **erreurs de validation Zod** (niveau `warn`) avec les détails, réponse `400`
 - Les **erreurs client** (4xx, niveau `warn`)
 - Les **erreurs serveur** (5xx, niveau `error`) avec l'URL, la méthode et l'ID utilisateur
 
@@ -90,7 +93,7 @@ import { createLogger } from '../utils/logger'
 
 const logger = createLogger('mon-composant')
 
-logger.info('Action effectuée', { page: 'dashboard' })
+logger.info('Action effectuée', { page: 'overview' })
 logger.error('Erreur API', { url, status })
 ```
 

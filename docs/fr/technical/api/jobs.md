@@ -85,6 +85,21 @@ Remet en file le payload enregistré du job sous un **nouvel** id (bouton « Rel
 
 ---
 
+## Suivi d'un job (SSE)
+
+### GET /api/jobs/:jobId/events
+
+Flux `text/event-stream` de la progression d'un job de l'utilisateur. `:jobId` est l'`id` de la ligne ou l'id BullMQ.
+
+- À l'ouverture : un message `data:` avec la ligne complète du job.
+- Si le job est déjà `completed`, `failed` ou `cancelled` : la ligne finale, puis un événement `close`, et le flux se ferme.
+- Ensuite, à chaque événement BullMQ : `data: { "bullmqId", "event": "progress", "status", "progress", "processed", "total" }`, `event: "completed"` (avec `progress: 100`) ou `event: "failed"` (avec `error`).
+- Un commentaire `: heartbeat` toutes les 15 s.
+
+**Réponse 404** — job inconnu ou appartenant à un autre utilisateur.
+
+---
+
 ## Événements en direct
 
 ### GET /api/events

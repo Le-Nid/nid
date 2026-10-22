@@ -1,6 +1,6 @@
 # API — Reports & Insights
 
-Weekly report generation on Gmail activity.
+Weekly reports on Nid activity.
 
 ---
 
@@ -8,29 +8,27 @@ Weekly report generation on Gmail activity.
 
 ### GET /api/reports/weekly 🔒
 
-Generates the report for the past week for the authenticated user.
+Generates on demand the report of the last 7 days for the authenticated user (all Gmail accounts combined).
 
 **Response 200**
 ```json
 {
+  "userId": "uuid",
+  "email": "user@example.com",
   "period": {
     "from": "2026-03-23T00:00:00Z",
     "to": "2026-03-30T00:00:00Z"
   },
-  "accounts": [
-    {
-      "accountId": "uuid",
-      "email": "user@gmail.com",
-      "mailsReceived": 142,
-      "mailsArchived": 38,
-      "mailsDeleted": 15,
-      "topSenders": [
-        { "sender": "newsletter@service.com", "count": 23 }
-      ],
-      "rulesExecuted": 3,
-      "storageFreed": 52428800
-    }
-  ]
+  "stats": {
+    "jobsCompleted": 12,
+    "jobsFailed": 1,
+    "mailsArchived": 38,
+    "archiveSizeBytes": 52428800,
+    "rulesExecuted": 3,
+    "topSenders": [
+      { "sender": "newsletter@service.com", "count": 23 }
+    ]
+  }
 }
 ```
 
@@ -38,8 +36,8 @@ Generates the report for the past week for the authenticated user.
 
 | Code | Description |
 |---|---|
-| 404 | No data available for the period |
+| 404 | User not found or disabled (`No data`) |
 
 ::: info Automatic generation
-The report is also automatically generated every Monday by the scheduler and stored as an in-app notification.
+The report is also generated automatically every Monday and sent as a `weekly_report` notification (in-app depending on preferences).
 :::

@@ -1,51 +1,52 @@
 # User Guide
 
-Welcome to the Nid user guide. This section explains how to use each feature of the application.
+Nid manages and archives your Gmail mailboxes from your own server (NAS, home server). This guide follows the app's layout: one page per screen.
 
 ---
 
-## Overview
+## Screens
 
-Nid is a Gmail mailbox management and archiving application, installed on your own hardware (NAS, server). Your emails stay on your network — no data is sent to third-party servers.
+| Screen | Address | What it is for |
+|---|---|---|
+| [**Overview**](overview.md) | `/overview` | Account status, top senders, suggestions, running jobs |
+| [**Mail**](mails.md) | `/mails` | Search, select and act on your mails in bulk, with undo |
+| [**Cleanup**](cleanup.md) | `/cleanup` | Senders & newsletters, large mails & attachments |
+| [**Rules & labels**](rules.md) | `/rules` | Automatic rules, Gmail labels, templates |
+| [**Archives**](archives.md) | `/archives` | Local copy on the NAS: search, reader, sharing, trash, retention |
+| [**Activity**](activity.md) | `/activity` | Every task started, live |
+| [**Settings**](settings.md) | `/settings/…` | Account, Security, Gmail accounts, Notifications & webhooks, Data |
+| [**Attachments**](attachments.md) | `/attachments` | Full attachment list (from the ⌘K palette) |
+| [**Notifications**](notifications.md) | bell + Settings | In-app notifications, toasts, webhooks |
+| [**Administration**](admin.md) | `/admin` | Users, instance settings, audit (admins) |
+| [**MCP Server**](mcp-server.md) | — | Drive Nid from an AI assistant |
 
-### What you can do
-
-| Feature | Description |
-|---|---|
-| [**Dashboard**](dashboard.md) | View your mailbox statistics at a glance |
-| [**Mail management**](mail-management.md) | Delete, label and archive in bulk |
-| [**Archiving**](archiving.md) | Back up your emails to your NAS in EML format |
-| [**Automatic rules**](rules.md) | Create rules to automate cleanup |
-| [**Newsletters**](newsletters.md) | Identify and clean up newsletters in one click |
-| [**Attachments**](attachments.md) | Manage and download your attachments |
-| [**Analytics**](analytics.md) | Analyze your email habits with charts |
-| [**Privacy**](privacy.md) | Detect tracking pixels and protect your data |
-| [**Unified inbox**](unified-inbox.md) | View all your Gmail accounts in a single view |
-| [**Saved searches**](saved-searches.md) | Save your favorite filters |
-| [**Ops & Resilience**](ops-resilience.md) | Retention, API quota, import/export |
-| [**Notifications**](notifications.md) | Stay informed via in-app notifications and webhooks |
-| [**Settings**](settings.md) | 2FA, export/import, language, theme |
-| [**Administration**](admin.md) | Manage users and quotas (admins) |
+New to Nid? Start with [**First Steps**](first-steps.md).
 
 ---
 
-## Navigating the application
+## Finding your way around
 
-The interface consists of:
+### On desktop
 
-- A **sidebar** on the left with links to each section
-- A **Gmail account selector** at the top of the sidebar to choose the active account
-- A **navigation bar** at the top with the notification bell, language selector, and dark/light theme toggle
+- **Sidebar** on the left: logo, **Collapse sidebar** button (`Ctrl+B` / `⌘B`), **Gmail Account** selector, **Search…** button, then the entries Overview, Mail, Cleanup, Rules & labels, Archives, Activity, Settings. Administrators also get an **Administration** group with **Admin**.
+- **Counters** next to the entries: number of mails in the account (Mail), number of active rules (Rules & labels), "N running" (Activity).
+- **Header**: the [notifications](notifications.md) bell and the user menu (avatar): **Language**, **Dark mode**, **Log out**.
 
-> 📸 *Suggested screenshot: overview of the interface with the sidebar, header and account selector highlighted*
+### On mobile
 
----
+The header keeps the bell and the avatar; the avatar menu also holds the **Gmail Account** choice. A bar at the bottom of the screen leads to **Home** (Overview), **Mail**, **Cleanup**, **Archives** and **More**.
 
-## Getting started
+The **More** page holds the rest:
 
-If you have just installed Nid, start with the [**First steps**](first-steps.md) guide which walks you through:
+- **Tools**: Rules & labels, Activity (with the number of running tasks);
+- **Settings**: the five sections, each with a summary ("2FA on", "1 action required", "Import, export"…);
+- **Administration** (admins only): "Instance admin";
+- at the bottom: "Signed in as …" and **Sign out of Nid**.
 
-1. Creating your account
-2. Connecting your first Gmail account
-3. Exploring the dashboard
-4. Your first cleanup operation
+### Command palette
+
+`⌘K` (Mac) or `Ctrl+K` opens the "Go to…" palette: every navigation page, the **New rule** action, and under **Other pages** the [Attachments](attachments.md) page.
+
+### Old addresses
+
+Old pages redirect to their new place: `/dashboard`, `/analytics`, `/insights` → Overview; `/unified` → Mail, "All accounts"; `/saved-searches` → Mail; `/unsubscribe` → Cleanup; `/expiration` → Rules & labels, Labels tab; `/archive` → Archives; `/sharing` → Archives, Shares tab; `/jobs` → Activity; `/privacy` → Settings › Account; `/ops` → Settings › Data.

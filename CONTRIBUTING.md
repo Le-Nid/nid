@@ -45,7 +45,7 @@ backend/          Fastify API (TypeScript, ESM)
     db/           Kysely migrations & types
     jobs/         BullMQ workers & scheduler
     plugins/      Fastify plugins (DB, Redis)
-frontend/         React SPA (Ant Design)
+frontend/         React SPA (shadcn/ui + Tailwind)
   src/
     pages/        Pages de l'app
     components/   Composants réutilisables

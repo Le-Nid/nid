@@ -52,7 +52,7 @@ Returns all saved searches for the authenticated user, sorted by `sort_order`.
 | `icon` | string | — | Icon identifier (`folder`, `star`, `mail`, `attachment`, `invoice`, `alert`, `archive`, `calendar`, `work`, `shopping`) |
 | `color` | string | — | Hex color code (e.g.: `#1677ff`) |
 
-**Response 201** — The created search.
+**Response 201** — The created search. `400` if `name` or `query` is empty.
 
 ---
 

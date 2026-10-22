@@ -9,7 +9,7 @@ Toutes les routes exigent l'authentification et la propriété du compte Gmail. 
 - à la connexion d'un compte Gmail (callback OAuth, en arrière-plan) ;
 - une fois par jour par le planificateur (un appel `labels.list` par compte actif) ;
 - à la demande avec `POST /api/labels/:accountId/sync` ;
-- à la création ou suppression d'un libellé via `/api/gmail/:accountId/labels`.
+- à la création, modification ou suppression d'un libellé via `/api/gmail/:accountId/labels`.
 
 Un libellé absent de Gmail n'est jamais supprimé de la table : son `deleted_at` est renseigné, puis remis à `null` s'il réapparaît.
 

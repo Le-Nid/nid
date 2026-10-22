@@ -1,74 +1,59 @@
 # Administration
 
-The **Administration** page is restricted to users with the **admin** role. It allows you to manage users, monitor jobs, and view system statistics.
+The **Admin** page (`/admin`) is reserved for users with the **admin** role: the entry only shows for them (**Administration** group in the sidebar, or **More › Administration** on mobile), and the address sends other users back to the Overview.
+
+Three tabs: **Users**, **System**, **Audit**.
 
 ---
 
-## User Management
+## Users
 
-### User List
+Search by **Email or name**, then the paginated list:
 
-The table displays all users on the instance with:
+| Column | Content |
+|---|---|
+| **User** | email and name |
+| **Role** | Admin or User |
+| **Status** | Active or Disabled |
+| **Gmail accounts** | "N / max accounts" |
+| **Storage** | archives used / quota |
+| **Last login** | date, or "Never logged in" |
 
-- Email, display name, avatar
-- Role (user / admin)
-- Number of connected Gmail accounts
-- Storage space used
-- Last sign-in date
-- Status (active / inactive)
+**Edit** opens "Edit user":
 
-The list is paginated and supports searching by email or name.
-
-> 📸 *Suggested screenshot: user table with the columns mentioned above*
-
-### Edit a User
-
-Click on a user to modify:
-
-- **Role**: promote to admin or demote to user
-- **Quotas**:
-    - Maximum number of Gmail accounts (default: 5)
-    - Archive storage quota (default: 1 GB)
-- **Status**: enable or disable the account
-
-> 📸 *Suggested screenshot: user edit form with role, quotas, and status fields*
+- **Role**: User or Admin;
+- **Active account**: a disabled account can no longer sign in ("This account has been disabled");
+- **Maximum Gmail accounts**;
+- **Storage quota (GB)**.
 
 ---
 
-## Global Jobs
+## System
 
-The **Jobs** tab displays jobs from **all users** with:
+"Settings of this Nid instance, for every user."
 
-- The user who launched the job
-- The type and status
-- The progress
-- The creation date
+### Archive trash
 
-Administrators can cancel any running job.
+- **Maximum time in the trash**: 7, 30 or 90 days.
+- Current volume ("N emails · size") and next purge date (or "automatic purge disabled").
+- **Empty the trash now…**: after confirmation ("Permanently empty the trash?"), deletes the trash mails from the NAS **for every user**. Cannot be undone.
+
+### Archive integrity
+
+Checks that the NAS files match the index: "Archives are intact", or the number of missing, corrupted and orphaned files. Shows the last check and the number of mails checked. "Automatic check every day at 3 am."; **Run a check** starts one now.
+
+When a problem is found, the **Integrity alert** event is notified (see [Notifications](notifications.md)).
+
+### Gmail API quota
+
+Usage of the instance's Google project, all accounts: **Units today**, **Peak per user** (units per second / limit), **429 responses over 24 h**.
+
+### Jobs of all users
+
+The 20 most recent jobs of the instance: **Job**, **User**, **Status**, **Created**.
 
 ---
 
-## System Statistics
+## Audit
 
-The **Statistics** tab displays:
-
-- Total number of users
-- Number of connected Gmail accounts
-- Total storage space used
-- Number of running jobs
-
-> 📸 *Suggested screenshot: admin dashboard with system statistics*
-
----
-
-## Integrity Check
-
-Administrators can verify the consistency between EML files on the NAS and the PostgreSQL index:
-
-- **Missing files**: referenced in the database but absent from disk
-- **Orphan files**: present on disk without a database record
-- **Corrupted files**: empty files (0 bytes)
-
-The check can be launched manually or runs automatically **every night at 3 AM**. If an issue is found, an `integrity.failed` webhook event is triggered.
-
-> 📸 *Suggested screenshot: integrity check result (healthy status / issues detected)*
+The instance log, filterable by **User** (email) and by **Action** (or **All actions**). Columns: **Date**, **User**, **Action**, **Target**.

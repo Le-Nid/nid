@@ -9,7 +9,7 @@ All routes require authentication and ownership of the Gmail account. `:accountI
 - when a Gmail account is connected (OAuth callback, in the background);
 - once a day by the scheduler (one `labels.list` call per active account);
 - on demand with `POST /api/labels/:accountId/sync`;
-- when a label is created or deleted through `/api/gmail/:accountId/labels`.
+- when a label is created, updated or deleted through `/api/gmail/:accountId/labels`.
 
 A label missing from Gmail is never deleted from the table: its `deleted_at` is set. It is cleared if the label comes back.
 

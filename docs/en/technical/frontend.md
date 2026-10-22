@@ -1,87 +1,188 @@
 # Frontend Architecture
 
+The UI specification (navigation, pages, components) is `design/ui-redesign.md`.
+
 ## Stack
 
 | Library | Role |
 |---|---|
-| `react 19` | UI, Server Components ready but not used (classic SPA) |
-| `react-router v7` | Client-side routing |
-| `antd v6` | UI components (Table, Form, Chart, Layout, etc.) |
-| `@ant-design/charts` | Dashboard charts (based on G2) |
-| `lucide-react` | Consistent SVG icons (replaces emojis and Ant Design icons) |
-| `zustand` | Global state management (lightweight stores) |
-| `axios` | HTTP client with JWT interceptors |
-| `dayjs` | Date manipulation (required by Ant Design) |
-| `react-i18next` | Internationalization (`useTranslation` hooks) |
-| `i18next` | i18n engine, automatic language detection |
-| `i18next-browser-languagedetector` | Browser language detection |
-| `vite` | Bundler, HMR in dev |
+| `react 19` + `react-dom` | UI (SPA, pages loaded with `lazy()`) |
+| `react-router 7` | Client-side routing |
+| `vite 8` + `@vitejs/plugin-react` | Bundler, dev HMR, `/api` → `localhost:4000` proxy |
+| `tailwindcss 4` (`@tailwindcss/vite`) | Utility styles, light/dark theme through CSS variables |
+| `radix-ui` + shadcn/ui | Accessible primitives; shadcn components vendored in `src/components/ui/` |
+| `@tanstack/react-table 9` | Tables (sorting, selection, column visibility) through `DataList` |
+| `@tanstack/react-query 5` | Server data (cache, invalidation) |
+| `zustand 5` | Client state (session, theme) |
+| `axios` | HTTP client (httpOnly cookie, 401 interceptor) |
+| `sonner` | Toasts (including the undo toast) |
+| `cmdk` | ⌘K command palette |
+| `lucide-react`, `@icons-pack/react-simple-icons` | Icons |
+| `dayjs` | Relative dates |
+| `i18next`, `react-i18next`, `i18next-browser-languagedetector` | fr/en internationalization |
+| `vite-plugin-pwa` | Manifest + service worker |
+| `@fontsource-variable/geist`, `geist-mono` | Fonts |
 
 ---
 
-## Zustand Store Structure
+## `src/` Layout
+
+```
+src/
+├── App.tsx                ← Routes, ProtectedRoute, AdminRoute, redirects
+├── main.tsx               ← QueryClient, BrowserRouter, ErrorBoundary, registerSW
+├── api/
+│   ├── client.ts          ← axios instance (withCredentials, 401 interceptor)
+│   └── index.ts           ← Endpoints grouped by module (jobsApi, rulesApi…)
+├── components/
+│   ├── app/               ← App components (AppShell, DataList, MailViewer…)
+│   ├── ui/                ← Vendored shadcn/ui (button, dialog, sheet, sidebar, table…)
+│   └── ErrorBoundary.tsx
+├── hooks/
+│   ├── queries.ts         ← React Query hooks + query key factories
+│   ├── useJobSSE.ts       ← One job's progress (SSE)
+│   ├── useLiveCounters.ts ← Live counters (SSE)
+│   ├── useGlobalJobNotifier.tsx, useMailActions.ts, useKeyboardShortcuts.ts
+│   ├── useAccount.ts, use-mobile.ts
+├── pages/                 ← One page per route + tab subfolders
+│   ├── admin/ archives/ cleanup/ overview/ rules/ settings/
+├── store/                 ← auth.store.ts, theme.store.ts
+├── i18n/                  ← index.ts + locales/fr.json, en.json
+├── lib/utils.ts           ← cn() (clsx + tailwind-merge)
+├── styles/, types/, utils/  ← format, gmail, download, logger…
+└── __tests__/             ← Vitest tests + setup.ts
+```
+
+---
+
+## Zustand Stores
+
+Server data goes through React Query; Zustand only holds client state.
 
 ### `auth.store.ts`
 
-Manages:
-- JWT token (persisted in `localStorage`)
-- Local user profile (email, role, display_name, avatar_url, quotas)
-- List of connected Gmail accounts
-- Active Gmail account (sidebar selector)
-- Login via Google SSO (`loginWithToken`)
+- `user` (email, role, display_name, avatar_url, quotas, `totp_enabled`), `isAuthenticated`, `initialLoading`
+- `gmailAccounts` (with `backup_enabled`, `backup_interval`, `needs_reauth`) and `activeAccountId` (persisted in `localStorage`)
+- Actions: `login`, `register`, `loginWithSsoCode`, `logout`, `fetchMe`, `setActiveAccount`
 
-```typescript
-const { token, user, gmailAccounts, activeAccountId } = useAuthStore()
-// user.role: 'user' | 'admin'
-// user.display_name, user.avatar_url: depuis Google SSO
-// user.max_gmail_accounts, user.storage_quota_bytes: quotas
-```
+No token is stored client-side: the session is an httpOnly cookie. `App.tsx` calls `fetchMe()` on mount to restore the session.
+
+### `theme.store.ts`
+
+`light` / `dark` mode; the `system` preference (nothing in `localStorage`) follows `prefers-color-scheme`. Imported in `main.tsx` so the `.dark` class is applied before the first render.
 
 ---
 
 ## Routing
 
 ```
-/login              → LoginPage (unprotected, handles TOTP 2FA)
-/                   → Redirect → /dashboard
-/dashboard          → DashboardPage 🔒
-/mails              → MailManagerPage 🔒
-/archive            → ArchivePage 🔒
-/rules              → RulesPage 🔒 (includes Templates drawer)
-/jobs               → JobsPage 🔒
-/settings           → SettingsPage 🔒 (profile, Gmail, 2FA, audit log)
-/admin              → AdminPage 🔒🛡️ (admin only)
-/unsubscribe        → UnsubscribePage 🔒
-/attachments        → AttachmentsPage 🔒
-/insights           → InsightsPage 🔒
-/privacy            → PrivacyPage 🔒 (tracking pixels, PII, encryption)
+/login              → Login (public, TOTP 2FA)
+/shared/:token      → SharedMail (public share link)
+/                   → AppShell 🔒, then:
+  /overview         → Overview                (RequireGmailAccess)
+  /mails            → Mails                   (RequireGmailAccess)
+  /cleanup          → Cleanup                 (RequireGmailAccess)
+  /rules            → Rules                   (RequireGmailAccess)
+  /archives         → Archives
+  /attachments      → Attachments
+  /activity         → Activity (jobs)
+  /settings/:section→ Settings (account, gmail, security, notifications, data)
+  /more             → More (mobile menu)
+  /admin            → Administration 🛡️ (AdminRoute)
 ```
+
+- `ProtectedRoute` waits for `initialLoading`, then redirects to `/login` when not authenticated.
+- `AdminRoute` redirects to `/overview` when `user.role !== 'admin'`.
+- `RequireGmailAccess`: on a disconnected Gmail account, pages that call Gmail offer reconnection instead of failing.
+
+### Legacy URL Redirects
+
+| Legacy URL | Target |
+|---|---|
+| `/`, `/dashboard`, `/analytics`, `/insights` | `/overview` |
+| `/archive` | `/archives` |
+| `/jobs` | `/activity` |
+| `/settings` | `/settings/account` |
+| `/ops` | `/settings/data` |
+| `/unsubscribe` | `/cleanup?tab=senders` |
+| `/expiration` | `/rules?tab=labels` |
+| `/sharing` | `/archives?tab=shares` |
+| `/privacy` | `/settings/account` |
+| `/unified` | `/mails?account=all` |
+| `/saved-searches` | `/mails` |
+
+Redirects keep the query string (e.g. `/settings?gmail=connected` after the OAuth callback).
+
+---
+
+## AppShell and Navigation
+
+`components/app/AppShell.tsx` is the layout of every authenticated page:
+
+- **≥ 768 px**: `AppSidebar` (shadcn `Sidebar`, 15rem) with the entries of `components/app/nav.ts` and their live badges.
+- **< 768 px** (`useIsMobile`): `BottomNav` (Overview, Mails, Cleanup, Archives, More); `/more` gathers the rest.
+- Header: `NotificationBell` + user menu (accounts, theme, language, logout).
+- `CommandPalette` (⌘K, `cmdk`), sonner `Toaster`, `useGlobalJobNotifier()` (toast when a job ends, per user preferences).
+- `useLiveCounters()` opens **one** SSE connection per tab; pages read the counters through `useOutletContext()`.
+
+`nav.ts` defines the entries (`NAV`), the path prefixes that highlight them (legacy pages included), the badges (`navBadge`: mail total, active rules, active jobs) and `visibleNav(role)` (Administration for admins only).
+
+---
+
+## Lists: `DataList`
+
+`components/app/DataList.tsx` renders a TanStack Table instance as a `<table>` (≥ md) or as cards (mobile). Pages create the table with `useTable({ features: dataListFeatures, ... })`:
+
+- `dataListFeatures` = row selection, sorting, column visibility, `columnMeta`.
+- `meta.mobile` places each column on the mobile card (`title`, `subtitle`, `meta`, `leading`, `menu`, `hidden`).
+- Props: `table`, `rowLabel` (accessible name of the checkbox), `onRowOpen`, `empty`, `isLoading` (skeletons).
+- Sorting exposed through `aria-sort`, column visibility menu.
+
+---
+
+## Server Data (React Query)
+
+`QueryClient` (in `main.tsx`): `staleTime` 5 min, `gcTime` 10 min, `retry: 1`, no refetch on window focus.
+
+`hooks/queries.ts` holds the hooks and the key factories:
+
+```typescript
+queryKeys.dashboard(accountId)       // ['dashboard', accountId]
+queryKeys.rules(accountId)           // ['rules', accountId]
+queryKeys.ruleStats(accountId)       // ['rules', accountId, 'stats'] — invalidated with rules
+queryKeys.jobs(params)               // ['jobs', params]
+```
+
+---
+
+## Real Time (SSE)
+
+| Hook | Endpoint | Usage |
+|---|---|---|
+| `useJobSSE(jobId)` | `GET /api/jobs/:jobId/events` | One job's progress; closes the stream on `completed`/`failed`/`cancelled`, reconnects with backoff (5 attempts max). Used by `JobProgressInline`. |
+| `useLiveCounters()` | `GET /api/events` | `counters` event (`mails` per account, `activeRules`, `activeJobs`); the `EventSource` reconnects on its own. |
+
+Both send the cookie (`withCredentials: true`); no token in the URL.
+
+### Undo Window
+
+Trash and archive (Mails, Cleanup), deleting a sender's mails and manually running a rule are enqueued with a server-side delay (`delayMs`, 10 s by default, see [Jobs](jobs.md#undo-window)). `UndoToast` shows a countdown and cancels the job through `DELETE /api/jobs/:id`. `useMailActions` hides the rows optimistically until the job ends or is undone; the other actions (read/unread, labels) are sent with `delayMs: 0`.
 
 ### Keyboard Shortcuts
 
-The **MailManager** page integrates the `useKeyboardShortcuts` hook which captures `j/k` (navigation), `Enter/o` (open), `e` (archive), `#` (trash), `r/u` (read/unread), `/` (search), `Escape` (deselect). Shortcuts are disabled in input fields.
-
-### Bulk Actions
-
-The **MailManager** page provides an **"Archive all"** button that launches a differential archiving of all emails matching the current query, without manual selection. The operation is asynchronous (BullMQ job) with SSE tracking.
-
-Metadata loading (subject, sender, size) uses the **batch** endpoint (`POST /messages/batch`) to fetch up to 100 messages in a single call, avoiding 429 errors.
-
-The `ProtectedRoute` component checks for the JWT token presence. If absent, redirects to `/login`.
-
-The `AdminRoute` component verifies that `user.role === 'admin'`. If non-admin, redirects to `/dashboard`.
+The **Mails** page uses `useKeyboardShortcuts`: `j`/`k` (navigation), `o` (open), `e` (archive), `#` (trash), `r`/`u` (read/unread), `/` (search), `Escape` (clear selection). They are off inside fields, menus and dialogs, and the user can turn them off (`localStorage` `nid.mailShortcuts`).
 
 ---
 
 ## HTTP Client (axios)
 
-`src/api/client.ts` configures an axios client with:
+`src/api/client.ts`:
 
-- `baseURL` from `VITE_API_URL`
-- Automatic JWT injection in the `Authorization: Bearer` header
-- Automatic redirect to `/login` on 401 response
+- `baseURL` from `VITE_API_URL` (empty by default: same origin)
+- `withCredentials: true`: the httpOnly `token` cookie is sent with every request
+- On 401 (except `/auth/me`), redirect to `/login`; 5xx and network errors are logged
 
-All pages make their calls through this client, never via `fetch` directly.
+Calls go through this client (via `api/index.ts`), never through `fetch`. Exception: SSE `EventSource`s.
 
 ---
 
@@ -91,112 +192,62 @@ All pages make their calls through this client, never via `fetch` directly.
 |---|---|---|
 | `VITE_API_URL` | `` (empty) | Backend API URL. In dev, the Vite proxy redirects `/api` to `localhost:4000` |
 
-In production (multi-stage Dockerfile), the Vite build is served by Nginx which proxies `/api` to the backend.
-
----
-
-## Icons (Lucide React)
-
-All application icons use [Lucide React](https://lucide.dev/), an open source SVG icon library. Emojis and Ant Design icons have been replaced for a uniform professional look.
-
-### Usage
-
-```tsx
-import { Mail, Archive, Trash2, Settings } from 'lucide-react'
-
-<Mail size={16} />
-<Archive className="icon-muted" />
-```
-
-### Conventions
-
-- **Size**: `16` in menus and buttons, `20-24` in titles and cards
-- **Dark mode**: icons inherit `currentColor` and automatically adapt to the theme
-- **i18n**: translation keys reference Lucide icons (no emojis) for identical rendering across all platforms
+In production (multi-stage Dockerfile), the Vite build is served by Nginx, which proxies `/api` to the backend.
 
 ---
 
 ## Internationalization (i18n)
 
-The application is fully translated into **French** (default language) and **English**, using `react-i18next`.
+French (fallback language) and English, through `react-i18next`.
 
-### Configuration
-
-The `src/i18n/index.ts` file initializes i18next with:
-
-- **`LanguageDetector`** — detects the browser language on first load
-- **`fallbackLng: 'fr'`** — French by default if the language is not supported
-- **`localStorage` persistence** — key `i18nextLng`, the user's choice is remembered
-
-### Translation Files
-
-```
-src/i18n/
-├── index.ts              ← Configuration i18next
-└── locales/
-    ├── fr.json           ← ~370+ clés, namespace plat
-    └── en.json           ← Traductions anglaises (même structure)
-```
-
-Keys are organized by functional domain in a flat namespace:
-
-```json
-{
-  "dashboard.title": "Tableau de bord",
-  "mails.search": "Rechercher...",
-  "rules.create": "Créer une règle",
-  "jobs.bulkOperation": "Opération groupée",
-  "settings.profile": "Profil",
-  "admin.users": "Utilisateurs"
-}
-```
-
-### Language Selector
-
-A `<Select>` language selector is integrated in the navigation bar (`AppLayout.tsx`), between the notification bell and the dark theme toggle. It displays the flags 🇫🇷 / 🇬🇧 and calls `i18n.changeLanguage()` on change.
-
-### Ant Design and dayjs Integration
-
-- **Ant Design**: the `ConfigProvider` locale is dynamically synchronized (`frFR` / `enUS`) in `main.tsx` based on the active language.
-- **dayjs**: the locale is changed dynamically in components that display relative dates (Rules, Jobs, NotificationBell).
-- **`<html lang>`**: the document's `lang` attribute is updated via a `useEffect` in `main.tsx`.
-
-### Usage in Components
-
-All pages and components use the `useTranslation()` hook:
+`src/i18n/index.ts` initializes i18next with `LanguageDetector` (order: `localStorage` then browser, key `i18nextLng`) and `fallbackLng: 'fr'`. Translations live in `src/i18n/locales/fr.json` and `en.json`, with keys nested by domain (`shell.*`, `mails.*`, `rules.*`…).
 
 ```tsx
-import { useTranslation } from 'react-i18next';
-
-function MaPage() {
-  const { t } = useTranslation();
-  return <h1>{t('dashboard.title')}</h1>;
-}
+const { t } = useTranslation();
+return <h1>{t('mails.title')}</h1>;
 ```
 
-### Translated Pages and Components
+`main.tsx` keeps `<html lang>` in sync with the active language. The language is changed from the user menu.
 
-All application pages and components are translated:
+---
 
-- **Pages**: Login, Dashboard, MailManager, Jobs, Archive, Rules, Settings, Admin, Unsubscribe, Attachments, Insights, Privacy
-- **Components**: AppLayout, BulkActionBar, NotificationBell, MailViewer, GmailSearchInput, RuleFormModal, JobProgressModal
+## Tests
+
+### Unit (Vitest)
+
+- `npm run test` (`vitest run`), `jsdom` environment, `globals: true`
+- Tests in `src/__tests__/` (`*.test.ts(x)`), global mocks in `setup.ts` (axios, `localStorage`, `matchMedia`, `ResizeObserver`)
+- Testing Library (`@testing-library/react`, `user-event`, `jest-dom`)
+
+### End-to-End (Playwright)
+
+- `npm run e2e` (`playwright test`), specs in `frontend/e2e/`
+- API mocked by `e2e/mock-api.ts` + `e2e/fixtures/`: no backend needed; Vite starts on port `PW_PORT` (3100 by default)
+- Two projects: `desktop` (1280×800) and `mobile` (iPhone 13), locale `fr-FR`
+- `a11y.spec.ts` runs axe-core (`@axe-core/playwright`) on every page. **Ratchet**: with `E2E_A11Y_STRICT=1` (set in CI), a page fails when it has more violations than recorded in `e2e/a11y-baseline.json`. Update the baseline after fixing issues: `E2E_A11Y_UPDATE=1 npx playwright test a11y --workers=1`.
+
+---
+
+## Logs
+
+See [Logging](logging.md#frontend): `utils/logger.ts`, `ErrorBoundary`, axios interceptor, global errors in `main.tsx`.
 
 ## PWA (Progressive Web App)
 
-Nid is an installable PWA: the application can be added to the home screen on mobile and desktop, with a service worker that precaches the app shell (no offline features).
+Nid is an installable PWA: the app can be added to the home screen on mobile and desktop, with a service worker that precaches the app shell (no offline features).
 
 ### Configuration
 
-- **Manifest + Service Worker**: generated by `vite-plugin-pwa` (config in `vite.config.ts`) as `manifest.webmanifest` and `sw.js` (Workbox), registered by `registerSW()` in `main.tsx`. `registerType: 'autoUpdate'`: a new deploy activates immediately and reloads open tabs.
-- **Icons**: 192×192 and 512×512 in standard + maskable in `public/`.
+- **Manifest + Service Worker**: generated by `vite-plugin-pwa` (configured in `vite.config.ts`) as `manifest.webmanifest` and `sw.js` (Workbox), registered by `registerSW()` in `main.tsx`. `registerType: 'autoUpdate'`: a new deployment activates immediately and reloads open tabs.
+- **Icons**: 192×192 and 512×512 standard + maskable in `public/`.
 - **Meta tags**: `theme-color`, `apple-mobile-web-app-capable`, `apple-touch-icon` in `index.html`.
 
 ### Service Worker Cache Strategy
 
-| Request Type | Strategy | Detail |
+| Request Type | Strategy | Details |
 |---|---|---|
-| API (`/api/*`) | Not intercepted | Excluded from the navigation fallback, no runtime caching |
-| App shell (JS, CSS, HTML of the build) | Precache | Versioned per build, outdated entries cleaned up |
+| API (`/api/*`) | Not intercepted | Excluded from the navigation fallback, no runtime cache |
+| App shell (build JS, CSS, HTML) | Precache | Versioned per build, outdated entries cleaned up |
 | Navigation (HTML) | Precached `index.html` | SPA fallback, except `/api/*` |
 
 nginx serves `sw.js` and `manifest.webmanifest` with `Cache-Control: no-cache` so updates are picked up.
@@ -205,23 +256,15 @@ nginx serves `sw.js` and `manifest.webmanifest` with `Cache-Control: no-cache` s
 
 On Chrome/Edge (desktop and mobile), an "Install" button appears in the URL bar. On Safari iOS, use "Add to Home Screen" from the share menu.
 
-## Responsive Navigation (Mobile)
+## Responsive (Mobile)
 
-The application adopts a **responsive** approach (no separate native app) via the Ant Design breakpoint system (`Grid.useBreakpoint`).
+A single responsive app, breakpoint `768px` (`useIsMobile`, aligned with Tailwind's `md`):
 
-### Behavior by Screen Size
-
-| Screen | Navigation | Content |
+| Screen | Navigation | Lists |
 |---|---|---|
-| **Desktop** (≥ 768px) | Collapsible fixed sidebar (220px / 64px) | 24px padding |
-| **Mobile** (< 768px) | Slide-in drawer from the left (280px) | 12px padding |
+| **Desktop** (≥ 768px) | Fixed sidebar | Tables |
+| **Mobile** (< 768px) | Bottom bar + "More" page | Cards (`DataList`) |
 
-### Mobile Adaptations
-
-- **Hamburger menu**: ☰ button in the header to open the navigation drawer.
-- **Auto-close**: the drawer closes after each navigation.
-- **Compact user menu**: name and admin badge hidden on mobile, only the avatar remains visible.
-- **Touch-friendly**: menu items 44px minimum (WCAG 2.5.8 accessibility).
-- **Safe areas**: notch support via `env(safe-area-inset-*)` for standalone PWA mode.
-- **Scrollable tables**: native horizontal scroll on Ant Design tables.
-- **Full-screen modals**: modals take up nearly the full width on mobile.
+- **Safe areas**: `env(safe-area-inset-*)` for the header, the bottom bar and toasts (standalone PWA mode).
+- **Toasts**: placed above the bottom bar on mobile.
+- **Skip link**: `#main-content` (in `index.html`) targets the AppShell `<main>`.

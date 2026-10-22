@@ -4,33 +4,36 @@
 
 ```mermaid
 graph TB
-    subgraph Frontend["Frontend (React 19 + Ant Design + i18n)"]
-        UI[Interface web :3000]
+    subgraph Container["nid container (unified Docker image)"]
+        Nginx[Nginx :3000\nstatic frontend + /api proxy]
+        subgraph Backend["Node backend (Fastify) :4000"]
+            API[REST API + SSE]
+            Worker[Unified BullMQ worker]
+            Sched[Schedulers]
+        end
     end
 
-    subgraph Backend["Backend (Fastify + TypeScript)"]
-        API[API REST :4000]
-        Workers[BullMQ Workers]
+    UI[React 19 frontend\nshadcn/Tailwind + React Query] -->|HTTP + JWT cookie| Nginx
+    Nginx --> API
+
+    subgraph Storage["Storage"]
+        PG[(PostgreSQL\nMetadata + indexes)]
+        Redis[(Redis\nBullMQ queue + pub/sub)]
+        NAS[📁 NAS\nEML archives]
     end
 
-    subgraph Storage["Stockage"]
-        PG[(PostgreSQL\nMétadonnées + index)]
-        Redis[(Redis\nQueue BullMQ)]
-        NAS[📁 NAS\nArchives EML]
-    end
-
-    subgraph External["Externe"]
+    subgraph External["External"]
         Gmail[Gmail API\nOAuth2]
     end
 
-    UI -->|HTTP + JWT| API
     API -->|OAuth2| Gmail
     API --> PG
     API --> Redis
-    Workers --> PG
-    Workers --> Redis
-    Workers -->|Écriture EML| NAS
-    Workers -->|Gmail API| Gmail
+    Sched -->|enqueueJob| Redis
+    Worker --> PG
+    Worker --> Redis
+    Worker -->|Write EML| NAS
+    Worker -->|Gmail API| Gmail
 ```
 
 ---
@@ -45,20 +48,21 @@ sequenceDiagram
     participant Worker as Worker
     participant Gmail as Gmail API
 
-    UI->>API: POST /api/gmail/:id/messages/bulk
-    API->>Queue: enqueueJob("bulk_operation", payload)
-    API-->>UI: 202 Accepted {jobId}
-    
-    UI->>API: GET /api/jobs/events (SSE)
-    loop Événements temps réel
-        API-->>UI: SSE {jobId, status, progress, processed/total}
-    end
+    UI->>API: POST /api/gmail/:accountId/messages/bulk {action, messageIds | query, delayMs}
+    API->>Queue: enqueueJob("bulk_operation", payload, {delay: delayMs})
+    API-->>UI: 202 Accepted {jobId, runAt}
 
-    Queue->>Worker: Job dépilé
-    loop Par batch de 100 (throttlé 500ms)
-        Worker->>Gmail: messages.trash() / modify()
+    Note over UI,Queue: Undo window (10 s by default):<br/>DELETE /api/jobs/:jobId removes the job
+
+    UI->>API: GET /api/jobs/:jobId/events (SSE)
+    Queue->>Worker: Job picked up (after the delay)
+    loop Per batch of 50 ids, or per page of 500 query results
+        Worker->>Gmail: messages.trash() / batchModify()
+        Worker-->>API: progress (QueueEvents)
+        API-->>UI: SSE {status, progress, processed, total}
     end
-    Worker->>API: Job completed
+    Worker-->>API: completed
+    API-->>UI: SSE final state
 ```
 
 ---
@@ -69,46 +73,47 @@ sequenceDiagram
 sequenceDiagram
     participant UI as Frontend
     participant API as Backend API
-    participant Worker as Archive Worker
+    participant Worker as Worker
     participant Gmail as Gmail API
     participant PG as PostgreSQL
     participant NAS as NAS (EML)
 
-    UI->>API: POST /api/archive/:id/archive {query, differential:true}
+    UI->>API: POST /api/archive/:accountId/archive {query, differential:true}
     API->>Worker: enqueueJob("archive_mails")
-    
+
     Worker->>Gmail: messages.list(query) → IDs
-    Worker->>PG: SELECT gmail_message_id WHERE account=... → IDs déjà archivés
-    Note over Worker: Diff = nouveaux IDs seulement
-    
-    loop Pour chaque nouvel ID
+    Worker->>PG: SELECT gmail_message_id WHERE account=... → already archived IDs
+    Note over Worker: Diff = new IDs only
+
+    loop For each new ID
         Worker->>Gmail: messages.get(id, format=raw)
-        Worker->>NAS: Écriture {id}.eml
-        Worker->>NAS: Écriture pièces jointes
+        Worker->>NAS: Write {id}.eml
+        Worker->>NAS: Write attachments
         Worker->>PG: INSERT archived_mails + archived_attachments
     end
+    Note over Worker: More than BULK_QUERY_MAX new mails:<br/>differential follow-up re-enqueued after ARCHIVE_CONTINUE_DELAY_MIN
 ```
+
+The same job runs the automatic NAS backup: the scheduler enqueues it for every account with `backup_enabled`, according to `backup_interval`.
 
 ---
 
-## Privacy Scan Flow
+## Archive Encryption Flow
 
 ```mermaid
 sequenceDiagram
     participant UI as Frontend
     participant API as Backend API
     participant Queue as BullMQ
-    participant Worker as Privacy Worker
-    participant Gmail as Gmail API
+    participant Worker as Worker
     participant PG as PostgreSQL
     participant NAS as NAS (EML)
 
-    Note over UI,NAS: Chiffrement des archives
-    UI->>API: POST /api/privacy/:id/encryption/encrypt
+    UI->>API: POST /api/privacy/:accountId/encryption/encrypt
     API->>Queue: enqueueJob("encrypt_archives")
-    Queue->>Worker: Job dépilé
-    loop Pour chaque EML non chiffré
-        Worker->>NAS: Lecture → chiffrement AES-256-GCM → écriture
+    Queue->>Worker: Job picked up
+    loop For each unencrypted EML
+        Worker->>NAS: Read → AES-256-GCM encryption → write
         Worker->>PG: UPDATE archived_mails SET is_encrypted=true
     end
 ```
@@ -134,10 +139,12 @@ Gmail API with 5,000 emails can potentially require several minutes of processin
 
 BullMQ allows:
 
-- Real-time progress (frontend polling)
+- Real-time progress (SSE fed by BullMQ `QueueEvents`)
 - Error recovery (retry with exponential backoff)
-- Cancellation of a running job
-- Controlled concurrency (max 3 bulk jobs in parallel, 1 for archiving)
+- An undo window before execution (delayed jobs), and cancellation of a job that has not started
+- Controlled concurrency (one unified worker, 3 jobs in parallel across all types)
+
+See [Jobs & Queue](jobs.md).
 
 ### PostgreSQL for Metadata
 

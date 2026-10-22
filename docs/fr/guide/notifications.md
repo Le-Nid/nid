@@ -1,137 +1,85 @@
 # Notifications et webhooks
 
-Nid vous informe des événements importants via des notifications in-app et des webhooks vers vos services préférés.
+Nid vous prévient des événements importants de trois façons : la **cloche** de l'en-tête, des **toasts** (messages temporaires à l'écran) et des **webhooks** vers vos services. Les réglages sont dans **Paramètres › Notifications & webhooks**.
 
 ---
 
-## Notifications in-app
+## Cloche de notifications
 
-### Cloche de notifications
+La cloche, en haut à droite de chaque page, affiche le nombre de notifications non lues. Elle ouvre un panneau avec les dernières notifications :
 
-L'icône **🔔** dans la barre de navigation affiche vos notifications. Le badge rouge indique le nombre de notifications non lues.
-
-> 📸 *Capture d'écran suggérée : cloche de notifications avec badge et panneau déroulant montrant les notifications*
-
-### Actions sur les notifications
-
-- Cliquez sur une notification pour la marquer comme lue
-- **Tout marquer comme lu** : marque toutes les notifications comme lues
-- **Supprimer** : supprime une notification individuellement
-- **Supprimer les lues** : supprime toutes les notifications déjà lues
-
-### Types de notifications
-
-| Notification | Description |
-|---|---|
-| **Rapport hebdomadaire** | Résumé de votre activité email de la semaine |
-| **Job terminé** | Un job (archivage, suppression, etc.) s'est terminé avec succès |
-| **Job en échec** | Un job a échoué après 3 tentatives |
-| **Règle exécutée** | Une règle automatique a été exécutée |
-| **Alerte quota** | Votre quota de stockage approche de la limite |
-| **Alerte intégrité** | La vérification d'intégrité des archives a détecté un problème |
+- cliquer une notification la marque comme lue ;
+- **Tout marquer lu** ;
+- **Supprimer lues** : après confirmation, supprime définitivement les notifications lues ;
+- le bouton de suppression d'une ligne supprime cette notification.
 
 ---
 
-## Préférences de notifications
+## Préférences de notification
 
-Personnalisez les canaux de notification pour chaque type d'événement.
+Dans **Paramètres › Notifications & webhooks**, chaque événement a deux interrupteurs : **In-app** (dans la cloche) et **Toast** (message temporaire à l'écran). Chaque changement est enregistré immédiatement.
 
-1. Rendez-vous dans **Paramètres** → section **Préférences de notifications**
-2. Pour chaque type de notification, activez ou désactivez les canaux :
-
-| Canal | Description |
+| Événement | Quand |
 |---|---|
-| 🔔 **In-app** | Crée une notification dans la cloche du header |
-| 💬 **Toast** | Affiche une pop-up temporaire en bas de page |
-
-> 📸 *Capture d'écran suggérée : tableau des préférences de notifications avec les toggles in-app et toast pour chaque type*
-
-Chaque toggle prend effet **immédiatement** — pas besoin de sauvegarder.
+| **Rapport hebdomadaire** | résumé d'activité chaque lundi |
+| **Tâche terminée** | une tâche (action de masse, sauvegarde, règle) se termine |
+| **Tâche en échec** | une tâche échoue |
+| **Règle exécutée** | une règle automatique s'exécute |
+| **Alerte de stockage** | le stockage des archives approche sa limite |
+| **Alerte d'intégrité** | un problème est détecté dans les archives |
 
 ---
 
 ## Webhooks
 
-Les webhooks permettent d'envoyer des notifications vers des services externes quand un événement se produit dans Nid.
+« Envoie les événements vers Discord, Slack, ntfy ou une URL à vous (signée HMAC). »
 
-### Types supportés
+### Créer un webhook
 
-| Type | Description |
+**Nouveau webhook** ouvre le formulaire :
+
+- **Nom** ;
+- **URL** ;
+- **Type** : **Générique (HMAC)**, **Discord**, **Slack**, **ntfy** ;
+- pour ntfy : **Utilisateur ntfy (facultatif)** et **Mot de passe ntfy (facultatif)** ;
+- **Événements** (au moins un) :
+
+| Événement | Préférence correspondante |
 |---|---|
-| **Discord** | Message dans un salon Discord via webhook URL |
-| **Slack** | Message dans un channel Slack via Incoming Webhook |
-| **Ntfy** | Notification push via [ntfy.sh](https://ntfy.sh) |
-| **Générique** | Requête HTTP POST vers n'importe quelle URL |
+| `job.completed` | Tâche terminée |
+| `job.failed` | Tâche en échec |
+| `rule.executed` | Règle exécutée |
+| `quota.warning` | Alerte de stockage |
+| `integrity.failed` | Alerte d'intégrité |
 
-### Événements disponibles
+Le rapport hebdomadaire n'est pas envoyé par webhook.
 
-| Événement | Description |
-|---|---|
-| `job.completed` | Un job s'est terminé avec succès |
-| `job.failed` | Un job a échoué |
-| `rule.executed` | Une règle automatique a été exécutée |
-| `quota.warning` | Le quota de stockage est presque atteint |
-| `integrity.failed` | La vérification d'intégrité a détecté un problème |
+### Gérer les webhooks
 
-### Configurer un webhook
+Chaque webhook de la liste affiche son type et le code du dernier envoi (« dernier envoi : 200 »). Un interrupteur l'active ou le désactive sans le supprimer. Son menu propose **Envoyer un test** et **Supprimer** (après confirmation).
 
-1. Dans **Paramètres** → section **Webhooks**
-2. Cliquez sur **Ajouter un webhook**
-3. Renseignez :
-    - **Nom** : un identifiant libre (ex. : "Notif Discord")
-    - **URL** : l'URL du webhook de votre service
-    - **Type** : Discord, Slack, Ntfy ou Générique
-    - **Événements** : cochez les événements qui déclenchent le webhook
-    - **Utilisateur / Mot de passe** *(Ntfy uniquement)* : identifiants si le topic est protégé par authentification
+### Signature (type Générique)
 
-> 📸 *Capture d'écran suggérée : formulaire de création d'un webhook avec les champs nom, URL, type et événements*
-
-### Tester un webhook
-
-Cliquez sur **Tester** à côté d'un webhook pour envoyer un message test et vérifier que la connexion fonctionne.
-
-### Activer / désactiver
-
-Le toggle à côté de chaque webhook permet de l'activer ou le désactiver sans le supprimer.
-
-### Sécurité (webhooks génériques)
-
-Les webhooks de type **Générique** incluent automatiquement un header `X-Webhook-Signature` contenant un HMAC-SHA256 du payload. Votre serveur peut vérifier cette signature pour s'assurer que la requête provient bien de Nid.
-
-> 📸 *Capture d'écran suggérée : liste des webhooks configurés avec les colonnes nom, type, événements, toggle actif/inactif et bouton tester*
+Les webhooks de type **Générique (HMAC)** ajoutent un en-tête `X-Webhook-Signature: sha256=…`, HMAC-SHA256 du corps de la requête. Votre serveur peut le vérifier pour s'assurer que la requête vient bien de Nid.
 
 ---
 
-## Exemples d'utilisation
+## Exemples
 
 ### Discord
 
-1. Dans Discord, créez un webhook dans un salon : **Paramètres du salon** → **Intégrations** → **Webhooks** → **Nouveau webhook**
-2. Copiez l'URL du webhook
-3. Dans Nid, créez un webhook de type **Discord** avec cette URL
-4. Sélectionnez les événements à notifier
+1. Dans Discord : **Paramètres du salon** → **Intégrations** → **Webhooks** → **Nouveau webhook**, puis copiez l'URL
+2. Dans Nid, créez un webhook de type **Discord** avec cette URL et choisissez les événements
 
-### Ntfy
+### ntfy
 
-[ntfy](https://ntfy.sh) permet de recevoir des notifications push sur votre téléphone ou navigateur.
+[ntfy](https://ntfy.sh) envoie des notifications push sur votre téléphone ou navigateur.
 
-#### Topic public (sans authentification)
-
-1. Choisissez un topic sur [ntfy.sh](https://ntfy.sh) (ex. : `nid-alerts`)
-2. Dans Nid, créez un webhook de type **Ntfy** avec l'URL `https://ntfy.sh/nid-alerts`
-3. Installez l'app ntfy sur votre téléphone et abonnez-vous au même topic
-
-#### Topic protégé (avec login / mot de passe)
-
-Si vous hébergez votre propre serveur ntfy ou utilisez un topic protégé par mot de passe :
-
-1. Dans Nid, créez un webhook de type **Ntfy** avec l'URL de votre serveur (ex. : `https://ntfy.example.com/mon-topic`)
-2. Renseignez le **nom d'utilisateur** et le **mot de passe** dans les champs qui apparaissent quand le type Ntfy est sélectionné
-3. Les identifiants sont envoyés via l'en-tête HTTP `Authorization: Basic` (encodage Base64)
-4. Cliquez sur **Tester** pour vérifier que l'authentification fonctionne
+- **Topic public** : créez un webhook de type **ntfy** avec l'URL `https://ntfy.sh/nid-alerts`, puis abonnez-vous au même topic dans l'app ntfy.
+- **Topic protégé** (serveur ntfy auto-hébergé, par exemple) : renseignez l'URL de votre serveur (`https://ntfy.example.com/mon-topic`) et les champs utilisateur / mot de passe ; ils sont envoyés en `Authorization: Basic`. **Envoyer un test** vérifie l'authentification.
 
 ::: tip Serveur ntfy auto-hébergé
-Si vous utilisez un serveur ntfy auto-hébergé avec contrôle d'accès (`auth-default-access: deny-all`), vous devez créer un utilisateur et lui autoriser l'accès en écriture au topic :
+Avec un contrôle d'accès (`auth-default-access: deny-all`), créez un utilisateur et autorisez-le en écriture sur le topic :
 ```bash
 ntfy user add monuser
 ntfy access monuser mon-topic write

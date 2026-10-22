@@ -1,0 +1,79 @@
+# Archives
+
+La page **Archives** (`/archives`) donne accès à la copie locale de vos mails, sauvegardée sur le NAS au format EML. Elle reste consultable même si les mails ont été supprimés de Gmail, et même si le compte Gmail a été déconnecté.
+
+Quatre onglets : **Mails**, **Corbeille**, **Rétention**, **Partages**.
+
+---
+
+## En-tête et sauvegarde
+
+- État : « Dernière sauvegarde il y a … · N mails » (ou « Aucune sauvegarde pour l'instant »).
+- **Sauvegarder sur le NAS maintenant** : sauvegarde les mails du compte pas encore archivés ; la progression s'affiche sous l'en-tête et dans [Activité](activity.md).
+- **Exporter (.mbox)** : télécharge les archives du compte au format mbox (lisible par Thunderbird ou Apple Mail). Si une recherche ou un filtre est actif, seuls les résultats chargés sont exportés.
+
+D'autres façons d'alimenter les archives : **Sauvegarder sur le NAS** dans [Mails](mails.md), la **Sauvegarde automatique** d'un compte dans [Paramètres › Comptes Gmail](settings.md#comptes-gmail), les règles « Sauvegarder sur le NAS puis supprimer » et l'import mbox / IMAP de [Paramètres › Données](settings.md#donnees).
+
+---
+
+## Onglet Mails : rechercher
+
+- **Arbre des libellés** (à gauche sur ordinateur) : **Tous les mails** puis les libellés qui contiennent des mails archivés, avec leur nombre.
+- **Recherche plein texte** : « Rechercher dans les archives (objet, expéditeur, contenu…) ». Les termes trouvés sont surlignés dans l'extrait.
+- **Filtres** : **Expéditeur**, période (**Du** / **Au**), **Avec pièce jointe**. Sur mobile, ils sont regroupés dans le panneau **Filtres (N)** avec le **Libellé**, puis **Afficher les résultats**.
+
+Les résultats (« N résultats ») affichent **Objet**, **Extrait**, **Date**, **Expéditeur**, **Taille**. **Effacer la recherche et les filtres** revient à la liste complète.
+
+### Actions
+
+- Menu `⋯` d'une ligne : **Ouvrir**, **Partager**, **Supprimer**.
+- Sélection de plusieurs lignes : **Exporter .mbox**, **Supprimer**.
+
+**Supprimer** envoie les archives dans la corbeille des archives, avec un toast « Suppression de N archives dans 10 s » et **Annuler**.
+
+### Lecteur d'archive
+
+**Ouvrir** affiche le mail archivé : en-têtes, corps (images distantes bloquées, comme dans [Mails](mails.md#lire-un-mail)), pièces jointes téléchargeables et **Conversation**. Actions : **Partager**, **Supprimer**.
+
+Un mail archivé chiffré affiche « Ce mail est chiffré : son contenu n'est pas lisible ici. » Le chiffrement des archives ne se règle pas depuis l'interface.
+
+---
+
+## Partager un mail
+
+**Partager** ouvre « Partager ce mail » : un lien temporaire, lisible sans compte Nid.
+
+1. Choisissez la **Durée de validité** : 1 heure, 24 heures, 3 jours, 7 jours ou 30 jours.
+2. **Créer le lien**, puis copiez-le.
+
+La fenêtre liste aussi les liens actifs de ce mail (« Expire le … ») avec les boutons copier et révoquer.
+
+La personne qui ouvre le lien voit le mail (« Mail partagé via lien temporaire »), images distantes bloquées. Un lien expiré, révoqué ou ayant atteint sa limite d'accès affiche « Lien introuvable ».
+
+### Onglet Partages
+
+Tous vos liens actifs : **Objet**, **Expéditeur**, **Expire le**, **Accès** (ouvertures / limite), copier, révoquer. Le nombre de liens actifs est aussi rappelé dans [Paramètres › Sécurité](settings.md#securite).
+
+---
+
+## Onglet Corbeille
+
+Les archives supprimées y restent avant d'être effacées du NAS.
+
+- « N mails dans la corbeille », avec la date **Supprimé le**.
+- **Restaurer** un mail, ou sélectionnez-en plusieurs puis **Restaurer**.
+- **Vider la corbeille** : après confirmation, supprime définitivement les mails et leurs pièces jointes du NAS. Irréversible.
+- Purge automatique : « Les mails de la corbeille sont supprimés définitivement après N jours » (ou « Purge automatique de la corbeille désactivée »). Les administrateurs règlent ici **Purge automatique** et **Durée avant purge (jours)** pour toute l'instance (voir aussi [Admin › Système](admin.md#systeme)).
+
+---
+
+## Onglet Rétention
+
+« Supprime les archives plus anciennes qu'une durée, pour un libellé ou toutes. »
+
+- **Nouvelle politique** : **Nom**, **Libellé** (ou **Tous les libellés**), **Supprimer après (jours)**.
+- La liste affiche **Nom**, **Libellé**, **Âge** (« Plus de N jours ») et **Dernière exécution** (avec le nombre d'archives supprimées).
+- **Exécuter maintenant** applique toutes les politiques.
+- Menu d'une politique : modifier, supprimer (après confirmation ; les archives déjà supprimées ne reviennent pas).
+
+Sans politique, les archives sont conservées sans limite de durée.

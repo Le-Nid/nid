@@ -78,6 +78,7 @@ Allows receiving notifications on external services (Discord, Slack, Ntfy, or ge
 | `url` | `string` | ✅ | Target URL (must be a valid URL) |
 | `type` | `string` | No | `generic` (default), `discord`, `slack`, `ntfy` |
 | `events` | `string[]` | ✅ | At least one event from the list above |
+| `auth_user` / `auth_password` | `string` | No | Basic Auth credentials, kept only for the `ntfy` type (255 chars max) |
 
 **Response** `201 Created`
 
@@ -91,7 +92,9 @@ For the `generic` type, an HMAC `secret` is automatically generated and included
 
 **Auth**: JWT
 
-**Body**: same fields as creation (all optional).
+**Body**: same fields as creation (all optional). Switching to a type other than `ntfy` clears `auth_user` / `auth_password`.
+
+**Response 200**: the updated webhook. `404` if it does not exist.
 
 ---
 
@@ -102,6 +105,8 @@ For the `generic` type, an HMAC `secret` is automatically generated and included
 **Auth**: JWT
 
 Toggles the webhook's `is_active` state.
+
+**Response 200**: the updated webhook. `404` if it does not exist.
 
 ---
 
@@ -121,7 +126,7 @@ Toggles the webhook's `is_active` state.
 
 **Auth**: JWT
 
-Sends a test `job.completed` event to the webhook to verify connectivity.
+Sends a test `job.completed` event to verify connectivity. Note: it goes through the normal dispatcher and reaches **all** of the user's active webhooks subscribed to `job.completed` (not only this one). `404` if the webhook does not exist.
 
 ```json
 {
@@ -133,7 +138,7 @@ Sends a test `job.completed` event to the webhook to verify connectivity.
 
 ## HMAC signature (generic type)
 
-For `generic` type webhooks, each outgoing request contains an `X-Webhook-Signature` header computed with HMAC-SHA256 on the JSON body, using the webhook's `secret`.
+For `generic` type webhooks, each outgoing request contains an `X-Webhook-Signature: sha256=<hex>` header computed with HMAC-SHA256 on the JSON body, using the webhook's `secret`.
 
 Receiver-side verification (Node.js):
 
@@ -143,5 +148,5 @@ const signature = crypto
   .createHmac('sha256', webhookSecret)
   .update(rawBody)
   .digest('hex');
-const isValid = signature === req.headers['x-webhook-signature'];
+const isValid = `sha256=${signature}` === req.headers['x-webhook-signature'];
 ```

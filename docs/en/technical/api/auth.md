@@ -1,6 +1,19 @@
 # API — Authentication
 
-All protected routes require an `Authorization: Bearer <token>` header.
+Authentication relies on a JWT set in the httpOnly `token` cookie (24 h lifetime, `SameSite=strict`). An `Authorization: Bearer <token>` header is also accepted. Routes marked 🔒 require that JWT; a revoked JWT (logout) or a disabled user returns `401`.
+
+---
+
+## Public configuration
+
+### GET /api/auth/config
+
+Tells the frontend which sign-in methods are available. Public.
+
+**Response 200**
+```json
+{ "allowRegistration": true, "googleSsoEnabled": true, "socialProviders": ["google", "microsoft"] }
+```
 
 ---
 
@@ -8,84 +21,104 @@ All protected routes require an `Authorization: Bearer <token>` header.
 
 ### POST /api/auth/register
 
-Create a local account.
+Create a local account. Rate limit: 3 requests / minute. The address equal to `ADMIN_EMAIL` gets the `admin` role.
 
 **Body**
 ```json
 { "email": "user@example.com", "password": "motdepasse123" }
 ```
 
-**Response 201**
+`password`: 8 to 128 characters.
+
+**Response 201** — the JWT is set in the cookie.
 ```json
-{
-  "token": "eyJhbGciOiJIUzI1NiJ9...",
-  "user": { "id": "uuid", "email": "user@example.com", "role": "user" }
-}
+{ "user": { "id": "uuid", "email": "user@example.com", "role": "user" } }
 ```
 
 **Errors**
 
 | Code | Description |
 |---|---|
-| 409 | Email already registered |
 | 400 | Validation failed (invalid email, password < 8 chars) |
+| 403 | Registration disabled (`ALLOW_REGISTRATION=false`) |
+| 409 | Email already registered |
 
 ---
 
 ### POST /api/auth/login
 
-Log in.
+Sign in. Rate limit: 5 requests / minute.
 
 **Body**
 ```json
 { "email": "user@example.com", "password": "motdepasse123" }
 ```
 
-If 2FA is enabled, the server returns a `403` error with `TOTP_REQUIRED`. You must resend the request with the `totpCode` field:
+If 2FA is enabled, the server returns `403` with `{ "error": "TOTP_REQUIRED" }`. Resend the request with the `totpCode` field (6 digits):
 
 ```json
 { "email": "user@example.com", "password": "motdepasse123", "totpCode": "123456" }
 ```
 
-**Response 200**
+**Response 200** — the JWT is set in the cookie.
 ```json
-{
-  "token": "eyJhbGciOiJIUzI1NiJ9...",
-  "user": { "id": "uuid", "email": "user@example.com", "role": "user" }
-}
+{ "user": { "id": "uuid", "email": "user@example.com", "role": "user" } }
 ```
 
 **Errors**
 
 | Code | Description |
 |---|---|
-| 401 | Invalid credentials or invalid TOTP code |
-| 403 | Account disabled or `TOTP_REQUIRED` (2FA required) |
+| 401 | Invalid credentials, disabled account or invalid TOTP code (single message, no enumeration) |
+| 403 | `TOTP_REQUIRED` (2FA required) |
+
+---
+
+### POST /api/auth/logout 🔒
+
+Revokes the current JWT (Redis blacklist until it expires) and clears the cookie.
+
+**Response 204** — No content
+
+---
+
+### POST /api/auth/refresh 🔒
+
+Issues a fresh JWT (cookie) without signing in again.
+
+**Response 200**
+```json
+{ "user": { "id": "uuid", "email": "user@example.com", "role": "user" } }
+```
 
 ---
 
 ### GET /api/auth/me 🔒
 
-Retrieve the user profile and associated Gmail accounts.
+Get the user profile and linked Gmail accounts.
 
 **Response 200**
 ```json
 {
   "user": {
     "id": "uuid", "email": "user@example.com", "role": "user",
-    "display_name": "John Doe", "avatar_url": "https://...",
+    "display_name": "John Doe", "avatar_url": "https://...", "is_active": true,
     "max_gmail_accounts": 3, "storage_quota_bytes": 5368709120,
-    "created_at": "..."
+    "totp_enabled": false, "created_at": "..."
   },
   "gmailAccounts": [
-    { "id": "uuid", "email": "compte@gmail.com", "is_active": true, "created_at": "..." }
+    {
+      "id": "uuid", "email": "account@gmail.com", "is_active": true, "created_at": "...",
+      "backup_enabled": false, "backup_interval": "24h",
+      "needs_reauth": false, "last_sync_at": "..."
+    }
   ],
   "storageUsedBytes": 1073741824
 }
 ```
 
-The `totp_enabled` field is included in the `user` object to indicate whether 2FA is active.
-```
+- `needs_reauth`: Google refused the refresh token, the account must be reconnected ("Action required").
+- `last_sync_at`: last label sync (`null` if never).
 
 ---
 
@@ -93,7 +126,7 @@ The `totp_enabled` field is included in the `user` object to indicate whether 2F
 
 ### GET /api/auth/google
 
-Get the Google SSO login URL (sign up or sign in).
+Get the Google SSO sign-in URL (registration or login). Public.
 
 **Response 200**
 ```json
@@ -102,21 +135,57 @@ Get the Google SSO login URL (sign up or sign in).
 
 ### GET /api/auth/google/callback
 
-Google SSO callback. Redirects to `{FRONTEND_URL}/login?token=...&user=...` on success, or `{FRONTEND_URL}/login?google=error` on failure.
+Google SSO callback (do not call directly). On success, sets the JWT cookie and redirects to `{FRONTEND_URL}/login?sso_code=<code>`; otherwise to `{FRONTEND_URL}/login?google=error` (or `google=disabled` if the account is disabled).
+
+### POST /api/auth/google/exchange
+
+Exchanges the `sso_code` (valid 60 s, single use) for the user info. The JWT is already in the cookie. Also used when returning from social providers.
+
+**Body**
+```json
+{ "code": "<sso_code>" }
 ```
+
+**Response 200**
+```json
+{ "id": "uuid", "email": "user@example.com", "role": "user" }
+```
+
+**Errors**: `401` invalid or expired code.
 
 ---
 
-## OAuth2 Gmail
+## Social login
+
+### GET /api/auth/social/:provider/url
+
+Get the authorization URL of a configured social provider (see `socialProviders` in `/api/auth/config`). Public. `provider`: `google`, `microsoft`, `discord`, `facebook`, `linkedin` or `keycloak`.
+
+**Response 200**
+```json
+{ "url": "https://..." }
+```
+
+**Errors**: `400` provider not configured.
+
+### GET /api/auth/social/:provider/callback
+
+Provider callback (do not call directly). Same behavior as the Google callback: redirects to `{FRONTEND_URL}/login?sso_code=<code>`, or `{FRONTEND_URL}/login?social=error` / `social=disabled`.
+
+---
+
+## Gmail OAuth2
 
 ### GET /api/auth/gmail/connect 🔒
 
-Generate the Google authorization URL.
+Generate the Google authorization URL (signed JWT state, valid 5 min).
 
 **Response 200**
 ```json
 { "url": "https://accounts.google.com/o/oauth2/v2/auth?..." }
 ```
+
+**Errors**: `403` maximum number of Gmail accounts reached (`max_gmail_accounts`).
 
 The frontend redirects the user to this URL. Google then redirects to `/api/auth/gmail/callback`.
 
@@ -127,16 +196,55 @@ The frontend redirects the user to this URL. Google then redirects to `/api/auth
 Google OAuth2 callback (do not call directly).
 
 Google redirects to this endpoint after authorization. It:
-1. Exchanges the code for tokens
-2. Retrieves the Google account email
-3. Stores the tokens in the database
-4. Redirects to the frontend: `{FRONTEND_URL}/settings?gmail=connected&account=...`
+1. Verifies the signed state
+2. Exchanges the code for tokens and stores the account (reconnecting an existing address reactivates its account)
+3. Starts a first label sync in the background
+4. Redirects to `{FRONTEND_URL}/settings/gmail?gmail=connected&account=...` (or `?gmail=error`)
 
 ---
 
 ### DELETE /api/auth/gmail/:accountId 🔒
 
-Disconnect a Gmail account.
+Soft disconnect of a Gmail account: tokens are cleared and the account becomes inactive (no more sync or backup), but it stays in the database.
+
+**Response 204** — No content
+
+::: tip
+This account's archives are **not deleted**; reconnecting the same address reactivates the account.
+:::
+
+---
+
+### PATCH /api/auth/gmail/:accountId/toggle 🔒
+
+Enables / disables a Gmail account.
+
+**Response 200**
+```json
+{ "id": "uuid", "is_active": false }
+```
+
+**Errors**: `404` account not found; `409` account disconnected (no token left): it must be reconnected.
+
+---
+
+### PATCH /api/auth/gmail/:accountId 🔒
+
+Gmail account settings (automatic NAS backup).
+
+**Body** (at least one field)
+```json
+{ "backup_enabled": true, "backup_interval": "6h" }
+```
+
+`backup_interval`: `1h`, `6h` or `24h`.
+
+**Response 200**
+```json
+{ "id": "uuid", "backup_enabled": true, "backup_interval": "6h" }
+```
+
+**Errors**: `400` invalid or empty body; `404` account not found.
 
 ---
 
@@ -144,7 +252,7 @@ Disconnect a Gmail account.
 
 ### POST /api/auth/2fa/setup 🔒
 
-Generate a TOTP secret and QR code for setting up 2FA.
+Generate a TOTP secret and a QR code to set up 2FA.
 
 **Response 200**
 ```json
@@ -154,7 +262,7 @@ Generate a TOTP secret and QR code for setting up 2FA.
 }
 ```
 
-The QR code encodes the URI `otpauth://totp/Gmail%20Manager:user@email.com?secret=...&issuer=Gmail%20Manager`.
+The QR code encodes the URI `otpauth://totp/Nid:user@email.com?secret=...&issuer=Nid`. If 2FA is already enabled, the response is `200` with `{ "error": "2FA is already enabled" }`.
 
 ### POST /api/auth/2fa/enable 🔒
 
@@ -174,7 +282,7 @@ Verify a TOTP code and enable 2FA.
 
 | Code | Description |
 |---|---|
-| 400 | 2FA already enabled, setup not completed, or invalid code |
+| 400 | 2FA already enabled, setup not done, or invalid code |
 
 ### POST /api/auth/2fa/disable 🔒
 
@@ -199,8 +307,3 @@ Disable 2FA (requires a valid TOTP code).
 ::: warning Google SSO and 2FA
 2FA only applies to accounts with a local password. Users signed in via Google SSO are protected by Google's own 2FA.
 :::
-
-**Response 204** — No content
-
-!!! note
-    Existing archives for this account **are not deleted** upon disconnection.

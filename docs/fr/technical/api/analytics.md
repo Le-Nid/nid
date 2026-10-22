@@ -111,7 +111,7 @@ Heuristiques basées sur les données analysées pour proposer des actions de ne
 
 | Champ | Type | Description |
 |---|---|---|
-| `type` | string | Type de suggestion : `bulk_unread`, `large_sender`, `old_newsletters`, `duplicate_pattern` |
+| `type` | string | Type de suggestion : `bulk_unread`, `large_sender`, `old_newsletters` |
 | `title` | string | Titre court de la suggestion |
 | `description` | string | Description détaillée avec chiffres |
 | `sender` | string | Expéditeur concerné (si applicable) |
@@ -127,7 +127,7 @@ Heuristiques basées sur les données analysées pour proposer des actions de ne
 
 ### PATCH /api/analytics/suggestions/:suggestionId/dismiss
 
-Ignore une suggestion (ne sera plus affichée).
+Ignore une suggestion (ne sera plus affichée). `404` si elle n'existe pas ou n'appartient pas à un compte de l'utilisateur.
 
 **Réponse**
 ```json

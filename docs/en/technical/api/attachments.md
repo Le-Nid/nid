@@ -15,7 +15,7 @@ Lists attachments from archived emails with pagination, sorting and search.
 | Param | Default | Description |
 |---|---|---|
 | `page` | `1` | Page number |
-| `limit` | `50` | Results per page |
+| `limit` | `50` | Results per page (max 100) |
 | `sort` | `size` | Sort by: `size` or `date` |
 | `order` | `desc` | Order: `asc` or `desc` |
 | `q` | — | Search in filename, subject, sender |
@@ -78,5 +78,58 @@ Scans Gmail messages with attachments (> 100 KB) directly via the Gmail API.
 ```
 
 ::: info Gmail API Throttling
-The live scan respects Gmail API quotas with a batch of 100 messages max and a 500ms pause between each batch.
+The live scan respects Gmail API quotas: metadata is read in batches of 25 messages (`GMAIL_BATCH_SIZE`) with a 1 s pause (`GMAIL_THROTTLE_MS`) between batches.
 :::
+
+---
+
+## Download
+
+### GET /api/attachments/:accountId/archived/:attachmentId/download 🔒
+
+Downloads an archived attachment. `?inline=1` displays it in the browser, only for PNG, JPEG, GIF, WebP and PDF (other types, including SVG and HTML, are always served as `attachment`). Response with `X-Content-Type-Options: nosniff` (and a `sandbox` CSP for inline images).
+
+**Errors**: `404` unknown attachment for this account or file missing from disk.
+
+### GET /api/attachments/:accountId/live/:messageId/download 🔒
+
+Downloads an attachment straight from Gmail.
+
+| Param | Description |
+|---|---|
+| `filename` | **Required**: file name in the message |
+| `inline` | `1`: inline display (same allowed types as above) |
+
+**Errors**: `400` missing `filename`; `404` attachment not found in the message.
+
+---
+
+## Deduplication
+
+Archived attachments are identified by their SHA-256 fingerprint (`content_hash`); identical files are stored only once.
+
+### GET /api/attachments/dedup-stats 🔒
+
+Deduplication statistics across all the user's accounts. `hashCoverage`: share of attachments already hashed (0 to 1).
+
+**Response 200**
+```json
+{
+  "totalAttachments": 1200,
+  "uniqueFiles": 950,
+  "duplicateFiles": 250,
+  "totalSizeBytes": 524288000,
+  "deduplicatedSizeBytes": 419430400,
+  "savedBytes": 104857600,
+  "hashCoverage": 1
+}
+```
+
+### POST /api/attachments/dedup-backfill 🔒
+
+Computes the fingerprint of archived attachments that have none yet, then merges duplicates (synchronous).
+
+**Response 200**
+```json
+{ "processed": 120, "failed": 0, "duplicatesRemoved": 15 }
+```

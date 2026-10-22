@@ -17,14 +17,14 @@ hero:
       link: /fr/installation/
 
 features:
-  - title: 📊 Dashboard
-    details: Top senders, largest mails, timeline, label breakdown
+  - title: 📬 Mails
+    details: Gmail search, saved searches, bulk actions with undo, all accounts in one list
   - title: 📦 Archives
     details: EML storage on your NAS, full-text search, differential archiving
   - title: ⚙️ Automatic Rules
     details: Automate cleanup with conditions, actions, and scheduling
   - title: 🔐 Privacy
-    details: Tracking pixel detection, PII scanner, AES-256 encryption
+    details: Remote images and tracking pixels blocked until you show them
   - title: 🌐 Multi-language
     details: French and English, with language selector
   - title: 🏠 Self-hosted
