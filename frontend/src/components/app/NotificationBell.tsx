@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Bell, Check, ListX, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ConfirmDialog } from '@/components/app/ConfirmDialog'
@@ -39,6 +40,9 @@ export default function NotificationBell() {
     const interval = setInterval(load, 60_000) // refresh every minute
     return () => clearInterval(interval)
   }, [load])
+
+  // The list only changes once the server agreed; a failure says so instead of rejecting unseen
+  const attempt = (action: () => Promise<void>) => () => void action().catch(() => toast.error(t('notifications.actionFailed')))
 
   const handleMarkRead = async (id: string) => {
     await notificationsApi.markRead(id)
@@ -88,7 +92,7 @@ export default function NotificationBell() {
             <h2 className="font-semibold">{t('notifications.title')}</h2>
             <div className="flex items-center gap-1">
               {unreadCount > 0 && (
-                <Button variant="ghost" size="sm" onClick={handleMarkAllRead}>
+                <Button variant="ghost" size="sm" onClick={attempt(handleMarkAllRead)}>
                   <Check aria-hidden="true" />{t('notifications.markAllRead')}
                 </Button>
               )}
@@ -116,7 +120,7 @@ export default function NotificationBell() {
                     {item.is_read ? (
                       <div className="min-w-0 flex-1">{content}</div>
                     ) : (
-                      <button type="button" className="min-w-0 flex-1 rounded-sm text-left focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none" onClick={() => handleMarkRead(item.id)}>
+                      <button type="button" className="min-w-0 flex-1 rounded-sm text-left focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none" onClick={attempt(() => handleMarkRead(item.id))}>
                         {content}
                         <span className="sr-only">{t('notifications.markRead')}</span>
                       </button>
@@ -125,7 +129,7 @@ export default function NotificationBell() {
                       variant="ghost"
                       size="icon"
                       className="size-11 shrink-0 text-destructive md:size-8"
-                      onClick={() => handleDelete(item.id, !item.is_read)}
+                      onClick={attempt(() => handleDelete(item.id, !item.is_read))}
                       aria-label={t('notifications.delete', { title: item.title })}
                     >
                       <Trash2 aria-hidden="true" />
@@ -143,7 +147,7 @@ export default function NotificationBell() {
         title={t('notifications.clearReadConfirm')}
         description={t('notifications.clearReadDescription', { count: readCount })}
         confirmLabel={t('notifications.clearRead')}
-        onConfirm={handleDeleteAllRead}
+        onConfirm={attempt(handleDeleteAllRead)}
         destructive
       />
     </>

@@ -808,7 +808,8 @@
     "markRead": "Marquer comme lue",
     "delete": "Supprimer la notification « {{title}} »",
     "clearReadDescription_one": "{{count}} notification lue sera supprimée définitivement.",
-    "clearReadDescription_other": "{{count}} notifications lues seront supprimées définitivement."
+    "clearReadDescription_other": "{{count}} notifications lues seront supprimées définitivement.",
+    "actionFailed": "L'action n'a pas abouti. Réessayez."
   },
   "sharing": {
     "notFound": "Lien introuvable",

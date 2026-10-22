@@ -808,7 +808,8 @@
     "markRead": "Mark as read",
     "delete": "Delete notification “{{title}}”",
     "clearReadDescription_one": "{{count}} read notification will be permanently deleted.",
-    "clearReadDescription_other": "{{count}} read notifications will be permanently deleted."
+    "clearReadDescription_other": "{{count}} read notifications will be permanently deleted.",
+    "actionFailed": "The action failed. Try again."
   },
   "sharing": {
     "notFound": "Link not found",

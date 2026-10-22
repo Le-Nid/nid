@@ -11,6 +11,8 @@ const api = vi.hoisted(() => ({
   removeAllRead: vi.fn(),
 }))
 vi.mock('../api', () => ({ notificationsApi: api }))
+const toastError = vi.hoisted(() => vi.fn())
+vi.mock('sonner', () => ({ toast: { error: toastError } }))
 
 const notif = (id: string, title: string, is_read: boolean, body: string | null = null) =>
   ({ id, type: 'info', title, body, is_read, created_at: '2026-03-30T10:00:00.000Z' })
@@ -69,6 +71,15 @@ describe('NotificationBell', () => {
     await userEvent.click(within(panel).getByRole('button', { name: 'Tout marquer lu' }))
     expect(api.markAllRead).toHaveBeenCalled()
     expect(within(panel).queryByRole('button', { name: 'Tout marquer lu' })).toBeNull()
+  })
+
+  it('says so when an action fails and keeps the list as it was', async () => {
+    api.markAllRead.mockRejectedValueOnce(new Error('fail'))
+    setup([notif('n1', 'Unread 1', false)])
+    const panel = await open(/1 non lue/)
+    await userEvent.click(within(panel).getByRole('button', { name: 'Tout marquer lu' }))
+    await waitFor(() => expect(toastError).toHaveBeenCalledWith("L'action n'a pas abouti. Réessayez."))
+    expect(within(panel).getByRole('button', { name: 'Tout marquer lu' })).toBeInTheDocument()
   })
 
   it('deletes one notification', async () => {
