@@ -1,4 +1,4 @@
-import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   dashboardApi, gmailApi, archiveApi, rulesApi, jobsApi,
   adminApi, unsubscribeApi, attachmentsApi,
@@ -301,10 +301,27 @@ export function useJobs(params: Record<string, any>) {
   })
 }
 
+/** Activité (§7.6): the list plus the per-status counts of the chips; « Afficher plus » keeps the rows on screen. */
+export function useActivity(params: { accountId?: string; status?: string; limit: number }) {
+  return useQuery({
+    queryKey: queryKeys.jobs({ ...params, withCounts: true }),
+    queryFn: () => jobsApi.list({ ...params, withCounts: true }),
+    placeholderData: keepPreviousData,
+  })
+}
+
 export function useCancelJob() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (jobId: string) => jobsApi.cancel(jobId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['jobs'] }),
+  })
+}
+
+export function useRetryJob() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (jobId: string) => jobsApi.retry(jobId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['jobs'] }),
   })
 }

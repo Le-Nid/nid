@@ -44,9 +44,15 @@ const ROUTES: [string, RegExp, Handler][] = [
   ['GET', /^\/api\/notifications\/preferences$/, {}],
   ['GET', /^\/api\/notifications$/, { notifications: [], unreadCount: 0 }],
   ['GET', /^\/api\/jobs$/, (req: Request) => {
-    const status = new URL(req.url()).searchParams.get('status')
-    return jobs.filter((j: { status: string }) => !status || j.status === status)
+    const params = new URL(req.url()).searchParams
+    const status = params.get('status')?.split(',')
+    const list = jobs.filter((j: { status: string }) => !status || status.includes(j.status))
+    if (params.get('withCounts') !== 'true') return list
+    const counts: Record<string, number> = {}
+    for (const j of jobs) counts[j.status] = (counts[j.status] ?? 0) + 1
+    return { jobs: list, counts }
   }],
+  ['POST', /^\/api\/jobs\/[^/]+\/retry$/, { jobId: 'job-retry', retryOf: 'j3' }],
   ['GET', /^\/api\/dashboard\/[^/]+\/stats$/, dashboard.stats],
   ['GET', /^\/api\/dashboard\/[^/]+\/archive-stats$/, dashboard.archiveStats],
   ['GET', /^\/api\/gmail\/[^/]+\/labels$/, gmail.labels],

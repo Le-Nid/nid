@@ -129,6 +129,9 @@ export const jobsApi = {
 
   cancel: (jobId: string) =>
     api.delete(`/api/jobs/${jobId}`).then((r) => r.data),
+
+  retry: (jobId: string) =>
+    api.post(`/api/jobs/${jobId}/retry`).then((r) => r.data),
 }
 
 // ─── Auth (Social providers — Google, Microsoft, Discord, etc.) ──

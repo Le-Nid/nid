@@ -11,7 +11,7 @@ import { useAccount } from '@/hooks/useAccount'
 import { useDashboardArchiveStats, useDashboardStats, useJobs, useNewsletters, useRuleStats } from '@/hooks/queries'
 import type { LiveCounters } from '@/hooks/useLiveCounters'
 import { useAuthStore } from '@/store/auth.store'
-import { formatBytes, formatRelative, formatSender } from '@/utils/format'
+import { formatBytes, formatRelative, formatSender, jobTypeKey } from '@/utils/format'
 import { Suggestions } from './overview/Suggestions'
 
 type Sender = { sender: string; count: number; sizeBytes: number }
@@ -109,7 +109,7 @@ function ActiveJobs({ activeJobs }: Readonly<{ activeJobs?: number }>) {
         <li key={j.id}>
           <JobProgressInline
             jobId={j.bullmq_id ?? j.id}
-            label={t(`jobs.${j.type.replace(/_(\w)/g, (_, c: string) => c.toUpperCase())}`, { defaultValue: j.type })}
+            label={t(jobTypeKey(j.type), { defaultValue: j.type })}
             onDone={() => void jobs.refetch()}
           />
         </li>

@@ -1,6 +1,14 @@
 [
   {
-    "id": "j1", "type": "archive_mails", "status": "completed", "progress": 100, "processed": 10, "total": 10,
-    "gmail_account_id": "acc-1", "created_at": "2026-10-01T10:00:00Z", "completed_at": "2026-10-01T10:01:00Z", "error": null
+    "id": "j1", "bullmq_id": "archive_mails-1", "type": "archive_mails", "status": "completed", "progress": 100, "processed": 10, "total": 10,
+    "gmail_account_id": "acc-1", "payload": { "accountId": "acc-1" }, "created_at": "2026-10-01T10:00:00Z", "completed_at": "2026-10-01T10:01:00Z", "error": null
+  },
+  {
+    "id": "j2", "bullmq_id": "job-scheduled", "type": "bulk_operation", "status": "scheduled", "progress": 0, "processed": 0, "total": 0,
+    "gmail_account_id": "acc-1", "payload": { "accountId": "acc-1", "senderEmail": "digest@news.test" }, "created_at": "2026-10-21T08:00:00Z", "completed_at": null, "error": null
+  },
+  {
+    "id": "j3", "bullmq_id": "archive_mails-3", "type": "archive_mails", "status": "failed", "progress": 40, "processed": 4, "total": 10,
+    "gmail_account_id": "acc-1", "payload": { "accountId": "acc-1" }, "created_at": "2026-10-20T22:00:00Z", "completed_at": "2026-10-20T22:03:00Z", "error": "NAS injoignable après 3 tentatives"
   }
 ]

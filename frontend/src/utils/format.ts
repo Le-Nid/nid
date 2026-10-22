@@ -27,3 +27,6 @@ export function formatRelative(date: string, locale: string): string {
   const [unit, size] = UNITS.find(([, s]) => Math.abs(seconds) >= s) ?? ['second', 1]
   return new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(Math.round(seconds / size), unit)
 }
+
+/** i18n key of a job type: `bulk_operation` → `jobs.bulkOperation`. */
+export const jobTypeKey = (type: string) => `jobs.${type.replace(/_(\w)/g, (_, c: string) => c.toUpperCase())}`

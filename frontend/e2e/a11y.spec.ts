@@ -15,7 +15,7 @@ const PAGES: [name: string, path: string, ready: string][] = [
   ['archives', '/archives', 'archives.title'],
   ['rules', '/rules', 'rules.title'],
   ['labels', '/rules?tab=labels', 'rules.title'],
-  ['activity', '/activity', 'jobs.title'],
+  ['activity', '/activity', 'activity.title'],
   ['settings', '/settings/account', 'settings.title'],
   ['cleanup', '/cleanup', 'cleanup.title'],
   ['attachments', '/attachments', 'attachments.title'],
