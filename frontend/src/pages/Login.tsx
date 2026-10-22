@@ -15,7 +15,11 @@ import { PageTabs } from '@/components/app/PageTabs'
 
 type Credentials = { email: string; password: string }
 
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+// One @, no spaces, a dot inside the domain: a split, not a backtracking regex
+function isEmail(value: string) {
+  const [local, domain, ...rest] = value.split('@')
+  return !rest.length && !!local && !!domain && !/\s/.test(value) && domain.slice(1, -1).includes('.')
+}
 const field = 'h-11 md:h-9'
 
 function FormError({ message }: Readonly<{ message: string | null }>) {
@@ -41,9 +45,9 @@ function CredentialsForm({ id, minLength, passwordPlaceholder, submitLabel, load
   function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const data = new FormData(e.currentTarget)
-    const values = { email: String(data.get('email')).trim(), password: String(data.get('password')) }
+    const values = { email: (data.get('email') as string | null ?? '').trim(), password: data.get('password') as string | null ?? '' }
     const errors: { email?: string; password?: string } = {}
-    if (!EMAIL.test(values.email)) errors.email = t('login.errorEmail')
+    if (!isEmail(values.email)) errors.email = t('login.errorEmail')
     if (!values.password) errors.password = t('login.errorPassword')
     else if (minLength && values.password.length < minLength) errors.password = t('login.errorPasswordMin', { count: minLength })
     setInvalid(errors)
@@ -236,7 +240,7 @@ export default function LoginPage() {
         value={totpCode}
         onChange={(e) => setTotpCode(e.target.value)}
         className={field}
-        onKeyDown={(e) => { if (e.key === 'Enter') handleTotpSubmit() }}
+        onKeyDown={(e) => { if (e.key === 'Enter') void handleTotpSubmit() }}
         autoComplete="one-time-code"
         autoFocus
       />

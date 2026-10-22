@@ -184,6 +184,75 @@ function ShortcutsHint({ on, onToggle }: Readonly<{ on: boolean; onToggle: () =>
   )
 }
 
+/** Mails of one account (Gmail pages) or of every account (« Tous les comptes », one request). */
+function useMailList(allMode: boolean, accountId: string | null, q: string) {
+  const messages = useGmailMessages(allMode ? null : accountId, q, '')
+  const unified = useUnifiedMessages({ q: q || undefined, maxResults: 50 }, allMode)
+  const loaded: Mail[] = useMemo(
+    () => (allMode ? (unified.data?.messages as Mail[] | undefined) : messages.data?.pages.flatMap((p) => p.mails as Mail[])) ?? [],
+    [allMode, unified.data, messages.data],
+  )
+  const total: number = allMode ? loaded.length : messages.data?.pages[0]?.total ?? 0
+  return { messages, list: allMode ? unified : messages, loaded, total }
+}
+
+function SearchActions({ q, onSaveAll, onCreateRule }: Readonly<{ q: string; onSaveAll: () => void; onCreateRule: () => void }>) {
+  const { t } = useTranslation()
+  return (
+    <>
+      <Button variant="outline" className="h-11 md:h-9" onClick={onSaveAll}>
+        <HardDriveDownload aria-hidden="true" />{t('mails.saveAllNas')}
+      </Button>
+      {q && (
+        <Button variant="outline" className="h-11 md:h-9" onClick={onCreateRule}>
+          <Zap aria-hidden="true" />{t('mails.createRule')}
+        </Button>
+      )}
+    </>
+  )
+}
+
+function ListFooter({ messages, empty }: Readonly<{ messages: ReturnType<typeof useGmailMessages>; empty: boolean }>) {
+  const { t } = useTranslation()
+  if (messages.hasNextPage) {
+    return (
+      <Button variant="outline" className="h-11 self-center md:h-9" disabled={messages.isFetchingNextPage} onClick={() => void messages.fetchNextPage()}>
+        {t('mails.loadMore')}
+      </Button>
+    )
+  }
+  return empty ? null : <p className="text-center text-sm text-muted-foreground">{t('mails.allLoaded')}</p>
+}
+
+function groupByAccount(ids: string[], accountOf: (id: string) => string | null) {
+  const byAccount = new Map<string, string[]>()
+  for (const id of ids) {
+    const account = accountOf(id)
+    if (account) byAccount.set(account, [...(byAccount.get(account) ?? []), id])
+  }
+  return byAccount
+}
+
+/** Gmail account of the list, « Tous les comptes » included (P2); shown from two active accounts. */
+function AccountSelect({ accounts, value, onChange }: Readonly<{ accounts: { id: string; email: string }[]; value: string; onChange: (value: string) => void }>) {
+  const { t } = useTranslation()
+  return (
+    <div className="md:w-72">
+      <FormField id="mails-account" label={t('layout.gmailAccount')}>
+        <select
+          id="mails-account"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="h-11 rounded-md border border-input bg-transparent px-3 text-base md:h-9 md:text-sm"
+        >
+          <option value="all">{t('mails.allAccounts')}</option>
+          {accounts.map((a) => <option key={a.id} value={a.id}>{a.email}</option>)}
+        </select>
+      </FormField>
+    </div>
+  )
+}
+
 /** /mails (§7.2): Gmail search, chips, responsive list, bulk actions with undo, reader. */
 export default function MailsPage() {
   const { t } = useTranslation()
@@ -196,9 +265,7 @@ export default function MailsPage() {
   const { data: labels = [] } = useLabels(accountId)
   const { data: savedSearches = [] } = useSavedSearches()
   const createSaved = useCreateSavedSearch()
-  const messages = useGmailMessages(allMode ? null : accountId, q, '')
-  const unified = useUnifiedMessages({ q: q || undefined, maxResults: 50 }, allMode)
-  const list = allMode ? unified : messages
+  const { messages, list, loaded, total } = useMailList(allMode, accountId, q)
   const { pending, run, done } = useMailActions(accountId, (id) => ['gmail', id, 'messages'])
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
   const [allResults, setAllResults] = useState(false)
@@ -220,12 +287,7 @@ export default function MailsPage() {
   }
 
   const hidden = useMemo(() => new Set(pending.flatMap((p) => p.hidden)), [pending])
-  const loaded: Mail[] = useMemo(
-    () => (allMode ? (unified.data?.messages as Mail[] | undefined) : messages.data?.pages.flatMap((p) => p.mails as Mail[])) ?? [],
-    [allMode, unified.data, messages.data],
-  )
   const mails = useMemo(() => loaded.filter((m) => !hidden.has(m.id)), [loaded, hidden])
-  const total = allMode ? loaded.length : messages.data?.pages[0]?.total ?? 0
   const accountOf = (id: string) => loaded.find((m) => m.id === id)?.accountId ?? accountId
   // Only labels still in Gmail can be applied
   const userLabels = (labels as ApiLabel[]).filter((l) => l.type === 'user' && !l.deleted_at)
@@ -236,12 +298,9 @@ export default function MailsPage() {
       return
     }
     // « Tous les comptes »: one job per account (the API is per account)
-    const byAccount = new Map<string, string[]>()
-    for (const id of target.ids) {
-      const account = accountOf(id)
-      if (account) byAccount.set(account, [...(byAccount.get(account) ?? []), id])
+    for (const [account, ids] of groupByAccount(target.ids, accountOf)) {
+      void run(action, { ids }, { count: ids.length, hidden: ids, labelId, accountId: account })
     }
-    for (const [account, ids] of byAccount) void run(action, { ids }, { count: ids.length, hidden: ids, labelId, accountId: account })
   }
 
   // Columns stay stable across renders; the row menu reaches the current handlers through this ref
@@ -365,38 +424,20 @@ export default function MailsPage() {
             <Button variant="outline" className="h-11 md:h-9" onClick={() => void list.refetch()} disabled={list.isFetching}>
               <RefreshCw aria-hidden="true" className={cn(list.isFetching && 'animate-spin motion-reduce:animate-none')} />{t('mails.refresh')}
             </Button>
+            {/* Both act on one account's search */}
             {!allMode && (
-              <Button
-                variant="outline"
-                className="h-11 md:h-9"
-                onClick={() => void run('archive_nas', { query: q }, { count: total, hidden: [], label: t('mails.job.saveAll') })}
-              >
-                <HardDriveDownload aria-hidden="true" />{t('mails.saveAllNas')}
-              </Button>
-            )}
-            {q && !allMode && (
-              <Button variant="outline" className="h-11 md:h-9" onClick={() => setRuleTarget({ from: searchSender(q) })}>
-                <Zap aria-hidden="true" />{t('mails.createRule')}
-              </Button>
+              <SearchActions
+                q={q}
+                onSaveAll={() => void run('archive_nas', { query: q }, { count: total, hidden: [], label: t('mails.job.saveAll') })}
+                onCreateRule={() => setRuleTarget({ from: searchSender(q) })}
+              />
             )}
           </>
         )}
       />
 
       {activeAccounts.length >= 2 && (
-        <div className="md:w-72">
-          <FormField id="mails-account" label={t('layout.gmailAccount')}>
-            <select
-              id="mails-account"
-              value={allMode ? 'all' : accountId ?? ''}
-              onChange={(e) => switchAccount(e.target.value)}
-              className="h-11 rounded-md border border-input bg-transparent px-3 text-base md:h-9 md:text-sm"
-            >
-              <option value="all">{t('mails.allAccounts')}</option>
-              {activeAccounts.map((a) => <option key={a.id} value={a.id}>{a.email}</option>)}
-            </select>
-          </FormField>
-        </div>
+        <AccountSelect accounts={activeAccounts} value={allMode ? 'all' : accountId ?? ''} onChange={switchAccount} />
       )}
 
       <SearchBar value={q} onChange={search} saved={chips} onSave={saveSearch} />
@@ -436,12 +477,8 @@ export default function MailsPage() {
         />
       )}
 
-      {!allMode && messages.hasNextPage && (
-        <Button variant="outline" className="h-11 self-center md:h-9" disabled={messages.isFetchingNextPage} onClick={() => void messages.fetchNextPage()}>
-          {t('mails.loadMore')}
-        </Button>
-      )}
-      {!allMode && !messages.hasNextPage && mails.length > 0 && <p className="text-center text-sm text-muted-foreground">{t('mails.allLoaded')}</p>}
+      {/* « Tous les comptes » has no pages: 50 mails per account */}
+      {!allMode && <ListFooter messages={messages} empty={!mails.length} />}
 
       <ShortcutsHint on={shortcutsOn} onToggle={toggleShortcuts} />
 

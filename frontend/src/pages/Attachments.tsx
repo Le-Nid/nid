@@ -193,13 +193,14 @@ export default function AttachmentsPage() {
       />
       {accountId ? (
         <>
-          <div role="group" aria-label={t('attachments.source')} className="flex items-center gap-1">
+          <fieldset className="flex items-center gap-1">
+            <legend className="sr-only">{t('attachments.source')}</legend>
             {(['archived', 'live'] as Source[]).map((key) => (
               <Button key={key} variant={source === key ? 'secondary' : 'ghost'} aria-pressed={source === key} className="h-11 md:h-8" onClick={() => setSource(key)}>
                 {t(`attachments.${key}`)}
               </Button>
             ))}
-          </div>
+          </fieldset>
 
           <dl className="grid grid-cols-2 gap-3 md:grid-cols-4">
             <Stat label={t('attachments.totalAttachments')} value={total.toLocaleString()} />
