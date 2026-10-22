@@ -211,6 +211,25 @@ describe('mobile bottom bar', () => {
   })
 })
 
+describe('disconnected account (soft disconnect)', () => {
+  beforeEach(() => {
+    useAuthStore.setState({ gmailAccounts: [{ id: 'a1', email: 'ana@gmail.com', is_active: false }, { id: 'a2', email: 'pro@gmail.com', is_active: true }] })
+  })
+
+  it.each(['/mails', '/overview', '/cleanup', '/rules'])('%s offers the reconnection instead of Gmail calls', async (url) => {
+    renderAt(url)
+    expect(await screen.findByText('ana@gmail.com est déconnecté')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Reconnecter dans Paramètres' })).toHaveAttribute('href', '/settings/gmail')
+    expect(screen.queryByRole('heading', { name: url })).not.toBeInTheDocument()
+  })
+
+  it('keeps Archives and labels the account in the picker', async () => {
+    renderAt('/archives')
+    await landedOn('/archives')
+    expect(screen.getByRole('option', { name: 'ana@gmail.com (déconnecté)' })).toBeInTheDocument()
+  })
+})
+
 describe('user menu', () => {
   it('toggles dark mode and logs out', async () => {
     renderAt('/overview')

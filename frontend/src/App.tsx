@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, Outlet, useLocation } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "./store/auth.store";
 import AppShell from "./components/app/AppShell";
+import { RequireGmailAccess } from "./components/app/RequireGmailAccess";
 import LegacyAntd from "./components/LegacyAntd";
 import { Skeleton } from "./components/ui/skeleton";
 
@@ -99,10 +100,10 @@ export default function App() {
             <Route path="ops" element={<OpsResiliencePage />} />
           </Route>
           {/* Migrated pages (§9.2): no antd context; own Suspense so the shell stays while the chunk loads */}
-          <Route path="overview" element={<Suspense fallback={<RouteFallback />}><OverviewPage /></Suspense>} />
-          <Route path="mails" element={<Suspense fallback={<RouteFallback />}><MailsPage /></Suspense>} />
-          <Route path="cleanup" element={<Suspense fallback={<RouteFallback />}><CleanupPage /></Suspense>} />
-          <Route path="rules" element={<Suspense fallback={<RouteFallback />}><RulesPage /></Suspense>} />
+          <Route path="overview" element={<RequireGmailAccess title="shell.overview"><Suspense fallback={<RouteFallback />}><OverviewPage /></Suspense></RequireGmailAccess>} />
+          <Route path="mails" element={<RequireGmailAccess title="mails.title"><Suspense fallback={<RouteFallback />}><MailsPage /></Suspense></RequireGmailAccess>} />
+          <Route path="cleanup" element={<RequireGmailAccess title="cleanup.title"><Suspense fallback={<RouteFallback />}><CleanupPage /></Suspense></RequireGmailAccess>} />
+          <Route path="rules" element={<RequireGmailAccess title="rules.title"><Suspense fallback={<RouteFallback />}><RulesPage /></Suspense></RequireGmailAccess>} />
           <Route path="archives" element={<Suspense fallback={<RouteFallback />}><ArchivesPage /></Suspense>} />
           <Route path="activity" element={<Suspense fallback={<RouteFallback />}><ActivityPage /></Suspense>} />
           <Route path="settings/:section" element={<Suspense fallback={<RouteFallback />}><SettingsPage /></Suspense>} />

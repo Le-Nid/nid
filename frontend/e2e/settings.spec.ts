@@ -1,5 +1,11 @@
 import type { Page, Request } from '@playwright/test'
+import { readFileSync } from 'node:fs'
 import { test, expect, t, ACCOUNT } from './mock-api'
+
+const me = JSON.parse(readFileSync(new URL('./fixtures/me.json', import.meta.url), 'utf8'))
+/** /me once the account was disconnected (soft disconnect: the row and its archives stay). */
+const asDisconnected = (page: Page) => page.route('**/api/auth/me', (route) =>
+  route.fulfill({ json: { ...me, gmailAccounts: me.gmailAccounts.map((a: object) => ({ ...a, is_active: false })) } }))
 
 // Paramètres (L9b, §7.7) and the mobile « Plus » screen. Roles, labels and i18n strings only.
 
@@ -56,9 +62,24 @@ test('asks before disconnecting a Gmail account, and keeps the archives', async 
   // Focus starts on « Annuler » (D2)
   await expect(dialog.getByRole('button', { name: t('common.cancel') })).toBeFocused()
   const remove = page.waitForRequest(is('DELETE', `/api/auth/gmail/${ACCOUNT}`))
+  await asDisconnected(page)
   await dialog.getByRole('button', { name: t('settings.gmail.disconnect') }).click()
   await remove
   await expect(dialog).toBeHidden()
+  // Still listed, with its archives, and a way back
+  await expect(page.getByText(t('settings.gmail.disconnectedState'), { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: t('settings.gmail.reconnect') })).toBeVisible()
+  await expect(page.getByRole('button', { name: t('settings.gmail.disconnect') })).toHaveCount(0)
+})
+
+test('a disconnected account keeps its archives but not the Gmail pages', async ({ page }) => {
+  await asDisconnected(page)
+  await page.goto('/mails')
+  await expect(page.getByText(t('settings.gmail.disconnectedPage', { email: 'alice@gmail.com' }))).toBeVisible()
+  await expect(page.getByRole('link', { name: t('settings.gmail.reconnectInSettings') })).toHaveAttribute('href', '/settings/gmail')
+  await page.goto('/archives')
+  await expect(page.getByRole('heading', { level: 1, name: t('archives.title') })).toBeVisible()
+  await expect(page.getByText('Édition du matin archivée')).toBeVisible()
 })
 
 test('enables 2FA with the QR code and a 6-digit code', async ({ page }) => {

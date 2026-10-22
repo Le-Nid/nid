@@ -8,7 +8,7 @@ import { ConfirmDialog } from '@/components/app/ConfirmDialog'
 import { EmptyState } from '@/components/app/EmptyState'
 import { gmailAccountsApi, type BackupInterval } from '@/api'
 import {
-  useDashboardArchiveStats, useDisconnectGmailAccount, useSyncGmailAccount, useToggleGmailAccount, useUpdateGmailAccount,
+  useDashboardArchiveStats, useDisconnectGmailAccount, useSyncGmailAccount, useUpdateGmailAccount,
 } from '@/hooks/queries'
 import type { LiveCounters } from '@/hooks/useLiveCounters'
 import { useAuthStore, type GmailAccount } from '@/store/auth.store'
@@ -35,10 +35,10 @@ function useConnectGmail() {
 
 function Status({ account }: Readonly<{ account: GmailAccount }>) {
   const { t } = useTranslation()
+  if (!account.is_active) return <span className="rounded-full bg-muted px-2 text-xs leading-[22px] font-medium text-muted-foreground">{t('settings.gmail.disconnectedState')}</span>
   if (account.needs_reauth) {
     return <span className="rounded-full border border-warning-border bg-warning-soft px-2 text-xs leading-[22px] font-medium text-warning">{t('settings.gmail.actionRequired')}</span>
   }
-  if (!account.is_active) return <span className="rounded-full bg-muted px-2 text-xs leading-[22px] font-medium text-muted-foreground">{t('settings.gmail.paused')}</span>
   return <span className="rounded-full bg-success-soft px-2 text-xs leading-[22px] font-medium text-success">{t('settings.gmail.synced')}</span>
 }
 
@@ -48,7 +48,6 @@ function AccountCard({ account, mails, onReconnect }: Readonly<{ account: GmailA
   const archive = useDashboardArchiveStats(account.id).data
   const update = useUpdateGmailAccount()
   const sync = useSyncGmailAccount()
-  const resume = useToggleGmailAccount()
   const disconnect = useDisconnectGmailAccount()
   const failed = () => toast.error(t('settings.saveFailed'))
   const save = (body: { backup_enabled?: boolean; backup_interval?: BackupInterval }) => update.mutate({ id: account.id, ...body }, { onError: failed })
@@ -68,62 +67,64 @@ function AccountCard({ account, mails, onReconnect }: Readonly<{ account: GmailA
 
   return (
     <SettingsCard title={account.email} description={<Status account={account} />}>
-      {account.needs_reauth && <p className="text-sm text-warning">{t('settings.gmail.actionRequiredHint')}</p>}
+      {account.needs_reauth && account.is_active && <p className="text-sm text-warning">{t('settings.gmail.actionRequiredHint')}</p>}
+      {!account.is_active && <p className="text-sm text-muted-foreground">{t('settings.gmail.disconnectedHint')}</p>}
       <dl className="grid gap-2 text-sm md:grid-cols-[max-content_1fr] md:gap-x-6">
         <dt className="text-muted-foreground">{t('settings.gmail.sync')}</dt>
         <dd>{syncLine.filter(Boolean).join(' · ')}</dd>
         <dt className="text-muted-foreground">{t('settings.gmail.backup')}</dt>
         <dd>{backupLine.filter(Boolean).join(' · ')}</dd>
       </dl>
-      <SwitchRow
-        label={t('settings.gmail.autoBackup')}
-        description={t('settings.gmail.autoBackupHint')}
-        checked={!!account.backup_enabled}
-        onChange={(on) => save({ backup_enabled: on })}
-        disabled={update.isPending}
-      />
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <label htmlFor={`${id}-every`} className="text-sm font-medium">{t('settings.gmail.frequency')}</label>
-        <select
-          id={`${id}-every`}
-          value={account.backup_interval ?? '24h'}
-          disabled={!account.backup_enabled || update.isPending}
-          onChange={(e) => save({ backup_interval: e.target.value as BackupInterval })}
-          className={selectClass}
-        >
-          {INTERVALS.map((every) => <option key={every} value={every}>{t(`settings.gmail.every.${every}`)}</option>)}
-        </select>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {account.is_active ? (
-          <Button
-            variant="outline"
-            className="h-11 md:h-9"
-            disabled={sync.isPending || account.needs_reauth}
-            onClick={() => sync.mutate(account.id, { onSuccess: () => toast.success(t('settings.gmail.syncDone')), onError: () => toast.error(t('settings.gmail.syncFailed')) })}
-          >
-            <RefreshCw aria-hidden="true" />{t('settings.gmail.syncNow')}
-          </Button>
-        ) : (
-          <Button variant="outline" className="h-11 md:h-9" disabled={resume.isPending} onClick={() => resume.mutate(account.id, { onError: failed })}>
-            {t('settings.gmail.resume')}
-          </Button>
-        )}
-        <Button variant={account.needs_reauth ? 'default' : 'outline'} className="h-11 md:h-9" onClick={onReconnect}>
-          {t('settings.gmail.reconnect')}
-        </Button>
-        <ConfirmDialog
-          trigger={<Button variant="destructive" className="h-11 md:h-9">{t('settings.gmail.disconnect')}</Button>}
-          title={t('settings.gmail.disconnectTitle', { email: account.email })}
-          description={t('settings.gmail.disconnectDescription')}
-          confirmLabel={t('settings.gmail.disconnect')}
-          destructive
-          onConfirm={() => disconnect.mutate(account.id, {
-            onSuccess: () => toast.success(t('settings.gmail.disconnected', { email: account.email })),
-            onError: failed,
-          })}
-        />
-      </div>
+      {account.is_active ? (
+        <>
+          <SwitchRow
+            label={t('settings.gmail.autoBackup')}
+            description={t('settings.gmail.autoBackupHint')}
+            checked={!!account.backup_enabled}
+            onChange={(on) => save({ backup_enabled: on })}
+            disabled={update.isPending}
+          />
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <label htmlFor={`${id}-every`} className="text-sm font-medium">{t('settings.gmail.frequency')}</label>
+            <select
+              id={`${id}-every`}
+              value={account.backup_interval ?? '24h'}
+              disabled={!account.backup_enabled || update.isPending}
+              onChange={(e) => save({ backup_interval: e.target.value as BackupInterval })}
+              className={selectClass}
+            >
+              {INTERVALS.map((every) => <option key={every} value={every}>{t(`settings.gmail.every.${every}`)}</option>)}
+            </select>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              className="h-11 md:h-9"
+              disabled={sync.isPending || account.needs_reauth}
+              onClick={() => sync.mutate(account.id, { onSuccess: () => toast.success(t('settings.gmail.syncDone')), onError: () => toast.error(t('settings.gmail.syncFailed')) })}
+            >
+              <RefreshCw aria-hidden="true" />{t('settings.gmail.syncNow')}
+            </Button>
+            <Button variant={account.needs_reauth ? 'default' : 'outline'} className="h-11 md:h-9" onClick={onReconnect}>
+              {t('settings.gmail.reconnect')}
+            </Button>
+            <ConfirmDialog
+              trigger={<Button variant="destructive" className="h-11 md:h-9">{t('settings.gmail.disconnect')}</Button>}
+              title={t('settings.gmail.disconnectTitle', { email: account.email })}
+              description={t('settings.gmail.disconnectDescription')}
+              confirmLabel={t('settings.gmail.disconnect')}
+              destructive
+              onConfirm={() => disconnect.mutate(account.id, {
+                onSuccess: () => toast.success(t('settings.gmail.disconnected', { email: account.email })),
+                onError: failed,
+              })}
+            />
+          </div>
+        </>
+      ) : (
+        // Reconnecting the same address brings this account back, archives included (same row server-side)
+        <Button className="h-11 w-fit md:h-9" onClick={onReconnect}>{t('settings.gmail.reconnect')}</Button>
+      )}
     </SettingsCard>
   )
 }

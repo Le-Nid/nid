@@ -54,7 +54,7 @@ function UserMenu({ withAccounts }: Readonly<{ withAccounts: boolean }>) {
             <DropdownMenuSeparator />
             <DropdownMenuLabel>{t('layout.gmailAccount')}</DropdownMenuLabel>
             <DropdownMenuRadioGroup value={activeAccountId ?? ''} onValueChange={setActiveAccount}>
-              {gmailAccounts.map((a) => <DropdownMenuRadioItem key={a.id} value={a.id}>{a.email}</DropdownMenuRadioItem>)}
+              {gmailAccounts.map((a) => <DropdownMenuRadioItem key={a.id} value={a.id}>{a.is_active ? a.email : t('settings.gmail.disconnectedOption', { email: a.email })}</DropdownMenuRadioItem>)}
             </DropdownMenuRadioGroup>
           </>
         )}

@@ -60,6 +60,7 @@ export async function exchangeGmailCode(code: string, userId: string) {
           ]) as any,
         token_expiry:  (eb) => eb.ref('excluded.token_expiry'),
         auth_error_at: null, // reconnected: « Action requise » cleared
+        is_active:     true, // a disconnected account comes back on the same row, with its archives
         updated_at:    new Date(),
       })
     )
@@ -74,11 +75,15 @@ export async function getAuthenticatedClient(accountId: string) {
 
   const account = await db
     .selectFrom('gmail_accounts')
-    .select(['access_token', 'refresh_token', 'token_expiry'])
+    .select(['access_token', 'refresh_token', 'token_expiry', 'is_active'])
     .where('id', '=', accountId)
     .executeTakeFirst()
 
   if (!account) throw new Error('Gmail account not found')
+  // Every Gmail call goes through here: a clear 409 instead of a token error (error handler sends statusCode < 500)
+  if (account.is_active === false) {
+    throw Object.assign(new Error('Gmail account disconnected: reconnect it in Settings'), { statusCode: 409 })
+  }
 
   const oauth2Client = createOAuth2Client()
   oauth2Client.setCredentials({

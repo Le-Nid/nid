@@ -449,7 +449,6 @@ function useMeMutation<T>(fn: (input: T) => Promise<unknown>) {
 
 export const useUpdateGmailAccount = () =>
   useMeMutation(({ id, ...body }: { id: string } & Parameters<typeof gmailAccountsApi.update>[1]) => gmailAccountsApi.update(id, body))
-export const useToggleGmailAccount = () => useMeMutation(gmailAccountsApi.toggle)
 export const useDisconnectGmailAccount = () => useMeMutation(gmailAccountsApi.disconnect)
 /** « Synchroniser maintenant »: labels read again from Gmail; last_sync_at comes back with /me. */
 export const useSyncGmailAccount = () => useMeMutation(labelsApi.sync)

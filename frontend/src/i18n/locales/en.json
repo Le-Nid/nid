@@ -557,7 +557,6 @@
     },
     "gmail": {
       "synced": "Synced",
-      "paused": "Paused",
       "actionRequired": "Action required",
       "actionRequiredHint": "Google withdrew Nid's access to this account. Reconnect it to resume sync and backups.",
       "sync": "Sync",
@@ -577,11 +576,10 @@
       "syncNow": "Sync now",
       "syncDone": "Sync done",
       "syncFailed": "Sync failed",
-      "resume": "Resume sync",
       "reconnect": "Reconnect with Google",
       "disconnect": "Disconnect",
       "disconnectTitle": "Disconnect {{email}}?",
-      "disconnectDescription": "Nid stops syncing and backing up this account. Its archives stay on the NAS.",
+      "disconnectDescription": "Nid stops syncing and backing up this account. Its archives stay on the NAS and in Nid.",
       "disconnected": "{{email}} disconnected",
       "add": "Add a Gmail account",
       "none": "No Gmail account connected",
@@ -589,7 +587,13 @@
       "scopeHint": "Requested access: gmail.modify, gmail.labels. Your mails never leave your NAS.",
       "connected": "Gmail account connected: {{email}}",
       "connectFailed": "Connecting to Gmail failed. Try again.",
-      "limitReached": "Maximum number of Gmail accounts reached"
+      "limitReached": "Maximum number of Gmail accounts reached",
+      "disconnectedState": "Disconnected",
+      "disconnectedHint": "Nid no longer reaches Gmail for this account. Its archives stay available in Archives; reconnect it to resume sync.",
+      "disconnectedPage": "{{email}} is disconnected",
+      "disconnectedPageHint": "This page needs Gmail access. The account's archives stay available in Archives.",
+      "reconnectInSettings": "Reconnect in Settings",
+      "disconnectedOption": "{{email}} (disconnected)"
     },
     "notifications": {
       "title": "Notification preferences",

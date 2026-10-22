@@ -42,15 +42,17 @@ vi.mock('googleapis', () => ({
         setCredentials = vi.fn()
         on = vi.fn()
         getAccessToken = mockGetAccessToken
+        getToken = vi.fn().mockResolvedValue({ tokens: { access_token: 'at', refresh_token: 'rt', expiry_date: 1 } })
       },
     },
+    oauth2: () => ({ userinfo: { get: vi.fn().mockResolvedValue({ data: { email: 'a@gmail.com' } }) } }),
   },
 }))
 
-import { enqueueDueBackups } from '../jobs/scheduler'
+import { enqueueDueBackups, startRuleScheduler } from '../jobs/scheduler'
 import { authRoutes } from '../routes/auth'
 import { notificationsRoutes } from '../routes/notifications'
-import { getAuthenticatedClient, isInvalidGrant } from '../auth/oauth.service'
+import { exchangeGmailCode, getAuthenticatedClient, isInvalidGrant } from '../auth/oauth.service'
 
 const ACCOUNT = '3f1c2a7e-8a4b-4c1d-9e2f-0123456789ab'
 const now = new Date('2026-10-21T12:00:00Z')
@@ -190,5 +192,51 @@ describe('« Action requise » — expired Google grant', () => {
     mockTakeFirst.mockResolvedValueOnce({ access_token: 'a', refresh_token: 'r', token_expiry: new Date(Date.now() + 3600_000) })
     await getAuthenticatedClient(ACCOUNT)
     expect(mockGetAccessToken).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('soft disconnect', () => {
+  const sets = () => calls.filter((c) => c.method === 'set').map((c) => c.args[0] as Record<string, unknown>)
+
+  it('DELETE keeps the row (and its archives): Gmail access off, tokens dropped, scoped to the user', async () => {
+    const app = await buildApp(authRoutes)
+    const res = await app.inject({ method: 'DELETE', url: `/gmail/${ACCOUNT}` })
+    await app.close()
+    expect(res.statusCode).toBe(204)
+    expect(calls.some((c) => c.method === 'deleteFrom')).toBe(false)
+    expect(sets()[0]).toMatchObject({ is_active: false, access_token: null, refresh_token: null })
+    expect(calls.filter((c) => c.method === 'where').map((c) => c.args)).toContainEqual(['user_id', '=', 'user-1'])
+  })
+
+  it('reconnecting the same address reactivates the existing row', async () => {
+    mockTakeFirst.mockResolvedValueOnce({ id: ACCOUNT, email: 'a@gmail.com' })
+    await exchangeGmailCode('code', 'user-1')
+    // Run the upsert's conflict clause against the recording builder
+    ;(calls.find((c) => c.method === 'onConflict')?.args[0] as (oc: unknown) => unknown)(chain)
+    expect(calls.find((c) => c.method === 'doUpdateSet')?.args[0]).toMatchObject({ is_active: true, auth_error_at: null })
+  })
+
+  it('a Gmail call on a disconnected account fails with a clear 409, before any token use', async () => {
+    mockTakeFirst.mockResolvedValueOnce({ access_token: null, refresh_token: null, token_expiry: hoursAgo(1), is_active: false })
+    await expect(getAuthenticatedClient(ACCOUNT)).rejects.toMatchObject({ statusCode: 409, message: expect.stringContaining('disconnected') })
+    expect(mockGetAccessToken).not.toHaveBeenCalled()
+  })
+
+  it('cannot be resumed without a reconnection', async () => {
+    mockTakeFirst.mockResolvedValueOnce({ id: ACCOUNT, is_active: false, refresh_token: null })
+    const app = await buildApp(authRoutes)
+    const res = await app.inject({ method: 'PATCH', url: `/gmail/${ACCOUNT}/toggle` })
+    await app.close()
+    expect(res.statusCode).toBe(409)
+    expect(sets()).toHaveLength(0)
+  })
+
+  it('the scheduler runs rules of connected accounts only', async () => {
+    vi.useFakeTimers()
+    mockExecute.mockResolvedValue([])
+    startRuleScheduler()
+    await vi.advanceTimersByTimeAsync(60_000)
+    vi.useRealTimers()
+    expect(calls.filter((c) => c.method === 'where').map((c) => c.args)).toContainEqual(['gmail_accounts.is_active', '=', true])
   })
 })

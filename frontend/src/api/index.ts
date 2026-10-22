@@ -59,7 +59,7 @@ export const gmailAccountsApi = {
   /** B12: automatic NAS backup. */
   update: (accountId: string, body: { backup_enabled?: boolean; backup_interval?: BackupInterval }) =>
     api.patch(`/api/auth/gmail/${accountId}`, body).then((r) => r.data),
-  toggle: (accountId: string) => api.patch(`/api/auth/gmail/${accountId}/toggle`).then((r) => r.data),
+  /** Soft disconnect: Gmail access stops, the account and its archives stay in Nid. */
   disconnect: (accountId: string) => api.delete(`/api/auth/gmail/${accountId}`).then((r) => r.data),
 }
 

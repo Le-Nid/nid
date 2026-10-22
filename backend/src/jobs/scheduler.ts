@@ -122,6 +122,7 @@ export function startRuleScheduler() {
           eb.ref("gmail_accounts.user_id").as("user_id") as any,
         ])
         .where("rules.is_active", "=", true)
+        .where("gmail_accounts.is_active", "=", true) // disconnected accounts have no Gmail access
         .where("rules.schedule", "is not", null)
         .execute();
 

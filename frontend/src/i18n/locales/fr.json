@@ -557,7 +557,6 @@
     },
     "gmail": {
       "synced": "Synchronisé",
-      "paused": "En pause",
       "actionRequired": "Action requise",
       "actionRequiredHint": "Google a retiré l'accès de Nid à ce compte. Reconnectez-le pour reprendre la synchronisation et les sauvegardes.",
       "sync": "Synchronisation",
@@ -577,11 +576,10 @@
       "syncNow": "Synchroniser maintenant",
       "syncDone": "Synchronisation terminée",
       "syncFailed": "La synchronisation a échoué",
-      "resume": "Reprendre la synchronisation",
       "reconnect": "Reconnecter avec Google",
       "disconnect": "Déconnecter",
       "disconnectTitle": "Déconnecter {{email}} ?",
-      "disconnectDescription": "Nid arrête la synchronisation et les sauvegardes de ce compte. Ses archives restent sur le NAS.",
+      "disconnectDescription": "Nid arrête la synchronisation et les sauvegardes de ce compte. Ses archives restent sur le NAS et dans Nid.",
       "disconnected": "{{email}} déconnecté",
       "add": "Ajouter un compte Gmail",
       "none": "Aucun compte Gmail connecté",
@@ -589,7 +587,13 @@
       "scopeHint": "Accès demandés : gmail.modify, gmail.labels. Vos mails ne quittent pas votre NAS.",
       "connected": "Compte Gmail connecté : {{email}}",
       "connectFailed": "La connexion à Gmail a échoué. Réessayez.",
-      "limitReached": "Nombre maximal de comptes Gmail atteint"
+      "limitReached": "Nombre maximal de comptes Gmail atteint",
+      "disconnectedState": "Déconnecté",
+      "disconnectedHint": "Nid n'accède plus à Gmail pour ce compte. Ses archives restent consultables dans Archives ; reconnectez-le pour reprendre la synchronisation.",
+      "disconnectedPage": "{{email}} est déconnecté",
+      "disconnectedPageHint": "Cette page a besoin de l'accès Gmail. Les archives du compte restent consultables dans Archives.",
+      "reconnectInSettings": "Reconnecter dans Paramètres",
+      "disconnectedOption": "{{email}} (déconnecté)"
     },
     "notifications": {
       "title": "Préférences de notification",

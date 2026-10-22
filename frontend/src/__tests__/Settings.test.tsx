@@ -20,7 +20,7 @@ vi.mock('../api', () => ({
   configApi: { exportConfig: vi.fn(), importConfig: vi.fn() },
   importApi: { importMbox: vi.fn(), importImap: vi.fn(), exportMbox: vi.fn() },
   labelsApi: { sync: vi.fn() },
-  gmailAccountsApi: { connectUrl: vi.fn(), update: vi.fn(), toggle: vi.fn(), disconnect: vi.fn() },
+  gmailAccountsApi: { connectUrl: vi.fn(), update: vi.fn(), disconnect: vi.fn() },
 }))
 vi.mock('../utils/download', () => ({ saveBlob: vi.fn() }))
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
@@ -188,7 +188,7 @@ describe('Comptes Gmail', () => {
     setup('/settings/gmail')
     await userEvent.click(screen.getByRole('button', { name: 'Déconnecter' }))
     const dialog = await screen.findByRole('alertdialog', { name: 'Déconnecter ana@gmail.com ?' })
-    expect(dialog).toHaveTextContent('Ses archives restent sur le NAS.')
+    expect(dialog).toHaveTextContent('Ses archives restent sur le NAS et dans Nid.')
     await userEvent.click(within(dialog).getByRole('button', { name: 'Déconnecter' }))
     expect(gmailAccountsApi.disconnect).toHaveBeenCalledWith('acc-1', expect.anything())
   })
@@ -207,13 +207,16 @@ describe('Comptes Gmail', () => {
     expect(gmailAccountsApi.connectUrl).toHaveBeenCalled()
   })
 
-  it('resumes a paused account', async () => {
-    vi.mocked(gmailAccountsApi.toggle).mockResolvedValue({})
+  it('shows a disconnected account with its archives and only « Reconnecter »', async () => {
+    vi.mocked(gmailAccountsApi.connectUrl).mockReturnValue(new Promise(() => {}))
     useAuthStore.setState({ gmailAccounts: [{ ...ACCOUNT, is_active: false }] })
     setup('/settings/gmail')
-    expect(screen.getByText('En pause')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Reprendre la synchronisation' }))
-    expect(gmailAccountsApi.toggle).toHaveBeenCalledWith('acc-1', expect.anything())
+    expect(screen.getByText('Déconnecté')).toBeInTheDocument()
+    expect(await screen.findByText(/24.106 mails/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Déconnecter' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('switch', { name: 'Sauvegarde automatique' })).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Reconnecter avec Google' }))
+    expect(gmailAccountsApi.connectUrl).toHaveBeenCalled()
   })
 
   it('adds an account, and explains a refused one', async () => {

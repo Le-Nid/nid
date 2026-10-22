@@ -272,8 +272,11 @@ export async function authRoutes(app: FastifyInstance) {
     const userId = request.user.sub
     const { accountId }      = request.params as { accountId: string }
 
+    // Soft disconnect: Gmail access stops (tokens dropped, no sync, no backup) but the row stays, so its archives
+    // remain in Nid; reconnecting the same address reactivates this row (exchangeGmailCode upsert)
     await db
-      .deleteFrom('gmail_accounts')
+      .updateTable('gmail_accounts')
+      .set({ is_active: false, access_token: null, refresh_token: null, updated_at: new Date() })
       .where('id', '=', accountId)
       .where('user_id', '=', userId)
       .execute()
@@ -288,12 +291,14 @@ export async function authRoutes(app: FastifyInstance) {
 
     const account = await db
       .selectFrom('gmail_accounts')
-      .select(['id', 'is_active'])
+      .select(['id', 'is_active', 'refresh_token'])
       .where('id', '=', accountId)
       .where('user_id', '=', userId)
       .executeTakeFirst()
 
     if (!account) return reply.code(404).send({ error: 'Account not found' })
+    // A disconnected account has no token left: only the Google consent can bring it back
+    if (!account.is_active && !account.refresh_token) return reply.code(409).send({ error: 'Gmail account disconnected: reconnect it in Settings' })
 
     const newStatus = !account.is_active
 

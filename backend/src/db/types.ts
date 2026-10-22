@@ -34,10 +34,10 @@ export interface GmailAccountsTable {
   id:            Generated<string>
   user_id:       string
   email:         string
-  access_token:  string
-  refresh_token: string
+  access_token:  string | null   // null once disconnected (soft disconnect keeps the row and its archives)
+  refresh_token: string | null
   token_expiry:  Timestamp
-  is_active:     Generated<boolean>
+  is_active:     Generated<boolean>   // false = disconnected: no Gmail call, archives still readable
   backup_enabled:  Generated<boolean>
   backup_interval: Generated<BackupInterval>
   last_backup_at:  Date | null
