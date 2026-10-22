@@ -179,28 +179,6 @@ export interface NotificationPreferencesTable {
   updated_at:      Generated<Date>
 }
 
-export interface TrackingPixelsTable {
-  id:                Generated<string>
-  gmail_account_id:  string
-  gmail_message_id:  string
-  subject:           string | null
-  sender:            string | null
-  date:              Timestamp | null
-  trackers:          ColumnType<unknown, string, string>
-  tracker_count:     Generated<number>
-  scanned_at:        Generated<Date>
-}
-
-export interface PiiFindingsTable {
-  id:                Generated<string>
-  gmail_account_id:  string
-  archived_mail_id:  string
-  pii_type:          string
-  count:             Generated<number>
-  snippet:           string | null
-  scanned_at:        Generated<Date>
-}
-
 // ─── Analytics tables ─────────────────────────────────────
 
 export interface EmailActivityHeatmapTable {
@@ -353,8 +331,6 @@ export interface Database {
   audit_logs:           AuditLogsTable
   webhooks:             WebhooksTable
   notification_preferences: NotificationPreferencesTable
-  tracking_pixels:     TrackingPixelsTable
-  pii_findings:        PiiFindingsTable
   email_activity_heatmap: EmailActivityHeatmapTable
   sender_scores:       SenderScoresTable
   cleanup_suggestions: CleanupSuggestionsTable
@@ -393,10 +369,6 @@ export type NewAuditLog           = Insertable<AuditLogsTable>
 export type NewWebhook            = Insertable<WebhooksTable>
 export type NotificationPreference = Selectable<NotificationPreferencesTable>
 
-export type TrackingPixel    = Selectable<TrackingPixelsTable>
-export type NewTrackingPixel = Insertable<TrackingPixelsTable>
-export type PiiFinding       = Selectable<PiiFindingsTable>
-export type NewPiiFinding    = Insertable<PiiFindingsTable>
 
 export type RetentionPolicy    = Selectable<RetentionPoliciesTable>
 export type NewRetentionPolicy = Insertable<RetentionPoliciesTable>

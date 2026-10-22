@@ -56,14 +56,6 @@ vi.mock('../unsubscribe/unsubscribe.service', () => ({
   getNewsletterScan: vi.fn().mockResolvedValue({ senders: [], scannedAt: null }),
   forgetNewsletterSender: vi.fn(),
 }))
-vi.mock('../privacy/tracking.service', () => ({
-  getTrackingStats: vi.fn().mockResolvedValue({}),
-  listTrackedMessages: vi.fn().mockResolvedValue({ items: [], total: 0 }),
-}))
-vi.mock('../privacy/pii.service', () => ({
-  getPiiStats: vi.fn().mockResolvedValue({}),
-  listPiiFindings: vi.fn().mockResolvedValue({ items: [], total: 0 }),
-}))
 vi.mock('../privacy/encryption.service', () => ({
   setupEncryption: vi.fn(),
   verifyEncryptionKey: vi.fn().mockResolvedValue(true),

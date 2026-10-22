@@ -10,8 +10,6 @@ export type JobType =
   | 'run_rule'
   | 'scan_unsubscribe'
   | 'integrity_check'
-  | 'scan_tracking'
-  | 'scan_pii'
   | 'encrypt_archives'
   | 'import_mbox'
   | 'import_imap'

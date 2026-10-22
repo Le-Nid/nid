@@ -317,26 +317,6 @@ export const configApi = {
 
 // ─── Privacy ──────────────────────────────────────────────
 export const privacyApi = {
-  // Tracking pixels
-  getTrackingStats: (accountId: string) =>
-    api.get(`/api/privacy/${accountId}/tracking/stats`).then((r) => r.data),
-
-  listTrackedMessages: (accountId: string, params: Record<string, any> = {}) =>
-    api.get(`/api/privacy/${accountId}/tracking`, { params }).then((r) => r.data),
-
-  scanTracking: (accountId: string, maxMessages?: number) =>
-    api.post(`/api/privacy/${accountId}/tracking/scan`, { maxMessages }).then((r) => r.data),
-
-  // PII scanner
-  getPiiStats: (accountId: string) =>
-    api.get(`/api/privacy/${accountId}/pii/stats`).then((r) => r.data),
-
-  listPiiFindings: (accountId: string, params: Record<string, any> = {}) =>
-    api.get(`/api/privacy/${accountId}/pii`, { params }).then((r) => r.data),
-
-  scanPii: (accountId: string) =>
-    api.post(`/api/privacy/${accountId}/pii/scan`).then((r) => r.data),
-
   // Encryption
   getEncryptionStatus: (accountId: string) =>
     api.get(`/api/privacy/${accountId}/encryption/status`).then((r) => r.data),

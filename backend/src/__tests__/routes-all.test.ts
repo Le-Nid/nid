@@ -74,16 +74,6 @@ vi.mock('../rules/rules.service', () => ({
   buildGmailQuery: vi.fn().mockReturnValue('from:test'),
 }))
 vi.mock('../rules/rule-templates', () => ({ RULE_TEMPLATES: [] }))
-vi.mock('../privacy/tracking.service', () => ({
-  getTrackingStats: vi.fn().mockResolvedValue({ trackedMessages: 0, totalTrackers: 0, topDomains: [] }),
-  listTrackedMessages: vi.fn().mockResolvedValue({ data: [], total: 0 }),
-  scanTrackingPixels: vi.fn(),
-}))
-vi.mock('../privacy/pii.service', () => ({
-  getPiiStats: vi.fn().mockResolvedValue({ totalFindings: 0, affectedMails: 0, byType: [] }),
-  listPiiFindings: vi.fn().mockResolvedValue({ data: [], total: 0 }),
-  scanArchivePii: vi.fn(),
-}))
 vi.mock('../privacy/encryption.service', () => ({
   setupEncryption: vi.fn().mockResolvedValue({ success: true }),
   verifyEncryptionKey: vi.fn().mockResolvedValue(true),
@@ -548,26 +538,6 @@ describe('configRoutes', () => {
 // Privacy routes
 // ═══════════════════════════════════════════════════════════
 describe('privacyRoutes', () => {
-  it('GET /:accountId/tracking/stats returns tracking stats', async () => {
-    const app = await buildTestApp()
-    await app.register(privacyRoutes)
-    await app.ready()
-
-    const res = await app.inject({ method: 'GET', url: '/acc-1/tracking/stats' })
-    expect(res.statusCode).toBe(200)
-    await app.close()
-  })
-
-  it('GET /:accountId/pii/stats returns PII stats', async () => {
-    const app = await buildTestApp()
-    await app.register(privacyRoutes)
-    await app.ready()
-
-    const res = await app.inject({ method: 'GET', url: '/acc-1/pii/stats' })
-    expect(res.statusCode).toBe(200)
-    await app.close()
-  })
-
   it('GET /:accountId/encryption/status returns encryption status', async () => {
     const app = await buildTestApp()
     await app.register(privacyRoutes)
@@ -877,46 +847,6 @@ describe('gmailRoutes - additional', () => {
 })
 
 describe('privacyRoutes - additional', () => {
-  it('GET /:accountId/tracking returns tracked messages list', async () => {
-    const app = await buildTestApp()
-    await app.register(privacyRoutes)
-    await app.ready()
-
-    const res = await app.inject({ method: 'GET', url: '/acc-1/tracking' })
-    expect(res.statusCode).toBe(200)
-    await app.close()
-  })
-
-  it('GET /:accountId/pii returns PII findings list', async () => {
-    const app = await buildTestApp()
-    await app.register(privacyRoutes)
-    await app.ready()
-
-    const res = await app.inject({ method: 'GET', url: '/acc-1/pii' })
-    expect(res.statusCode).toBe(200)
-    await app.close()
-  })
-
-  it('POST /:accountId/tracking/scan triggers tracking scan', async () => {
-    const app = await buildTestApp()
-    await app.register(privacyRoutes)
-    await app.ready()
-
-    const res = await app.inject({ method: 'POST', url: '/acc-1/tracking/scan' })
-    expect([200, 202]).toContain(res.statusCode)
-    await app.close()
-  })
-
-  it('POST /:accountId/pii/scan triggers PII scan', async () => {
-    const app = await buildTestApp()
-    await app.register(privacyRoutes)
-    await app.ready()
-
-    const res = await app.inject({ method: 'POST', url: '/acc-1/pii/scan' })
-    expect([200, 202]).toContain(res.statusCode)
-    await app.close()
-  })
-
   it('POST /encryption/setup sets up encryption', async () => {
     const app = await buildTestApp()
     await app.register(privacyRoutes)
