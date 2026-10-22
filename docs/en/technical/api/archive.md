@@ -1,5 +1,7 @@
 # API — Archives
 
+All `/:accountId/...` routes require the JWT and ownership of the Gmail account (otherwise `403`).
+
 ---
 
 ## List archived emails
@@ -15,8 +17,11 @@
 | `from_date` | Start date (ISO 8601) |
 | `to_date` | End date (ISO 8601) |
 | `has_attachments` | Filter by attachment presence (`true` / `false`) |
+| `label` | Gmail label id the email must carry (e.g. `INBOX`, `Label_12`) |
 | `page` | Page (default: 1) |
-| `limit` | Results per page (default: 50) |
+| `limit` | Results per page (default: 50, max: 100) |
+
+With `q`, results are sorted by relevance then date, and each email carries a `highlight` field (HTML excerpt with matched terms in `<mark>`). Trashed emails are excluded. `body_text`, `search_vector` and `eml_path` are never returned.
 
 **Response**
 ```json
@@ -36,9 +41,12 @@
   ],
   "total": 4823,
   "page": 1,
-  "limit": 50
+  "limit": 50,
+  "tookMs": 12
 }
 ```
+
+`total`: total number of results; `tookMs`: search duration in milliseconds.
 
 ---
 
@@ -46,13 +54,14 @@
 
 ### GET /api/archive/:accountId/mails/:mailId
 
-Returns the email with its raw EML content and attachments.
+Returns the email columns (except `body_text` and `eml_path`), its body decoded from the EML (`html` and `text`, empty strings if the email is encrypted or unreadable) and its attachments. `404` if the email does not exist for this account.
 
 ```json
 {
   "id": "uuid",
   "subject": "...",
-  "emlContent": "From: ...\nTo: ...\n\nCorps du mail...",
+  "html": "<p>Email body...</p>",
+  "text": "Email body...",
   "attachments": [
     {
       "id": "uuid",
@@ -71,7 +80,7 @@ Returns the email with its raw EML content and attachments.
 
 ### GET /api/archive/:accountId/attachments/:attachmentId/download
 
-Returns the file as a direct download (`Content-Disposition: attachment`).
+Returns the file as a direct download (`Content-Disposition: attachment`). `404` if the attachment does not belong to this account.
 
 ---
 
@@ -126,7 +135,7 @@ Exports a selection of archived emails as a ZIP file (chunked streaming).
 }
 ```
 
-**Response 200** — ZIP file download (`Content-Type: application/zip`).
+**Response 200** — ZIP file download (`Content-Type: application/zip`). `400` if `mailIds` is empty.
 
 ---
 
@@ -148,7 +157,7 @@ Returns archived emails grouped by `thread_id` (Gmail conversation). For each th
 | `to_date` | End date (ISO 8601) |
 | `has_attachments` | Filter by attachment presence (`true` / `false`) |
 | `page` | Page (default: 1) |
-| `limit` | Results per page (default: 50) |
+| `limit` | Results per page (default: 50, max: 100) |
 
 **Response 200**
 ```json
@@ -228,6 +237,80 @@ Returns all emails in a thread, sorted by date ascending (chronological order), 
     ]
   }
 ]
+```
+
+---
+
+## Archive trash
+
+Deleted archived emails first go to a trash (`deleted_at` set); they are excluded from lists, threads and searches, then purged after `retentionDays` days when automatic purge is enabled.
+
+### POST /api/archive/:accountId/mails/trash
+
+Moves archived emails to the trash.
+
+**Body**
+```json
+{ "mailIds": ["uuid-1", "uuid-2"] }
+```
+
+`mailIds`: 1 to 500 UUIDs.
+
+**Response 200**
+```json
+{ "trashed": 2 }
+```
+
+### POST /api/archive/:accountId/mails/restore
+
+Restores emails from the trash. Same body as `/mails/trash`.
+
+**Response 200**
+```json
+{ "restored": 2 }
+```
+
+### GET /api/archive/:accountId/trash
+
+Paginated trash list, sorted by deletion date descending. Query: `q` (full-text), `page`, `limit` (default 50, max 100).
+
+**Response 200**
+```json
+{ "mails": [ { "id": "uuid", "subject": "...", "deleted_at": "..." } ], "total": 12, "page": 1, "limit": 50, "retentionDays": 30 }
+```
+
+### DELETE /api/archive/:accountId/trash
+
+Empties the trash: permanent deletion of the emails (EML and attachments).
+
+**Response 200**
+```json
+{ "deleted": 12 }
+```
+
+### GET /api/archive/config/trash
+
+Trash settings (any authenticated user).
+
+**Response 200**
+```json
+{ "retentionDays": 30, "purgeEnabled": true }
+```
+
+### PUT /api/archive/config/trash
+
+Updates the trash settings for the whole instance. **Admin only.**
+
+**Body** (optional fields)
+```json
+{ "retentionDays": 30, "purgeEnabled": true }
+```
+
+`retentionDays`: 1 to 365.
+
+**Response 200**
+```json
+{ "ok": true }
 ```
 
 ---

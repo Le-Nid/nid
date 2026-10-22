@@ -79,3 +79,5 @@ Supprime en masse tous les mails d'un expéditeur newsletters (via job BullMQ).
 ```json
 { "jobId": "bulk_operation-456", "runAt": "2026-10-20T12:00:10.000Z", "count": 42 }
 ```
+
+Si Gmail n'a plus aucun mail de cet expéditeur : **réponse 200** `{ "deleted": 0 }` et l'expéditeur est retiré du cache.

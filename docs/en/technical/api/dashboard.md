@@ -13,6 +13,7 @@ Aggregates statistics from the Gmail API (loads the last 500 messages).
 | Param | Default | Description |
 |---|---|---|
 | `limit` | `20` | Number of results in the tops |
+| `refresh` | — | `1`: bypass the Redis cache and recompute |
 
 **Response**
 ```json
@@ -37,12 +38,13 @@ Aggregates statistics from the Gmail API (loads the last 500 messages).
   "profile": {
     "emailAddress": "compte@gmail.com",
     "messagesTotal": 5234
-  }
+  },
+  "cachedAt": "2024-03-15T12:00:00.000Z"
 }
 ```
 
 ::: warning Performance
-This endpoint performs a batchGet of up to 500 messages. It can take 5-10 seconds depending on the Gmail quota speed. A Redis cache is planned for v1.1.
+This endpoint performs a batchGet of up to 500 messages and can take 5-10 seconds depending on the Gmail quota. The result is cached in Redis for 10 minutes (`refresh=1` forces a recompute).
 :::
 
 ---
@@ -51,7 +53,7 @@ This endpoint performs a batchGet of up to 500 messages. It can take 5-10 second
 
 ### GET /api/dashboard/:accountId/archive-stats
 
-Statistics from PostgreSQL (instant).
+Statistics from PostgreSQL (top 20 senders), cached in Redis for 5 minutes.
 
 ```json
 {
@@ -60,6 +62,7 @@ Statistics from PostgreSQL (instant).
   "last_archived_at": "2024-03-15T12:00:00Z",
   "bySender": [
     { "sender": "...", "count": "234", "total_size": "12345678" }
-  ]
+  ],
+  "cachedAt": "2024-03-15T12:00:00.000Z"
 }
 ```

@@ -79,3 +79,5 @@ Bulk deletes all emails from a newsletter sender (via BullMQ job).
 ```json
 { "jobId": "bulk_operation-456", "runAt": "2026-10-20T12:00:10.000Z", "count": 42 }
 ```
+
+If Gmail has no email left from this sender: **response 200** `{ "deleted": 0 }` and the sender is removed from the cache.

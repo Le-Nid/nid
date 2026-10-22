@@ -68,7 +68,7 @@ Importe des règles et webhooks depuis un fichier JSON précédemment exporté.
 | Élément | Logique d'import |
 |---|---|
 | Règles | Associées au compte Gmail correspondant par **email**. Si le compte Gmail n'existe pas chez l'utilisateur, les règles sont ignorées. |
-| Webhooks | Créés directement pour l'utilisateur. Un nouveau `secret` sera généré pour les webhooks de type `generic`. |
+| Webhooks | Créés directement pour l'utilisateur. Aucun `secret` n'est généré : les webhooks `generic` importés partent sans signature (recréer le webhook pour obtenir un secret). |
 
 **Réponse**
 

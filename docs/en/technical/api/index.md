@@ -8,7 +8,7 @@ Interactive Swagger documentation is available in development at `http://localho
 
 ## Authentication
 
-All routes (except `/api/auth/config`, `/api/auth/register`, `/api/auth/login` and OAuth callbacks) require an httpOnly JWT cookie.
+All routes require a JWT in the httpOnly `token` cookie (or an `Authorization: Bearer` header), except: `/api/auth/config`, `/api/auth/register`, `/api/auth/login`, `/api/auth/google` (+ `/callback`, `/exchange`), `/api/auth/social/:provider/*`, `/api/auth/gmail/callback` and `/api/shares/public/:token`. Routes with `:accountId` also check that the Gmail account belongs to the user (otherwise `403`).
 
 ---
 
@@ -17,11 +17,12 @@ All routes (except `/api/auth/config`, `/api/auth/register`, `/api/auth/login` a
 | Module | Prefix | Documentation |
 |---|---|---|
 | Authentication | `/api/auth` | [auth.md](auth.md) |
+| 2FA / TOTP | `/api/auth/2fa` | [auth.md](auth.md#_2fa-totp) |
 | Gmail | `/api/gmail` | [gmail.md](gmail.md) |
 | Archives | `/api/archive` | [archive.md](archive.md) |
 | Dashboard | `/api/dashboard` | [dashboard.md](dashboard.md) |
 | Rules | `/api/rules` | [rules.md](rules.md) |
-| Jobs | `/api/jobs` | [jobs.md](jobs.md) |
+| Jobs (+ per-job SSE `/:jobId/events`) | `/api/jobs` | [jobs.md](jobs.md) |
 | Live events (SSE) | `/api/events` | [jobs.md](jobs.md#live-events) |
 | Notifications | `/api/notifications` | [notifications.md](notifications.md) |
 | Webhooks | `/api/webhooks` | [webhooks.md](webhooks.md) |
@@ -37,6 +38,11 @@ All routes (except `/api/auth/config`, `/api/auth/register`, `/api/auth/login` a
 | Saved searches | `/api/saved-searches` | [saved-searches.md](saved-searches.md) |
 | Labels | `/api/labels` | [labels.md](labels.md) |
 | Unified inbox | `/api/unified` | [unified.md](unified.md) |
+| Retention | `/api/retention` | [retention.md](retention.md) |
+| Expiration | `/api/expiration` | [expiration.md](expiration.md) |
+| Sharing | `/api/shares` | [sharing.md](sharing.md) |
+| mbox Import / Export | `/api/import` | [import.md](import.md) |
+| Gmail API quota | `/api/quota` | [quota.md](quota.md) |
 
 ---
 
@@ -46,7 +52,11 @@ All routes (except `/api/auth/config`, `/api/auth/register`, `/api/auth/login` a
 GET /health
 ```
 
-Returns `200 OK` if the service is operational.
+Outside the `/api` prefix, no authentication. Returns `200` when the service is up:
+
+```json
+{ "status": "ok", "version": "0.1.0", "timestamp": "2026-03-20T10:00:00.000Z" }
+```
 
 ---
 

@@ -111,7 +111,7 @@ Heuristics based on analyzed data to suggest concrete cleanup actions.
 
 | Field | Type | Description |
 |---|---|---|
-| `type` | string | Suggestion type: `bulk_unread`, `large_sender`, `old_newsletters`, `duplicate_pattern` |
+| `type` | string | Suggestion type: `bulk_unread`, `large_sender`, `old_newsletters` |
 | `title` | string | Short title of the suggestion |
 | `description` | string | Detailed description with figures |
 | `sender` | string | Concerned sender (if applicable) |
@@ -127,7 +127,7 @@ Heuristics based on analyzed data to suggest concrete cleanup actions.
 
 ### PATCH /api/analytics/suggestions/:suggestionId/dismiss
 
-Dismisses a suggestion (will no longer be displayed).
+Dismisses a suggestion (will no longer be displayed). `404` if it does not exist or does not belong to one of the user's accounts.
 
 **Response**
 ```json

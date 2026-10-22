@@ -15,7 +15,7 @@ Retourne les notifications de l'utilisateur authentifié, paginées.
 | Param | Défaut | Description |
 |---|---|---|
 | `page` | `1` | Numéro de page |
-| `limit` | `20` | Résultats par page |
+| `limit` | `20` | Résultats par page (max 100) |
 | `unread_only` | — | `1` ou `true` pour n'afficher que les non lues |
 
 **Réponse 200**
@@ -49,20 +49,20 @@ Marque une notification comme lue.
 
 **Réponse 200**
 ```json
-{ "success": true }
+{ "ok": true }
 ```
 
 ---
 
 ## Marquer toutes comme lues
 
-### POST /api/notifications/read-all 🔒
+### PATCH /api/notifications/read-all 🔒
 
 Marque toutes les notifications de l'utilisateur comme lues.
 
 **Réponse 200**
 ```json
-{ "updated": 5 }
+{ "ok": true }
 ```
 
 ---
@@ -122,7 +122,8 @@ Retourne les préférences de notifications de l'utilisateur. Si aucune préfér
   "job_failed_toast": true,
   "rule_executed_toast": false,
   "quota_warning_toast": false,
-  "integrity_alert_toast": false
+  "integrity_alert_toast": false,
+  "remote_images": "block"
 }
 ```
 
@@ -143,11 +144,13 @@ Chaque type de notification possède deux canaux indépendants :
 | `integrity_alert` | `true` | 🔔 In-app | Problème d'intégrité |
 | `integrity_alert_toast` | `false` | 💬 Toast | |
 
+`remote_images` (`block` par défaut, ou `allow`) n'est pas une préférence de notification : c'est le chargement des images distantes dans le lecteur de mails, rangé avec les autres préférences utilisateur.
+
 ---
 
 ### PUT /api/notifications/preferences 🔒
 
-Met à jour une ou plusieurs préférences. Seules les clés fournies sont modifiées.
+Met à jour une ou plusieurs préférences. Seules les clés fournies sont modifiées ; les clés inconnues ou de mauvais type (booléen attendu, `block`/`allow` pour `remote_images`) sont ignorées.
 
 **Body**
 

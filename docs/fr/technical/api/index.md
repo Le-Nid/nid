@@ -8,7 +8,7 @@ La documentation Swagger interactive est disponible en développement à `http:/
 
 ## Authentification
 
-Toutes les routes (sauf `/api/auth/config`, `/api/auth/register`, `/api/auth/login` et les callbacks OAuth) requièrent un cookie JWT httpOnly.
+Toutes les routes requièrent un JWT dans le cookie httpOnly `token` (ou un header `Authorization: Bearer`), sauf : `/api/auth/config`, `/api/auth/register`, `/api/auth/login`, `/api/auth/google` (+ `/callback`, `/exchange`), `/api/auth/social/:provider/*`, `/api/auth/gmail/callback` et `/api/shares/public/:token`. Les routes avec `:accountId` vérifient en plus que le compte Gmail appartient à l'utilisateur (`403` sinon).
 
 ---
 
@@ -17,11 +17,12 @@ Toutes les routes (sauf `/api/auth/config`, `/api/auth/register`, `/api/auth/log
 | Module | Préfixe | Documentation |
 |---|---|---|
 | Authentification | `/api/auth` | [auth.md](auth.md) |
+| 2FA / TOTP | `/api/auth/2fa` | [auth.md](auth.md#_2fa-totp) |
 | Gmail | `/api/gmail` | [gmail.md](gmail.md) |
 | Archives | `/api/archive` | [archive.md](archive.md) |
 | Dashboard | `/api/dashboard` | [dashboard.md](dashboard.md) |
 | Règles | `/api/rules` | [rules.md](rules.md) |
-| Jobs | `/api/jobs` | [jobs.md](jobs.md) |
+| Jobs (+ SSE par job `/:jobId/events`) | `/api/jobs` | [jobs.md](jobs.md) |
 | Événements en direct (SSE) | `/api/events` | [jobs.md](jobs.md#evenements-en-direct) |
 | Notifications | `/api/notifications` | [notifications.md](notifications.md) |
 | Webhooks | `/api/webhooks` | [webhooks.md](webhooks.md) |
@@ -37,6 +38,11 @@ Toutes les routes (sauf `/api/auth/config`, `/api/auth/register`, `/api/auth/log
 | Recherches sauvegardées | `/api/saved-searches` | [saved-searches.md](saved-searches.md) |
 | Libellés | `/api/labels` | [labels.md](labels.md) |
 | Boîte unifiée | `/api/unified` | [unified.md](unified.md) |
+| Rétention | `/api/retention` | [retention.md](retention.md) |
+| Expiration | `/api/expiration` | [expiration.md](expiration.md) |
+| Partage | `/api/shares` | [sharing.md](sharing.md) |
+| Import / Export mbox | `/api/import` | [import.md](import.md) |
+| Quota Gmail API | `/api/quota` | [quota.md](quota.md) |
 
 ---
 
@@ -46,7 +52,11 @@ Toutes les routes (sauf `/api/auth/config`, `/api/auth/register`, `/api/auth/log
 GET /health
 ```
 
-Retourne `200 OK` si le service est opérationnel.
+Hors préfixe `/api`, sans authentification. Retourne `200` si le service est opérationnel :
+
+```json
+{ "status": "ok", "version": "0.1.0", "timestamp": "2026-03-20T10:00:00.000Z" }
+```
 
 ---
 

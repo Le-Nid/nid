@@ -1,5 +1,7 @@
 # API — Automatic rules
 
+All `/:accountId/...` routes require the JWT and ownership of the Gmail account. Every successful write request republishes the `/api/events` counters (`activeRules`).
+
 ---
 
 ## List rules
@@ -7,6 +9,21 @@
 ### GET /api/rules/:accountId
 
 Returns all rules for the Gmail account.
+
+### GET /api/rules/:accountId/stats
+
+"Active rules" indicators of the overview.
+
+**Response 200**
+```json
+{ "active": 3, "processed30d": 1250 }
+```
+
+`processed30d`: sum of emails processed by completed `run_rule` executions (manual and scheduled) over 30 days.
+
+### GET /api/rules/:accountId/:ruleId
+
+Returns one rule. `404` if it does not exist for this account.
 
 ---
 
@@ -42,6 +59,10 @@ Returns all rules for the Gmail account.
 | `label` | Gmail label | `equals`, `not_equals` |
 | `older_than` | Minimum age | `equals` (e.g.: `7d`, `3m`, `1y`) |
 | `newer_than` | Maximum age | `equals` (e.g.: `7d`, `3m`, `1y`) |
+
+An unsupported field/operator combination is rejected (`400`). `name`: 1 to 255 characters.
+
+**Response 201**: the created rule.
 
 ### Available actions
 
@@ -124,9 +145,15 @@ Counts emails that would match the conditions **without** applying any action.
 ```json
 {
   "query": "from:(newsletter) -has:attachment",
-  "estimatedCount": 342
+  "estimatedCount": 342,
+  "samples": [
+    { "id": "abc123", "from": "news@example.com", "subject": "What's new", "date": "Mon, 01 Mar 2024 10:00:00 +0000" }
+  ],
+  "sizeBytes": 15600000
 }
 ```
+
+`samples`: up to 5 matching emails; `sizeBytes`: estimated size (average sample size × `estimatedCount`).
 
 ::: tip Always preview before creating
 The preview translates your conditions into a native Gmail query and gives you an estimate of the number of affected emails. Useful to avoid surprises with irreversible actions like `delete`.
@@ -158,15 +185,15 @@ Returns the library of pre-configured rules, organized by category.
 ]
 ```
 
-Available categories: `cleanup`, `archive`, `organize`.
+Available categories: `cleanup`, `archive`, `organize`, `label`, `expire`. `label` templates carry a `label: { "name": "Factures" }` field: the Gmail label is found or created when the rule is created.
 
 ### POST /api/rules/:accountId/from-template
 
-Creates a rule from a template.
+Creates a rule from a template. Idempotent: if a rule from this template already exists for the account, it is returned as is (`200`).
 
 **Body**
 ```json
 { "templateId": "cleanup-github-notifications" }
 ```
 
-**Response 201**: the created rule.
+**Response 201**: the created rule. **Response 404**: unknown template.

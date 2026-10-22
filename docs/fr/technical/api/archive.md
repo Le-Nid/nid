@@ -1,5 +1,7 @@
 # API — Archives
 
+Toutes les routes `/:accountId/...` exigent le JWT et la propriété du compte Gmail (`403` sinon).
+
 ---
 
 ## Lister les mails archivés
@@ -15,8 +17,11 @@
 | `from_date` | Date de début (ISO 8601) |
 | `to_date` | Date de fin (ISO 8601) |
 | `has_attachments` | Filtrer par présence de pièces jointes (`true` / `false`) |
+| `label` | Id de libellé Gmail que le mail doit porter (ex. `INBOX`, `Label_12`) |
 | `page` | Page (défaut : 1) |
-| `limit` | Résultats par page (défaut : 50) |
+| `limit` | Résultats par page (défaut : 50, max : 100) |
+
+Avec `q`, les résultats sont triés par pertinence puis par date, et chaque mail porte un champ `highlight` (extrait HTML avec les termes trouvés en `<mark>`). Les mails à la corbeille sont exclus. `body_text`, `search_vector` et `eml_path` ne sont jamais renvoyés.
 
 **Réponse**
 ```json
@@ -36,9 +41,12 @@
   ],
   "total": 4823,
   "page": 1,
-  "limit": 50
+  "limit": 50,
+  "tookMs": 12
 }
 ```
+
+`total` : nombre total de résultats ; `tookMs` : durée de la recherche en millisecondes.
 
 ---
 
@@ -46,13 +54,14 @@
 
 ### GET /api/archive/:accountId/mails/:mailId
 
-Retourne le mail avec son contenu EML brut et ses pièces jointes.
+Retourne les colonnes du mail (sauf `body_text` et `eml_path`), son corps décodé depuis l'EML (`html` et `text`, chaînes vides si le mail est chiffré ou illisible) et ses pièces jointes. `404` si le mail n'existe pas pour ce compte.
 
 ```json
 {
   "id": "uuid",
   "subject": "...",
-  "emlContent": "From: ...\nTo: ...\n\nCorps du mail...",
+  "html": "<p>Corps du mail...</p>",
+  "text": "Corps du mail...",
   "attachments": [
     {
       "id": "uuid",
@@ -71,7 +80,7 @@ Retourne le mail avec son contenu EML brut et ses pièces jointes.
 
 ### GET /api/archive/:accountId/attachments/:attachmentId/download
 
-Retourne le fichier en téléchargement direct (`Content-Disposition: attachment`).
+Retourne le fichier en téléchargement direct (`Content-Disposition: attachment`). `404` si la pièce jointe n'appartient pas à ce compte.
 
 ---
 
@@ -126,7 +135,7 @@ Exporte une sélection de mails archivés en fichier ZIP (streaming chunked).
 }
 ```
 
-**Réponse 200** — Fichier ZIP en téléchargement (`Content-Type: application/zip`).
+**Réponse 200** — Fichier ZIP en téléchargement (`Content-Type: application/zip`). `400` si `mailIds` est vide.
 
 ---
 
@@ -148,7 +157,7 @@ Retourne les mails archivés groupés par `thread_id` (conversation Gmail). Pour
 | `to_date` | Date de fin (ISO 8601) |
 | `has_attachments` | Filtrer par présence de pièces jointes (`true` / `false`) |
 | `page` | Page (défaut : 1) |
-| `limit` | Résultats par page (défaut : 50) |
+| `limit` | Résultats par page (défaut : 50, max : 100) |
 
 **Réponse 200**
 ```json
@@ -228,6 +237,80 @@ Retourne tous les mails d'un thread, triés par date croissante (ordre chronolog
     ]
   }
 ]
+```
+
+---
+
+## Corbeille des archives
+
+Les mails archivés supprimés passent d'abord par une corbeille (`deleted_at` renseigné) ; ils sont exclus des listes, threads et recherches, puis purgés après `retentionDays` jours si la purge automatique est active.
+
+### POST /api/archive/:accountId/mails/trash
+
+Met des mails archivés à la corbeille.
+
+**Body**
+```json
+{ "mailIds": ["uuid-1", "uuid-2"] }
+```
+
+`mailIds` : 1 à 500 UUID.
+
+**Réponse 200**
+```json
+{ "trashed": 2 }
+```
+
+### POST /api/archive/:accountId/mails/restore
+
+Restaure des mails de la corbeille. Même body que `/mails/trash`.
+
+**Réponse 200**
+```json
+{ "restored": 2 }
+```
+
+### GET /api/archive/:accountId/trash
+
+Liste paginée de la corbeille, triée par date de suppression décroissante. Query : `q` (full-text), `page`, `limit` (défaut 50, max 100).
+
+**Réponse 200**
+```json
+{ "mails": [ { "id": "uuid", "subject": "...", "deleted_at": "..." } ], "total": 12, "page": 1, "limit": 50, "retentionDays": 30 }
+```
+
+### DELETE /api/archive/:accountId/trash
+
+Vide la corbeille : suppression définitive des mails (EML et pièces jointes).
+
+**Réponse 200**
+```json
+{ "deleted": 12 }
+```
+
+### GET /api/archive/config/trash
+
+Réglages de la corbeille (tout utilisateur authentifié).
+
+**Réponse 200**
+```json
+{ "retentionDays": 30, "purgeEnabled": true }
+```
+
+### PUT /api/archive/config/trash
+
+Modifie les réglages de la corbeille pour toute l'instance. **Admin uniquement.**
+
+**Body** (champs optionnels)
+```json
+{ "retentionDays": 30, "purgeEnabled": true }
+```
+
+`retentionDays` : 1 à 365.
+
+**Réponse 200**
+```json
+{ "ok": true }
 ```
 
 ---

@@ -52,7 +52,7 @@ Retourne toutes les recherches sauvegardées de l'utilisateur connecté, triées
 | `icon` | string | — | Identifiant d'icône (`folder`, `star`, `mail`, `attachment`, `invoice`, `alert`, `archive`, `calendar`, `work`, `shopping`) |
 | `color` | string | — | Code couleur hex (ex : `#1677ff`) |
 
-**Réponse 201** — La recherche créée.
+**Réponse 201** — La recherche créée. `400` si `name` ou `query` est vide.
 
 ---
 

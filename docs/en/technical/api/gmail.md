@@ -1,6 +1,6 @@
 # API — Gmail
 
-All routes require `Authorization: Bearer <token>`.
+All routes require the JWT (`token` cookie) and that `:accountId` belongs to the user (otherwise `403`).
 
 `:accountId` = UUID of the Gmail account (retrieved via `GET /api/auth/me`).
 
@@ -35,7 +35,7 @@ Paginated message list.
 |---|---|---|
 | `q` | string | Native Gmail query (`from:`, `has:attachment`, `larger:1mb`, etc.) |
 | `pageToken` | string | Pagination token (returned by the previous response) |
-| `maxResults` | number | Number of results (default: 50, max: 500) |
+| `maxResults` | number | Number of results (default: 50; passed as-is to Gmail, which caps it at 500) |
 
 **Response**
 ```json
@@ -76,6 +76,16 @@ Message metadata (headers only, lightweight).
 ### GET /api/gmail/:accountId/messages/:messageId/full
 
 Full message (Gmail API `full` format — payload, parts, attachments). Used for reading and archiving.
+
+---
+
+### GET /api/gmail/:accountId/messages/:messageId/attachments/:attachmentId
+
+Content of a Gmail attachment (`attachmentId` from the `full` payload).
+
+```json
+{ "data": "<base64url>", "size": 45678 }
+```
 
 ---
 
@@ -141,7 +151,6 @@ The route does not list the messages: the job pages through Gmail search results
 | Action | Description |
 |---|---|
 | `trash` | Send to Gmail trash (recoverable for 30 days) |
-| `delete` | Permanently delete ⚠️ irreversible |
 | `archive` | Remove from INBOX (equivalent to the Gmail Archive button) |
 | `label` | Add `labelId` to messages |
 | `unlabel` | Remove `labelId` from messages |
@@ -163,12 +172,26 @@ Lists all labels for the Gmail account.
 
 ### POST /api/gmail/:accountId/labels
 
-Create a label.
+Create a label (`name`: 1 to 225 characters). The label is also stored in the local cache (`/api/labels`).
 
 ```json
-{ "name": "Mon Label" }
+{ "name": "My Label" }
 ```
+
+**Response 201** — the created Gmail label.
+
+### PATCH /api/gmail/:accountId/labels/:labelId
+
+Rename and/or recolor a label. At least one of the two fields is required (otherwise `400`). Gmail itself rejects colors outside its palette.
+
+```json
+{ "name": "New name", "color": { "backgroundColor": "#16a766", "textColor": "#ffffff" } }
+```
+
+**Response 200** — the updated Gmail label (local cache updated too).
 
 ### DELETE /api/gmail/:accountId/labels/:labelId
 
-Delete a label.
+Delete a label (marked deleted in the local cache).
+
+**Response 204** — No content

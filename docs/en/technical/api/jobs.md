@@ -85,6 +85,21 @@ Enqueues the job's stored payload again under a **new** job id (the "Relancer" b
 
 ---
 
+## Job tracking (SSE)
+
+### GET /api/jobs/:jobId/events
+
+`text/event-stream` of the progress of one of the user's jobs. `:jobId` is the row `id` or the BullMQ id.
+
+- On open: a `data:` message with the full job row.
+- If the job is already `completed`, `failed` or `cancelled`: the final row, then a `close` event, and the stream closes.
+- Then, on each BullMQ event: `data: { "bullmqId", "event": "progress", "status", "progress", "processed", "total" }`, `event: "completed"` (with `progress: 100`) or `event: "failed"` (with `error`).
+- A `: heartbeat` comment every 15 s.
+
+**Response 404** — unknown job or owned by another user.
+
+---
+
 ## Live events
 
 ### GET /api/events
