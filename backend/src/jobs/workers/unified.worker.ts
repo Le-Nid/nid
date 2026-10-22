@@ -12,7 +12,7 @@ import { encryptArchives } from '../../privacy/encryption.service'
 import { importMbox, importImap } from '../../archive/import.service'
 import { applyRetentionPolicies } from '../../archive/retention.service'
 import { purgeArchiveTrash } from '../../archive/trash.service'
-import { checkArchiveIntegrity } from '../../archive/integrity.service'
+import { checkArchiveIntegrity, saveIntegrityResult } from '../../archive/integrity.service'
 import { backfillBodyText, countPendingBodyText } from '../../archive/body-text'
 import { createLogger } from '../../logger'
 import { config } from '../../config'
@@ -789,6 +789,7 @@ async function handleIntegrity(job: Job) {
 
   try {
     const result = await checkArchiveIntegrity(job.data.accountId || undefined)
+    if (!job.data.accountId) await saveIntegrityResult(result)
     await db.updateTable('jobs')
       .set({ status: 'completed', progress: 100, processed: result.checkedFiles, total: result.totalRecords, completed_at: new Date() })
       .where('bullmq_id', '=', String(job.id))

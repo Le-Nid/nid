@@ -40,7 +40,6 @@
     "newsletters": "Newsletters",
     "attachments": "Attachments",
     "jobs": "Jobs",
-    "ops": "Ops & Resilience",
     "settings": "Settings",
     "admin": "Administration"
   },
@@ -681,33 +680,129 @@
   },
   "admin": {
     "title": "Administration",
-    "users": "Users",
-    "gmailAccounts": "Gmail Accounts",
-    "totalJobs": "Jobs (total)",
-    "activeJobs": "{{count}} active",
-    "archives": "Archives",
-    "searchPlaceholder": "Search by email or name...",
-    "email": "Email",
-    "role": "Role",
-    "isActive": "Active",
-    "gmailAccountCount": "Gmail Accounts",
-    "storage": "Storage",
-    "lastLogin": "Last login",
-    "actions": "Actions",
-    "editUser": "Edit user",
-    "registeredAt": "Registered on",
-    "storageUsed": "Storage used",
-    "roleUser": "User",
-    "roleAdmin": "Admin",
-    "maxGmailAccounts": "Max Gmail accounts",
-    "storageQuota": "Storage quota (GB)",
-    "filterStatus": "Filter by status",
-    "jobType": "Type",
-    "jobStatus": "Status",
-    "jobProgress": "Progress",
-    "jobUser": "User",
-    "jobCreated": "Created",
-    "jobError": "Error"
+    "tabsLabel": "Administration sections",
+    "tab": {
+      "users": "Users",
+      "system": "System",
+      "audit": "Audit"
+    },
+    "pager": {
+      "label": "Pagination",
+      "previous": "Previous page",
+      "next": "Next page",
+      "status": "Page {{page}} of {{pages}}"
+    },
+    "users": {
+      "search": "Search users",
+      "searchPlaceholder": "Email or name",
+      "col": {
+        "user": "User",
+        "role": "Role",
+        "active": "Status",
+        "accounts": "Gmail accounts",
+        "storage": "Storage",
+        "lastLogin": "Last login"
+      },
+      "role": {
+        "admin": "Admin",
+        "user": "User"
+      },
+      "active": "Active",
+      "inactive": "Disabled",
+      "accounts": "{{count, number}} / {{max}} accounts",
+      "storageOf": "{{used}} / {{quota}}",
+      "never": "Never logged in",
+      "edit": "Edit {{email}}",
+      "editTitle": "Edit user",
+      "isActive": "Active account",
+      "maxAccounts": "Maximum Gmail accounts",
+      "quotaGb": "Storage quota (GB)",
+      "saved": "User updated",
+      "failed": "The update failed.",
+      "empty": "No users",
+      "loadError": "Could not load the users."
+    },
+    "system": {
+      "description": "Settings of this Nid instance, for every user.",
+      "loadError": "Could not load the instance status.",
+      "trash": {
+        "title": "Archive trash",
+        "maxDuration": "Maximum time in the trash",
+        "days_one": "{{count}} day",
+        "days_other": "{{count}} days",
+        "volume_one": "{{count, number}} email · {{size}}",
+        "volume_other": "{{count, number}} emails · {{size}}",
+        "nextPurge": "next purge on {{date}}",
+        "purgeOff": "automatic purge disabled",
+        "saved": "Maximum time saved",
+        "saveFailed": "Could not save the maximum time.",
+        "empty": "Empty the trash now…",
+        "confirmTitle": "Permanently empty the trash?",
+        "confirmDescription_one": "{{count, number}} email ({{size}}) will be deleted from the NAS for every user. This cannot be undone.",
+        "confirmDescription_other": "{{count, number}} emails ({{size}}) will be deleted from the NAS for every user. This cannot be undone.",
+        "confirm": "Delete permanently",
+        "emptied_one": "{{count, number}} email permanently deleted",
+        "emptied_other": "{{count, number}} emails permanently deleted",
+        "emptyFailed": "Could not empty the trash."
+      },
+      "integrity": {
+        "title": "Archive integrity",
+        "healthy": "Archives are intact",
+        "unhealthy": "{{missing}} missing file(s), {{corrupted}} corrupted",
+        "orphaned": "{{count, number}} orphaned file(s) on the NAS",
+        "never": "No check recorded",
+        "last_one": "Last check {{when}} · {{count, number}} email checked",
+        "last_other": "Last check {{when}} · {{count, number}} emails checked",
+        "schedule": "Automatic check every day at 3 am.",
+        "run": "Run a check",
+        "running": "Integrity check",
+        "failed": "The check could not start."
+      },
+      "quota": {
+        "title": "Gmail API quota",
+        "description": "The instance's Google project, all accounts.",
+        "day": "Units today",
+        "peak": "Peak per user",
+        "perSecond": "{{units}} / {{limit}} u/s",
+        "rateLimited": "429 responses over 24 h",
+        "loadError": "Could not load the quota."
+      },
+      "jobs": {
+        "title": "Jobs of all users",
+        "description": "The 20 most recent.",
+        "col": {
+          "type": "Job",
+          "user": "User",
+          "status": "Status",
+          "created": "Created"
+        },
+        "status": {
+          "pending": "Pending",
+          "scheduled": "Scheduled",
+          "active": "Running",
+          "completed": "Completed",
+          "failed": "Failed",
+          "cancelled": "Cancelled"
+        },
+        "empty": "No jobs",
+        "loadError": "Could not load the jobs."
+      }
+    },
+    "audit": {
+      "user": "User",
+      "userPlaceholder": "Email",
+      "action": "Action",
+      "allActions": "All actions",
+      "col": {
+        "date": "Date",
+        "user": "User",
+        "action": "Action",
+        "target": "Target"
+      },
+      "deletedUser": "Deleted user",
+      "empty": "No entries",
+      "loadError": "Could not load the log."
+    }
   },
   "attachments": {
     "title": "Attachments",
@@ -827,69 +922,6 @@
     "results": "result(s)",
     "noMail": "No email",
     "needMultipleAccounts": "Connect at least 2 Gmail accounts to use the unified inbox."
-  },
-  "ops": {
-    "title": "Ops & Resilience",
-    "description": "Remote storage, retention policies, Gmail API quota monitoring, mail import/export.",
-    "selectAccount": "Select a Gmail account to access this feature.",
-    "tabs": {
-      "retention": "Retention",
-      "quota": "API Quota",
-      "import": "Import / Export"
-    },
-    "retention": {
-      "info": "Retention policies automatically delete archives older than the configured duration.",
-      "add": "New policy",
-      "name": "Name",
-      "account": "Account",
-      "allAccounts": "All",
-      "label": "Gmail label",
-      "labelPlaceholder": "Label (optional)",
-      "maxAge": "Max age",
-      "maxAgeDays": "Retention days",
-      "days": "day(s)",
-      "months": "month(s)",
-      "years": "year(s)",
-      "deleted": "Deleted",
-      "lastRun": "Last run",
-      "runNow": "Run now",
-      "runResult": "{{policies}} policy(ies) executed, {{deleted}} archive(s) deleted.",
-      "created": "Retention policy created",
-      "deleteConfirm": "Delete this retention policy?"
-    },
-    "quota": {
-      "info": "Track Gmail API quota usage (250 units/user/second). Data refreshes automatically.",
-      "lastMinute": "Last minute",
-      "lastHour": "Last hour",
-      "last24h": "Last 24 hours",
-      "units": "units",
-      "calls": "calls",
-      "topEndpoints": "Top endpoints (24h)",
-      "endpoint": "Endpoint",
-      "hourlyBreakdown": "Hourly breakdown (24h)",
-      "hour": "Hour"
-    },
-    "import": {
-      "mboxTitle": "Mbox Import",
-      "mboxInfo": "Import a mbox file (Google Takeout, Thunderbird, Apple Mail) into your archives. Emails will be converted to individual EML files.",
-      "dropMbox": "Drop a .mbox file here or click to select",
-      "mboxStarted": "Mbox import started (job {{jobId}}). Track progress in Jobs.",
-      "imapTitle": "IMAP Import",
-      "imapInfo": "Import emails from an IMAP server (Outlook, ProtonMail, Yahoo, etc.).",
-      "imapHost": "IMAP Server",
-      "imapPort": "Port",
-      "imapUser": "Username",
-      "imapPass": "Password",
-      "imapFolder": "Folder",
-      "imapSecure": "Secure connection (TLS)",
-      "maxMessages": "Max messages",
-      "startImport": "Start import",
-      "imapStarted": "IMAP import started (job {{jobId}}). Track progress in Jobs.",
-      "exportTitle": "Mbox Export",
-      "exportInfo": "Export all your archives in mbox format, compatible with Thunderbird, Apple Mail and other email clients.",
-      "exportMbox": "Export as .mbox",
-      "exportSuccess": "Mbox export downloaded"
-    }
   },
   "sharing": {
     "notFound": "Link not found",

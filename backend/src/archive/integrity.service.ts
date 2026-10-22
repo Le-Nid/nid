@@ -83,3 +83,39 @@ export async function checkArchiveIntegrity(accountId?: string): Promise<Integri
 
   return result
 }
+
+const LAST_CHECK_KEY = 'integrity_last_check'
+
+export type IntegritySummary = {
+  checkedAt: string
+  checkedFiles: number
+  missing: number
+  corrupted: number
+  orphaned: number
+  healthy: boolean
+}
+
+/** Keep the outcome of an instance-wide check for Admin > Système (counts only, not the file lists). */
+export async function saveIntegrityResult(result: IntegrityResult): Promise<void> {
+  const summary: IntegritySummary = {
+    checkedAt: new Date().toISOString(),
+    checkedFiles: result.checkedFiles,
+    missing: result.missingFiles.length,
+    corrupted: result.corruptedFiles.length,
+    orphaned: result.orphanedFiles.length,
+    healthy: result.healthy,
+  }
+  const value = JSON.stringify(summary)
+  await getDb()
+    .insertInto('system_config')
+    .values({ key: LAST_CHECK_KEY, value, updated_at: new Date() })
+    .onConflict((oc) => oc.column('key').doUpdateSet({ value, updated_at: new Date() }))
+    .execute()
+}
+
+export async function getLastIntegrityCheck(): Promise<IntegritySummary | null> {
+  const row = await getDb().selectFrom('system_config').select('value').where('key', '=', LAST_CHECK_KEY).executeTakeFirst()
+  if (!row) return null
+  // jsonb comes back parsed from pg; a string only if the column were text
+  return (typeof row.value === 'string' ? JSON.parse(row.value) : row.value) as IntegritySummary
+}

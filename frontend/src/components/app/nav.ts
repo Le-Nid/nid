@@ -30,7 +30,6 @@ export const LEGACY_PAGES: { to: string; labelKey: string }[] = [
   { to: '/unified', labelKey: 'nav.unified' },
   { to: '/saved-searches', labelKey: 'nav.savedSearches' },
   { to: '/attachments', labelKey: 'nav.attachments' },
-  { to: '/ops', labelKey: 'nav.ops' },
 ]
 
 export const isActive = (entry: NavEntry, pathname: string) =>

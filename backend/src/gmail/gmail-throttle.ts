@@ -13,6 +13,7 @@
  */
 
 import { createLogger } from '../logger'
+import { getRedis } from '../plugins/redis'
 
 const logger = createLogger('gmail-throttle')
 
@@ -35,9 +36,11 @@ export async function gmailRetry<T>(fn: () => Promise<T>, retries = MAX_RETRIES)
       // Gmail also signals rate limits as 403 with a rateLimitExceeded / userRateLimitExceeded reason
       const reason = errObj?.errors?.[0]?.reason ?? errObj?.response?.data?.error?.errors?.[0]?.reason
       const isRateLimit403 = status === 403 && (reason === 'rateLimitExceeded' || reason === 'userRateLimitExceeded')
-      const isRetryable = status === 429 || status === 503 || status === 500 || isRateLimit403
+      const isRateLimit = status === 429 || isRateLimit403
+      const isRetryable = isRateLimit || status === 503 || status === 500
 
       if (isRetryable && attempt < retries) {
+        if (isRateLimit) void countRateLimited()
         const retryAfterMs = parseRetryAfter(err)
         const expDelay = Math.min(BASE_DELAY_MS * Math.pow(2, attempt), MAX_DELAY_MS)
         const jitter = Math.random() * 1_000
@@ -75,6 +78,29 @@ export async function limitConcurrency<T>(
   const workers = Array.from({ length: Math.min(concurrency, tasks.length) }, () => worker())
   await Promise.all(workers)
   return results
+}
+
+// ─── Rate-limit counter (B13) ───────────────────────────
+// Hourly Redis buckets kept 25 h, shared by the API and the worker; summed by the admin quota view.
+const HOUR_MS = 3_600_000
+const rateLimitKey = (hour: number) => `gmail:rate-limited:${hour}`
+
+/** Count one retried rate-limited response. Never rejects: monitoring must not break a Gmail call. */
+async function countRateLimited(): Promise<void> {
+  try {
+    const key = rateLimitKey(Math.floor(Date.now() / HOUR_MS))
+    await getRedis().multi().incr(key).expire(key, 25 * 3600).exec()
+  } catch (err) {
+    logger.debug({ err }, 'rate-limit counter unavailable')
+  }
+}
+
+/** Rate-limited responses retried over the last 24 hourly buckets. */
+export async function rateLimitedLast24h(): Promise<number> {
+  const now = Math.floor(Date.now() / HOUR_MS)
+  const keys = Array.from({ length: 24 }, (_, i) => rateLimitKey(now - i))
+  const values = await getRedis().mget(...keys)
+  return values.reduce((sum, v) => sum + Number(v ?? 0), 0)
 }
 
 function parseRetryAfter(err: unknown): number | null {

@@ -82,7 +82,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const accounts: GmailAccount[] = data.gmailAccounts
       const stored = get().activeAccountId
       // Default to a connected account: a disconnected one only shows its archives
-      const active = stored && accounts.find((a) => a.id === stored) ? stored : (accounts.find((a) => a.is_active) ?? accounts[0])?.id ?? null
+      const active = stored && accounts.some((a) => a.id === stored) ? stored : (accounts.find((a) => a.is_active) ?? accounts[0])?.id ?? null
       if (active) localStorage.setItem('activeAccountId', active)
       set({
         initialLoading: false,
