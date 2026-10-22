@@ -5,6 +5,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router'
 import { create } from 'zustand'
 import { toast } from 'sonner'
 import i18n from '../i18n'
+import { useAuthStore } from '../store/auth.store'
 import { archiveApi, gmailApi, jobsApi } from '../api'
 import { showUndoToast } from '../components/app/UndoToast'
 import type { JobState } from '../hooks/useJobSSE'
@@ -15,9 +16,11 @@ vi.mock('../hooks/useAccount', () => ({ useAccount: () => ({ accountId: useMockA
 
 const messages = vi.hoisted(() => ({ current: {} as Record<string, unknown> }))
 const useGmailMessages = vi.hoisted(() => vi.fn())
+const useUnifiedMessages = vi.hoisted(() => vi.fn())
 const createSaved = vi.hoisted(() => vi.fn())
 vi.mock('../hooks/queries', () => ({
   useGmailMessages,
+  useUnifiedMessages,
   useLabels: () => ({
     data: [
       { id: 'INBOX', name: 'INBOX', type: 'system' },
@@ -47,13 +50,13 @@ vi.mock('../components/app/JobProgressInline', () => ({
   ),
 }))
 vi.mock('../components/app/RuleSheet', () => ({
-  RuleSheet: ({ target, onClose }: { target: { from?: string } | null; onClose: () => void }) =>
-    target && <div role="dialog" aria-label="rule sheet">from={target.from ?? 'none'}<button type="button" onClick={onClose}>close rule</button></div>,
+  RuleSheet: ({ accountId, target, onClose }: { accountId: string; target: { from?: string } | null; onClose: () => void }) =>
+    target && <div role="dialog" aria-label="rule sheet">from={target.from ?? 'none'} account={accountId}<button type="button" onClick={onClose}>close rule</button></div>,
 }))
 vi.mock('../components/app/MailViewer', () => ({
-  MailViewer: ({ messageId, onAction, onClose, onCreateRule }: { messageId: string | null; onAction: (a: string) => void; onClose: () => void; onCreateRule: (from: string) => void }) =>
+  MailViewer: ({ accountId, messageId, onAction, onClose, onCreateRule }: { accountId: string; messageId: string | null; onAction: (a: string) => void; onClose: () => void; onCreateRule: (from: string) => void }) =>
     messageId && (
-      <div role="dialog" aria-label={`viewer ${messageId}`}>
+      <div role="dialog" aria-label={`viewer ${messageId}`} data-account={accountId}>
         <button type="button" onClick={() => onAction('trash')}>viewer trash</button>
         <button type="button" onClick={() => onCreateRule('v@x.test')}>viewer rule</button>
         <button type="button" onClick={onClose}>viewer close</button>
@@ -68,6 +71,17 @@ const mail = (id: string, subject: string, patch = {}) => ({
   sizeEstimate: 2048, snippet: `snippet ${id}`, labelIds: ['INBOX', 'Label_1'], hasAttachments: false, ...patch,
 })
 const MAILS = [mail('m1', 'Bulletin', { labelIds: ['UNREAD', 'CATEGORY_PROMOTIONS', 'Label_old'], hasAttachments: true }), mail('m2', 'Réunion', { date: '2020-01-02T00:00:00Z' })]
+
+const ACCOUNTS = [
+  { id: 'acc-1', email: 'perso@x.test', is_active: true },
+  { id: 'acc-2', email: 'pro@x.test', is_active: true },
+  { id: 'acc-3', email: 'old@x.test', is_active: false },
+]
+const UNIFIED = [
+  { ...mail('m1', 'Bulletin', { labelIds: ['INBOX', 'Label_1'] }), accountId: 'acc-1', accountEmail: 'perso@x.test' },
+  { ...mail('m3', 'Contrat', { labelIds: ['INBOX', 'Label_9'] }), accountId: 'acc-2', accountEmail: 'pro@x.test' },
+  { ...mail('m4', 'Devis'), accountId: 'acc-2', accountEmail: 'pro@x.test' },
+]
 
 function setMessages(patch: Record<string, unknown> = {}, mails = MAILS, total = 2) {
   messages.current = {
@@ -95,6 +109,10 @@ beforeEach(() => {
   vi.clearAllMocks()
   useMockAccount.setState({ accountId: 'acc-1' })
   useGmailMessages.mockImplementation(() => messages.current)
+  useUnifiedMessages.mockReturnValue({
+    data: { messages: UNIFIED }, isLoading: false, isError: false, isFetching: false, refetch: vi.fn(),
+  })
+  useAuthStore.setState({ gmailAccounts: [] })
   setMessages()
   vi.mocked(gmailApi.bulkOperation).mockResolvedValue({ jobId: 'job-1' })
   vi.mocked(archiveApi.triggerArchive).mockResolvedValue({ jobId: 'job-nas' })
@@ -349,5 +367,89 @@ describe('MailsPage', () => {
     await user().click(screen.getByRole('button', { name: 'Afficher plus' }))
     expect(messages.current.fetchNextPage).toHaveBeenCalled()
     expect(screen.queryByText('Tous les mails sont chargés')).not.toBeInTheDocument()
+  })
+
+  describe('« Tous les comptes » (P2)', () => {
+    beforeEach(() => useAuthStore.setState({ gmailAccounts: ACCOUNTS }))
+
+    it('switches between one account and all of them through ?account=all', async () => {
+      const { router } = setup('/mails?q=from:a')
+      const select = screen.getByLabelText('Compte Gmail')
+      expect(within(select).getAllByRole('option').map((o) => o.textContent)).toEqual(['Tous les comptes', 'perso@x.test', 'pro@x.test'])
+      expect(useUnifiedMessages).toHaveBeenLastCalledWith({ q: 'from:a', maxResults: 50 }, false)
+
+      await user().selectOptions(select, 'all')
+      expect(router.state.location.search).toBe('?q=from%3Aa&account=all')
+      expect(useUnifiedMessages).toHaveBeenLastCalledWith({ q: 'from:a', maxResults: 50 }, true)
+      expect(useGmailMessages).toHaveBeenLastCalledWith(null, 'from:a', '')
+
+      await user().selectOptions(select, 'acc-2')
+      expect(router.state.location.search).toBe('?q=from%3Aa')
+      expect(useAuthStore.getState().activeAccountId).toBe('acc-2')
+    })
+
+    it('has no selector with a single active account', () => {
+      useAuthStore.setState({ gmailAccounts: ACCOUNTS.slice(1) })
+      setup()
+      expect(screen.queryByLabelText('Compte Gmail')).not.toBeInTheDocument()
+    })
+
+    it('lists every account with its email, without the per-account actions', async () => {
+      setup('/mails?account=all&q=in:inbox')
+      expect(within(screen.getByRole('row', { name: /Contrat/ })).getByText('pro@x.test')).toBeInTheDocument()
+      // Another account's user labels are not loaded: no raw id
+      expect(screen.queryByText('Label_9')).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Tout sauvegarder sur le NAS' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Créer une règle' })).not.toBeInTheDocument()
+      expect(screen.queryByText('Tous les mails sont chargés')).not.toBeInTheDocument()
+
+      await user().click(checkbox('Bulletin'))
+      await user().click(checkbox('Contrat'))
+      await user().click(checkbox('Devis'))
+      expect(within(bar()).queryByRole('button', { name: 'Ajouter un libellé' })).not.toBeInTheDocument()
+      expect(within(bar()).queryByRole('button', { name: /Sélectionner les/ })).not.toBeInTheDocument()
+      // Two accounts: no rule; one account: a rule on that account
+      expect(within(bar()).queryByRole('button', { name: 'Créer une règle' })).not.toBeInTheDocument()
+      await user().click(checkbox('Bulletin'))
+      await user().click(within(bar()).getByRole('button', { name: 'Créer une règle' }))
+      expect(screen.getByRole('dialog', { name: 'rule sheet' })).toHaveTextContent('account=acc-2')
+    })
+
+    it('splits a bulk action into one job per account and refreshes the unified list', async () => {
+      vi.mocked(gmailApi.bulkOperation).mockImplementation(async (accountId: string) => ({ jobId: `job-${accountId}` }))
+      const { invalidate } = setup('/mails?account=all')
+      await user().click(checkbox('Bulletin'))
+      await user().click(checkbox('Contrat'))
+      await user().click(checkbox('Devis'))
+      await user().click(within(bar()).getByRole('button', { name: 'Marquer comme lu' }))
+      expect(gmailApi.bulkOperation).toHaveBeenCalledTimes(2)
+      expect(gmailApi.bulkOperation).toHaveBeenCalledWith('acc-1', { action: 'mark_read', messageIds: ['m1'], delayMs: 0 })
+      expect(gmailApi.bulkOperation).toHaveBeenCalledWith('acc-2', { action: 'mark_read', messageIds: ['m3', 'm4'], delayMs: 0 })
+
+      await user().click(await screen.findByRole('button', { name: 'finish job-acc-2' }))
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: ['gmail', 'acc-2', 'messages'] })
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: ['unified'] })
+    })
+
+    it('reader, row menu and shortcuts act on the mail\'s own account, with undo', async () => {
+      setup('/mails?account=all')
+      await user().click(rowMenu('Contrat'))
+      await user().click(await screen.findByRole('menuitem', { name: 'Ouvrir' }))
+      expect(screen.getByRole('dialog', { name: 'viewer m3' })).toHaveAttribute('data-account', 'acc-2')
+      await user().click(screen.getByRole('button', { name: 'viewer rule' }))
+      expect(screen.getByRole('dialog', { name: 'rule sheet' })).toHaveTextContent('account=acc-2')
+      await user().click(screen.getByRole('button', { name: 'close rule' }))
+
+      await user().click(rowMenu('Devis'))
+      await user().click(await screen.findByRole('menuitem', { name: 'Supprimer' }))
+      expect(gmailApi.bulkOperation).toHaveBeenLastCalledWith('acc-2', { action: 'trash', messageIds: ['m4'] })
+      await waitFor(() => expect(showUndoToast).toHaveBeenCalled())
+      act(() => vi.mocked(showUndoToast).mock.calls[0][0].onUndo())
+      expect(jobsApi.cancel).toHaveBeenCalledWith('job-1')
+
+      press('j')
+      press('e')
+      expect(gmailApi.bulkOperation).toHaveBeenLastCalledWith('acc-1', { action: 'archive', messageIds: ['m1'] })
+    })
   })
 })

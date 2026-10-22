@@ -1,7 +1,8 @@
 import React from 'react'
-import { Result, Button } from 'antd'
+import { CircleX } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import i18n from '../i18n'
 import { createLogger } from '../utils/logger'
-import LegacyAntd from './LegacyAntd'
 
 const logger = createLogger('error-boundary')
 
@@ -35,19 +36,14 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
+      // Above the router and QueryClient: plain markup, i18n read directly (no hooks in a class)
       return (
-        <LegacyAntd>
-        <Result
-          status="error"
-          title="Une erreur inattendue s'est produite"
-          subTitle={this.state.error?.message}
-          extra={
-            <Button type="primary" onClick={this.handleReset}>
-              Réessayer
-            </Button>
-          }
-        />
-        </LegacyAntd>
+        <div role="alert" className="flex min-h-svh flex-col items-center justify-center gap-3 bg-background p-6 text-center text-foreground">
+          <CircleX className="size-12 text-destructive" aria-hidden="true" />
+          <h1 className="text-2xl font-semibold">{i18n.t('errorBoundary.title')}</h1>
+          {this.state.error?.message && <p className="max-w-prose text-muted-foreground">{this.state.error.message}</p>}
+          <Button className="h-11 md:h-9" onClick={this.handleReset}>{i18n.t('errorBoundary.retry')}</Button>
+        </div>
       )
     }
     return this.props.children

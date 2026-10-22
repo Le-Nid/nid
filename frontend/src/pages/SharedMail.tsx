@@ -1,17 +1,20 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router'
-import { Card, Typography, Spin, Result, Tag, Space } from 'antd'
-import { Mail, User, Calendar } from 'lucide-react'
+import { Calendar, Link2Off, Loader2, Mail, User } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import dayjs from 'dayjs'
 import { sharingApi } from '../api'
+import { EmptyState } from '@/components/app/EmptyState'
+import { MailFrame } from '@/components/app/MailViewer'
 
-const { Title, Text } = Typography
+type SharedMail = { subject?: string; sender?: string; recipient?: string; date?: string; htmlBody?: string; textBody?: string }
+
+const chip = 'inline-flex items-center gap-1.5 rounded-md border bg-muted px-2 py-0.5 text-sm'
 
 export default function SharedMailPage() {
   const { t } = useTranslation()
   const { token } = useParams<{ token: string }>()
-  const [mail, setMail] = useState<any>(null)
+  const [mail, setMail] = useState<SharedMail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
@@ -26,76 +29,48 @@ export default function SharedMailPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '60vh', display: 'grid', placeItems: 'center' }}>
-        <Spin size="large" />
-      </div>
+      <output aria-label={t('common.loading')} className="grid min-h-[60dvh] place-items-center">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" aria-hidden="true" />
+      </output>
     )
   }
 
   if (error || !mail) {
     return (
-      <div style={{ minHeight: '60vh', display: 'grid', placeItems: 'center' }}>
-        <Result
-          status="404"
-          title={t('sharing.notFound')}
-          subTitle={t('sharing.notFoundDesc')}
-        />
-      </div>
+      <main className="grid min-h-[60dvh] place-items-center bg-background px-4">
+        <EmptyState icon={<Link2Off />} title={t('sharing.notFound')} description={t('sharing.notFoundDesc')} />
+      </main>
     )
   }
 
   return (
-    <div style={{ maxWidth: 800, margin: '40px auto', padding: '0 16px' }}>
-      <Card>
-        <Space orientation="vertical" style={{ width: '100%' }} size="middle">
-          <Title level={3}>
-            <Mail size={16} style={{ marginRight: 8 }} />
-            {mail.subject || t('common.noSubject')}
-          </Title>
+    <main className="min-h-dvh bg-background px-4 py-6 md:py-10">
+      <article className="mx-auto flex max-w-3xl flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground md:p-6">
+        <h1 className="flex items-start gap-2 text-xl font-semibold break-words">
+          <Mail className="mt-1 size-5 shrink-0" aria-hidden="true" />
+          {mail.subject || t('common.noSubject')}
+        </h1>
 
-          <Space wrap>
-            <Tag icon={<User size={14} />}>{mail.sender}</Tag>
-            {mail.recipient && <Tag>{t('sharing.to')}: {mail.recipient}</Tag>}
-            {mail.date && (
-              <Tag icon={<Calendar size={14} />}>
-                {dayjs(mail.date).format('DD/MM/YYYY HH:mm')}
-              </Tag>
-            )}
-          </Space>
-
-          <Tag color="orange">{t('sharing.sharedLink')}</Tag>
-
-          {mail.htmlBody ? (
-            <iframe
-              srcDoc={mail.htmlBody}
-              sandbox="allow-same-origin"
-              style={{
-                width: '100%',
-                minHeight: 400,
-                border: '1px solid #d9d9d9',
-                borderRadius: 6,
-                background: '#fff',
-              }}
-              title={t('sharing.emailContent')}
-            />
-          ) : mail.textBody ? (
-            <Card
-              size="small"
-              style={{ background: '#fafafa', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}
-            >
-              {mail.textBody}
-            </Card>
-          ) : (
-            <Text type="secondary">{t('sharing.noContent')}</Text>
+        <div className="flex flex-wrap gap-2">
+          <span className={chip}><User className="size-3.5" aria-hidden="true" />{mail.sender}</span>
+          {mail.recipient && <span className={chip}>{t('sharing.to')}: {mail.recipient}</span>}
+          {mail.date && (
+            <span className={chip}><Calendar className="size-3.5" aria-hidden="true" />{dayjs(mail.date).format('DD/MM/YYYY HH:mm')}</span>
           )}
-        </Space>
-      </Card>
+        </div>
 
-      <div style={{ textAlign: 'center', marginTop: 24 }}>
-        <Text type="secondary" style={{ fontSize: 12 }}>
-          {t('sharing.poweredBy')}
-        </Text>
-      </div>
-    </div>
+        <p className="self-start rounded-md bg-warning-soft px-2 py-0.5 text-sm text-warning">{t('sharing.sharedLink')}</p>
+
+        {mail.htmlBody || mail.textBody ? (
+          <div className="flex min-h-[50dvh] flex-col overflow-hidden rounded-lg border">
+            <MailFrame html={mail.htmlBody ?? ''} text={mail.textBody ?? ''} />
+          </div>
+        ) : (
+          <p className="text-muted-foreground">{t('sharing.noContent')}</p>
+        )}
+      </article>
+
+      <p className="mt-6 text-center text-xs text-muted-foreground">{t('sharing.poweredBy')}</p>
+    </main>
   )
 }

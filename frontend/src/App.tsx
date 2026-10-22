@@ -1,10 +1,9 @@
 import { useEffect, lazy, Suspense } from "react";
-import { Routes, Route, Navigate, Outlet, useLocation } from "react-router";
+import { Routes, Route, Navigate, useLocation } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "./store/auth.store";
 import AppShell from "./components/app/AppShell";
 import { RequireGmailAccess } from "./components/app/RequireGmailAccess";
-import LegacyAntd from "./components/LegacyAntd";
 import { Skeleton } from "./components/ui/skeleton";
 
 const LoginPage = lazy(() => import("./pages/Login"));
@@ -18,8 +17,6 @@ const RulesPage = lazy(() => import("./pages/Rules"));
 const AdminPage = lazy(() => import("./pages/Admin"));
 const CleanupPage = lazy(() => import("./pages/Cleanup"));
 const AttachmentsPage = lazy(() => import("./pages/Attachments"));
-const SavedSearchesPage = lazy(() => import("./pages/SavedSearches"));
-const UnifiedInboxPage = lazy(() => import("./pages/UnifiedInbox"));
 const SharedMailPage = lazy(() => import("./pages/SharedMail"));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -54,20 +51,6 @@ function Redirect({ to }: Readonly<{ to: string }>) {
   return <Navigate to={{ pathname: to, search, hash }} replace />;
 }
 
-/** Pages not migrated yet (§9.1): antd context plus the gutter and background AppLayout gave them. */
-function LegacyPages() {
-  return (
-    // shortcut: AppLayout's hardcoded content backgrounds, dropped with the last antd page (L10)
-    <div className="flex-1 bg-[#f5f5f5] p-3 md:p-6 dark:bg-[#1f1f1f]">
-      <LegacyAntd>
-        <Suspense fallback={<RouteFallback />}>
-          <Outlet />
-        </Suspense>
-      </LegacyAntd>
-    </div>
-  );
-}
-
 export default function App() {
   const { fetchMe } = useAuthStore();
 
@@ -79,8 +62,8 @@ export default function App() {
   return (
     <Suspense fallback={<RouteFallback />}>
       <Routes>
-        <Route path="/login" element={<LegacyAntd><LoginPage /></LegacyAntd>} />
-        <Route path="/shared/:token" element={<LegacyAntd><SharedMailPage /></LegacyAntd>} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/shared/:token" element={<SharedMailPage />} />
         <Route
           path="/"
           element={
@@ -89,24 +72,18 @@ export default function App() {
             </ProtectedRoute>
           }
         >
-          <Route element={<LegacyPages />}>
-            {/* New routes (§3.1), rendering the legacy page until its lot lands */}
-            {/* Legacy routes whose destination does not exist yet: redirected in their lot (§3.3) */}
-            <Route path="attachments" element={<AttachmentsPage />} />
-            <Route path="saved-searches" element={<SavedSearchesPage />} />
-            <Route path="unified" element={<UnifiedInboxPage />} />
-          </Route>
-          {/* Migrated pages (§9.2): no antd context; own Suspense so the shell stays while the chunk loads */}
+          {/* Own Suspense so the shell stays while the chunk loads */}
           <Route path="overview" element={<RequireGmailAccess title="shell.overview"><Suspense fallback={<RouteFallback />}><OverviewPage /></Suspense></RequireGmailAccess>} />
           <Route path="mails" element={<RequireGmailAccess title="mails.title"><Suspense fallback={<RouteFallback />}><MailsPage /></Suspense></RequireGmailAccess>} />
           <Route path="cleanup" element={<RequireGmailAccess title="cleanup.title"><Suspense fallback={<RouteFallback />}><CleanupPage /></Suspense></RequireGmailAccess>} />
           <Route path="rules" element={<RequireGmailAccess title="rules.title"><Suspense fallback={<RouteFallback />}><RulesPage /></Suspense></RequireGmailAccess>} />
           <Route path="archives" element={<Suspense fallback={<RouteFallback />}><ArchivesPage /></Suspense>} />
+          <Route path="attachments" element={<Suspense fallback={<RouteFallback />}><AttachmentsPage /></Suspense>} />
           <Route path="activity" element={<Suspense fallback={<RouteFallback />}><ActivityPage /></Suspense>} />
           <Route path="settings/:section" element={<Suspense fallback={<RouteFallback />}><SettingsPage /></Suspense>} />
           <Route path="more" element={<Suspense fallback={<RouteFallback />}><MorePage /></Suspense>} />
           <Route path="admin" element={<AdminRoute><Suspense fallback={<RouteFallback />}><AdminPage /></Suspense></AdminRoute>} />
-          {/* §3.3 redirects whose target exists in L0 */}
+          {/* §3.3 redirects */}
           <Route index element={<Redirect to="/overview" />} />
           <Route path="dashboard" element={<Redirect to="/overview" />} />
           <Route path="analytics" element={<Redirect to="/overview" />} />
@@ -119,6 +96,8 @@ export default function App() {
           <Route path="expiration" element={<Navigate to="/rules?tab=labels" replace />} />
           <Route path="sharing" element={<Navigate to="/archives?tab=shares" replace />} />
           <Route path="privacy" element={<Navigate to="/settings/account" replace />} />
+          <Route path="unified" element={<Navigate to="/mails?account=all" replace />} />
+          <Route path="saved-searches" element={<Navigate to="/mails" replace />} />
         </Route>
       </Routes>
     </Suspense>

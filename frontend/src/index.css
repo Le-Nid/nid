@@ -1,8 +1,3 @@
-/* Cascade order (O14, design/ui-redesign.md §9.1): antd's CSS-in-JS is injected into @layer antd
-   (StyleProvider layer in LegacyAntd), after Tailwind's preflight (base) and before utilities.
-   Legacy pages therefore keep antd winning over preflight, and the new UI keeps utilities winning. */
-@layer theme, base, antd, components, utilities;
-
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "./styles/shadcn-tailwind.css";
@@ -235,14 +230,6 @@
     outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
-  /* Legacy antd subtrees (pages, portals) keep browser defaults: undo preflight and the rules above for raw
-     elements there (unstyled <button>, <h*>, <img>…), so legacy pages render as before L0 (O14).
-     Class specificity beats preflight's element selectors; antd and unlayered CSS still win.
-     shortcut: relies on antd class prefixes, removed with antd in L10. */
-  :is(.ant-app, [class^="ant-"], [class*=" ant-"]),
-  :is(.ant-app, [class^="ant-"], [class*=" ant-"]) * {
-    all: revert-layer;
-  }
   /* Mobile selection mode (§6.1): the bulk action bar takes the bottom nav's place, the page keeps room for
      it, and toasts sit above it. --bulk-bar-h is the bar's measured height (safe area included), set by
      BulkActionBar. !important: beats main's pb utility and the offset sonner sets inline. */
@@ -265,81 +252,13 @@
   }
 }
 
-/* ─── Legacy (antd pages, until L10). Unlayered on purpose: these overrides must keep beating @layer antd. ─── */
-
-/* Lucide spin animation (replaces antd LoadingOutlined spin) */
-@keyframes lucide-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-.lucide-spin {
-  animation: lucide-spin 1s linear infinite;
-}
-
-/* ─── Mobile responsive (< 768px) ─── */
-@media (max-width: 767px) {
-  /* Tables : scroll horizontal, ne jamais comprimer les colonnes */
-  .ant-table-wrapper {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .ant-table-wrapper .ant-table table {
-    min-width: 1100px;
-  }
-
-  /* Cards : pleine largeur */
-  .ant-card {
-    border-radius: 8px;
-  }
-
-  /* Stats row : empiler verticalement */
-  .ant-row {
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-  }
-
-  /* Modal : plein écran sur mobile */
-  .ant-modal {
-    max-width: calc(100vw - 16px) !important;
-    margin: 8px auto !important;
-  }
-
-  /* Drawer : plein écran sur mobile */
-  .ant-drawer-content-wrapper {
-    max-width: 100vw !important;
-  }
-
-  .mail-viewer-fullscreen .ant-drawer-content-wrapper {
-    width: 100vw !important;
-  }
-
-  /* Touch-friendly : targets plus larges */
-  .ant-menu-item,
-  .ant-menu-submenu-title {
-    min-height: 44px !important;
-    line-height: 44px !important;
-  }
-
-  .ant-btn {
-    min-height: 40px;
-  }
-}
-
-/* ─── Tablet (768px – 1024px) ─── */
-@media (min-width: 768px) and (max-width: 1024px) {
-  .ant-modal {
-    max-width: calc(100vw - 48px) !important;
-  }
-}
-
 /* RGAA — skip link for keyboard users */
 .skip-link {
   position: absolute;
   top: -100%;
   left: 0;
-  background: #1677ff;
-  color: #fff;
+  background: var(--primary);
+  color: var(--primary-foreground);
   padding: 8px 16px;
   z-index: 10000;
   font-size: 14px;
