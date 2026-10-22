@@ -43,9 +43,11 @@ function getFileIcon(mimeType: string | null) {
   return <File size={14} />
 }
 
+// Same list as INLINE_SAFE_MIME in backend/src/routes/attachments.ts (SVG excluded: XSS)
+const PREVIEWABLE_MIME = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'application/pdf'])
+
 function isPreviewable(mimeType: string | null): boolean {
-  if (!mimeType) return false
-  return mimeType.startsWith('image/') || mimeType === 'application/pdf'
+  return !!mimeType && PREVIEWABLE_MIME.has(mimeType.split(';')[0].trim().toLowerCase())
 }
 
 export default function AttachmentsPage() {

@@ -14,6 +14,24 @@ function sanitizeFilename(name: string): string {
   return name.replaceAll(/["\r\n]/g, '_')
 }
 
+// Only these render inline: SVG/HTML/XML can carry scripts that would run on the app origin
+const INLINE_SAFE_MIME = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'application/pdf'])
+// No CSP on PDFs: `sandbox` blocks Chromium's built-in PDF viewer
+const IMAGE_CSP = "sandbox; default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'"
+
+/** Headers for serving an attachment; inline only for the safe list, else forced download */
+function fileHeaders(mimeType: string, filename: string, inlineRequested: boolean): Record<string, string> {
+  const baseType = mimeType.split(';')[0].trim().toLowerCase()
+  const inline = inlineRequested && INLINE_SAFE_MIME.has(baseType)
+  const headers: Record<string, string> = {
+    'Content-Disposition': `${inline ? 'inline' : 'attachment'}; filename="${sanitizeFilename(filename)}"`,
+    'Content-Type': mimeType,
+    'X-Content-Type-Options': 'nosniff',
+  }
+  if (inline && baseType.startsWith('image/')) headers['Content-Security-Policy'] = IMAGE_CSP
+  return headers
+}
+
 /** Recursively find a part by filename in a Gmail message payload */
 function findPartByFilename(parts: any[], filename: string): any | null {
   for (const part of parts) {
@@ -198,11 +216,8 @@ export async function attachmentsRoutes(app: FastifyInstance) {
       return reply.code(404).send({ error: 'File not found on disk' })
     }
 
-    const disposition = inlineParam === '1' ? 'inline' : 'attachment'
-
     return reply
-      .header('Content-Disposition', `${disposition}; filename="${sanitizeFilename(att.filename)}"`)
-      .header('Content-Type', att.mime_type ?? 'application/octet-stream')
+      .headers(fileHeaders(att.mime_type ?? 'application/octet-stream', att.filename, inlineParam === '1'))
       .send(fs.createReadStream(att.file_path))
   })
 
@@ -244,11 +259,8 @@ export async function attachmentsRoutes(app: FastifyInstance) {
     }
 
     const mimeType = part.mimeType ?? 'application/octet-stream'
-    const disposition = inlineParam === '1' ? 'inline' : 'attachment'
-
     return reply
-      .header('Content-Disposition', `${disposition}; filename="${sanitizeFilename(filename)}"`)
-      .header('Content-Type', mimeType)
+      .headers(fileHeaders(mimeType, filename, inlineParam === '1'))
       .send(data)
   })
 

@@ -473,6 +473,23 @@ describe('attachmentsRoutes deep', () => {
     await app.close()
   })
 
+  it('GET /:accountId/live/:messageId/download forces download of SVG even with inline=1', async () => {
+    const app = await buildTestApp()
+    await app.register(attachmentsRoutes)
+    await app.ready()
+    const svg = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>').toString('base64url')
+    mockGetGmailClient.mockResolvedValueOnce({
+      users: { messages: { get: vi.fn().mockResolvedValue({
+        data: { payload: { parts: [{ filename: 'x.svg', mimeType: 'image/svg+xml', body: { data: svg } }] } },
+      }) } },
+    })
+    const res = await app.inject({ method: 'GET', url: '/acc-1/live/msg-1/download?filename=x.svg&inline=1' })
+    expect(res.statusCode).toBe(200)
+    expect(res.headers['content-disposition']).toMatch(/^attachment;/)
+    expect(res.headers['x-content-type-options']).toBe('nosniff')
+    await app.close()
+  })
+
   it('GET /:accountId/live/:messageId/download with attachmentId', async () => {
     const app = await buildTestApp()
     await app.register(attachmentsRoutes)
