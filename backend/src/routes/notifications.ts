@@ -107,7 +107,8 @@ export async function notificationsRoutes(app: FastifyInstance) {
       .where('user_id', '=', userId)
       .executeTakeFirst()
 
-    if (!row) return NOTIFICATION_DEFAULTS
+    // B10: the reader preference lives with the other user preferences; remote images blocked by default (I4)
+    if (!row) return { ...NOTIFICATION_DEFAULTS, remote_images: 'block' }
 
     return {
       weekly_report: row.weekly_report,
@@ -122,13 +123,14 @@ export async function notificationsRoutes(app: FastifyInstance) {
       rule_executed_toast: row.rule_executed_toast,
       quota_warning_toast: row.quota_warning_toast,
       integrity_alert_toast: row.integrity_alert_toast,
+      remote_images: row.remote_images,
     }
   })
 
   // ─── Update notification preferences ─────────────────
   app.put('/preferences', auth, async (request) => {
     const userId = request.user.sub
-    const body = request.body as Record<string, boolean>
+    const body = (request.body ?? {}) as Record<string, unknown>
 
     // Filter only valid keys
     const allowed = [
@@ -139,6 +141,8 @@ export async function notificationsRoutes(app: FastifyInstance) {
     for (const key of allowed) {
       if (typeof body[key] === 'boolean') updates[key] = body[key]
     }
+    // shortcut: no per-sender allow list (§6.7 « Toujours afficher pour cet expéditeur »), add it with the reader button
+    if (body.remote_images === 'block' || body.remote_images === 'allow') updates.remote_images = body.remote_images
 
     const existing = await db
       .selectFrom('notification_preferences')

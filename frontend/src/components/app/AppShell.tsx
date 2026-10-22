@@ -54,7 +54,7 @@ function UserMenu({ withAccounts }: Readonly<{ withAccounts: boolean }>) {
             <DropdownMenuSeparator />
             <DropdownMenuLabel>{t('layout.gmailAccount')}</DropdownMenuLabel>
             <DropdownMenuRadioGroup value={activeAccountId ?? ''} onValueChange={setActiveAccount}>
-              {gmailAccounts.map((a) => <DropdownMenuRadioItem key={a.id} value={a.id}>{a.email}</DropdownMenuRadioItem>)}
+              {gmailAccounts.map((a) => <DropdownMenuRadioItem key={a.id} value={a.id}>{a.is_active ? a.email : t('settings.gmail.disconnectedOption', { email: a.email })}</DropdownMenuRadioItem>)}
             </DropdownMenuRadioGroup>
           </>
         )}
@@ -105,7 +105,7 @@ export default function AppShell() {
             <Outlet context={counters} />
           </main>
         </div>
-        {isMobile && <BottomNav counters={counters} />}
+        {isMobile && <BottomNav />}
         <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
         {/* Mobile: above the bottom bar (52 px + safe area) */}
         <Toaster containerAriaLabel={t('undoToast.region')} mobileOffset={{ bottom: 'calc(60px + max(22px, env(safe-area-inset-bottom)))' }} />

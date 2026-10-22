@@ -69,7 +69,7 @@ export default function AppSidebar({ onSearch, counters }: Readonly<{ onSearch: 
               value={activeAccountId ?? ''}
               onChange={(e) => setActiveAccount(e.target.value)}
             >
-              {gmailAccounts.map((a) => <option key={a.id} value={a.id}>{a.email}</option>)}
+              {gmailAccounts.map((a) => <option key={a.id} value={a.id}>{a.is_active ? a.email : t('settings.gmail.disconnectedOption', { email: a.email })}</option>)}
             </select>
           </div>
         )}

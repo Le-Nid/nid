@@ -253,6 +253,8 @@ async function autoRegisterGmailAccount(userId: string, email: string, tokens: a
           token_expiry:  (eb) => eb.ref('excluded.token_expiry'),
           updated_at:    new Date(),
         })
+        // A disconnected account keeps its tokens erased: only « Reconnecter » brings it back
+        .where('gmail_accounts.is_active', '=', true)
       )
       .execute()
   } catch (err) {

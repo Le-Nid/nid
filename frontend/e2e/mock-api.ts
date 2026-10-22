@@ -41,7 +41,18 @@ type Handler = unknown | ((req: Request) => unknown)
 const ROUTES: [string, RegExp, Handler][] = [
   ['GET', /^\/api\/auth\/me$/, me],
   ['GET', /^\/api\/auth\/config$/, { allowRegistration: true, socialProviders: [] }],
-  ['GET', /^\/api\/notifications\/preferences$/, {}],
+  ['GET', /^\/api\/notifications\/preferences$/, settings.preferences],
+  ['PUT', /^\/api\/notifications\/preferences$/, { ok: true }],
+  ['PATCH', /^\/api\/auth\/gmail\/[^/]+$/, (req: Request) => ({ id: ACCOUNT, ...req.postDataJSON() })],
+  ['DELETE', /^\/api\/auth\/gmail\/[^/]+$/, {}],
+  ['POST', /^\/api\/auth\/2fa\/setup$/, settings.twoFactorSetup],
+  ['POST', /^\/api\/auth\/2fa\/(enable|disable)$/, { ok: true }],
+  ['POST', /^\/api\/labels\/[^/]+\/sync$/, { synced: 12 }],
+  ['POST', /^\/api\/webhooks$/, (req: Request) => ({ id: 'w-new', is_active: true, last_status: null, ...req.postDataJSON() })],
+  ['PATCH', /^\/api\/webhooks\/[^/]+\/toggle$/, { ok: true }],
+  ['POST', /^\/api\/webhooks\/[^/]+\/test$/, { ok: true }],
+  ['DELETE', /^\/api\/webhooks\/[^/]+$/, {}],
+  ['GET', /^\/api\/config\/export$/, { rules: [], webhooks: [] }],
   ['GET', /^\/api\/notifications$/, { notifications: [], unreadCount: 0 }],
   ['GET', /^\/api\/jobs$/, (req: Request) => {
     const params = new URL(req.url()).searchParams

@@ -6,7 +6,7 @@ import { Archive, Download, HardDriveDownload, ImageOff, Paperclip, Share2, Tras
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { archiveApi, gmailApi } from '@/api'
-import { useArchiveMail, useArchiveThread, useGmailMessage } from '@/hooks/queries'
+import { useArchiveMail, useArchiveThread, useGmailMessage, useNotificationPreferences } from '@/hooks/queries'
 import { saveBlob, saveFile } from '@/utils/download'
 import { formatBytes, formatEmail, formatSender } from '@/utils/format'
 import {
@@ -85,10 +85,13 @@ function useViewerMail(source: 'gmail' | 'archive', accountId: string, messageId
   return { mail, isLoading: query.isLoading, isError: query.isError, refetch: query.refetch }
 }
 
-/** Body of a mail (I4): sandboxed, no scripts, remote content blocked until « Afficher ». */
+/** Body of a mail (I4): sandboxed, no scripts, remote content blocked until « Afficher » unless the user allows it (B10). */
 function MailBody({ html, text }: Readonly<{ html: string; text: string }>) {
   const { t } = useTranslation()
-  const [allowRemote, setAllowRemote] = useState(false)
+  const [shown, setAllowRemote] = useState(false)
+  // Blocked while the preference loads or when it cannot be read: never show more than the user asked for
+  const allowedByPref = useNotificationPreferences().data?.remote_images === 'allow'
+  const allowRemote = shown || allowedByPref
   if (!html) return <pre className="p-4 font-sans text-[15px] leading-normal whitespace-pre-wrap">{text || t('mails.viewer.empty')}</pre>
 
   return (

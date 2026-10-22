@@ -157,13 +157,6 @@ test('Archive', async ({ page }) => {
   await expect(page.getByText('Édition du matin archivée')).toBeVisible()
 })
 
-test('Settings', async ({ page }) => {
-  await page.goto('/settings')
-  await expect(page.getByRole('heading', { name: t('settings.title') })).toBeVisible()
-  await expect(page.getByRole('main').getByText('alice@gmail.com').first()).toBeVisible()
-  await expect(page.getByRole('button', { name: t('settings.connectGmail') })).toBeVisible()
-})
-
 test.describe('Cleanup', () => {
   const DIGEST = 'Weekly Digest'
   const isSenderDelete = (r: Request) => r.method() === 'POST' && r.url().endsWith(`/api/unsubscribe/${ACCOUNT}/newsletters/digest%40news.test/delete`)

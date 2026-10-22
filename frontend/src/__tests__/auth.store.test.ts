@@ -127,6 +127,17 @@ describe('useAuthStore', () => {
       expect(useAuthStore.getState().storageUsedBytes).toBe(5000)
     })
 
+    it('defaults to a connected account rather than a disconnected one', async () => {
+      useAuthStore.setState({ activeAccountId: null })
+      const accounts = [
+        { id: 'acc1', email: 'a@b.com', is_active: false },
+        { id: 'acc2', email: 'c@d.com', is_active: true },
+      ]
+      vi.mocked(api.get).mockResolvedValueOnce({ data: { user: { id: 'u1' }, gmailAccounts: accounts, storageUsedBytes: 0 } })
+      await useAuthStore.getState().fetchMe()
+      expect(useAuthStore.getState().activeAccountId).toBe('acc2')
+    })
+
     it('uses stored activeAccountId if valid', async () => {
       useAuthStore.setState({ activeAccountId: 'acc2' })
       const accounts = [

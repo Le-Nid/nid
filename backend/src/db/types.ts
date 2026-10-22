@@ -28,14 +28,20 @@ export interface UsersTable {
   updated_at:          Generated<Date>
 }
 
+export type BackupInterval = '1h' | '6h' | '24h'
+
 export interface GmailAccountsTable {
   id:            Generated<string>
   user_id:       string
   email:         string
-  access_token:  string
-  refresh_token: string
+  access_token:  string | null   // null once disconnected (soft disconnect keeps the row and its archives)
+  refresh_token: string | null
   token_expiry:  Timestamp
-  is_active:     Generated<boolean>
+  is_active:     Generated<boolean>   // false = disconnected: no Gmail call, archives still readable
+  backup_enabled:  Generated<boolean>
+  backup_interval: Generated<BackupInterval>
+  last_backup_at:  Date | null
+  auth_error_at:   Date | null   // Google refused the refresh token: reconnect needed
   created_at:    Generated<Date>
   updated_at:    Generated<Date>
 }
@@ -169,6 +175,7 @@ export interface NotificationPreferencesTable {
   rule_executed_toast:   Generated<boolean>
   quota_warning_toast:   Generated<boolean>
   integrity_alert_toast: Generated<boolean>
+  remote_images:   Generated<'block' | 'allow'>
   updated_at:      Generated<Date>
 }
 

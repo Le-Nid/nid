@@ -6,6 +6,7 @@ import { cleanupExpiredShares } from "../archive/sharing.service";
 import { syncAllLabels } from "../labels/labels.service";
 import { countPendingBodyText } from "../archive/body-text";
 import { createLogger } from '../logger'
+import type { BackupInterval } from '../db/types'
 
 const logger = createLogger('scheduler')
 
@@ -97,6 +98,13 @@ export function startRuleScheduler() {
         }
       }
 
+      // ─── Automatic NAS backups (B12) — each tick, per account interval ──
+      try {
+        await enqueueDueBackups(now);
+      } catch (err) {
+        logger.error({ err }, 'Automatic backup scheduling failed');
+      }
+
       // Récupère les règles actives avec un schedule cron
       const rules = await db
         .selectFrom("rules")
@@ -114,6 +122,7 @@ export function startRuleScheduler() {
           eb.ref("gmail_accounts.user_id").as("user_id") as any,
         ])
         .where("rules.is_active", "=", true)
+        .where("gmail_accounts.is_active", "=", true) // disconnected accounts have no Gmail access
         .where("rules.schedule", "is not", null)
         .execute();
 
@@ -139,6 +148,32 @@ export function startRuleScheduler() {
   void enqueueBodyTextBackfill(); // logs its own errors
   setInterval(tick, INTERVAL_MS);
   logger.info('Rule scheduler started (1min interval)');
+}
+
+const BACKUP_INTERVAL_MS: Record<BackupInterval, number> = { '1h': 3600_000, '6h': 6 * 3600_000, '24h': 24 * 3600_000 };
+
+/**
+ * B12: differential NAS backup of each account whose automatic backup is on and due. Accounts waiting for a
+ * reconnection (auth_error_at) are skipped: the job would only fail. last_backup_at is written at enqueue time
+ * so a long backup is not enqueued again every minute (dedupId covers the job still in the queue).
+ */
+export async function enqueueDueBackups(now: Date) {
+  const db = getDb();
+  const accounts = await db
+    .selectFrom('gmail_accounts')
+    .select(['id', 'user_id', 'backup_interval', 'last_backup_at'])
+    .where('is_active', '=', true)
+    .where('backup_enabled', '=', true)
+    .where('auth_error_at', 'is', null)
+    .execute();
+
+  for (const account of accounts) {
+    const last = account.last_backup_at ? new Date(account.last_backup_at).getTime() : 0;
+    if (now.getTime() - last < BACKUP_INTERVAL_MS[account.backup_interval]) continue;
+    await enqueueJob('archive_mails', { accountId: account.id, userId: account.user_id, differential: true }, { dedupId: `backup-${account.id}` });
+    await db.updateTable('gmail_accounts').set({ last_backup_at: now }).where('id', '=', account.id).execute();
+    logger.info(`Enqueued automatic backup (${account.id}, every ${account.backup_interval})`);
+  }
 }
 
 /** B2: once at startup, fill body_text of mails archived before migration 007 (fixed dedupId: one backfill at a time). */

@@ -59,6 +59,8 @@ export async function exchangeGmailCode(code: string, userId: string) {
             eb.ref('gmail_accounts.refresh_token'),
           ]) as any,
         token_expiry:  (eb) => eb.ref('excluded.token_expiry'),
+        auth_error_at: null, // reconnected: « Action requise » cleared
+        is_active:     true, // a disconnected account comes back on the same row, with its archives
         updated_at:    new Date(),
       })
     )
@@ -73,11 +75,15 @@ export async function getAuthenticatedClient(accountId: string) {
 
   const account = await db
     .selectFrom('gmail_accounts')
-    .select(['access_token', 'refresh_token', 'token_expiry'])
+    .select(['access_token', 'refresh_token', 'token_expiry', 'is_active'])
     .where('id', '=', accountId)
     .executeTakeFirst()
 
   if (!account) throw new Error('Gmail account not found')
+  // Every Gmail call goes through here: a clear 409 instead of a token error (error handler sends statusCode < 500)
+  if (account.is_active === false) {
+    throw Object.assign(new Error('Gmail account disconnected: reconnect it in Settings'), { statusCode: 409 })
+  }
 
   const oauth2Client = createOAuth2Client()
   oauth2Client.setCredentials({
@@ -95,6 +101,7 @@ export async function getAuthenticatedClient(accountId: string) {
         .set({
           access_token: tokens.access_token,
           token_expiry: new Date(tokens.expiry_date!),
+          auth_error_at: null,
           updated_at:   new Date(),
         })
         .where('id', '=', accountId)
@@ -102,7 +109,27 @@ export async function getAuthenticatedClient(accountId: string) {
     }
   })
 
+  // « Action requise » (§7.7): an expired token is refreshed here rather than inside the first Gmail call,
+  // so a revoked or expired grant is recorded on the account whichever caller hits it
+  if (new Date(account.token_expiry).getTime() <= Date.now()) {
+    try {
+      await oauth2Client.getAccessToken()
+    } catch (err) {
+      if (isInvalidGrant(err)) {
+        logger.warn({ accountId }, 'Google refused the refresh token: reconnection required')
+        await db.updateTable('gmail_accounts').set({ auth_error_at: new Date() }).where('id', '=', accountId).execute()
+      }
+      throw err
+    }
+  }
+
   return oauth2Client
+}
+
+/** Google's answer when the refresh token is revoked, expired or the consent was withdrawn. */
+export function isInvalidGrant(err: unknown): boolean {
+  const e = err as { response?: { data?: { error?: string } }; message?: string } | null
+  return e?.response?.data?.error === 'invalid_grant' || !!e?.message?.includes('invalid_grant')
 }
 
 

@@ -9,12 +9,18 @@ interface User {
   avatar_url?: string | null
   max_gmail_accounts?: number
   storage_quota_bytes?: number
+  totp_enabled?: boolean
 }
 
-interface GmailAccount {
+export interface GmailAccount {
   id: string
   email: string
   is_active: boolean
+  backup_enabled?: boolean
+  backup_interval?: '1h' | '6h' | '24h'
+  /** « Action requise »: Google refused the refresh token, the account must be reconnected. */
+  needs_reauth?: boolean
+  last_sync_at?: string | null
 }
 
 interface AuthState {
@@ -75,7 +81,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const { data } = await api.get('/api/auth/me')
       const accounts: GmailAccount[] = data.gmailAccounts
       const stored = get().activeAccountId
-      const active = stored && accounts.find((a) => a.id === stored) ? stored : accounts[0]?.id ?? null
+      // Default to a connected account: a disconnected one only shows its archives
+      const active = stored && accounts.find((a) => a.id === stored) ? stored : (accounts.find((a) => a.is_active) ?? accounts[0])?.id ?? null
       if (active) localStorage.setItem('activeAccountId', active)
       set({
         initialLoading: false,

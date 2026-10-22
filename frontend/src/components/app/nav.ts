@@ -21,7 +21,7 @@ export const NAV: NavEntry[] = [
   { key: 'rules', to: '/rules', icon: Zap, match: ['/rules', '/expiration'] },
   { key: 'archives', to: '/archives', icon: Archive, match: ['/archives'] },
   { key: 'activity', to: '/activity', icon: Activity, match: ['/activity'] },
-  { key: 'settings', to: '/settings/account', icon: SlidersHorizontal, match: ['/settings', '/privacy', '/ops'] },
+  { key: 'settings', to: '/settings/account', icon: SlidersHorizontal, match: ['/settings', '/ops'] },
   { key: 'admin', to: '/admin', icon: Shield, match: ['/admin'], adminOnly: true },
 ]
 
@@ -30,7 +30,6 @@ export const LEGACY_PAGES: { to: string; labelKey: string }[] = [
   { to: '/unified', labelKey: 'nav.unified' },
   { to: '/saved-searches', labelKey: 'nav.savedSearches' },
   { to: '/attachments', labelKey: 'nav.attachments' },
-  { to: '/privacy', labelKey: 'nav.privacy' },
   { to: '/ops', labelKey: 'nav.ops' },
 ]
 

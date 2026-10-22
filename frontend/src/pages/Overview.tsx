@@ -138,7 +138,7 @@ export default function OverviewPage() {
         <PageHeader title={greeting} />
         <EmptyState
           title={t('overview.noAccount')}
-          action={<Link to="/settings/account" className="inline-flex min-h-11 items-center font-medium text-primary-text underline">{t('overview.connectAccount')}</Link>}
+          action={<Link to="/settings/gmail" className="inline-flex min-h-11 items-center font-medium text-primary-text underline">{t('overview.connectAccount')}</Link>}
         />
       </div>
     )
