@@ -23,7 +23,7 @@ Your data stays where it always should have been: **at home**.
 
 ### Features
 
-- 📊 **Dashboard** — top senders, largest emails, timeline, labels
+- 📊 **Overview** — live key figures, top senders, cleanup suggestions
 - 📬 **Bulk ops** — delete, label, archive thousands of emails in a few clicks
 - 📦 **NAS Archive** — differential EML storage on your NAS, full-text search, attachment preview
 - 🤖 **Automatic rules** — rule engine (Gmail conditions + actions), schedulable (hourly/daily/weekly/monthly)
@@ -72,7 +72,7 @@ Hot reload enabled on frontend and backend. Debug ports: Node (9229), PostgreSQL
 
 | | |
 |---|---|
-| Frontend | React 19, Ant Design 6, Zustand, React Router 7 |
+| Frontend | React 19, shadcn/ui (Radix) + Tailwind v4, TanStack Table, React Query, Zustand, React Router 7 |
 | Backend | Fastify, TypeScript, Kysely ORM, Zod |
 | Database | PostgreSQL 16 |
 | Queue | BullMQ + Redis 7 |
@@ -117,7 +117,7 @@ Vos données restent là où elles ont toujours dû être : **chez vous**.
 
 ### Fonctionnalités
 
-- 📊 **Dashboard** — top expéditeurs, mails les plus gros, timeline, labels
+- 📊 **Vue d'ensemble** — chiffres clés en temps réel, gros expéditeurs, suggestions de nettoyage
 - 📬 **Bulk ops** — supprimer, labelliser, archiver des milliers de mails en quelques clics
 - 📦 **Archive NAS** — stockage EML différentiel sur votre NAS, recherche full-text, preview pièces jointes
 - 🤖 **Règles automatiques** — moteur de règles (conditions Gmail + actions), planifiables (hourly/daily/weekly/monthly)
@@ -166,7 +166,7 @@ Hot reload activé sur frontend et backend. Ports debug Node (9229), PostgreSQL 
 
 | | |
 |---|---|
-| Frontend | React 19, Ant Design 6, Zustand, React Router 7 |
+| Frontend | React 19, shadcn/ui (Radix) + Tailwind v4, TanStack Table, React Query, Zustand, React Router 7 |
 | Backend | Fastify, TypeScript, Kysely ORM, Zod |
 | BDD | PostgreSQL 16 |
 | Queue | BullMQ + Redis 7 |

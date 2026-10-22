@@ -12,25 +12,19 @@ Elle remplace des outils comme Gmail Cleaner et OpenArchiver, sans envoyer vos d
 
 | Module | Fonctionnalités |
 |---|---|
-| 📊 **Dashboard** | Top expéditeurs, mails les plus gros, timeline, répartition labels |
-| 📬 **Gestion mails** | Bulk delete/label/archive, lecture, pièces jointes, règles auto |
-| 📦 **Archives** | Stockage EML sur NAS, recherche full-text, différentiel |
-| ⚙️ **Jobs** | Suivi en temps réel des opérations longues (BullMQ + SSE) |
-| 🔐 **Auth** | JWT local + Google SSO + multi-providers, 2FA/TOTP, multi-utilisateurs |
-| 📧 **Newsletters** | Scan des headers List-Unsubscribe, nettoyage en masse |
-| 📎 **Pièces jointes** | Gestionnaire dédié (live Gmail + archives), tri par taille |
-| 📋 **Templates** | Bibliothèque de règles pré-configurées, activation en un clic |
-| 📈 **Analytics** | Heatmap, scores d'encombrement, suggestions de nettoyage, Inbox Zero |
-| 📝 **Audit log** | Journal d'activité traçant les actions sensibles |
-| 🔗 **Webhooks** | Notifications Discord, Slack, Ntfy ou HTTP générique |
-| 🛡️ **Intégrité** | Vérification de cohérence archives disque ↔ BDD |
-| 🔒 **Vie privée** | Détection pixels espions, scanner PII, chiffrement AES-256 des archives |
-| ⌨️ **Raccourcis clavier** | Navigation et actions rapides dans Mes mails |
-| 💾 **Export/Import** | Sauvegarde et restauration de la configuration (règles, webhooks) |
-| 🌐 **i18n** | Français / Anglais, sélecteur de langue, persistance du choix |
-| 📬 **Boîte unifiée** | Tous vos comptes Gmail en une seule vue |
-| 🔍 **Recherches** | Recherches sauvegardées avec icônes et couleurs |
-| ⚙️ **Ops & Résilience** | Stockage S3/MinIO, politiques de rétention, suivi quota Gmail API, import IMAP/mbox, export mbox |
+| 📊 **Vue d'ensemble** | Chiffres clés en temps réel, gros expéditeurs, suggestions de nettoyage |
+| 📬 **Mails** | Recherche Gmail à jetons, recherches enregistrées, actions en masse avec annulation, lecteur, raccourcis clavier, « Tous les comptes » |
+| 🧹 **Nettoyage** | Expéditeurs et newsletters (List-Unsubscribe), gros mails, désabonnement et suppression en masse |
+| 🤖 **Règles** | Conditions Gmail + actions, planification, modèles prêts à l'emploi, libellés |
+| 📦 **Archives** | Stockage EML sur NAS, recherche plein texte avec surlignage, partage par lien, corbeille, rétention |
+| 📎 **Pièces jointes** | Gmail et archives, aperçu des images et PDF, déduplication |
+| ⚙️ **Activité** | Suivi des jobs en temps réel (BullMQ + SSE), annuler, relancer |
+| 🔐 **Comptes** | JWT local, SSO Google et autres fournisseurs, 2FA/TOTP, multi-utilisateurs, sauvegarde automatique par compte Gmail |
+| 🔔 **Notifications** | In-app, webhooks (Discord, Slack, Ntfy, HTTP), rapport hebdomadaire |
+| 🛡️ **Admin** | Utilisateurs, quota Gmail API, journal d'audit, intégrité des archives, corbeille globale |
+| 🔒 **Vie privée** | Images distantes (et pixels espions) bloquées par le lecteur jusqu'à « Afficher » |
+| 💾 **Données** | Export/import de la configuration, import IMAP/mbox, export mbox |
+| 🌐 **i18n** | Français / Anglais, thème clair/sombre, mobile |
 
 ---
 

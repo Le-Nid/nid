@@ -12,25 +12,19 @@ It replaces tools like Gmail Cleaner and OpenArchiver, without sending your data
 
 | Module | Features |
 |---|---|
-| 📊 **Dashboard** | Top senders, largest mails, timeline, label breakdown |
-| 📬 **Mail Management** | Bulk delete/label/archive, reading, attachments, auto rules |
-| 📦 **Archives** | EML storage on NAS, full-text search, differential |
-| ⚙️ **Jobs** | Real-time tracking of long operations (BullMQ + SSE) |
-| 🔐 **Auth** | Local JWT + Google SSO + multi-providers, 2FA/TOTP, multi-user |
-| 📧 **Newsletters** | List-Unsubscribe header scan, bulk cleanup |
-| 📎 **Attachments** | Dedicated manager (live Gmail + archives), sort by size |
-| 📋 **Templates** | Pre-configured rule library, one-click activation |
-| 📈 **Analytics** | Heatmap, clutter scores, cleanup suggestions, Inbox Zero |
-| 📝 **Audit Log** | Activity journal tracking sensitive actions |
-| 🔗 **Webhooks** | Discord, Slack, Ntfy or generic HTTP notifications |
-| 🛡️ **Integrity** | Archive consistency check: disk ↔ database |
-| 🔒 **Privacy** | Tracking pixel detection, PII scanner, AES-256 archive encryption |
-| ⌨️ **Keyboard Shortcuts** | Fast navigation and actions in My Mails |
-| 💾 **Export/Import** | Configuration backup and restore (rules, webhooks) |
-| 🌐 **i18n** | French / English, language selector, preference persistence |
-| 📬 **Unified Inbox** | All your Gmail accounts in a single view |
-| 🔍 **Searches** | Saved searches with icons and colors |
-| ⚙️ **Ops & Resilience** | S3/MinIO storage, retention policies, Gmail API quota tracking, IMAP/mbox import, mbox export |
+| 📊 **Overview** | Live key figures, top senders, cleanup suggestions |
+| 📬 **Mails** | Token-based Gmail search, saved searches, bulk actions with undo, reader, keyboard shortcuts, « All accounts » |
+| 🧹 **Cleanup** | Senders and newsletters (List-Unsubscribe), large mails, bulk unsubscribe and delete |
+| 🤖 **Rules** | Gmail conditions + actions, scheduling, ready-made templates, labels |
+| 📦 **Archives** | EML storage on your NAS, full-text search with highlighting, link sharing, trash, retention |
+| 📎 **Attachments** | Gmail and archives, image and PDF preview, deduplication |
+| ⚙️ **Activity** | Real-time job tracking (BullMQ + SSE), cancel, retry |
+| 🔐 **Accounts** | Local JWT, Google and other SSO providers, 2FA/TOTP, multi-user, automatic backup per Gmail account |
+| 🔔 **Notifications** | In-app, webhooks (Discord, Slack, Ntfy, HTTP), weekly report |
+| 🛡️ **Admin** | Users, Gmail API quota, audit log, archive integrity, global trash |
+| 🔒 **Privacy** | Remote images (and tracking pixels) blocked by the reader until « Show » |
+| 💾 **Data** | Configuration export/import, IMAP/mbox import, mbox export |
+| 🌐 **i18n** | French / English, light/dark theme, mobile |
 
 ---
 
