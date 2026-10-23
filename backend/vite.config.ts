@@ -31,6 +31,7 @@ export default defineConfig({
         /^@modelcontextprotocol\//,
         /^zod\//,
         'imapflow',
+        'qrcode',
       ],
     },
     // Pas de minification pour un serveur Node (debug plus facile + pas de gain réel)
