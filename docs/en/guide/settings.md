@@ -30,7 +30,7 @@
 2. Scan the QR code with your authenticator app (Google Authenticator, Aegis, Authy…), or enter the key shown
 3. Enter the **6-digit code** then **Verify and turn on**
 
-Once on, a code is asked at each sign-in. To turn it off, enter a code then **Turn off 2FA**.
+Once on, a code is asked at each sign-in, including with Google or another provider (SSO). To turn it off, enter a code then **Turn off 2FA**.
 
 ### Share links
 

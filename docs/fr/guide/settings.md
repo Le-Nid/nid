@@ -30,7 +30,7 @@ Les **Paramètres** (`/settings/…`) sont découpés en cinq sections, en ongle
 2. Scannez le QR code avec votre application d'authentification (Google Authenticator, Aegis, Authy…), ou saisissez la clé affichée
 3. Saisissez le **Code à 6 chiffres** puis **Vérifier et activer**
 
-Une fois activée, un code est demandé à chaque connexion. Pour la désactiver, saisissez un code puis **Désactiver la 2FA**.
+Une fois activée, un code est demandé à chaque connexion, y compris avec Google ou un autre fournisseur (SSO). Pour la désactiver, saisissez un code puis **Désactiver la 2FA**.
 
 ### Liens de partage
 

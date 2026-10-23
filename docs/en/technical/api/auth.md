@@ -135,23 +135,27 @@ Get the Google SSO sign-in URL (registration or login). Public.
 
 ### GET /api/auth/google/callback
 
-Google SSO callback (do not call directly). On success, sets the JWT cookie and redirects to `{FRONTEND_URL}/login?sso_code=<code>`; otherwise to `{FRONTEND_URL}/login?google=error` (or `google=disabled` if the account is disabled).
+Google SSO callback (do not call directly). On success, sets the JWT cookie (unless 2FA is on, see below) and redirects to `{FRONTEND_URL}/login?sso_code=<code>`; otherwise to `{FRONTEND_URL}/login?google=error` (or `google=disabled` if the account is disabled).
 
 ### POST /api/auth/google/exchange
 
-Exchanges the `sso_code` (valid 60 s, single use) for the user info. The JWT is already in the cookie. Also used when returning from social providers.
+Exchanges the `sso_code` (valid 60 s, single use) for the user info. The JWT is already in the cookie. Also used when returning from social providers. Limited to 10 requests/minute.
+
+When 2FA is on for the account, the callback does **not** set the cookie: the `sso_code` stays valid for 5 minutes and the exchange requires `totpCode`. The JWT cookie is set only once the code is verified. After 5 invalid codes the `sso_code` is revoked and the SSO sign-in must be restarted.
 
 **Body**
 ```json
-{ "code": "<sso_code>" }
+{ "code": "<sso_code>", "totpCode": "123456" }
 ```
+
+`totpCode`: optional, required only when 2FA is on.
 
 **Response 200**
 ```json
 { "id": "uuid", "email": "user@example.com", "role": "user" }
 ```
 
-**Errors**: `401` invalid or expired code.
+**Errors**: `401` invalid or expired code, or invalid TOTP code; `403` `TOTP_REQUIRED` (2FA on, `totpCode` missing).
 
 ---
 

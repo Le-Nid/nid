@@ -106,6 +106,8 @@ export default function LoginPage() {
   const [totpRequired, setTotpRequired] = useState(false)
   const [totpCode, setTotpCode] = useState('')
   const [savedCredentials, setSavedCredentials] = useState<Credentials | null>(null)
+  // SSO login waiting for the TOTP code (2FA enabled on the account)
+  const [pendingSsoCode, setPendingSsoCode] = useState<string | null>(null)
   const [allowRegistration, setAllowRegistration] = useState(true)
   const [socialProviders, setSocialProviders] = useState<string[]>([])
   const [tab, setTab] = useState('login')
@@ -126,7 +128,15 @@ export default function LoginPage() {
     if (ssoCode) {
       loginWithSsoCode(ssoCode)
         .then(() => navigate('/overview'))
-        .catch(() => setError(t('login.errorSocial')))
+        .catch((e: unknown) => {
+          const axiosErr = e as { response?: { data?: { error?: string } } }
+          if (axiosErr.response?.data?.error === 'TOTP_REQUIRED') {
+            setPendingSsoCode(ssoCode)
+            setTotpRequired(true)
+          } else {
+            setError(t('login.errorSocial'))
+          }
+        })
     } else if (googleError === 'disabled' || socialError === 'disabled') {
       setError(t('login.errorDisabled'))
     } else if (googleError === 'error' || socialError === 'error') {
@@ -152,10 +162,11 @@ export default function LoginPage() {
   }
 
   async function handleTotpSubmit() {
-    if (!savedCredentials) return
+    if (!savedCredentials && !pendingSsoCode) return
     setLoading(true); setError(null)
     try {
-      await login(savedCredentials.email, savedCredentials.password, totpCode)
+      if (pendingSsoCode) await loginWithSsoCode(pendingSsoCode, totpCode)
+      else if (savedCredentials) await login(savedCredentials.email, savedCredentials.password, totpCode)
       navigate('/overview')
     } catch (e: unknown) {
       const axiosErr = e as { response?: { data?: { error?: string } } }
@@ -249,7 +260,7 @@ export default function LoginPage() {
         {loading && <Loader2 className="animate-spin" aria-hidden="true" />}
         {t('login.totpVerify')}
       </Button>
-      <Button variant="outline" className={field} onClick={() => { setTotpRequired(false); setSavedCredentials(null); setTotpCode(''); setError(null) }}>
+      <Button variant="outline" className={field} onClick={() => { setTotpRequired(false); setSavedCredentials(null); setPendingSsoCode(null); setTotpCode(''); setError(null) }}>
         {t('common.back')}
       </Button>
     </div>
