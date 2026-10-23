@@ -39,33 +39,36 @@ In production, PostgreSQL and Redis are **not** exposed on the host. They commun
 
 ## Versioning
 
-Nid uses **Semantic Versioning** (SemVer). The version number is defined in the `VERSION` file at the project root.
+Nid uses **Semantic Versioning** (SemVer). Versions are computed automatically by [release-please](https://github.com/googleapis/release-please) from commit messages in the [Conventional Commits](https://www.conventionalcommits.org/) format.
 
-### VERSION File
+### How the version is computed
 
-The `VERSION` file contains only the version number (e.g. `0.1.0`). It is the single source of truth for the application version.
+| Commit | Effect on the version |
+|---|---|
+| `fix: …` | patch (`0.2.1` → `0.2.2`) |
+| `feat: …` | minor (`0.2.1` → `0.3.0`) |
+| `feat!: …` or a `BREAKING CHANGE:` footer | minor while the version is < 1.0.0, then major |
+| `chore`, `ci`, `test`, `refactor`, `build` | none (not shown in the changelog) |
+
+### Publishing a release
+
+1. On each push to `main`, the `release-please.yml` workflow opens (or updates) a **"chore(main): release X.Y.Z"** PR. It updates `VERSION`, the backend/frontend `package.json` versions and `CHANGELOG.md`.
+2. Merging that PR creates the `vX.Y.Z` tag and the GitHub Release, then publishes the versioned Docker image.
+
+Do not edit `VERSION` by hand: release-please owns it. To force a number, add a commit with a `Release-As: X.Y.Z` footer.
+
+Repository prerequisite: *Settings → Actions → General → "Allow GitHub Actions to create and approve pull requests"* must be enabled.
 
 ### Docker Tags
 
-During Docker publish (GitHub Actions), the workflow reads the `VERSION` file and generates three tags:
+| Tag | Example | Published | Displayed version (`APP_VERSION`) |
+|---|---|---|---|
+| `latest` | `ghcr.io/le-nid/nid:latest` | on each release | `0.3.0` |
+| Version | `ghcr.io/le-nid/nid:0.3.0`, `ghcr.io/le-nid/nid:0.3` | on each release | `0.3.0` |
+| `main` | `ghcr.io/le-nid/nid:main` | on each push to `main` | `0.2.1-main.<sha>` |
+| Commit | `ghcr.io/le-nid/nid:sha-1a2b3c4` | on each push to `main` | `0.2.1-main.1a2b3c4` |
 
-| Tag | Example | Description |
-|---|---|---|
-| `latest` | `ghcr.io/le-nid/nid:latest` | Latest published version |
-| Version | `ghcr.io/le-nid/nid:0.1.0` | Fixed version tag |
-| Git branch/tag | `ghcr.io/le-nid/nid:main` | Git branch or tag |
-
-### Updating the Version
-
-1. Edit the `VERSION` file with the new number
-2. Commit and push to `main`
-3. The `docker-publish.yml` workflow automatically builds and publishes the image with the correct tags
-
-```bash
-echo "0.2.0" > VERSION
-git add VERSION && git commit -m "bump version to 0.2.0"
-git push
-```
+For a production instance, follow `latest` (or pin a version). `main` tracks development continuously.
 
 ### In the Dockerfile
 
