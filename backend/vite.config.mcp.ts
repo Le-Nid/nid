@@ -33,6 +33,7 @@ export default defineConfig({
         /^@aws-sdk\//,
         /^@modelcontextprotocol\//,
         'imapflow',
+        'qrcode',
       ],
     },
     minify:       false,
