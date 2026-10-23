@@ -59,7 +59,7 @@ nid/
 
 ### Commit messages
 
-Commits follow [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `chore:`…): the version and changelog are derived from them automatically by release-please. See [Versioning](../installation/production.md#versioning).
+Commits follow [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `chore:`…): the version and changelog are derived from them automatically by semantic-release, which creates a release for each merged `feat`/`fix`. See [Versioning](../installation/production.md#versioning).
 
 ### Backend
 

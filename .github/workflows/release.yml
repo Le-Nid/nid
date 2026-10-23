@@ -1,0 +1,60 @@
+name: Release
+
+# À chaque push sur main, semantic-release lit les commits conventionnels depuis le dernier tag :
+# - feat → minor, fix/perf → patch, breaking change → major ;
+# - s'il y a de quoi publier : tag X.Y.Z + GitHub Release, puis image Docker X.Y.Z et latest ;
+# - sinon (chore, ci, docs, test…) : rien n'est publié.
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '26'
+
+      - name: Create the release (tag + GitHub Release)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx --yes semantic-release@25.0.9
+
+      - name: Read the released version
+        id: version
+        run: |
+          git fetch --tags --force
+          echo "version=$(git tag --points-at HEAD | head -n1)" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GitHub Container Registry
+        if: steps.version.outputs.version != ''
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        if: steps.version.outputs.version != ''
+        uses: docker/build-push-action@v7
+        with:
+          push: true
+          build-args: |
+            APP_VERSION=${{ steps.version.outputs.version }}
+          tags: |
+            ghcr.io/le-nid/nid:${{ steps.version.outputs.version }}
+            ghcr.io/le-nid/nid:latest

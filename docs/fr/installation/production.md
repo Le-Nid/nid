@@ -39,43 +39,28 @@ En production, PostgreSQL et Redis ne sont **pas** exposés sur l'hôte. Ils com
 
 ## Versioning
 
-Nid utilise le **Semantic Versioning** (SemVer). Les versions sont calculées automatiquement par [release-please](https://github.com/googleapis/release-please) à partir des messages de commit au format [Conventional Commits](https://www.conventionalcommits.org/fr/).
+Nid utilise le **Semantic Versioning** (SemVer). Les releases sont **entièrement automatiques** : à chaque push sur `main`, le workflow `release.yml` lance [semantic-release](https://semantic-release.gitbook.io/), qui calcule la version à partir des messages de commit au format [Conventional Commits](https://www.conventionalcommits.org/fr/) depuis le dernier tag.
 
-### Calcul de la version
-
-| Commit | Effet sur la version |
+| Commits depuis la dernière release | Résultat |
 |---|---|
-| `fix: …` | patch (`0.2.1` → `0.2.2`) |
-| `feat: …` | minor (`0.2.1` → `0.3.0`) |
-| `feat!: …` ou pied `BREAKING CHANGE:` | minor tant que la version est < 1.0.0, puis major |
-| `chore`, `ci`, `test`, `refactor`, `build` | aucun (n'apparaît pas dans le changelog) |
+| au moins un `fix: …` ou `perf: …` | patch (`0.2.1` → `0.2.2`) |
+| au moins un `feat: …` | minor (`0.2.1` → `0.3.0`) |
+| `feat!: …` ou pied `BREAKING CHANGE:` | major (`0.2.1` → `1.0.0`) |
+| seulement `chore`, `ci`, `docs`, `test`, `refactor`, `build` | pas de release |
 
-### Publier une release
+Quand une release est créée, le même run produit, avec le même numéro :
 
-1. À chaque push sur `main`, le workflow `release-please.yml` ouvre (ou met à jour) une PR **« chore(main): release X.Y.Z »**. Elle met à jour `VERSION`, la version des `package.json` backend/frontend et `CHANGELOG.md`.
-2. Merger cette PR crée le tag `vX.Y.Z` et la GitHub Release, puis publie l'image Docker versionnée.
+- le tag git `X.Y.Z` et la **GitHub Release** (notes générées depuis les commits) ;
+- l'image Docker `ghcr.io/le-nid/nid:X.Y.Z`, ainsi que `ghcr.io/le-nid/nid:latest`.
 
-Ne modifiez pas `VERSION` à la main : release-please en est la source. Pour forcer un numéro, ajoutez un commit avec le pied `Release-As: X.Y.Z`.
-
-Prérequis côté dépôt : *Settings → Actions → General → « Allow GitHub Actions to create and approve pull requests »* doit être activé.
-
-### Tags Docker
-
-| Tag | Exemple | Publié | Version affichée (`APP_VERSION`) |
-|---|---|---|---|
-| `latest` | `ghcr.io/le-nid/nid:latest` | à chaque release | `0.3.0` |
-| Version | `ghcr.io/le-nid/nid:0.3.0`, `ghcr.io/le-nid/nid:0.3` | à chaque release | `0.3.0` |
-| `main` | `ghcr.io/le-nid/nid:main` | à chaque push sur `main` | `0.2.1-main.<sha>` |
-| Commit | `ghcr.io/le-nid/nid:sha-1a2b3c4` | à chaque push sur `main` | `0.2.1-main.1a2b3c4` |
-
-Pour une instance de production, suivez `latest` (ou épinglez une version). `main` suit le développement en continu.
+Le numéro n'est stocké dans aucun fichier : la source de vérité est le dernier tag git. Il n'y a rien à modifier à la main.
 
 ### Dans le Dockerfile
 
 Le `ARG APP_VERSION` est injecté au build. Il est utilisé pour :
 
 - Le label OCI `org.opencontainers.image.version`
-- La variable d'environnement `APP_VERSION` accessible au runtime dans le backend
+- La variable d'environnement `APP_VERSION` accessible au runtime dans le backend (version affichée dans l'application)
 
 ---
 
