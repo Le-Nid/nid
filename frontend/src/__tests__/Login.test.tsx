@@ -8,17 +8,18 @@ import LoginPage from '../pages/Login'
 
 const login = vi.fn()
 const register = vi.fn()
+const loginWithSsoCode = vi.fn()
 const get = vi.mocked(api.get)
 
-function setup(config = { allowRegistration: true, socialProviders: [] as string[] }) {
+function setup(config = { allowRegistration: true, socialProviders: [] as string[] }, initialEntry = '/login') {
   get.mockImplementation((url: string) => url === '/api/auth/config'
     ? Promise.resolve({ data: config })
     : Promise.reject(new Error('down')))
-  useAuthStore.setState({ login, register, loginWithSsoCode: vi.fn() })
+  useAuthStore.setState({ login, register, loginWithSsoCode })
   const router = createMemoryRouter([
     { path: '/login', element: <LoginPage /> },
     { path: '*', element: <h1>elsewhere</h1> },
-  ], { initialEntries: ['/login'] })
+  ], { initialEntries: [initialEntry] })
   render(<RouterProvider router={router} />)
   return router
 }
@@ -69,6 +70,18 @@ describe('Login (/login)', () => {
     await userEvent.type(code, '123456')
     await userEvent.click(verify)
     expect(login).toHaveBeenLastCalledWith('ana@example.com', 'secret', '123456')
+    await vi.waitFor(() => expect(router.state.location.pathname).toBe('/overview'))
+  })
+
+  it('asks for the TOTP code after an SSO login when 2FA is on', async () => {
+    loginWithSsoCode.mockRejectedValueOnce({ response: { data: { error: 'TOTP_REQUIRED' } } }).mockResolvedValueOnce(undefined)
+    const router = setup(undefined, '/login?sso_code=abc')
+    const code = await screen.findByLabelText('Code TOTP à 6 chiffres')
+    expect(loginWithSsoCode).toHaveBeenCalledWith('abc')
+    await userEvent.type(code, '123456')
+    await userEvent.click(screen.getByRole('button', { name: 'Vérifier' }))
+    expect(loginWithSsoCode).toHaveBeenLastCalledWith('abc', '123456')
+    expect(login).not.toHaveBeenCalled()
     await vi.waitFor(() => expect(router.state.location.pathname).toBe('/overview'))
   })
 

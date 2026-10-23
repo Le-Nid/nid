@@ -39,40 +39,28 @@ En production, PostgreSQL et Redis ne sont **pas** exposés sur l'hôte. Ils com
 
 ## Versioning
 
-Nid utilise le **Semantic Versioning** (SemVer). Le numéro de version est défini dans le fichier `VERSION` à la racine du projet.
+Nid utilise le **Semantic Versioning** (SemVer). Les releases sont **entièrement automatiques** : à chaque push sur `main`, le workflow `release.yml` lance [semantic-release](https://semantic-release.gitbook.io/), qui calcule la version à partir des messages de commit au format [Conventional Commits](https://www.conventionalcommits.org/fr/) depuis le dernier tag.
 
-### Fichier VERSION
+| Commits depuis la dernière release | Résultat |
+|---|---|
+| au moins un `fix: …` ou `perf: …` | patch (`0.2.1` → `0.2.2`) |
+| au moins un `feat: …` | minor (`0.2.1` → `0.3.0`) |
+| `feat!: …` ou pied `BREAKING CHANGE:` | major (`0.2.1` → `1.0.0`) |
+| seulement `chore`, `ci`, `docs`, `test`, `refactor`, `build` | pas de release |
 
-Le fichier `VERSION` contient uniquement le numéro de version (ex. `0.1.0`). Il est la source de vérité unique pour la version de l'application.
+Quand une release est créée, le même run produit, avec le même numéro :
 
-### Tags Docker
+- le tag git `X.Y.Z` et la **GitHub Release** (notes générées depuis les commits) ;
+- l'image Docker `ghcr.io/le-nid/nid:X.Y.Z`, ainsi que `ghcr.io/le-nid/nid:latest`.
 
-Lors du publish Docker (GitHub Actions), le workflow lit le fichier `VERSION` et génère trois tags :
-
-| Tag | Exemple | Description |
-|---|---|---|
-| `latest` | `ghcr.io/le-nid/nid:latest` | Dernière version publiée |
-| Version | `ghcr.io/le-nid/nid:0.1.0` | Tag de version fixe |
-| Branche/tag Git | `ghcr.io/le-nid/nid:main` | Branche ou tag Git |
-
-### Mettre à jour la version
-
-1. Modifiez le fichier `VERSION` avec le nouveau numéro
-2. Committez et poussez sur `main`
-3. Le workflow `docker-publish.yml` build et publie automatiquement l'image avec les bons tags
-
-```bash
-echo "0.2.0" > VERSION
-git add VERSION && git commit -m "bump version to 0.2.0"
-git push
-```
+Le numéro n'est stocké dans aucun fichier : la source de vérité est le dernier tag git. Il n'y a rien à modifier à la main.
 
 ### Dans le Dockerfile
 
 Le `ARG APP_VERSION` est injecté au build. Il est utilisé pour :
 
 - Le label OCI `org.opencontainers.image.version`
-- La variable d'environnement `APP_VERSION` accessible au runtime dans le backend
+- La variable d'environnement `APP_VERSION` accessible au runtime dans le backend (version affichée dans l'application)
 
 ---
 

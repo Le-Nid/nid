@@ -135,23 +135,27 @@ Obtenir l'URL de connexion Google SSO (inscription ou connexion). Public.
 
 ### GET /api/auth/google/callback
 
-Callback Google SSO (ne pas appeler directement). En cas de succès, pose le cookie JWT et redirige vers `{FRONTEND_URL}/login?sso_code=<code>` ; sinon vers `{FRONTEND_URL}/login?google=error` (ou `google=disabled` si le compte est désactivé).
+Callback Google SSO (ne pas appeler directement). En cas de succès, pose le cookie JWT (sauf si la 2FA est activée, voir ci-dessous) et redirige vers `{FRONTEND_URL}/login?sso_code=<code>` ; sinon vers `{FRONTEND_URL}/login?google=error` (ou `google=disabled` si le compte est désactivé).
 
 ### POST /api/auth/google/exchange
 
-Échange le `sso_code` (valable 60 s, usage unique) contre les infos utilisateur. Le JWT est déjà dans le cookie. Sert aussi au retour des fournisseurs sociaux.
+Échange le `sso_code` (valable 60 s, usage unique) contre les infos utilisateur. Le JWT est déjà dans le cookie. Sert aussi au retour des fournisseurs sociaux. Limité à 10 requêtes/minute.
+
+Si la 2FA est activée sur le compte, le callback ne pose **pas** le cookie : le `sso_code` reste valable 5 minutes et l'échange exige `totpCode`. Le cookie JWT n'est posé qu'après vérification du code. Après 5 codes invalides, le `sso_code` est invalidé et il faut relancer la connexion SSO.
 
 **Body**
 ```json
-{ "code": "<sso_code>" }
+{ "code": "<sso_code>", "totpCode": "123456" }
 ```
+
+`totpCode` : optionnel, requis uniquement si la 2FA est activée.
 
 **Réponse 200**
 ```json
 { "id": "uuid", "email": "user@example.com", "role": "user" }
 ```
 
-**Erreurs** : `401` code invalide ou expiré.
+**Erreurs** : `401` code invalide ou expiré, ou code TOTP invalide ; `403` `TOTP_REQUIRED` (2FA activée, `totpCode` manquant).
 
 ---
 

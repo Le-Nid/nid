@@ -33,7 +33,7 @@ interface AuthState {
 
   login: (email: string, password: string, totpCode?: string) => Promise<void>
   register: (email: string, password: string) => Promise<void>
-  loginWithSsoCode: (code: string) => Promise<void>
+  loginWithSsoCode: (code: string, totpCode?: string) => Promise<void>
   logout: () => Promise<void>
   fetchMe: () => Promise<void>
   setActiveAccount: (accountId: string) => void
@@ -61,8 +61,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   // Point 3: SSO now uses an auth code exchange instead of token in URL
-  loginWithSsoCode: async (code: string) => {
-    const { data } = await api.post('/api/auth/google/exchange', { code })
+  loginWithSsoCode: async (code: string, totpCode?: string) => {
+    const { data } = await api.post('/api/auth/google/exchange', { code, totpCode })
     set({ isAuthenticated: true, user: data })
     await get().fetchMe()
   },

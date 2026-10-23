@@ -57,6 +57,10 @@ nid/
 
 ## Conventions
 
+### Messages de commit
+
+Les commits suivent [Conventional Commits](https://www.conventionalcommits.org/fr/) (`feat:`, `fix:`, `docs:`, `chore:`…) : la version et le changelog en sont déduits automatiquement par semantic-release, qui crée une release à chaque `feat`/`fix` mergé. Voir [Versioning](../installation/production.md#versioning).
+
 ### Backend
 
 - **Routes** : une route = un fichier dans `src/routes/`

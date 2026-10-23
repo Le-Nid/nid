@@ -1,4 +1,4 @@
-import { FastifyInstance } from 'fastify'
+import { FastifyInstance, FastifyReply } from 'fastify'
 import { z } from 'zod'
 import bcrypt from 'bcrypt'
 import crypto from 'node:crypto'
@@ -8,7 +8,7 @@ import { getGmailAuthUrl, exchangeGmailCode } from '../auth/oauth.service'
 import { syncLabels } from '../labels/labels.service'
 import { getEnabledProviders, isProviderEnabled, createAuthorizationUrl, exchangeSocialCode } from '../auth/social.service'
 import { config } from '../config'
-import { logAudit } from '../audit/audit.service'
+import { logAudit, type AuditAction } from '../audit/audit.service'
 import { setAuthCookie, clearAuthCookie } from '../plugins'
 import { getRedis } from '../plugins/redis'
 
@@ -28,8 +28,60 @@ const loginSchema = z.object({
   totpCode: z.string().length(6).optional(),
 })
 
+const ssoExchangeSchema = z.object({
+  code:     z.string().min(1),
+  totpCode: z.string().length(6).optional(),
+})
+
+const SSO_CODE_TTL_SECONDS = 60
+const SSO_TOTP_TTL_SECONDS = 300
+const SSO_TOTP_MAX_ATTEMPTS = 5
+
+/** SSO login waiting in Redis for `/google/exchange` (and its TOTP code when 2FA is on). */
+interface PendingSsoLogin {
+  id: string
+  email: string
+  role: string
+  totpRequired?: boolean
+  auditAction: AuditAction
+  auditDetails?: Record<string, unknown>
+}
+
 export async function authRoutes(app: FastifyInstance) {
   const db = getDb()
+
+  /**
+   * End of an SSO / social callback: returns the one-time code passed to the frontend.
+   * Without 2FA the session cookie is set right away; with 2FA it is set by `/google/exchange`
+   * once the TOTP code is checked, so SSO cannot bypass the second factor.
+   */
+  async function issueSsoCode(
+    user: { id: string; email: string; role: string },
+    reply: FastifyReply,
+    ipAddress: string,
+    auditAction: AuditAction,
+    auditDetails?: Record<string, unknown>,
+  ): Promise<string> {
+    const totp = await db
+      .selectFrom('users')
+      .select(['totp_enabled', 'totp_secret'])
+      .where('id', '=', user.id)
+      .executeTakeFirst()
+    const totpRequired = !!totp?.totp_enabled && !!totp.totp_secret
+
+    const pending: PendingSsoLogin = { id: user.id, email: user.email, role: user.role, auditAction, auditDetails }
+    if (totpRequired) {
+      pending.totpRequired = true
+    } else {
+      setAuthCookie(reply, app.jwt.sign({ sub: user.id, email: user.email, role: user.role }))
+      await logAudit(user.id, auditAction, { details: auditDetails, ipAddress })
+    }
+
+    const authCode = crypto.randomBytes(32).toString('hex')
+    const ttl = totpRequired ? SSO_TOTP_TTL_SECONDS : SSO_CODE_TTL_SECONDS
+    await getRedis().set(`sso:code:${authCode}`, JSON.stringify(pending), 'EX', ttl)
+    return authCode
+  }
 
   // ─── Public config (registration open?) ───────────────────
   app.get('/config', async () => {
@@ -166,11 +218,7 @@ export async function authRoutes(app: FastifyInstance) {
 
     try {
       const user = await exchangeSocialCode('google', code, codeVerifier)
-      const token = app.jwt.sign({ sub: user.id, email: user.email, role: user.role })
-      await logAudit(user.id, 'user.login_sso', { ipAddress: request.ip })
-      setAuthCookie(reply, token)
-      const authCode = crypto.randomBytes(32).toString('hex')
-      await redis.set(`sso:code:${authCode}`, JSON.stringify({ id: user.id, email: user.email, role: user.role }), 'EX', 60)
+      const authCode = await issueSsoCode(user, reply, request.ip, 'user.login_sso')
       return reply.redirect(`${config.FRONTEND_URL}/login?sso_code=${authCode}`)
     } catch (err: unknown) {
       app.log.error(err)
@@ -179,14 +227,46 @@ export async function authRoutes(app: FastifyInstance) {
     }
   })
 
-  // Exchange SSO auth code for user info (token is already in cookie)
-  app.post('/google/exchange', async (request, reply) => {
-    const { code } = z.object({ code: z.string().min(1) }).parse(request.body)
+  // Exchange SSO auth code for user info. Without 2FA the token is already in the cookie;
+  // with 2FA the session is only opened here, once the TOTP code is verified.
+  app.post('/google/exchange', {
+    config: { rateLimit: { max: 10, timeWindow: '1 minute' } },
+  }, async (request, reply) => {
+    const { code, totpCode } = ssoExchangeSchema.parse(request.body)
     const redis = getRedis()
-    const data = await redis.get(`sso:code:${code}`)
+    const key = `sso:code:${code}`
+    const data = await redis.get(key)
     if (!data) return reply.code(401).send({ error: 'Invalid or expired code' })
-    await redis.del(`sso:code:${code}`)
-    return JSON.parse(data)
+
+    const pending: PendingSsoLogin = JSON.parse(data)
+    const user = { id: pending.id, email: pending.email, role: pending.role }
+    if (!pending.totpRequired) {
+      await redis.del(key)
+      return user
+    }
+
+    if (!totpCode) return reply.code(403).send({ error: 'TOTP_REQUIRED' })
+
+    const row = await db
+      .selectFrom('users')
+      .select(['totp_secret', 'is_active'])
+      .where('id', '=', user.id)
+      .executeTakeFirst()
+    const valid = !!row?.is_active && !!row.totp_secret
+      && otpVerify({ token: totpCode, secret: row.totp_secret }).valid
+    if (!valid) {
+      // The code stays usable for a few retries, then the user must restart the SSO flow
+      const attemptsKey = `sso:attempts:${code}`
+      const attempts = await redis.incr(attemptsKey)
+      await redis.expire(attemptsKey, SSO_TOTP_TTL_SECONDS)
+      if (attempts >= SSO_TOTP_MAX_ATTEMPTS) await redis.del(key)
+      return reply.code(401).send({ error: 'Invalid TOTP code' })
+    }
+
+    await redis.del(key)
+    setAuthCookie(reply, app.jwt.sign({ sub: user.id, email: user.email, role: user.role }))
+    await logAudit(user.id, pending.auditAction, { details: pending.auditDetails, ipAddress: request.ip })
+    return user
   })
 
   // ─── Me ───────────────────────────────────────────────────
@@ -372,13 +452,8 @@ export async function authRoutes(app: FastifyInstance) {
 
     try {
       const user = await exchangeSocialCode(provider, code, codeVerifier)
-      const token = app.jwt.sign({ sub: user.id, email: user.email, role: user.role })
-      await logAudit(user.id, 'user.login_social', { details: { provider }, ipAddress: request.ip })
-      setAuthCookie(reply, token)
-
       // Pass a short-lived auth code for frontend user info (same pattern as Google SSO)
-      const authCode = crypto.randomBytes(32).toString('hex')
-      await redis.set(`sso:code:${authCode}`, JSON.stringify({ id: user.id, email: user.email, role: user.role }), 'EX', 60)
+      const authCode = await issueSsoCode(user, reply, request.ip, 'user.login_social', { provider })
       return reply.redirect(`${config.FRONTEND_URL}/login?sso_code=${authCode}`)
     } catch (err: unknown) {
       app.log.error(err)

@@ -59,10 +59,16 @@ const mockRedis = {
   get: vi.fn().mockResolvedValue(null),
   set: vi.fn(),
   del: vi.fn(),
+  incr: vi.fn().mockResolvedValue(1),
+  expire: vi.fn(),
 }
 vi.mock('../plugins/redis', () => ({ getRedis: () => mockRedis }))
 
+const mockVerifySync = vi.fn().mockReturnValue({ valid: true })
+vi.mock('otplib', () => ({ verifySync: (...args: any[]) => mockVerifySync(...args) }))
+
 import { authRoutes } from '../routes/auth'
+import { setAuthCookie } from '../plugins'
 
 async function buildAuthApp() {
   const app = Fastify({ logger: false })
@@ -309,6 +315,86 @@ describe('authRoutes - coverage gaps', () => {
     const app = await buildAuthApp()
     const res = await app.inject({ method: 'DELETE', url: '/gmail/acc-1' })
     expect(res.statusCode).toBe(204)
+    await app.close()
+  })
+})
+
+describe('SSO login with 2FA enabled', () => {
+  const pendingTotp = JSON.stringify({
+    id: 'u1', email: 'e@e.com', role: 'user', totpRequired: true, auditAction: 'user.login_sso',
+  })
+
+  it('callback sets no session cookie and keeps a pending code', async () => {
+    const app = await buildAuthApp()
+    mockRedis.get.mockResolvedValueOnce(JSON.stringify({ provider: 'google', codeVerifier: 'cv' }))
+    mockExchangeSocialCode.mockResolvedValueOnce({ id: 'u1', email: 'e@e.com', role: 'user' })
+    mockExecuteTakeFirst.mockResolvedValueOnce({ totp_enabled: true, totp_secret: 'SECRET' })
+    const res = await app.inject({ method: 'GET', url: '/google/callback?code=abc&state=xyz' })
+    expect(res.statusCode).toBe(302)
+    expect(res.headers.location).toContain('sso_code=')
+    expect(setAuthCookie).not.toHaveBeenCalled()
+    const [, stored, , ttl] = mockRedis.set.mock.calls.at(-1)!
+    expect(JSON.parse(stored).totpRequired).toBe(true)
+    expect(ttl).toBe(300)
+    await app.close()
+  })
+
+  it('social callback also defers the session cookie', async () => {
+    const app = await buildAuthApp()
+    mockRedis.get.mockResolvedValueOnce(JSON.stringify({ provider: 'google', codeVerifier: 'cv' }))
+    mockExchangeSocialCode.mockResolvedValueOnce({ id: 'u1', email: 'e@e.com', role: 'user' })
+    mockExecuteTakeFirst.mockResolvedValueOnce({ totp_enabled: true, totp_secret: 'SECRET' })
+    const res = await app.inject({ method: 'GET', url: '/social/google/callback?code=abc&state=s1' })
+    expect(res.statusCode).toBe(302)
+    expect(setAuthCookie).not.toHaveBeenCalled()
+    await app.close()
+  })
+
+  it('exchange asks for the TOTP code and keeps the pending code', async () => {
+    const app = await buildAuthApp()
+    mockRedis.get.mockResolvedValueOnce(pendingTotp)
+    const res = await app.inject({ method: 'POST', url: '/google/exchange', payload: { code: 'c1' } })
+    expect(res.statusCode).toBe(403)
+    expect(res.json().error).toBe('TOTP_REQUIRED')
+    expect(mockRedis.del).not.toHaveBeenCalled()
+    expect(setAuthCookie).not.toHaveBeenCalled()
+    await app.close()
+  })
+
+  it('exchange opens the session with a valid TOTP code', async () => {
+    const app = await buildAuthApp()
+    mockRedis.get.mockResolvedValueOnce(pendingTotp)
+    mockExecuteTakeFirst.mockResolvedValueOnce({ totp_secret: 'SECRET', is_active: true })
+    const res = await app.inject({ method: 'POST', url: '/google/exchange', payload: { code: 'c1', totpCode: '123456' } })
+    expect(res.statusCode).toBe(200)
+    expect(res.json()).toEqual({ id: 'u1', email: 'e@e.com', role: 'user' })
+    expect(mockVerifySync).toHaveBeenCalledWith({ token: '123456', secret: 'SECRET' })
+    expect(setAuthCookie).toHaveBeenCalledTimes(1)
+    expect(mockRedis.del).toHaveBeenCalledWith('sso:code:c1')
+    await app.close()
+  })
+
+  it('exchange rejects an invalid TOTP code without opening a session', async () => {
+    const app = await buildAuthApp()
+    mockRedis.get.mockResolvedValueOnce(pendingTotp)
+    mockExecuteTakeFirst.mockResolvedValueOnce({ totp_secret: 'SECRET', is_active: true })
+    mockVerifySync.mockReturnValueOnce({ valid: false })
+    const res = await app.inject({ method: 'POST', url: '/google/exchange', payload: { code: 'c1', totpCode: '000000' } })
+    expect(res.statusCode).toBe(401)
+    expect(setAuthCookie).not.toHaveBeenCalled()
+    expect(mockRedis.del).not.toHaveBeenCalled()
+    await app.close()
+  })
+
+  it('exchange drops the pending code after too many invalid TOTP codes', async () => {
+    const app = await buildAuthApp()
+    mockRedis.get.mockResolvedValueOnce(pendingTotp)
+    mockRedis.incr.mockResolvedValueOnce(5)
+    mockExecuteTakeFirst.mockResolvedValueOnce({ totp_secret: 'SECRET', is_active: true })
+    mockVerifySync.mockReturnValueOnce({ valid: false })
+    const res = await app.inject({ method: 'POST', url: '/google/exchange', payload: { code: 'c1', totpCode: '000000' } })
+    expect(res.statusCode).toBe(401)
+    expect(mockRedis.del).toHaveBeenCalledWith('sso:code:c1')
     await app.close()
   })
 })

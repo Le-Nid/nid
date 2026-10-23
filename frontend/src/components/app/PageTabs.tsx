@@ -10,12 +10,12 @@ export function PageTabs({ value, onChange, label, tabs }: Readonly<{
 }>) {
   return (
     <Tabs.Root value={value} onValueChange={onChange} className="flex flex-col gap-4">
-      <Tabs.List aria-label={label} className="flex gap-1 overflow-x-auto border-b">
+      <Tabs.List aria-label={label} className="flex gap-1 overflow-x-auto overflow-y-hidden shadow-[inset_0_-1px_0_var(--color-border)]">
         {tabs.map((tab) => (
           <Tabs.Trigger
             key={tab.key}
             value={tab.key}
-            className="-mb-px flex min-h-11 shrink-0 items-center gap-2 border-b-2 border-transparent px-3 text-sm font-medium text-muted-foreground hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none data-[state=active]:border-primary data-[state=active]:text-foreground"
+            className="flex min-h-11 shrink-0 items-center gap-2 border-b-2 border-transparent px-3 text-sm font-medium text-muted-foreground hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none data-[state=active]:border-primary data-[state=active]:text-foreground"
           >
             {tab.label}
           </Tabs.Trigger>
