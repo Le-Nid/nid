@@ -11,6 +11,9 @@ build/
 # Volumes locaux
 volumes/
 
+# Dumps de scripts/backup-db.sh
+backups/
+
 # MkDocs build
 site/
 

@@ -32,6 +32,7 @@ export default defineConfig({
         /^zod\//,
         'imapflow',
         'qrcode',
+        'prom-client',
       ],
     },
     // Pas de minification pour un serveur Node (debug plus facile + pas de gain réel)

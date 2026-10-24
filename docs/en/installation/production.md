@@ -180,17 +180,46 @@ Data is persisted in Docker volumes (PostgreSQL, Redis, EML archives). Rebuildin
 
 ### Database
 
+`scripts/backup-db.sh` dumps PostgreSQL (custom format, compressed) through `docker compose`, into `./backups` or the directory given as argument, and keeps the last `KEEP` dumps (14 by default). Credentials are read inside the `postgres` container: no `.env` needed. Run it from the directory holding `docker-compose.yml`, e.g. nightly:
+
 ```bash
-docker compose exec postgres pg_dump -U gmailmanager gmailmanager > backup.sql
+# crontab -e
+15 3 * * * cd /opt/nid && scripts/backup-db.sh /mnt/nas/nid-backups >> backups.log 2>&1
 ```
+
+Restore (replaces the **whole** database; the app is stopped meanwhile then started again, migrations run on start):
+
+```bash
+scripts/restore-db.sh /mnt/nas/nid-backups/nid-db-20261024-031500.dump
+```
+
+The restore runs in a single transaction: if it fails, the database stays as it was.
 
 ### EML Archives
 
-Simply back up the mounted directory (e.g. `/mnt/nas/gmail-archives/`). EML files are in standard format, readable by any mail client.
+Back up the mounted directory (e.g. `/mnt/nas/gmail-archives/`) **after** the database dump, e.g. `rsync -a` in the same cron job. The database references the files: a file newer than the dump is just orphaned after a restore, a missing one is reported by the [integrity check](../guide/admin.md#archive-integrity). EML files are in standard format, readable by any mail client.
 
 ### Application Configuration
 
 Use the built-in [configuration export](../guide/settings.md#configuration) feature to back up your rules and webhooks in JSON format.
+
+---
+
+## Monitoring (Prometheus)
+
+Set `METRICS_TOKEN` (e.g. `openssl rand -hex 32`) to enable `GET /api/metrics`; without it the endpoint does not exist. Exposed metrics: `nid_http_request_duration_seconds` (by method, route pattern and status), `nid_queue_jobs{state}` (BullMQ queue), `nid_gmail_rate_limited_24h`, `nid_redis_up` (0: Redis unreadable, the previous two are stale), and the Node process metrics (`nid_process_*`, `nid_nodejs_*`).
+
+```yaml
+# prometheus.yml
+scrape_configs:
+  - job_name: nid
+    scheme: https
+    metrics_path: /api/metrics
+    authorization:
+      credentials: <METRICS_TOKEN>
+    static_configs:
+      - targets: ['nid.example.com']
+```
 
 ---
 

@@ -180,17 +180,46 @@ Les données sont persistées dans les volumes Docker (PostgreSQL, Redis, archiv
 
 ### Base de données
 
+`scripts/backup-db.sh` fait un dump PostgreSQL (format custom, compressé) via `docker compose`, dans `./backups` ou le dossier passé en argument, et garde les `KEEP` derniers (14 par défaut). Les identifiants sont lus dans le conteneur `postgres` : pas besoin de `.env`. À lancer depuis le dossier du `docker-compose.yml`, par exemple chaque nuit :
+
 ```bash
-docker compose exec postgres pg_dump -U gmailmanager gmailmanager > backup.sql
+# crontab -e
+15 3 * * * cd /opt/nid && scripts/backup-db.sh /mnt/nas/nid-backups >> backups.log 2>&1
 ```
+
+Restauration (remplace **toute** la base ; l'app est arrêtée pendant l'opération puis relancée, les migrations repassent au démarrage) :
+
+```bash
+scripts/restore-db.sh /mnt/nas/nid-backups/nid-db-20261024-031500.dump
+```
+
+La restauration est en une seule transaction : si elle échoue, la base reste telle qu'avant.
 
 ### Archives EML
 
-Sauvegardez simplement le dossier monté (ex. `/mnt/nas/gmail-archives/`). Les fichiers EML sont au format standard, lisibles par n'importe quel client mail.
+Sauvegardez le dossier monté (ex. `/mnt/nas/gmail-archives/`) **après** le dump de la base, par exemple `rsync -a` dans le même cron. La base référence les fichiers : un fichier plus récent que le dump est simplement orphelin après restauration, un fichier manquant est signalé par le [contrôle d'intégrité](../guide/admin.md#integrite-des-archives). Les fichiers EML sont au format standard, lisibles par n'importe quel client mail.
 
 ### Configuration applicative
 
 Utilisez la fonction d'[export de configuration](../guide/settings.md#configuration) intégrée pour sauvegarder vos règles et webhooks au format JSON.
+
+---
+
+## Supervision (Prometheus)
+
+Définissez `METRICS_TOKEN` (ex. `openssl rand -hex 32`) pour activer `GET /api/metrics` ; sans lui, l'endpoint n'existe pas. Métriques exposées : `nid_http_request_duration_seconds` (par méthode, motif de route et statut), `nid_queue_jobs{state}` (file BullMQ), `nid_gmail_rate_limited_24h`, `nid_redis_up` (0 : Redis illisible, les deux précédentes sont figées), et les métriques process Node (`nid_process_*`, `nid_nodejs_*`).
+
+```yaml
+# prometheus.yml
+scrape_configs:
+  - job_name: nid
+    scheme: https
+    metrics_path: /api/metrics
+    authorization:
+      credentials: <METRICS_TOKEN>
+    static_configs:
+      - targets: ['nid.example.com']
+```
 
 ---
 

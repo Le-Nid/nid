@@ -102,6 +102,7 @@ Example: `http://localhost:3000/api/auth/social/microsoft/callback`
 |---|---|---|
 | `ADMIN_EMAIL` | *(empty)* | The user who signs up with this email automatically gets the `admin` role |
 | `ALLOW_REGISTRATION` | `true` | `false` to close registrations (form and SSO). Attempts will return a 403 error |
+| `METRICS_TOKEN` | *(empty)* | Bearer token of `GET /api/metrics` (Prometheus, see [Production](production.md#monitoring-prometheus)). Empty: endpoint disabled |
 | `WEBHOOK_ALLOW_PRIVATE_NETWORKS` | `false` | `true` to let webhooks target the local network (ntfy, Home Assistant on your LAN). Off by default: any user could otherwise probe internal services (SSRF) |
 | `BULK_QUERY_MAX` | `50000` | Max number of mails a bulk action sent with a Gmail `query` ("select all results") processes; the job stops there and reports it. Also caps the new mails one NAS backup by `query` saves |
 | `ARCHIVE_CONTINUE_DELAY_MIN` | `15` | A NAS backup by `query` stopped at `BULK_QUERY_MAX` resumes automatically after this many minutes |
