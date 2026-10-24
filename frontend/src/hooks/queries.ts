@@ -5,7 +5,7 @@ import {
   analyticsApi, notificationsApi,
   auditApi, webhooksApi, savedSearchesApi, unifiedApi, archiveThreadsApi,
   retentionApi, importApi,
-  sharingApi, labelsApi, gmailAccountsApi, twoFactorApi, configApi, integrityApi,
+  sharingApi, labelsApi, gmailAccountsApi, twoFactorApi, configApi, integrityApi, authApi,
 } from '../api'
 import { useAuthStore } from '../store/auth.store'
 
@@ -348,6 +348,18 @@ export function useUpdateAdminUser() {
   })
 }
 
+export const useAdminResetPassword = () => useMutation({
+  mutationFn: ({ userId, password }: { userId: string; password: string }) => adminApi.resetPassword(userId, password),
+})
+
+export function useAdminDeleteUser() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: adminApi.deleteUser,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'users'] }),
+  })
+}
+
 export function useAdminQuota() {
   return useQuery({
     queryKey: queryKeys.admin.quota(),
@@ -490,6 +502,10 @@ export const useSyncGmailAccount = () => useMeMutation(labelsApi.sync)
 export const useTwoFactorSetup = () => useMutation({ mutationFn: twoFactorApi.setup })
 export const useTwoFactorEnable = () => useMeMutation(twoFactorApi.enable)
 export const useTwoFactorDisable = () => useMeMutation(twoFactorApi.disable)
+
+export const useChangePassword = () => useMutation({ mutationFn: authApi.changePassword })
+export const useExportMyData = () => useMutation({ mutationFn: authApi.exportMyData })
+export const useDeleteMe = () => useMutation({ mutationFn: authApi.deleteMe })
 
 export const useExportConfig = () => useMutation({ mutationFn: configApi.exportConfig })
 export const useImportConfig = () => useMeMutation(configApi.importConfig)

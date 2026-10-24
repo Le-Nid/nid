@@ -10,6 +10,8 @@ interface User {
   max_gmail_accounts?: number
   storage_quota_bytes?: number
   totp_enabled?: boolean
+  /** Local account with a password (false: SSO only). */
+  has_password?: boolean
 }
 
 export interface GmailAccount {

@@ -203,6 +203,39 @@ describe('registerPlugins', () => {
     expect(reply.code).toHaveBeenCalledWith(401)
   })
 
+  it('authenticate rejects a token issued before the last password change', async () => {
+    const { app, decorators } = createMockApp()
+    app.redis = { get: vi.fn().mockResolvedValue(null) }
+    await registerPlugins(app)
+
+    const changedAt = new Date('2026-10-24T10:00:00Z')
+    const chain: any = new Proxy({}, {
+      get: (_target, prop) => {
+        if (prop === 'executeTakeFirst') {
+          return vi.fn().mockResolvedValue({ id: 'user-1', is_active: true, role: 'user', password_changed_at: changedAt })
+        }
+        return (..._args: any[]) => chain
+      },
+    })
+    app.db = new Proxy({}, { get: () => () => chain })
+
+    const at = (iat: number) => ({
+      jwtVerify: vi.fn().mockResolvedValue(undefined),
+      user: { sub: 'user-1', iat },
+      cookies: { token: 'jwt-token' },
+      headers: {},
+    })
+    const reply = () => ({ code: vi.fn().mockReturnThis(), send: vi.fn(), clearCookie: vi.fn().mockReturnThis() })
+
+    const before = reply()
+    await decorators.authenticate(at(changedAt.getTime() / 1000 - 1), before)
+    expect(before.code).toHaveBeenCalledWith(401)
+
+    const sameSecond = reply()
+    await decorators.authenticate(at(changedAt.getTime() / 1000), sameSecond)
+    expect(sameSecond.code).not.toHaveBeenCalled()
+  })
+
   it('requireAdmin rejects non-admin user', async () => {
     const { app, decorators } = createMockApp()
     await registerPlugins(app)

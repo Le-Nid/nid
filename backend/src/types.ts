@@ -7,6 +7,7 @@ export interface JwtUser {
   email: string;
   role: string;
   exp?: number;
+  iat?: number;
 }
 
 declare module "@fastify/jwt" {

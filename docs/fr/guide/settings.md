@@ -24,6 +24,12 @@ Les **Paramètres** (`/settings/…`) sont découpés en cinq sections, en ongle
 
 ## Sécurité
 
+### Mot de passe
+
+Comptes locaux uniquement (un compte Google ou SSO n'a pas de mot de passe Nid) : **Mot de passe actuel**, **Nouveau mot de passe** (8 caractères minimum) et sa confirmation, puis **Changer le mot de passe**. Vos autres sessions ouvertes sont déconnectées.
+
+Mot de passe oublié : demandez à un administrateur de le réinitialiser ([Administration](admin.md#utilisateurs)).
+
 ### Authentification à deux facteurs (2FA)
 
 1. Cliquez sur **Configurer la 2FA**
@@ -88,3 +94,11 @@ De nombreux fournisseurs (Google, Outlook, Yahoo) exigent un **mot de passe d'ap
 ### Configuration
 
 Vos règles et webhooks dans un fichier JSON, pour les sauvegarder ou les reprendre sur une autre instance : **Exporter la configuration** / **Importer une configuration**.
+
+### Mes données (RGPD)
+
+**Exporter mes données** : tout ce que Nid conserve sur vous dans un fichier JSON (profil, comptes Gmail, règles, métadonnées des archives, journal d'activité…). Le contenu des mails s'exporte en .mbox (ci-dessus) ; les secrets (mots de passe, jetons) sont exclus.
+
+### Supprimer mon compte
+
+Saisissez votre mot de passe (ou, pour un compte Google/SSO, votre adresse e-mail), puis **Supprimer définitivement mon compte** et confirmez. Votre compte, vos comptes Gmail connectés, vos archives et vos règles sont supprimés de Nid ; rien n'est supprimé dans Gmail. Le dernier administrateur de l'instance ne peut pas supprimer son compte.

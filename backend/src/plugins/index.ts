@@ -94,10 +94,13 @@ export async function registerPlugins(app: FastifyInstance) {
       const { sub: userId } = request.user as { sub: string }
       const user = await app.db
         .selectFrom('users')
-        .select(['id', 'is_active', 'role'])
+        .select(['id', 'is_active', 'role', 'password_changed_at'])
         .where('id', '=', userId)
         .executeTakeFirst()
-      if (!user?.is_active) {
+      // iat is in seconds: a token issued in the same second as the change stays valid (the re-issued one)
+      const issuedBefore = user?.password_changed_at
+        && (request.user.iat ?? 0) < Math.floor(new Date(user.password_changed_at).getTime() / 1000)
+      if (!user?.is_active || issuedBefore) {
         return reply
           .clearCookie('token', { path: '/' })
           .code(401)

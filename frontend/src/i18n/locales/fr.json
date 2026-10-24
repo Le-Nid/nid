@@ -495,6 +495,16 @@
     "remoteImagesHint": "Bloquées par défaut : elles servent souvent à savoir quand vous ouvrez un mail. Un bouton « Afficher » reste disponible dans chaque mail.",
     "shortcuts": "Raccourcis clavier à une touche",
     "shortcutsHint": "j/k, e, #, r, u et / dans Mails. À désactiver si vous utilisez une commande vocale.",
+    "password": {
+      "title": "Mot de passe",
+      "hint": "Les autres sessions ouvertes sont déconnectées après le changement.",
+      "current": "Mot de passe actuel",
+      "new": "Nouveau mot de passe (8 caractères minimum)",
+      "confirm": "Confirmer le nouveau mot de passe",
+      "submit": "Changer le mot de passe",
+      "mismatch": "Les deux mots de passe ne correspondent pas.",
+      "changed": "Mot de passe changé"
+    },
     "twoFactor": {
       "title": "Authentification à deux facteurs (2FA)",
       "hint": "Protégez votre compte avec un code généré par une application d'authentification.",
@@ -638,7 +648,18 @@
       "configImport": "Importer une configuration",
       "configImported": "Configuration importée",
       "configInvalid": "Ce fichier n'est pas une configuration Nid valide",
-      "configFailed": "L'opération sur la configuration a échoué"
+      "configFailed": "L'opération sur la configuration a échoué",
+      "myData": "Mes données (RGPD)",
+      "myDataHint": "Tout ce que Nid conserve sur vous, au format JSON : profil, comptes Gmail, règles, métadonnées des archives, journal d'activité… Le contenu des mails s'exporte en mbox ci-dessus. Les secrets (mots de passe, jetons) sont exclus.",
+      "myDataExport": "Exporter mes données",
+      "delete": "Supprimer mon compte",
+      "deleteHint": "Supprime définitivement votre compte, vos comptes Gmail connectés, vos archives et vos règles. Rien n'est supprimé dans Gmail.",
+      "deletePassword": "Votre mot de passe Nid",
+      "deleteEmail": "Tapez {{email}} pour confirmer",
+      "deleteSubmit": "Supprimer définitivement mon compte",
+      "deleteTitle": "Supprimer votre compte ?",
+      "deleteConfirm": "Vos archives et tous vos réglages seront perdus. Cette action est irréversible.",
+      "deleteFailed": "La suppression a échoué : vérifiez la confirmation saisie."
     }
   },
   "admin": {
@@ -683,7 +704,14 @@
       "saved": "Utilisateur mis à jour",
       "failed": "La mise à jour a échoué.",
       "empty": "Aucun utilisateur",
-      "loadError": "Impossible de charger les utilisateurs."
+      "loadError": "Impossible de charger les utilisateurs.",
+      "newPassword": "Nouveau mot de passe (8 caractères minimum)",
+      "resetPassword": "Réinitialiser le mot de passe",
+      "passwordReset": "Mot de passe réinitialisé, l'utilisateur est déconnecté",
+      "delete": "Supprimer l'utilisateur",
+      "deleteTitle": "Supprimer {{email}} ?",
+      "deleteConfirm": "Le compte, ses comptes Gmail et ses archives seront supprimés définitivement.",
+      "deleted": "Utilisateur supprimé"
     },
     "system": {
       "description": "Réglages de l'instance Nid, pour tous les utilisateurs.",

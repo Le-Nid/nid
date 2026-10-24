@@ -12,6 +12,7 @@ import * as migration006 from './migrations/006_rule_templates'
 import * as migration007 from './migrations/007_archive_body_text'
 import * as migration008 from './migrations/008_account_backup_prefs'
 import * as migration009 from './migrations/009_drop_pii_tracking'
+import * as migration010 from './migrations/010_password_changed_at'
 import { createLogger } from '../logger'
 
 const logger = createLogger('db')
@@ -45,6 +46,7 @@ const migrations: Record<string, Migration> = {
   '007_archive_body_text': migration007,
   '008_account_backup_prefs': migration008,
   '009_drop_pii_tracking': migration009,
+  '010_password_changed_at': migration010,
 }
 
 class InCodeMigrationProvider implements MigrationProvider {
