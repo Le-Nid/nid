@@ -27,6 +27,7 @@ export type AuditAction =
   | 'user.2fa_enable'
   | 'user.2fa_disable'
   | 'user.password_change'
+  | 'user.password_reset'
   | 'user.export_data'
   | 'admin.reset_password'
   | 'admin.delete_user'

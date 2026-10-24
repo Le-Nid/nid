@@ -9,6 +9,9 @@ import { startRuleScheduler } from "./jobs/scheduler";
 import type { Worker } from "bullmq";
 
 const server = Fastify({
+  // request.ip from X-Forwarded-For set by these proxies only: else every client is nginx's 127.0.0.1 and
+  // each rate limit (login, password reset…) is shared by the whole instance
+  trustProxy: config.TRUST_PROXY,
   logger: {
     level: config.LOG_LEVEL,
     transport:

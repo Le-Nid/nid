@@ -33,6 +33,7 @@ export default defineConfig({
         'imapflow',
         'qrcode',
         'prom-client',
+        'nodemailer',
       ],
     },
     // Pas de minification pour un serveur Node (debug plus facile + pas de gain réel)

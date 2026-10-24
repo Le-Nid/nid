@@ -12,6 +12,7 @@ import { logAudit, type AuditAction } from '../audit/audit.service'
 import { setAuthCookie, clearAuthCookie } from '../plugins'
 import { getRedis } from '../plugins/redis'
 import { deleteUser, exportUserData } from '../account/account.service'
+import { isMailEnabled, sendMail } from '../mail/mail.service'
 
 const registerSchema = z.object({
   email:    z.string().email(),
@@ -33,6 +34,17 @@ const changePasswordSchema = z.object({
   currentPassword: z.string().min(1).max(128),
   newPassword:     z.string().min(8).max(128),
 })
+
+const forgotPasswordSchema = z.object({ email: z.string().email() })
+const resetPasswordSchema = z.object({
+  token:       z.string().regex(/^[0-9a-f]{64}$/),
+  newPassword: z.string().min(8).max(128),
+})
+const RESET_TTL_SECONDS = 3600
+
+/** Reset link waiting in Redis under the token's SHA-256 (a Redis dump never holds a usable token). */
+interface PendingReset { userId: string; issuedAt: number }
+const resetKey = (token: string) => `pwreset:${crypto.createHash('sha256').update(token).digest('hex')}`
 
 // Local accounts confirm with their password, SSO-only accounts (no password) by typing their e-mail
 const deleteAccountSchema = z.object({
@@ -100,6 +112,7 @@ export async function authRoutes(app: FastifyInstance) {
     return {
       allowRegistration: config.ALLOW_REGISTRATION,
       googleSsoEnabled: !!config.GOOGLE_SSO_REDIRECT_URI,
+      passwordResetEnabled: isMailEnabled(),
       socialProviders: getEnabledProviders(),
     }
   })
@@ -227,6 +240,58 @@ export async function authRoutes(app: FastifyInstance) {
       .execute()
     setAuthCookie(reply, app.jwt.sign({ sub: userId, email, role }))
     await logAudit(userId, 'user.password_change', { ipAddress: request.ip })
+    return reply.code(204).send()
+  })
+
+  // ─── Forgot password: e-mails a one-hour reset link ───────
+  app.post('/password/forgot', {
+    config: { rateLimit: { max: 3, timeWindow: '1 minute' } },
+  }, async (request, reply) => {
+    if (!isMailEnabled()) return reply.code(404).send({ error: 'Password reset is disabled' })
+    const { email } = forgotPasswordSchema.parse(request.body)
+
+    const user = await db.selectFrom('users').select(['id', 'email', 'password_hash', 'is_active'])
+      .where('email', '=', email).executeTakeFirst()
+    // Same answer for every address (no user enumeration); SSO-only accounts have no password to reset
+    // One e-mail per account per minute, whatever the source IP (mail bombing)
+    const cooldown = user?.is_active && user.password_hash
+      && await getRedis().set(`pwreset:cooldown:${user.id}`, '1', 'EX', 60, 'NX')
+    if (user && cooldown) {
+      const token = crypto.randomBytes(32).toString('hex')
+      const pending: PendingReset = { userId: user.id, issuedAt: Date.now() }
+      await getRedis().set(resetKey(token), JSON.stringify(pending), 'EX', RESET_TTL_SECONDS)
+      const link = `${config.FRONTEND_URL}/reset-password?token=${token}`
+      // Not awaited: the SMTP round-trip would tell existing addresses apart by response time
+      sendMail(user.email, 'Nid — réinitialiser votre mot de passe / reset your password', [
+        'Pour choisir un nouveau mot de passe Nid, ouvrez ce lien (valable 1 heure) :',
+        'To choose a new Nid password, open this link (valid for 1 hour):',
+        '', link, '',
+        "Si vous n'avez rien demandé, ignorez cet e-mail. / If you did not ask for this, ignore this e-mail.",
+      ].join('\n')).catch((err) => app.log.error({ err, userId: user.id }, 'password reset e-mail failed'))
+    }
+    return reply.code(204).send()
+  })
+
+  // ─── Reset password with the e-mailed token (single use) ──
+  app.post('/password/reset', {
+    config: { rateLimit: { max: 5, timeWindow: '1 minute' } },
+  }, async (request, reply) => {
+    const body = resetPasswordSchema.parse(request.body)
+    const raw = await getRedis().getdel(resetKey(body.token))
+    const pending = raw ? JSON.parse(raw) as PendingReset : null
+
+    const user = pending && await db.selectFrom('users').select(['id', 'is_active', 'password_changed_at'])
+      .where('id', '=', pending.userId).executeTakeFirst()
+    // A link issued before the last password change (another link already used, admin reset…) is dead
+    const stale = user?.password_changed_at && new Date(user.password_changed_at).getTime() > pending!.issuedAt
+    if (!user?.is_active || stale) return reply.code(400).send({ error: 'Invalid or expired link' })
+
+    await db.updateTable('users')
+      .set({ password_hash: await bcrypt.hash(body.newPassword, 12), password_changed_at: new Date(), updated_at: new Date() })
+      .where('id', '=', user.id)
+      .execute()
+    await logAudit(user.id, 'user.password_reset', { ipAddress: request.ip })
+    // No session opened here: signing in again goes through the 2FA check
     return reply.code(204).send()
   })
 

@@ -28,7 +28,7 @@ Les **Paramètres** (`/settings/…`) sont découpés en cinq sections, en ongle
 
 Comptes locaux uniquement (un compte Google ou SSO n'a pas de mot de passe Nid) : **Mot de passe actuel**, **Nouveau mot de passe** (8 caractères minimum) et sa confirmation, puis **Changer le mot de passe**. Vos autres sessions ouvertes sont déconnectées.
 
-Mot de passe oublié : demandez à un administrateur de le réinitialiser ([Administration](admin.md#utilisateurs)).
+Mot de passe oublié : sur l'écran de connexion, **Mot de passe oublié ?** envoie un lien valable 1 heure (si l'instance a un serveur SMTP, voir [Configuration](../installation/configuration.md#e-mail-smtp)). Sinon, demandez à un administrateur de le réinitialiser ([Administration](admin.md#utilisateurs)).
 
 ### Authentification à deux facteurs (2FA)
 
