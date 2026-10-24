@@ -15,7 +15,7 @@ function setup(config = { allowRegistration: true, socialProviders: [] as string
   get.mockImplementation((url: string) => url === '/api/auth/config'
     ? Promise.resolve({ data: config })
     : Promise.reject(new Error('down')))
-  useAuthStore.setState({ login, register, loginWithSsoCode })
+  useAuthStore.setState({ login, register, loginWithSsoCode, initialLoading: true, isAuthenticated: false })
   const router = createMemoryRouter([
     { path: '/login', element: <LoginPage /> },
     { path: '*', element: <h1>elsewhere</h1> },
@@ -49,6 +49,13 @@ describe('Login (/login)', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Se connecter' }))
     expect(login).toHaveBeenCalledWith('ana@example.com', 'secret', undefined)
     await vi.waitFor(() => expect(router.state.location.pathname).toBe('/overview'))
+  })
+
+  it('skips the login (and the TOTP) while the session is still valid', async () => {
+    const router = setup()
+    useAuthStore.setState({ initialLoading: false, isAuthenticated: true })
+    await vi.waitFor(() => expect(router.state.location.pathname).toBe('/overview'))
+    expect(login).not.toHaveBeenCalled()
   })
 
   it('announces the server error', async () => {

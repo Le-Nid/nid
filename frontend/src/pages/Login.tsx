@@ -98,7 +98,7 @@ export default function LoginPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { login, register, loginWithSsoCode } = useAuthStore()
+  const { login, register, loginWithSsoCode, initialLoading, isAuthenticated } = useAuthStore()
   const { mode } = useThemeStore()
   const [loading, setLoading] = useState(false)
   const [socialLoading, setSocialLoading] = useState<string | null>(null)
@@ -111,6 +111,11 @@ export default function LoginPage() {
   const [allowRegistration, setAllowRegistration] = useState(true)
   const [socialProviders, setSocialProviders] = useState<string[]>([])
   const [tab, setTab] = useState('login')
+
+  // Session still valid (cookie restored by fetchMe): no need to sign in again, nor to re-enter the TOTP
+  useEffect(() => {
+    if (!initialLoading && isAuthenticated) navigate('/overview', { replace: true })
+  }, [initialLoading])
 
   useEffect(() => {
     api.get('/api/auth/config').then((r) => {
@@ -127,7 +132,8 @@ export default function LoginPage() {
 
     if (ssoCode) {
       loginWithSsoCode(ssoCode)
-        .then(() => navigate('/overview'))
+        // replace: the one-shot sso_code must not stay in history, going back would replay it and fail
+        .then(() => navigate('/overview', { replace: true }))
         .catch((e: unknown) => {
           const axiosErr = e as { response?: { data?: { error?: string } } }
           if (axiosErr.response?.data?.error === 'TOTP_REQUIRED') {
@@ -148,7 +154,7 @@ export default function LoginPage() {
     setLoading(true); setError(null)
     try {
       await login(values.email, values.password, totpRequired ? totpCode : undefined)
-      navigate('/overview')
+      navigate('/overview', { replace: true })
     } catch (e: unknown) {
       const axiosErr = e as { response?: { data?: { error?: string } } }
       if (axiosErr.response?.data?.error === 'TOTP_REQUIRED') {
@@ -167,7 +173,7 @@ export default function LoginPage() {
     try {
       if (pendingSsoCode) await loginWithSsoCode(pendingSsoCode, totpCode)
       else if (savedCredentials) await login(savedCredentials.email, savedCredentials.password, totpCode)
-      navigate('/overview')
+      navigate('/overview', { replace: true })
     } catch (e: unknown) {
       const axiosErr = e as { response?: { data?: { error?: string } } }
       setError(axiosErr.response?.data?.error ?? t('login.errorTotpInvalid'))
