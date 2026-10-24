@@ -8,7 +8,7 @@ import { adminApi, archiveApi, integrityApi } from '../api'
 
 vi.mock('../api', () => ({
   adminApi: {
-    listUsers: vi.fn(), updateUser: vi.fn(), listJobs: vi.fn(),
+    listUsers: vi.fn(), updateUser: vi.fn(), resetPassword: vi.fn(), deleteUser: vi.fn(), listJobs: vi.fn(),
     getQuota: vi.fn(), listAudit: vi.fn(), getSystem: vi.fn(), emptyArchiveTrash: vi.fn(),
   },
   archiveApi: { updateTrashConfig: vi.fn() },
@@ -25,6 +25,7 @@ vi.mock('../components/app/JobProgressInline', () => ({
 }))
 
 import AdminPage from '../pages/Admin'
+import { useAuthStore } from '../store/auth.store'
 
 const GB = 1024 ** 3
 const BOB = {
@@ -133,6 +134,37 @@ describe('Utilisateurs', () => {
     expect(toast.error).toHaveBeenCalledWith('La mise à jour a échoué.')
     await user().click(within(sheet).getByRole('button', { name: 'Annuler' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  })
+
+  it('resets a password from the sheet', async () => {
+    vi.mocked(adminApi.resetPassword).mockResolvedValue(undefined)
+    setup()
+    await user().click(await screen.findByRole('button', { name: 'Modifier bob@example.com' }))
+    const sheet = screen.getByRole('dialog')
+    const reset = within(sheet).getByRole('button', { name: 'Réinitialiser le mot de passe' })
+    expect(reset).toBeDisabled()
+    await user().type(within(sheet).getByLabelText('Nouveau mot de passe (8 caractères minimum)'), 'temp-pass-1')
+    await user().click(reset)
+    await waitFor(() => expect(adminApi.resetPassword).toHaveBeenCalledWith('u2', 'temp-pass-1'))
+    expect(toast.success).toHaveBeenCalledWith("Mot de passe réinitialisé, l'utilisateur est déconnecté")
+  })
+
+  it('deletes a user after a confirmation, and never offers it on oneself', async () => {
+    vi.mocked(adminApi.deleteUser).mockResolvedValue(undefined)
+    useAuthStore.setState({ user: { id: 'u3', email: 'eve@example.com', role: 'admin' } })
+    setup()
+    await user().click(await screen.findByRole('button', { name: 'Modifier eve@example.com' }))
+    expect(within(screen.getByRole('dialog')).queryByRole('button', { name: "Supprimer l'utilisateur" })).not.toBeInTheDocument()
+    expect(within(screen.getByRole('dialog')).queryByRole('button', { name: 'Réinitialiser le mot de passe' })).not.toBeInTheDocument()
+    await user().click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Annuler' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+
+    await user().click(screen.getByRole('button', { name: 'Modifier bob@example.com' }))
+    await user().click(within(screen.getByRole('dialog')).getByRole('button', { name: "Supprimer l'utilisateur" }))
+    const confirm = await screen.findByRole('alertdialog', { name: 'Supprimer bob@example.com ?' })
+    await user().click(within(confirm).getByRole('button', { name: "Supprimer l'utilisateur" }))
+    await waitFor(() => expect(adminApi.deleteUser).toHaveBeenCalledWith('u2', expect.anything()))
+    expect(toast.success).toHaveBeenCalledWith('Utilisateur supprimé')
   })
 
   it('pages through the users', async () => {

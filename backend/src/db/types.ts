@@ -24,6 +24,7 @@ export interface UsersTable {
   totp_enabled:        Generated<boolean>
   encryption_key_hash: string | null
   last_login_at:       Date | null
+  password_changed_at: Date | null   // JWTs issued before are rejected
   created_at:          Generated<Date>
   updated_at:          Generated<Date>
 }

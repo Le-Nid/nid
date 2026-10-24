@@ -495,6 +495,16 @@
     "remoteImagesHint": "Blocked by default: they are often used to know when you open a mail. A « Show » button stays available in each mail.",
     "shortcuts": "Single-key keyboard shortcuts",
     "shortcutsHint": "j/k, e, #, r, u and / in Mails. Turn off if you use voice control.",
+    "password": {
+      "title": "Password",
+      "hint": "Your other open sessions are signed out after the change.",
+      "current": "Current password",
+      "new": "New password (at least 8 characters)",
+      "confirm": "Confirm the new password",
+      "submit": "Change password",
+      "mismatch": "The two passwords do not match.",
+      "changed": "Password changed"
+    },
     "twoFactor": {
       "title": "Two-factor authentication (2FA)",
       "hint": "Protect your account with a code from an authenticator app.",
@@ -638,7 +648,18 @@
       "configImport": "Import a configuration",
       "configImported": "Configuration imported",
       "configInvalid": "This file is not a valid Nid configuration",
-      "configFailed": "The configuration operation failed"
+      "configFailed": "The configuration operation failed",
+      "myData": "My data (GDPR)",
+      "myDataHint": "Everything Nid stores about you, as JSON: profile, Gmail accounts, rules, archive metadata, activity log… Mail content is exported as mbox above. Secrets (passwords, tokens) are left out.",
+      "myDataExport": "Export my data",
+      "delete": "Delete my account",
+      "deleteHint": "Permanently deletes your account, your connected Gmail accounts, your archives and your rules. Nothing is deleted in Gmail.",
+      "deletePassword": "Your Nid password",
+      "deleteEmail": "Type {{email}} to confirm",
+      "deleteSubmit": "Permanently delete my account",
+      "deleteTitle": "Delete your account?",
+      "deleteConfirm": "Your archives and all your settings will be lost. This cannot be undone.",
+      "deleteFailed": "Deletion failed: check the confirmation you typed."
     }
   },
   "admin": {
@@ -683,7 +704,14 @@
       "saved": "User updated",
       "failed": "The update failed.",
       "empty": "No users",
-      "loadError": "Could not load the users."
+      "loadError": "Could not load the users.",
+      "newPassword": "New password (at least 8 characters)",
+      "resetPassword": "Reset password",
+      "passwordReset": "Password reset, the user is signed out",
+      "delete": "Delete user",
+      "deleteTitle": "Delete {{email}}?",
+      "deleteConfirm": "The account, its Gmail accounts and its archives will be permanently deleted.",
+      "deleted": "User deleted"
     },
     "system": {
       "description": "Settings of this Nid instance, for every user.",

@@ -93,6 +93,36 @@ Issues a fresh JWT (cookie) without signing in again.
 
 ---
 
+### PATCH /api/auth/password 🔒
+
+Change the password of a local account. Revokes every other session (`users.password_changed_at`); the current session gets a new cookie. Rate limit: 5/min.
+
+```json
+{ "currentPassword": "old", "newPassword": "new-at-least-8-chars" }
+```
+
+**Response 204**. `400` if the account has no password (SSO only), `400` too if the current password is wrong (not `401`, which the frontend turns into a redirect to `/login`).
+
+---
+
+### GET /api/auth/me/export 🔒
+
+GDPR export: everything Nid stores about the user, as JSON (`Content-Disposition: attachment`). Profile, social and Gmail accounts, preferences, notifications, audit log, webhooks, saved searches, retention, shares, jobs, rules, labels, expirations, analyses, archived mail and attachment metadata. Left out: secrets (password and TOTP hashes, OAuth tokens, webhook credentials, share tokens) and mail content, exported per account as mbox/ZIP. Rate limit: 3/min.
+
+---
+
+### DELETE /api/auth/me 🔒
+
+Permanently deletes the account: the user, their Gmail accounts, their archives (DB rows and files under `ARCHIVE_PATH/<accountId>/`), their rules and the rest (cascade). Nothing is deleted in Gmail. Rate limit: 3/min.
+
+```json
+{ "password": "..." }
+```
+
+A local account confirms with `password`, an SSO-only account with `email` (its address). **Response 204** (cookie cleared). `401` if the confirmation is wrong, `409` for the last active admin.
+
+---
+
 ### GET /api/auth/me 🔒
 
 Get the user profile and linked Gmail accounts.
@@ -104,7 +134,7 @@ Get the user profile and linked Gmail accounts.
     "id": "uuid", "email": "user@example.com", "role": "user",
     "display_name": "John Doe", "avatar_url": "https://...", "is_active": true,
     "max_gmail_accounts": 3, "storage_quota_bytes": 5368709120,
-    "totp_enabled": false, "created_at": "..."
+    "totp_enabled": false, "has_password": true, "created_at": "..."
   },
   "gmailAccounts": [
     {
@@ -119,6 +149,7 @@ Get the user profile and linked Gmail accounts.
 
 - `needs_reauth`: Google refused the refresh token, the account must be reconnected ("Action required").
 - `last_sync_at`: last label sync (`null` if never).
+- `has_password`: local account with a password (`false`: SSO only).
 
 ---
 

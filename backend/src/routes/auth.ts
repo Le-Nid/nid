@@ -11,6 +11,7 @@ import { config } from '../config'
 import { logAudit, type AuditAction } from '../audit/audit.service'
 import { setAuthCookie, clearAuthCookie } from '../plugins'
 import { getRedis } from '../plugins/redis'
+import { deleteUser, exportUserData } from '../account/account.service'
 
 const registerSchema = z.object({
   email:    z.string().email(),
@@ -26,6 +27,17 @@ const loginSchema = z.object({
   email:    z.string().email(),
   password: z.string().min(8).max(128),
   totpCode: z.string().length(6).optional(),
+})
+
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1).max(128),
+  newPassword:     z.string().min(8).max(128),
+})
+
+// Local accounts confirm with their password, SSO-only accounts (no password) by typing their e-mail
+const deleteAccountSchema = z.object({
+  password: z.string().max(128).optional(),
+  email:    z.string().max(255).optional(),
 })
 
 const ssoExchangeSchema = z.object({
@@ -193,6 +205,64 @@ export async function authRoutes(app: FastifyInstance) {
     return { user: { id: userId, email, role } }
   })
 
+  // ─── Change password (local accounts) ─────────────────────
+  app.patch('/password', {
+    preHandler: [app.authenticate],
+    config: { rateLimit: { max: 5, timeWindow: '1 minute' } },
+  }, async (request, reply) => {
+    const { sub: userId, email, role } = request.user
+    const body = changePasswordSchema.parse(request.body)
+
+    const user = await db.selectFrom('users').select('password_hash').where('id', '=', userId).executeTakeFirst()
+    if (!user?.password_hash) return reply.code(400).send({ error: 'No local password on this account' })
+    // 400, not 401: the frontend turns any 401 into a redirect to /login
+    if (!await bcrypt.compare(body.currentPassword, user.password_hash)) {
+      return reply.code(400).send({ error: 'Invalid current password' })
+    }
+
+    // password_changed_at revokes every other session; this one gets a fresh token
+    await db.updateTable('users')
+      .set({ password_hash: await bcrypt.hash(body.newPassword, 12), password_changed_at: new Date(), updated_at: new Date() })
+      .where('id', '=', userId)
+      .execute()
+    setAuthCookie(reply, app.jwt.sign({ sub: userId, email, role }))
+    await logAudit(userId, 'user.password_change', { ipAddress: request.ip })
+    return reply.code(204).send()
+  })
+
+  // ─── GDPR export of all the user's data ───────────────────
+  app.get('/me/export', {
+    preHandler: [app.authenticate],
+    config: { rateLimit: { max: 3, timeWindow: '1 minute' } },
+  }, async (request, reply) => {
+    const userId = request.user.sub
+    const data = await exportUserData(userId)
+    await logAudit(userId, 'user.export_data', { ipAddress: request.ip })
+    return reply
+      .header('Content-Disposition', `attachment; filename="nid-export-${new Date().toISOString().slice(0, 10)}.json"`)
+      .send(data)
+  })
+
+  // ─── Delete own account (irreversible) ────────────────────
+  app.delete('/me', {
+    preHandler: [app.authenticate],
+    config: { rateLimit: { max: 3, timeWindow: '1 minute' } },
+  }, async (request, reply) => {
+    const userId = request.user.sub
+    const body = deleteAccountSchema.parse(request.body ?? {})
+
+    const user = await db.selectFrom('users').select(['email', 'password_hash']).where('id', '=', userId).executeTakeFirst()
+    if (!user) return reply.code(404).send({ error: 'User not found' })
+    const confirmed = user.password_hash
+      ? !!body.password && await bcrypt.compare(body.password, user.password_hash)
+      : body.email?.trim().toLowerCase() === user.email.toLowerCase()
+    if (!confirmed) return reply.code(401).send({ error: 'Confirmation failed' })
+
+    await deleteUser(userId)
+    clearAuthCookie(reply)
+    return reply.code(204).send()
+  })
+
   // ─── Google SSO (redirige vers le flow social Arctic) ──────
   app.get('/google', async () => {
     // Use the social provider URL which goes through Arctic
@@ -275,8 +345,10 @@ export async function authRoutes(app: FastifyInstance) {
 
     const user = await db
       .selectFrom('users')
-      .select(['id', 'email', 'role', 'display_name', 'avatar_url', 'is_active',
-               'max_gmail_accounts', 'storage_quota_bytes', 'totp_enabled', 'created_at'])
+      .select((eb) => ['id', 'email', 'role', 'display_name', 'avatar_url', 'is_active',
+               'max_gmail_accounts', 'storage_quota_bytes', 'totp_enabled', 'created_at',
+               // Local account (password change, delete confirmation) vs SSO-only
+               eb('password_hash', 'is not', null).as('has_password')])
       .where('id', '=', userId)
       .executeTakeFirst()
 

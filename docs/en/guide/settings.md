@@ -24,6 +24,12 @@
 
 ## Security
 
+### Password
+
+Local accounts only (a Google or SSO account has no Nid password): **Current password**, **New password** (at least 8 characters) and its confirmation, then **Change password**. Your other open sessions are signed out.
+
+Forgot your password: ask an administrator to reset it ([Administration](admin.md#users)).
+
 ### Two-factor authentication (2FA)
 
 1. Click **Set up 2FA**
@@ -88,3 +94,11 @@ Many providers (Google, Outlook, Yahoo) require an **app password** rather than 
 ### Configuration
 
 Your rules and webhooks in a JSON file, to back them up or move them to another instance: **Export configuration** / **Import a configuration**.
+
+### My data (GDPR)
+
+**Export my data**: everything Nid stores about you in a JSON file (profile, Gmail accounts, rules, archive metadata, activity log…). Mail content is exported as .mbox (above); secrets (passwords, tokens) are left out.
+
+### Delete my account
+
+Type your password (or, for a Google/SSO account, your e-mail address), then **Permanently delete my account** and confirm. Your account, connected Gmail accounts, archives and rules are deleted from Nid; nothing is deleted in Gmail. The instance's last administrator cannot delete their account.

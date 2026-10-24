@@ -6,7 +6,7 @@ import { ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { FormField } from '@/components/app/FormField'
-import { useShares, useTwoFactorDisable, useTwoFactorEnable, useTwoFactorSetup } from '@/hooks/queries'
+import { useChangePassword, useShares, useTwoFactorDisable, useTwoFactorEnable, useTwoFactorSetup } from '@/hooks/queries'
 import { useAuthStore } from '@/store/auth.store'
 import { SettingsCard } from './shared'
 
@@ -115,12 +115,55 @@ function TwoFactorCard() {
   )
 }
 
-/** « Sécurité » (§7.7): 2FA, and the active share links, managed in Archives (not duplicated here). */
+/** Local accounts only (SSO accounts have no password): the other sessions are signed out. */
+function PasswordCard() {
+  const { t } = useTranslation()
+  const id = useId()
+  const change = useChangePassword()
+  const submit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formEl = e.currentTarget
+    const form = new FormData(formEl)
+    const value = (name: string) => String(form.get(name) ?? '')
+    if (value('new') !== value('confirm')) {
+      toast.error(t('settings.password.mismatch'))
+      return
+    }
+    change.mutate({ currentPassword: value('current'), newPassword: value('new') }, {
+      onSuccess: () => {
+        formEl.reset()
+        toast.success(t('settings.password.changed'))
+      },
+      onError: (err) => toast.error(serverError(err, t('common.error'))),
+    })
+  }
+  const input = 'h-11 text-base md:h-9 md:max-w-sm md:text-sm'
+  return (
+    <SettingsCard title={t('settings.password.title')} description={t('settings.password.hint')}>
+      <form onSubmit={submit} className="flex flex-col gap-3">
+        <FormField id={`${id}-current`} label={t('settings.password.current')}>
+          <Input id={`${id}-current`} name="current" type="password" autoComplete="current-password" required className={input} />
+        </FormField>
+        <FormField id={`${id}-new`} label={t('settings.password.new')}>
+          <Input id={`${id}-new`} name="new" type="password" autoComplete="new-password" minLength={8} maxLength={128} required className={input} />
+        </FormField>
+        <FormField id={`${id}-confirm`} label={t('settings.password.confirm')}>
+          <Input id={`${id}-confirm`} name="confirm" type="password" autoComplete="new-password" minLength={8} maxLength={128} required className={input} />
+        </FormField>
+        <Button type="submit" className="h-11 w-fit md:h-9" disabled={change.isPending}>{t('settings.password.submit')}</Button>
+      </form>
+    </SettingsCard>
+  )
+}
+
+/** « Sécurité » (§7.7): password, 2FA, and the active share links, managed in Archives (not duplicated here). */
 export function SecuritySection() {
   const { t } = useTranslation()
   const shares = useShares().data as unknown[] | undefined
+  const hasPassword = !!useAuthStore((s) => s.user?.has_password)
   return (
     <div className="flex flex-col gap-4">
+      {hasPassword && <PasswordCard />}
       <TwoFactorCard />
       <SettingsCard
         title={t('settings.shares.title')}

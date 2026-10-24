@@ -5,13 +5,14 @@ import { createMemoryRouter, Outlet, RouterProvider } from 'react-router'
 import { toast } from 'sonner'
 import i18n from '../i18n'
 import {
-  configApi, dashboardApi, gmailAccountsApi, importApi, labelsApi, notificationsApi, sharingApi, twoFactorApi, webhooksApi,
+  authApi, configApi, dashboardApi, gmailAccountsApi, importApi, labelsApi, notificationsApi, sharingApi, twoFactorApi, webhooksApi,
 } from '../api'
 import { useAuthStore } from '../store/auth.store'
 import { useThemeStore } from '../store/theme.store'
 import { saveBlob } from '../utils/download'
 
 vi.mock('../api', () => ({
+  authApi: { changePassword: vi.fn(), exportMyData: vi.fn(), deleteMe: vi.fn() },
   dashboardApi: { getArchiveStats: vi.fn() },
   notificationsApi: { getPreferences: vi.fn(), updatePreferences: vi.fn() },
   twoFactorApi: { setup: vi.fn(), enable: vi.fn(), disable: vi.fn() },
@@ -43,6 +44,7 @@ function setup(url: string) {
     children: [
       { path: '/settings/:section', element: <SettingsPage /> },
       { path: '/more', element: <h1>more</h1> },
+      { path: '/login', element: <h1>login</h1> },
     ],
   }], { initialEntries: [url] })
   render(<QueryClientProvider client={client}><RouterProvider router={router} /></QueryClientProvider>)
@@ -155,6 +157,30 @@ describe('Sécurité', () => {
     await userEvent.type(screen.getByLabelText('Code à 6 chiffres'), '000000')
     await userEvent.click(screen.getByRole('button', { name: 'Désactiver la 2FA' }))
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Invalid TOTP code'))
+  })
+
+  it('changes the password of a local account, checking the confirmation first', async () => {
+    useAuthStore.setState({ user: { id: 'u1', email: 'ana@example.com', role: 'user', has_password: true } })
+    vi.mocked(authApi.changePassword).mockResolvedValue(undefined)
+    setup('/settings/security')
+    await userEvent.type(screen.getByLabelText('Mot de passe actuel'), 'old-password')
+    await userEvent.type(screen.getByLabelText('Nouveau mot de passe (8 caractères minimum)'), 'new-password')
+    await userEvent.type(screen.getByLabelText('Confirmer le nouveau mot de passe'), 'typo-password')
+    await userEvent.click(screen.getByRole('button', { name: 'Changer le mot de passe' }))
+    expect(toast.error).toHaveBeenCalledWith('Les deux mots de passe ne correspondent pas.')
+    expect(authApi.changePassword).not.toHaveBeenCalled()
+
+    const confirm = screen.getByLabelText('Confirmer le nouveau mot de passe')
+    await userEvent.clear(confirm)
+    await userEvent.type(confirm, 'new-password')
+    await userEvent.click(screen.getByRole('button', { name: 'Changer le mot de passe' }))
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Mot de passe changé'))
+    expect(authApi.changePassword).toHaveBeenCalledWith({ currentPassword: 'old-password', newPassword: 'new-password' }, expect.anything())
+  })
+
+  it('hides the password card for an SSO-only account', () => {
+    setup('/settings/security')
+    expect(screen.queryByRole('heading', { name: 'Mot de passe' })).not.toBeInTheDocument()
   })
 
   it('links to the share links in Archives instead of listing them', async () => {
@@ -320,6 +346,38 @@ describe('Données', () => {
     await waitFor(() => expect(configApi.importConfig).toHaveBeenCalledWith({ rules: [] }, expect.anything()))
     await pick(screen.getByRole('button', { name: 'Importer une configuration' }), new File(['not json'], 'bad.json', { type: 'application/json' }))
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Ce fichier n'est pas une configuration Nid valide"))
+  })
+
+  it('exports all my data as JSON (GDPR)', async () => {
+    vi.mocked(authApi.exportMyData).mockResolvedValue({ version: '1.0' })
+    setup('/settings/data')
+    await userEvent.click(screen.getByRole('button', { name: 'Exporter mes données' }))
+    await waitFor(() => expect(saveBlob).toHaveBeenCalledWith(expect.any(Blob), expect.stringMatching(/^nid-export-.*\.json$/)))
+  })
+
+  it('deletes the account after the password and a confirmation dialog, then goes to /login', async () => {
+    const logout = vi.fn(() => Promise.resolve())
+    useAuthStore.setState({ user: { id: 'u1', email: 'ana@example.com', role: 'user', has_password: true }, logout })
+    vi.mocked(authApi.deleteMe).mockResolvedValue(undefined)
+    const router = setup('/settings/data')
+    await userEvent.type(screen.getByLabelText('Votre mot de passe Nid'), 'my-password')
+    await userEvent.click(screen.getByRole('button', { name: 'Supprimer définitivement mon compte' }))
+    const dialog = await screen.findByRole('alertdialog')
+    expect(authApi.deleteMe).not.toHaveBeenCalled()
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Supprimer définitivement mon compte' }))
+    await waitFor(() => expect(logout).toHaveBeenCalled())
+    expect(authApi.deleteMe).toHaveBeenCalledWith({ password: 'my-password' }, expect.anything())
+    expect(router.state.location.pathname).toBe('/login')
+  })
+
+  it('confirms the deletion of an SSO-only account with its e-mail', async () => {
+    vi.mocked(authApi.deleteMe).mockRejectedValue(new Error('401'))
+    setup('/settings/data')
+    await userEvent.type(screen.getByLabelText('Tapez ana@example.com pour confirmer'), 'ana@example.com')
+    await userEvent.click(screen.getByRole('button', { name: 'Supprimer définitivement mon compte' }))
+    await userEvent.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Supprimer définitivement mon compte' }))
+    expect(authApi.deleteMe).toHaveBeenCalledWith({ email: 'ana@example.com' }, expect.anything())
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('La suppression a échoué : vérifiez la confirmation saisie.'))
   })
 
   it('asks for a Gmail account before mail import/export', () => {

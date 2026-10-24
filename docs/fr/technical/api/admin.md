@@ -89,6 +89,27 @@ Content-Type: application/json
 
 **Réponse :** `{ "id", "email", "role", "is_active", "max_gmail_accounts", "storage_quota_bytes" }`. `400` si aucun champ, `404` si l'utilisateur n'existe pas.
 
+### Réinitialiser le mot de passe
+
+```http
+POST /api/admin/users/:userId/password
+Content-Type: application/json
+```
+
+```json
+{ "password": "provisoire-8-caracteres-min" }
+```
+
+Remplace le mot de passe et révoque toutes les sessions de l'utilisateur. Tracé `admin.reset_password`. **Réponse 204**, `404` si l'utilisateur n'existe pas.
+
+### Supprimer un utilisateur
+
+```http
+DELETE /api/admin/users/:userId
+```
+
+Suppression définitive (comptes Gmail, archives en base et sur disque, règles…). Tracé `admin.delete_user` (email dans `details`). **Réponse 204**. `400` sur son propre compte (passer par `DELETE /api/auth/me`), `404` si inconnu, `409` pour le dernier admin actif.
+
 ---
 
 ## Jobs (vue globale)

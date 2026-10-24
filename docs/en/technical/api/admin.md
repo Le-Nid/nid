@@ -89,6 +89,27 @@ Content-Type: application/json
 
 **Response:** `{ "id", "email", "role", "is_active", "max_gmail_accounts", "storage_quota_bytes" }`. `400` if no field, `404` if the user does not exist.
 
+### Reset a password
+
+```http
+POST /api/admin/users/:userId/password
+Content-Type: application/json
+```
+
+```json
+{ "password": "temporary-at-least-8-chars" }
+```
+
+Replaces the password and revokes every session of the user. Logged as `admin.reset_password`. **Response 204**, `404` if the user does not exist.
+
+### Delete a user
+
+```http
+DELETE /api/admin/users/:userId
+```
+
+Permanent deletion (Gmail accounts, archives in the DB and on disk, rules…). Logged as `admin.delete_user` (email in `details`). **Response 204**. `400` on one's own account (use `DELETE /api/auth/me`), `404` if unknown, `409` for the last active admin.
+
 ---
 
 ## Jobs (global view)

@@ -26,6 +26,10 @@ export type AuditAction =
   | 'admin.empty_archive_trash'
   | 'user.2fa_enable'
   | 'user.2fa_disable'
+  | 'user.password_change'
+  | 'user.export_data'
+  | 'admin.reset_password'
+  | 'admin.delete_user'
 
 export async function logAudit(
   userId: string,

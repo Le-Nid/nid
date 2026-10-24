@@ -153,6 +153,17 @@ export const jobsApi = {
 export const authApi = {
   getSocialAuthUrl: (provider: string) =>
     api.get(`/api/auth/social/${provider}/url`).then((r) => r.data),
+
+  changePassword: (body: { currentPassword: string; newPassword: string }) =>
+    api.patch('/api/auth/password', body).then((r) => r.data),
+
+  /** GDPR export: everything Nid stores about the user, as JSON. */
+  exportMyData: () =>
+    api.get('/api/auth/me/export').then((r) => r.data),
+
+  /** Irreversible. `password` for a local account, `email` for an SSO-only one. */
+  deleteMe: (body: { password?: string; email?: string }) =>
+    api.delete('/api/auth/me', { data: body }).then((r) => r.data),
 }
 
 // ─── Admin ────────────────────────────────────────────────
@@ -168,6 +179,14 @@ export const adminApi = {
 
   updateUser: (userId: string, dto: Record<string, any>) =>
     api.patch(`/api/admin/users/${userId}`, dto).then((r) => r.data),
+
+  /** Sets a new password and signs the user out everywhere. */
+  resetPassword: (userId: string, password: string) =>
+    api.post(`/api/admin/users/${userId}/password`, { password }).then((r) => r.data),
+
+  /** Irreversible: the user, their Gmail accounts and archives. */
+  deleteUser: (userId: string) =>
+    api.delete(`/api/admin/users/${userId}`).then((r) => r.data),
 
   listJobs: (params: Record<string, any> = {}) =>
     api.get('/api/admin/jobs', { params }).then((r) => r.data),

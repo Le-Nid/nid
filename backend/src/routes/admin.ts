@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
+import bcrypt from 'bcrypt'
 import { getDb } from '../db'
 import { sql } from 'kysely'
 import { escapeIlike, notFound } from '../utils/db'
@@ -9,6 +10,7 @@ import { getInstanceQuotaStats } from '../gmail/quota.service'
 import { emptyAllArchiveTrash, getArchiveTrashSummary } from '../archive/trash.service'
 import { getLastIntegrityCheck } from '../archive/integrity.service'
 import { logAudit } from '../audit/audit.service'
+import { deleteUser } from '../account/account.service'
 
 const updateUserSchema = z.object({
   role: z.enum(['admin', 'user']).optional(),
@@ -16,6 +18,8 @@ const updateUserSchema = z.object({
   max_gmail_accounts: z.number().int().min(1).max(50).optional(),
   storage_quota_bytes: z.number().int().min(0).optional(),
 })
+
+const resetPasswordSchema = z.object({ password: z.string().min(8).max(128) })
 
 const auditQuerySchema = z.object({
   user: z.string().trim().max(255).optional(),
@@ -138,6 +142,37 @@ export async function adminRoutes(app: FastifyInstance) {
 
     if (!updated) return notFound(reply, 'User not found')
     return updated
+  })
+
+  // ─── Réinitialiser le mot de passe (déconnecte ses sessions) ─
+  app.post('/users/:userId/password', adminAuth, async (request, reply) => {
+    const { userId } = request.params as { userId: string }
+    const { password } = resetPasswordSchema.parse(request.body)
+
+    const updated = await db
+      .updateTable('users')
+      .set({ password_hash: await bcrypt.hash(password, 12), password_changed_at: new Date(), updated_at: new Date() })
+      .where('id', '=', userId)
+      .returning('email')
+      .executeTakeFirst()
+
+    if (!updated) return notFound(reply, 'User not found')
+    await logAudit(request.user.sub, 'admin.reset_password', {
+      targetType: 'user', targetId: userId, details: { email: updated.email }, ipAddress: request.ip,
+    })
+    return reply.code(204).send()
+  })
+
+  // ─── Supprimer un utilisateur (irréversible) ──────────────
+  app.delete('/users/:userId', adminAuth, async (request, reply) => {
+    const { userId } = request.params as { userId: string }
+    if (userId === request.user.sub) return reply.code(400).send({ error: 'Use account settings to delete yourself' })
+
+    const { email } = await deleteUser(userId)
+    await logAudit(request.user.sub, 'admin.delete_user', {
+      targetType: 'user', targetId: userId, details: { email }, ipAddress: request.ip,
+    })
+    return reply.code(204).send()
   })
 
   // ─── Vue globale des jobs ─────────────────────────────────

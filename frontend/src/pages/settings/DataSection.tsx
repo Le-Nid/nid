@@ -1,12 +1,14 @@
-import { useId, useRef, type ChangeEvent, type FormEvent } from 'react'
+import { useId, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { Download, Upload } from 'lucide-react'
+import { Download, Trash2, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { ConfirmDialog } from '@/components/app/ConfirmDialog'
 import { FormField } from '@/components/app/FormField'
-import { useExportConfig, useImportConfig, useImportImap, useImportMbox } from '@/hooks/queries'
+import { useDeleteMe, useExportConfig, useExportMyData, useImportConfig, useImportImap, useImportMbox } from '@/hooks/queries'
+import { useAuthStore } from '@/store/auth.store'
 import { useAccount } from '@/hooks/useAccount'
 import { saveBlob } from '@/utils/download'
 import { useMboxExport } from '../archives/shared'
@@ -140,7 +142,74 @@ function ConfigCard() {
   )
 }
 
-/** « Données » (§7.7, P6): mbox (Takeout, L4) / IMAP import and mbox export into the active account, config export/import. */
+/** GDPR export (`/api/auth/me/export`): every stored datum as JSON, mails excepted (mbox export above). */
+function MyDataCard() {
+  const { t } = useTranslation()
+  const exporter = useExportMyData()
+  const save = () => exporter.mutate(undefined, {
+    onSuccess: (data) => saveBlob(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }), `nid-export-${today()}.json`),
+    onError: () => toast.error(t('common.error')),
+  })
+  return (
+    <SettingsCard title={t('settings.data.myData')} description={t('settings.data.myDataHint')}>
+      <Button variant="outline" className="h-11 w-fit md:h-9" disabled={exporter.isPending} onClick={save}>
+        <Download aria-hidden="true" />{t('settings.data.myDataExport')}
+      </Button>
+    </SettingsCard>
+  )
+}
+
+/** Account deletion (D2): confirmed with the password, or the e-mail for an SSO-only account, then a dialog. */
+function DeleteAccountCard() {
+  const { t } = useTranslation()
+  const id = useId()
+  const navigate = useNavigate()
+  const { user, logout } = useAuthStore()
+  const remove = useDeleteMe()
+  const [secret, setSecret] = useState('')
+  const [confirming, setConfirming] = useState(false)
+  const hasPassword = !!user?.has_password
+
+  const confirm = () => remove.mutate(hasPassword ? { password: secret } : { email: secret }, {
+    onSuccess: async () => {
+      await logout()
+      navigate('/login', { replace: true })
+    },
+    onError: () => toast.error(t('settings.data.deleteFailed')),
+  })
+
+  return (
+    <SettingsCard title={t('settings.data.delete')} description={t('settings.data.deleteHint')}>
+      <form onSubmit={(e) => { e.preventDefault(); setConfirming(true) }} className="flex flex-col gap-3">
+        <FormField id={id} label={hasPassword ? t('settings.data.deletePassword') : t('settings.data.deleteEmail', { email: user?.email })}>
+          <Input
+            id={id}
+            type={hasPassword ? 'password' : 'email'}
+            autoComplete={hasPassword ? 'current-password' : 'off'}
+            required
+            value={secret}
+            onChange={(e) => setSecret(e.target.value)}
+            className="h-11 text-base md:h-9 md:max-w-sm md:text-sm"
+          />
+        </FormField>
+        <Button type="submit" variant="destructive" className="h-11 w-fit md:h-9" disabled={remove.isPending || !secret}>
+          <Trash2 aria-hidden="true" />{t('settings.data.deleteSubmit')}
+        </Button>
+      </form>
+      <ConfirmDialog
+        open={confirming}
+        onOpenChange={setConfirming}
+        title={t('settings.data.deleteTitle')}
+        description={t('settings.data.deleteConfirm')}
+        confirmLabel={t('settings.data.deleteSubmit')}
+        onConfirm={confirm}
+        destructive
+      />
+    </SettingsCard>
+  )
+}
+
+/** « Données » (§7.7, P6): mbox (Takeout, L4) / IMAP import and mbox export into the active account, config export/import, GDPR export and account deletion. */
 export function DataSection() {
   const { t } = useTranslation()
   const { accountId, account } = useAccount()
@@ -155,6 +224,8 @@ export function DataSection() {
         </p>
       )}
       <ConfigCard />
+      <MyDataCard />
+      <DeleteAccountCard />
     </div>
   )
 }

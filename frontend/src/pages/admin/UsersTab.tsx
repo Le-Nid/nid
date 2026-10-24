@@ -3,16 +3,18 @@ import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { createColumnHelper, useTable } from '@tanstack/react-table'
 import { toast } from 'sonner'
-import { Pencil, Users } from 'lucide-react'
+import { Pencil, Trash2, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { ConfirmDialog } from '@/components/app/ConfirmDialog'
 import { DataList, dataListFeatures } from '@/components/app/DataList'
 import { EmptyState } from '@/components/app/EmptyState'
 import { FormField } from '@/components/app/FormField'
 import { LoadError } from '@/components/app/LoadError'
-import { useAdminUsers, useUpdateAdminUser } from '@/hooks/queries'
+import { useAdminDeleteUser, useAdminResetPassword, useAdminUsers, useUpdateAdminUser } from '@/hooks/queries'
+import { useAuthStore } from '@/store/auth.store'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { formatBytes, formatRelative } from '@/utils/format'
 import { actionsHeader } from '../archives/shared'
@@ -79,6 +81,55 @@ function buildColumns(t: TFunction, locale: string, edit: { current: (u: AdminUs
       ),
     }),
   ])
+}
+
+/** Password reset (signs the user out everywhere) and deletion, outside the edit form: each is its own action. */
+function UserDangerZone({ user, onDeleted }: Readonly<{ user: AdminUser; onDeleted: () => void }>) {
+  const { t } = useTranslation()
+  const id = useId()
+  const isSelf = useAuthStore((s) => s.user?.id) === user.id
+  const reset = useAdminResetPassword()
+  const remove = useAdminDeleteUser()
+  const [password, setPassword] = useState('')
+
+  const submitReset = (e: FormEvent) => {
+    e.preventDefault()
+    reset.mutate({ userId: user.id, password }, {
+      onSuccess: () => {
+        setPassword('')
+        toast.success(t('admin.users.passwordReset'))
+      },
+      onError: () => toast.error(t('admin.users.failed')),
+    })
+  }
+
+  return (
+    <div className="flex flex-col gap-4 border-t px-4 pt-4">
+      {/* Own password: Settings › Sécurité (a reset here would revoke the admin's own session) */}
+      {!isSelf && <form onSubmit={submitReset} className="flex flex-col gap-2">
+        <FormField id={`${id}-pwd`} label={t('admin.users.newPassword')}>
+          <Input id={`${id}-pwd`} type="password" autoComplete="new-password" minLength={8} maxLength={128} required value={password} onChange={(e) => setPassword(e.target.value)} className="h-11 text-base md:h-9 md:text-sm" />
+        </FormField>
+        <Button type="submit" variant="outline" className="h-11 w-fit md:h-9" disabled={reset.isPending || password.length < 8}>{t('admin.users.resetPassword')}</Button>
+      </form>}
+      {!isSelf && (
+        <ConfirmDialog
+          trigger={<Button type="button" variant="destructive" className="h-11 w-fit md:h-9" disabled={remove.isPending}><Trash2 aria-hidden="true" />{t('admin.users.delete')}</Button>}
+          title={t('admin.users.deleteTitle', { email: user.email })}
+          description={t('admin.users.deleteConfirm')}
+          confirmLabel={t('admin.users.delete')}
+          onConfirm={() => remove.mutate(user.id, {
+            onSuccess: () => {
+              toast.success(t('admin.users.deleted'))
+              onDeleted()
+            },
+            onError: () => toast.error(t('admin.users.failed')),
+          })}
+          destructive
+        />
+      )}
+    </div>
+  )
 }
 
 function UserForm({ user, onClose }: Readonly<{ user: AdminUser; onClose: () => void }>) {
@@ -173,7 +224,12 @@ export function UsersTab() {
       <Pager page={page} total={query.data?.total ?? 0} onChange={(p) => set({ page: String(p) })} />
       <Sheet open={!!editing} onOpenChange={(open) => !open && setEditing(null)}>
         <SheetContent side={isMobile ? 'bottom' : 'right'} showCloseButton={false} className="max-h-[90dvh] sm:max-w-md">
-          {editing && <UserForm key={editing.id} user={editing} onClose={() => setEditing(null)} />}
+          {editing && (
+            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+              <UserForm key={editing.id} user={editing} onClose={() => setEditing(null)} />
+              <UserDangerZone key={`${editing.id}-danger`} user={editing} onDeleted={() => setEditing(null)} />
+            </div>
+          )}
         </SheetContent>
       </Sheet>
     </div>

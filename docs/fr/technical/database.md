@@ -17,6 +17,7 @@ Migrations in-code dans `backend/src/db/migrations/`, enregistrées dans `backen
 | `007_archive_body_text` | `archived_mails.body_text`, ajouté au `search_vector` (poids D) |
 | `008_account_backup_prefs` | `gmail_accounts.backup_enabled`, `backup_interval`, `last_backup_at`, `auth_error_at` ; tokens nullables ; `notification_preferences.remote_images` |
 | `009_drop_pii_tracking` | Suppression des tables `pii_findings` et `tracking_pixels` |
+| `010_password_changed_at` | `users.password_changed_at` : les JWT émis avant sont refusés (changement / reset du mot de passe) |
 
 ---
 
@@ -39,6 +40,7 @@ erDiagram
         boolean totp_enabled "default false"
         varchar encryption_key_hash "nullable"
         timestamptz last_login_at
+        timestamptz password_changed_at
         timestamptz created_at
         timestamptz updated_at
     }

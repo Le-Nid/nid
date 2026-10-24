@@ -53,6 +53,10 @@ Returns audit logs for the authenticated user, paginated and sorted by descendin
 | `user.login_social` | Social provider login (`details.provider`) |
 | `user.2fa_enable` | 2FA activation |
 | `user.2fa_disable` | 2FA deactivation |
+| `user.password_change` | Password change |
+| `user.export_data` | GDPR data export |
+| `admin.reset_password` | Password reset by an admin |
+| `admin.delete_user` | User deleted by an admin |
 | `rule.create_from_template` | Rule creation from template |
 | `bulk.trash` | Bulk operation: move to trash |
 | `bulk.archive` | Bulk operation: archive |

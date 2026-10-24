@@ -93,6 +93,36 @@ Réémet un JWT neuf (cookie) sans se reconnecter.
 
 ---
 
+### PATCH /api/auth/password 🔒
+
+Changer le mot de passe d'un compte local. Révoque toutes les autres sessions (`users.password_changed_at`) ; la session courante reçoit un nouveau cookie. Rate limit : 5/min.
+
+```json
+{ "currentPassword": "ancien", "newPassword": "nouveau-8-caracteres-min" }
+```
+
+**Réponse 204**. `400` si le compte n'a pas de mot de passe (SSO uniquement), `400` aussi si le mot de passe actuel est faux (pas `401`, que le frontend traduit en redirection vers `/login`).
+
+---
+
+### GET /api/auth/me/export 🔒
+
+Export RGPD : toutes les données que Nid conserve sur l'utilisateur, en JSON (`Content-Disposition: attachment`). Profil, comptes sociaux et Gmail, préférences, notifications, journal d'audit, webhooks, recherches enregistrées, rétention, partages, jobs, règles, libellés, expirations, analyses, métadonnées des mails archivés et des pièces jointes. Sont exclus : les secrets (hash du mot de passe et du TOTP, tokens OAuth, identifiants des webhooks, tokens de partage) et le contenu des mails, exportable par compte en mbox/ZIP. Rate limit : 3/min.
+
+---
+
+### DELETE /api/auth/me 🔒
+
+Supprime définitivement le compte : l'utilisateur, ses comptes Gmail, ses archives (lignes en base et fichiers sous `ARCHIVE_PATH/<accountId>/`), ses règles et le reste (cascade). Rien n'est supprimé dans Gmail. Rate limit : 3/min.
+
+```json
+{ "password": "..." }
+```
+
+Un compte local confirme avec `password`, un compte SSO uniquement avec `email` (son adresse). **Réponse 204** (cookie effacé). `401` si la confirmation est fausse, `409` s'il s'agit du dernier admin actif.
+
+---
+
 ### GET /api/auth/me 🔒
 
 Récupérer le profil utilisateur et les comptes Gmail associés.
@@ -104,7 +134,7 @@ Récupérer le profil utilisateur et les comptes Gmail associés.
     "id": "uuid", "email": "user@example.com", "role": "user",
     "display_name": "John Doe", "avatar_url": "https://...", "is_active": true,
     "max_gmail_accounts": 3, "storage_quota_bytes": 5368709120,
-    "totp_enabled": false, "created_at": "..."
+    "totp_enabled": false, "has_password": true, "created_at": "..."
   },
   "gmailAccounts": [
     {
@@ -119,6 +149,7 @@ Récupérer le profil utilisateur et les comptes Gmail associés.
 
 - `needs_reauth` : Google a refusé le refresh token, le compte doit être reconnecté (« Action requise »).
 - `last_sync_at` : dernière synchronisation des libellés (`null` si jamais).
+- `has_password` : compte local avec mot de passe (`false` : SSO uniquement).
 
 ---
 
