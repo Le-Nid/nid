@@ -58,6 +58,15 @@ Outside the `/api` prefix, no authentication. Returns `200` when the service is 
 { "status": "ok", "version": "0.1.0", "timestamp": "2026-03-20T10:00:00.000Z" }
 ```
 
+## Metrics
+
+```
+GET /api/metrics
+Authorization: Bearer <METRICS_TOKEN>
+```
+
+Prometheus text format. Only exists when `METRICS_TOKEN` is set (`404` otherwise), `401` on a wrong token. See [Production › Monitoring](../../installation/production.md#monitoring-prometheus).
+
 ---
 
 ## Common response codes

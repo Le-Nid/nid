@@ -58,6 +58,15 @@ Hors préfixe `/api`, sans authentification. Retourne `200` si le service est op
 { "status": "ok", "version": "0.1.0", "timestamp": "2026-03-20T10:00:00.000Z" }
 ```
 
+## Métriques
+
+```
+GET /api/metrics
+Authorization: Bearer <METRICS_TOKEN>
+```
+
+Format texte Prometheus. N'existe que si `METRICS_TOKEN` est défini (`404` sinon), `401` si le jeton est faux. Voir [Production › Supervision](../../installation/production.md#supervision-prometheus).
+
 ---
 
 ## Codes de réponse communs

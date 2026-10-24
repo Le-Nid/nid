@@ -25,6 +25,9 @@ export const config = {
   FRONTEND_URL: process.env.FRONTEND_URL ?? 'http://localhost:3000',
   ARCHIVE_PATH: process.env.ARCHIVE_PATH ?? '/archives',
 
+  // Bearer token of GET /api/metrics (Prometheus); empty = endpoint disabled
+  METRICS_TOKEN: process.env.METRICS_TOKEN ?? '',
+
   // Social OAuth providers (optionnels — les providers non configurés sont désactivés)
   MICROSOFT_CLIENT_ID:     process.env.MICROSOFT_CLIENT_ID ?? '',
   MICROSOFT_CLIENT_SECRET: process.env.MICROSOFT_CLIENT_SECRET ?? '',

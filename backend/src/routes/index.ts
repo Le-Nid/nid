@@ -27,8 +27,11 @@ import { expirationRoutes } from './expiration'
 import { sharingRoutes } from './sharing'
 import { eventsRoutes } from './events'
 import { labelsRoutes } from './labels'
+import { registerMetrics } from './metrics'
 
 export async function registerRoutes(app: FastifyInstance) {
+  await registerMetrics(app)
+
   // Health check
   app.get('/health', async () => ({
     status: 'ok',

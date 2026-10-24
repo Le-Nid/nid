@@ -26,6 +26,7 @@ services:
       BULK_QUERY_MAX: ${BULK_QUERY_MAX:-50000}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
       ARCHIVE_PATH: /archives
+      METRICS_TOKEN: ${METRICS_TOKEN:-}
     volumes:
       - ./volumes/archives:/archives
     security_opt:
