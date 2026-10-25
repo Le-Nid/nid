@@ -30,6 +30,12 @@ Comptes locaux uniquement (un compte Google ou SSO n'a pas de mot de passe Nid) 
 
 Mot de passe oublié : sur l'écran de connexion, **Mot de passe oublié ?** envoie un lien valable 1 heure (si l'instance a un serveur SMTP, voir [Configuration](../installation/configuration.md#e-mail-smtp)). Sinon, demandez à un administrateur de le réinitialiser ([Administration](admin.md#utilisateurs)).
 
+### Passkeys
+
+Une passkey remplace mot de passe et code 2FA : on se connecte avec le code ou la biométrie de l'appareil (Face ID, Windows Hello, empreinte, clé de sécurité). Donnez-lui un **Nom** (ex. « iPhone »), puis **Ajouter une passkey** et suivez la fenêtre du navigateur. Ensuite, sur l'écran de connexion : **Se connecter avec une passkey**, sans saisir d'e-mail. La liste indique la dernière utilisation de chaque passkey ; l'icône corbeille la supprime.
+
+La carte n'apparaît que si le navigateur gère les passkeys. Une passkey est liée à l'adresse de l'instance : si cette adresse change, il faut en recréer.
+
 ### Authentification à deux facteurs (2FA)
 
 1. Cliquez sur **Configurer la 2FA**

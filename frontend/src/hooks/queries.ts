@@ -5,8 +5,9 @@ import {
   analyticsApi, notificationsApi,
   auditApi, webhooksApi, savedSearchesApi, unifiedApi, archiveThreadsApi,
   retentionApi, importApi,
-  sharingApi, labelsApi, gmailAccountsApi, twoFactorApi, configApi, integrityApi, authApi,
+  sharingApi, labelsApi, gmailAccountsApi, twoFactorApi, configApi, integrityApi, authApi, passkeysApi,
 } from '../api'
+import { startRegistration } from '@simplewebauthn/browser'
 import { useAuthStore } from '../store/auth.store'
 
 // ─── Query key factories ──────────────────────────────────
@@ -59,6 +60,7 @@ export const queryKeys = {
   webhooks: () => ['webhooks'] as const,
   retention: () => ['retention'] as const,
   shares: () => ['shares'] as const,
+  passkeys: () => ['passkeys'] as const,
 }
 
 // ─── Dashboard ────────────────────────────────────────────
@@ -502,6 +504,32 @@ export const useSyncGmailAccount = () => useMeMutation(labelsApi.sync)
 export const useTwoFactorSetup = () => useMutation({ mutationFn: twoFactorApi.setup })
 export const useTwoFactorEnable = () => useMeMutation(twoFactorApi.enable)
 export const useTwoFactorDisable = () => useMeMutation(twoFactorApi.disable)
+
+// ─── Passkeys ─────────────────────────────────────────────
+
+export function usePasskeys() {
+  return useQuery({ queryKey: queryKeys.passkeys(), queryFn: passkeysApi.list })
+}
+
+/** Options from the server → the browser's passkey dialog → verified and stored under `name`. */
+export function useAddPasskey() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (name: string) => {
+      const response = await startRegistration({ optionsJSON: await passkeysApi.registerOptions() })
+      return passkeysApi.registerVerify(name, response)
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.passkeys() }),
+  })
+}
+
+export function useRemovePasskey() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: passkeysApi.remove,
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.passkeys() }),
+  })
+}
 
 export const useChangePassword = () => useMutation({ mutationFn: authApi.changePassword })
 export const useExportMyData = () => useMutation({ mutationFn: authApi.exportMyData })

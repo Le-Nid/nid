@@ -35,6 +35,10 @@ Passwords are hashed with **bcrypt** (12 rounds). A dummy hash is computed even 
 
 Two-factor authentication is optional for local accounts. It uses **TOTP** (RFC 6238) via `otplib`, with QR code generation for setup.
 
+### Passkeys (WebAuthn)
+
+Passwordless sign-in through `@simplewebauthn/server`, bound to the frontend's site (`FRONTEND_URL`). User verification (the device's PIN or biometrics) is required, so the passkey is two factors on its own: the TOTP 2FA is not asked again. Only the public key is stored; challenges are single-use (Redis, 5 min). See [API › Passkeys](api/auth.md#passkeys-webauthn).
+
 ### Multi-Provider SSO
 
 Social Login uses the **Arctic** library with server-side OAuth2 code exchange. Social tokens never transit through the frontend.

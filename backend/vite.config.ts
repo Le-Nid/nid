@@ -33,6 +33,7 @@ export default defineConfig({
         'qrcode',
         'prom-client',
         'nodemailer',
+        /^@simplewebauthn\//,
       ],
     },
     // Pas de minification pour un serveur Node (debug plus facile + pas de gain réel)

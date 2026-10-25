@@ -174,6 +174,27 @@ export const authApi = {
     api.delete('/api/auth/me', { data: body }).then((r) => r.data),
 }
 
+// ─── Passkeys (WebAuthn) ──────────────────────────────────
+export const passkeysApi = {
+  list: () =>
+    api.get('/api/auth/passkeys').then((r) => r.data),
+
+  registerOptions: () =>
+    api.post('/api/auth/passkeys/register/options').then((r) => r.data),
+
+  registerVerify: (name: string, response: unknown) =>
+    api.post('/api/auth/passkeys/register/verify', { name, response }).then((r) => r.data),
+
+  remove: (id: string) =>
+    api.delete(`/api/auth/passkeys/${id}`).then((r) => r.data),
+
+  loginOptions: () =>
+    api.post('/api/auth/passkeys/login/options').then((r) => r.data),
+
+  loginVerify: (challengeId: string, response: unknown) =>
+    api.post('/api/auth/passkeys/login/verify', { challengeId, response }).then((r) => r.data),
+}
+
 // ─── Admin ────────────────────────────────────────────────
 export const adminApi = {
   getStats: () =>
