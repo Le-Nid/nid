@@ -73,7 +73,6 @@ logger.warn('something unusual happened')
 | `encryption` | `privacy/encryption.service.ts` | Archive encryption |
 | `unsubscribe` | `unsubscribe/unsubscribe.service.ts` | Newsletter scan |
 | `job-sse` | `routes/job-sse.ts` | SSE broadcast |
-| `mcp` | `mcp-server.ts` | MCP server |
 
 ### Fastify Error Handling
 

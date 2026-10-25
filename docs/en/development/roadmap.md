@@ -164,7 +164,7 @@
 
 ### Other
 - [x] Deduplicate attachments by content hash
-- [x] MCP server to interact with the app?
+- [x] MCP server to interact with the app? — *removed: unauthenticated stdio (direct database access), not in the Docker image, no real use*
 
 ## v2.4 — Quality, industrialization & polish (✅ completed)
 
@@ -183,7 +183,7 @@
 
 ### MCP Tools
 
-- [x] **Extended MCP tools** — Added notification creation (`create-notification`), rules (`create-rule`, `update-rule`, `delete-rule`, `run-rule`), and saved searches (`create-saved-search`, `update-saved-search`, `delete-saved-search`) to the MCP server. See [MCP Server](../guide/mcp-server.md)
+- [x] **Extended MCP tools** — Added notification creation (`create-notification`), rules (`create-rule`, `update-rule`, `delete-rule`, `run-rule`), and saved searches (`create-saved-search`, `update-saved-search`, `delete-saved-search`) to the MCP server — *removed: unauthenticated stdio (direct database access), not in the Docker image, no real use*
 
 ### Ops & Deployment
 

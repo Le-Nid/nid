@@ -116,7 +116,7 @@ export async function rulesRoutes(app: FastifyInstance) {
   });
 
   // « Règles actives » KPI (Vue d'ensemble): `processed` is what handleRule stores in jobs.payload.result,
-  // i.e. manual and scheduled runs; MCP runs call runRule directly and leave no job row.
+  // i.e. manual and scheduled runs.
   app.get("/:accountId/stats", accountAuth, async (request) => {
     const { accountId } = request.params as { accountId: string };
     const db = getDb();

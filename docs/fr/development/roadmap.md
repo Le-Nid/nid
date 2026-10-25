@@ -165,7 +165,7 @@
 
 ### autre
 - [x] dédupliquer les pièces jointes par hash de contenu
-- [x] serveur mcp pour manipuler l'appli ?
+- [x] serveur mcp pour manipuler l'appli ? — *retiré : stdio sans authentification (accès direct à la base), absent de l'image Docker, sans usage réel*
 
 
 ## v2.4 — Qualité, industrialisation & polish (✅ complété)
@@ -185,7 +185,7 @@
 
 ### Outils MCP
 
-- [x] **Outils MCP étendus** — Ajout de la création d'alertes (`create-notification`), de règles (`create-rule`, `update-rule`, `delete-rule`, `run-rule`), et de recherches sauvegardées (`create-saved-search`, `update-saved-search`, `delete-saved-search`) dans le serveur MCP. Voir [Serveur MCP](../guide/mcp-server.md)
+- [x] **Outils MCP étendus** — Ajout de la création d'alertes (`create-notification`), de règles (`create-rule`, `update-rule`, `delete-rule`, `run-rule`), et de recherches sauvegardées (`create-saved-search`, `update-saved-search`, `delete-saved-search`) dans le serveur MCP — *retiré : stdio sans authentification (accès direct à la base), absent de l'image Docker, sans usage réel*
 
 ### Ops & Déploiement
 
