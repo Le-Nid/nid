@@ -9,6 +9,7 @@
 | [Gmail accounts](#gmail-accounts) | `/settings/gmail` |
 | [Notifications & webhooks](#notifications-webhooks) | `/settings/notifications` |
 | [Data](#data) | `/settings/data` |
+| [About](#about) | `/settings/about` |
 
 ---
 
@@ -102,3 +103,11 @@ Your rules and webhooks in a JSON file, to back them up or move them to another 
 ### Delete my account
 
 Type your password (or, for a Google/SSO account, your e-mail address), then **Permanently delete my account** and confirm. Your account, connected Gmail accounts, archives and rules are deleted from Nid; nothing is deleted in Gmail. The instance's last administrator cannot delete their account.
+
+---
+
+## About
+
+- **Version**: the installed Nid version, and whether a newer one is published (checked twice a day, with the time of the last check). When an update exists, the card links to what's new and gives the command to run.
+- **What Nid talks to**: the external services the instance talks to (Google, ghcr.io for the version check, your SMTP, your webhooks, the configured SSO providers). No telemetry.
+- **Project**: MIT licence, source code, release history, reporting a problem.

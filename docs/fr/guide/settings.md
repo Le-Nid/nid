@@ -9,6 +9,7 @@ Les **Paramètres** (`/settings/…`) sont découpés en cinq sections, en ongle
 | [Comptes Gmail](#comptes-gmail) | `/settings/gmail` |
 | [Notifications & webhooks](#notifications-webhooks) | `/settings/notifications` |
 | [Données](#donnees) | `/settings/data` |
+| [À propos](#a-propos) | `/settings/about` |
 
 ---
 
@@ -102,3 +103,11 @@ Vos règles et webhooks dans un fichier JSON, pour les sauvegarder ou les repren
 ### Supprimer mon compte
 
 Saisissez votre mot de passe (ou, pour un compte Google/SSO, votre adresse e-mail), puis **Supprimer définitivement mon compte** et confirmez. Votre compte, vos comptes Gmail connectés, vos archives et vos règles sont supprimés de Nid ; rien n'est supprimé dans Gmail. Le dernier administrateur de l'instance ne peut pas supprimer son compte.
+
+---
+
+## À propos
+
+- **Version** : la version de Nid installée, et si une plus récente est publiée (vérification deux fois par jour, avec la date de la dernière). Quand une mise à jour existe, la carte donne le lien vers les nouveautés et la commande à lancer.
+- **Ce que Nid contacte** : la liste des services externes auxquels l'instance parle (Google, ghcr.io pour la vérification des versions, votre SMTP, vos webhooks, les fournisseurs SSO configurés). Aucune télémétrie.
+- **Projet** : licence MIT, code source, historique des versions, signalement d'un problème.

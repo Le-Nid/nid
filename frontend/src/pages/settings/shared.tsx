@@ -36,7 +36,7 @@ export function SwitchRow({ label, description, checked, onChange, disabled }: R
 }
 
 /** Slugs of /settings/:section (§7.7), in tab order; « Plus » lists them too. */
-export const SETTINGS_SECTIONS = ['account', 'security', 'gmail', 'notifications', 'data'] as const
+export const SETTINGS_SECTIONS = ['account', 'security', 'gmail', 'notifications', 'data', 'about'] as const
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number]
 
 /** Same look as the shadcn Input, for native selects (mobile pickers, no extra dependency). */

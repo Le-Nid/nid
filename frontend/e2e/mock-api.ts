@@ -41,6 +41,7 @@ type Handler = unknown | ((req: Request) => unknown)
 const ROUTES: [string, RegExp, Handler][] = [
   ['GET', /^\/api\/auth\/me$/, me],
   ['GET', /^\/api\/auth\/config$/, { allowRegistration: true, socialProviders: [] }],
+  ['GET', /^\/api\/about$/, { version: '0.5.1', updateCheck: true, latestVersion: '0.5.1', updateAvailable: false, checkedAt: '2026-10-25T08:00:00Z', checkFailed: false }],
   ['GET', /^\/api\/notifications\/preferences$/, settings.preferences],
   ['PUT', /^\/api\/notifications\/preferences$/, { ok: true }],
   ['PATCH', /^\/api\/auth\/gmail\/[^/]+$/, (req: Request) => ({ id: ACCOUNT, ...req.postDataJSON() })],

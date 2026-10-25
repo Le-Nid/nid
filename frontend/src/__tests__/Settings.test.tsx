@@ -5,13 +5,14 @@ import { createMemoryRouter, Outlet, RouterProvider } from 'react-router'
 import { toast } from 'sonner'
 import i18n from '../i18n'
 import {
-  authApi, configApi, dashboardApi, gmailAccountsApi, importApi, labelsApi, notificationsApi, sharingApi, twoFactorApi, webhooksApi,
+  aboutApi, authApi, configApi, dashboardApi, gmailAccountsApi, importApi, labelsApi, notificationsApi, sharingApi, twoFactorApi, webhooksApi,
 } from '../api'
 import { useAuthStore } from '../store/auth.store'
 import { useThemeStore } from '../store/theme.store'
 import { saveBlob } from '../utils/download'
 
 vi.mock('../api', () => ({
+  aboutApi: { get: vi.fn() },
   authApi: { changePassword: vi.fn(), exportMyData: vi.fn(), deleteMe: vi.fn() },
   dashboardApi: { getArchiveStats: vi.fn() },
   notificationsApi: { getPreferences: vi.fn(), updatePreferences: vi.fn() },
@@ -71,11 +72,11 @@ beforeEach(() => {
 })
 
 describe('desktop layout', () => {
-  it('shows the five sections as tabs and switches section in the URL', async () => {
+  it('shows the six sections as tabs and switches section in the URL', async () => {
     const router = setup('/settings/account')
     expect(screen.getByRole('heading', { level: 1, name: 'Paramètres' })).toBeInTheDocument()
     const tabs = screen.getByRole('tablist', { name: 'Sections des paramètres' })
-    expect(within(tabs).getAllByRole('tab').map((t) => t.textContent)).toEqual(['Compte', 'Sécurité', 'Comptes Gmail', 'Notifications & webhooks', 'Données'])
+    expect(within(tabs).getAllByRole('tab').map((t) => t.textContent)).toEqual(['Compte', 'Sécurité', 'Comptes Gmail', 'Notifications & webhooks', 'Données', 'À propos'])
     await userEvent.click(within(tabs).getByRole('tab', { name: 'Données' }))
     expect(router.state.location.pathname).toBe('/settings/data')
   })
@@ -309,6 +310,34 @@ describe('Notifications & webhooks', () => {
       expect.anything(),
     )
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  })
+})
+
+describe('À propos', () => {
+  const ABOUT = { version: '0.5.1', updateCheck: true, latestVersion: '0.5.1', updateAvailable: false, checkedAt: '2026-10-25T08:00:00Z', checkFailed: false }
+
+  it('shows the version, up to date, and what Nid talks to', async () => {
+    vi.mocked(aboutApi.get).mockResolvedValue(ABOUT)
+    setup('/settings/about')
+    expect(await screen.findByText('Nid 0.5.1')).toBeInTheDocument()
+    expect(screen.getByText('À jour')).toBeInTheDocument()
+    expect(screen.getByText(/GitHub Container Registry \(ghcr.io\), deux fois par jour/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Code source' })).toHaveAttribute('href', 'https://github.com/Le-Nid/nid')
+  })
+
+  it('announces a newer version with its release notes and how to update', async () => {
+    vi.mocked(aboutApi.get).mockResolvedValue({ ...ABOUT, latestVersion: '0.6.0', updateAvailable: true })
+    setup('/settings/about')
+    expect(await screen.findByRole('status')).toHaveTextContent('Nid 0.6.0 est disponible')
+    expect(screen.getByText('docker compose pull && docker compose up -d')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Voir les nouveautés' })).toHaveAttribute('href', 'https://github.com/Le-Nid/nid/releases/tag/0.6.0')
+  })
+
+  it('says when the check is off, and for a dev build', async () => {
+    vi.mocked(aboutApi.get).mockResolvedValue({ ...ABOUT, version: 'dev', updateCheck: false, checkedAt: null })
+    setup('/settings/about')
+    expect(await screen.findByText('Version de développement (hors image Docker publiée)')).toBeInTheDocument()
+    expect(screen.getByText('Vérification des mises à jour désactivée (UPDATE_CHECK=false).')).toBeInTheDocument()
   })
 })
 
