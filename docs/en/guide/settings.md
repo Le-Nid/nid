@@ -28,7 +28,7 @@
 
 Local accounts only (a Google or SSO account has no Nid password): **Current password**, **New password** (at least 8 characters) and its confirmation, then **Change password**. Your other open sessions are signed out.
 
-Forgot your password: ask an administrator to reset it ([Administration](admin.md#users)).
+Forgot your password: on the sign-in screen, **Forgot your password?** sends a link valid for 1 hour (when the instance has an SMTP server, see [Configuration](../installation/configuration.md#e-mail-smtp)). Otherwise, ask an administrator to reset it ([Administration](admin.md#users)).
 
 ### Two-factor authentication (2FA)
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import { Eye, EyeOff, Loader2, Lock, Mail, ShieldCheck } from 'lucide-react'
 import { SiGoogle, SiDiscord, SiFacebook } from '@icons-pack/react-simple-icons'
 import { useTranslation } from 'react-i18next'
@@ -110,6 +110,7 @@ export default function LoginPage() {
   const [pendingSsoCode, setPendingSsoCode] = useState<string | null>(null)
   const [allowRegistration, setAllowRegistration] = useState(true)
   const [socialProviders, setSocialProviders] = useState<string[]>([])
+  const [passwordResetEnabled, setPasswordResetEnabled] = useState(false)
   const [tab, setTab] = useState('login')
 
   // Session still valid (cookie restored by fetchMe): no need to sign in again, nor to re-enter the TOTP
@@ -121,6 +122,7 @@ export default function LoginPage() {
     api.get('/api/auth/config').then((r) => {
       setAllowRegistration(r.data.allowRegistration)
       setSocialProviders(r.data.socialProviders ?? [])
+      setPasswordResetEnabled(!!r.data.passwordResetEnabled)
     }).catch(() => {})
   }, [])
 
@@ -275,6 +277,11 @@ export default function LoginPage() {
       id="login" passwordPlaceholder={t('login.passwordPlaceholder')} submitLabel={t('login.submit')}
       loading={loading} error={error} onSubmit={handleLogin}
     >
+      {passwordResetEnabled && (
+        <Link to="/reset-password" className="inline-flex min-h-11 items-center justify-center text-sm font-medium text-primary-text underline-offset-4 hover:underline md:min-h-0">
+          {t('login.forgotPassword')}
+        </Link>
+      )}
       {social}
     </CredentialsForm>
   )

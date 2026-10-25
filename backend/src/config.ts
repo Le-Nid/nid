@@ -25,6 +25,14 @@ export const config = {
   FRONTEND_URL: process.env.FRONTEND_URL ?? 'http://localhost:3000',
   ARCHIVE_PATH: process.env.ARCHIVE_PATH ?? '/archives',
 
+  // Reverse proxies whose X-Forwarded-For is trusted (comma-separated IPs/CIDRs, or loopback): the bundled nginx
+  // by default; add the address an outer proxy (Caddy, Traefik) connects from, e.g. the Docker gateway
+  TRUST_PROXY: process.env.TRUST_PROXY ?? 'loopback',
+
+  // SMTP for the password reset e-mail (smtp:// or smtps:// URL); empty = « mot de passe oublié » disabled
+  SMTP_URL: process.env.SMTP_URL ?? '',
+  SMTP_FROM: process.env.SMTP_FROM ?? 'Nid <nid@localhost>',
+
   // Bearer token of GET /api/metrics (Prometheus); empty = endpoint disabled
   METRICS_TOKEN: process.env.METRICS_TOKEN ?? '',
 

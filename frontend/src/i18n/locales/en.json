@@ -54,7 +54,19 @@
     "errorPassword": "Enter your password",
     "errorPasswordMin": "Password must be at least {{count}} characters",
     "showPassword": "Show password",
-    "hidePassword": "Hide password"
+    "hidePassword": "Hide password",
+    "forgotPassword": "Forgot your password?"
+  },
+  "resetPassword": {
+    "title": "Forgot your password",
+    "hint": "Enter the address of your Nid account: you will receive a link to choose a new password, valid for 1 hour.",
+    "send": "Send the link",
+    "sent": "If an account with a password exists for this address, an e-mail has just been sent to it. Check your spam folder too.",
+    "submit": "Save the new password",
+    "changed": "Password changed. You can sign in.",
+    "errorSend": "Sending failed. Try again in a minute.",
+    "errorLink": "This link is invalid, already used or expired. Ask for a new one.",
+    "backToLogin": "Back to sign in"
   },
   "labels": {
     "INBOX": "Inbox",
