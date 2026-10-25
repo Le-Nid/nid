@@ -28,7 +28,7 @@ Search by **Email or name**, then the paginated list:
 
 Below the form:
 
-- **Reset password**: sets a new password (at least 8 characters) to pass on to the user; their open sessions are signed out (for your own password, use Settings › Security);
+- **Reset password**: sets a new password (at least 8 characters) to pass on to the user; their open sessions are signed out and their passkeys removed (for your own password, use Settings › Security);
 - **Delete user**: after a confirmation, permanently deletes the account, its Gmail accounts and its archives. Not offered on your own account (use [Settings › Data](settings.md#delete-my-account)); the last active admin cannot be deleted.
 
 ---

@@ -100,7 +100,7 @@ Content-Type: application/json
 { "password": "temporary-at-least-8-chars" }
 ```
 
-Replaces the password and revokes every session of the user. Logged as `admin.reset_password`. **Response 204**, `404` if the user does not exist.
+Replaces the password, revokes every session of the user and removes their passkeys (a passkey added from a stolen session does not survive the account recovery). Logged as `admin.reset_password`. **Response 204**, `404` if the user does not exist.
 
 ### Delete a user
 

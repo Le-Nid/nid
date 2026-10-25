@@ -18,6 +18,7 @@ In-code migrations in `backend/src/db/migrations/`, registered in `backend/src/d
 | `008_account_backup_prefs` | `gmail_accounts.backup_enabled`, `backup_interval`, `last_backup_at`, `auth_error_at` ; nullable tokens ; `notification_preferences.remote_images` |
 | `009_drop_pii_tracking` | Drops the `pii_findings` and `tracking_pixels` tables |
 | `010_password_changed_at` | `users.password_changed_at`: JWTs issued before it are rejected (password change / reset) |
+| `011_passkeys` | `passkeys` table (WebAuthn): unique `credential_id`, public key, counter, transports, name; removed with the user |
 
 ---
 

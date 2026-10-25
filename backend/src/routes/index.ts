@@ -13,6 +13,7 @@ import { reportsRoutes } from './reports'
 import { notificationsRoutes } from './notifications'
 import { auditRoutes } from './audit'
 import { twoFactorRoutes } from './2fa'
+import { passkeyRoutes } from './passkeys'
 import { integrityRoutes } from './integrity'
 import { webhookRoutes } from './webhooks'
 import { configRoutes } from './config'
@@ -54,6 +55,7 @@ export async function registerRoutes(app: FastifyInstance) {
   await app.register(notificationsRoutes, { prefix: '/api/notifications' })
   await app.register(auditRoutes,         { prefix: '/api/audit' })
   await app.register(twoFactorRoutes,     { prefix: '/api/auth/2fa' })
+  await app.register(passkeyRoutes,       { prefix: '/api/auth/passkeys' })
   await app.register(integrityRoutes,     { prefix: '/api/integrity' })
   await app.register(webhookRoutes,       { prefix: '/api/webhooks' })
   await app.register(configRoutes,        { prefix: '/api/config' })

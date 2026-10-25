@@ -172,6 +172,7 @@ describe('admin user management', () => {
     const res = await app.inject({ method: 'POST', url: '/admin/users/user-2/password', payload: { password: 'temp-pass-1' } })
     expect(res.statusCode).toBe(204)
     expect(updates[0]).toMatchObject({ password_hash: '$2b$12$new', password_changed_at: expect.any(Date) })
+    expect(tables).toContain('deleteFrom:passkeys')
   })
 
   it('rejects a password reset below 8 characters', async () => {

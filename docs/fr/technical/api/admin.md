@@ -100,7 +100,7 @@ Content-Type: application/json
 { "password": "provisoire-8-caracteres-min" }
 ```
 
-Remplace le mot de passe et révoque toutes les sessions de l'utilisateur. Tracé `admin.reset_password`. **Réponse 204**, `404` si l'utilisateur n'existe pas.
+Remplace le mot de passe, révoque toutes les sessions de l'utilisateur et supprime ses passkeys (une passkey ajoutée depuis une session volée ne survit pas à la récupération du compte). Tracé `admin.reset_password`. **Réponse 204**, `404` si l'utilisateur n'existe pas.
 
 ### Supprimer un utilisateur
 

@@ -368,3 +368,43 @@ Disable 2FA (requires a valid TOTP code).
 ::: warning Google SSO and 2FA
 2FA only applies to accounts with a local password. Users signed in via Google SSO are protected by Google's own 2FA.
 :::
+
+---
+
+## Passkeys (WebAuthn)
+
+Passwordless sign-in with the device's PIN or biometrics, through `@simplewebauthn/server`. The relying party is the frontend's site: `rpID` = host name of `FRONTEND_URL`, expected origin = `FRONTEND_URL`, so a passkey only works on that exact address. Passkeys are discoverable (no e-mail typed) and user verification is **required**: a verified passkey is already multi-factor, so the TOTP 2FA is not asked on top. Challenges are single-use, kept 5 minutes in Redis.
+
+### GET /api/auth/passkeys 🔒
+
+The user's passkeys: `[{ "id", "name", "created_at", "last_used_at" }]`.
+
+### POST /api/auth/passkeys/register/options 🔒
+
+Creation options to pass to `startRegistration()` (browser). Passkeys already registered are excluded.
+
+### POST /api/auth/passkeys/register/verify 🔒
+
+```json
+{ "name": "iPhone", "response": { "id": "…", "type": "public-key", "...": "startRegistration() result" } }
+```
+
+**Response 201**: the new passkey. `400` if the challenge expired or the response does not verify. Logged as `user.passkey_add`. Rate limit: 10/min.
+
+### DELETE /api/auth/passkeys/:id 🔒
+
+**Response 204**, `404` if the passkey is not the user's. Logged as `user.passkey_remove`.
+
+### POST /api/auth/passkeys/login/options
+
+Public. **Response 200**: `{ "challengeId": "32 hex", "options": { … } }`, options to pass to `startAuthentication()`. Rate limit: 10/min.
+
+### POST /api/auth/passkeys/login/verify
+
+Public. Rate limit: 10/min.
+
+```json
+{ "challengeId": "…", "response": { "id": "…", "type": "public-key", "...": "startAuthentication() result" } }
+```
+
+**Response 200**: `{ "user": { "id", "email", "role" } }`, session cookie set, passkey counter updated. Logged as `user.login_passkey`. The same `401` for an expired challenge, an unknown passkey, a disabled account or a bad signature.
