@@ -28,7 +28,7 @@ Recherche par **Email ou nom**, puis la liste paginée :
 
 Sous le formulaire :
 
-- **Réinitialiser le mot de passe** : définit un nouveau mot de passe (8 caractères minimum) à transmettre à l'utilisateur ; ses sessions ouvertes sont déconnectées (pour votre propre mot de passe, passez par Paramètres › Sécurité) ;
+- **Réinitialiser le mot de passe** : définit un nouveau mot de passe (8 caractères minimum) à transmettre à l'utilisateur ; ses sessions ouvertes sont déconnectées et ses passkeys supprimées (pour votre propre mot de passe, passez par Paramètres › Sécurité) ;
 - **Supprimer l'utilisateur** : après confirmation, supprime définitivement le compte, ses comptes Gmail et ses archives. Indisponible sur votre propre compte (passez par [Paramètres › Données](settings.md#supprimer-mon-compte)) ; le dernier admin actif ne peut pas être supprimé.
 
 ---

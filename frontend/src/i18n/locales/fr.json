@@ -55,7 +55,9 @@
     "errorPasswordMin": "Le mot de passe doit contenir au moins {{count}} caractères",
     "showPassword": "Afficher le mot de passe",
     "hidePassword": "Masquer le mot de passe",
-    "forgotPassword": "Mot de passe oublié ?"
+    "forgotPassword": "Mot de passe oublié ?",
+    "passkey": "Se connecter avec une passkey",
+    "errorPasskey": "Connexion par passkey annulée ou impossible. Réessayez, ou connectez-vous autrement."
   },
   "resetPassword": {
     "title": "Mot de passe oublié",
@@ -518,6 +520,21 @@
       "submit": "Changer le mot de passe",
       "mismatch": "Les deux mots de passe ne correspondent pas.",
       "changed": "Mot de passe changé"
+    },
+    "passkeys": {
+      "title": "Passkeys",
+      "hint": "Connectez-vous avec le code ou la biométrie de votre appareil (Face ID, Windows Hello, empreinte, clé de sécurité), sans mot de passe ni code 2FA.",
+      "name": "Nom de la passkey",
+      "namePlaceholder": "Ex. iPhone, PC du bureau",
+      "add": "Ajouter une passkey",
+      "added": "Passkey ajoutée",
+      "addFailed": "La passkey n'a pas été ajoutée (annulée, ou déjà enregistrée sur cet appareil).",
+      "lastUsed": "Utilisée {{when}}",
+      "neverUsed": "Jamais utilisée",
+      "remove": "Supprimer la passkey {{name}}",
+      "removeTitle": "Supprimer la passkey « {{name}} » ?",
+      "removeConfirm": "Elle ne permettra plus de se connecter à Nid. Pensez à la supprimer aussi du gestionnaire de mots de passe de l'appareil.",
+      "removeLabel": "Supprimer la passkey"
     },
     "twoFactor": {
       "title": "Authentification à deux facteurs (2FA)",

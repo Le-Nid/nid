@@ -85,6 +85,8 @@ export async function exportUserData(userId: string) {
     webhooks: await db.selectFrom('webhooks')
       .select(['id', 'name', 'url', 'type', 'events', 'is_active', 'last_triggered_at', 'last_status', 'created_at'])
       .where('user_id', '=', userId).execute(),
+    passkeys: await db.selectFrom('passkeys').select(['id', 'name', 'created_at', 'last_used_at'])
+      .where('user_id', '=', userId).execute(),
     savedSearches: await db.selectFrom('saved_searches').selectAll().where('user_id', '=', userId).execute(),
     retentionPolicies: await db.selectFrom('retention_policies').selectAll().where('user_id', '=', userId).execute(),
     archiveShares: await db.selectFrom('archive_shares')

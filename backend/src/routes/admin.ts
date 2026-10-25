@@ -157,6 +157,8 @@ export async function adminRoutes(app: FastifyInstance) {
       .executeTakeFirst()
 
     if (!updated) return notFound(reply, 'User not found')
+    // Recovery of a compromised account: a passkey added from a stolen session must not survive the reset
+    await db.deleteFrom('passkeys').where('user_id', '=', userId).execute()
     await logAudit(request.user.sub, 'admin.reset_password', {
       targetType: 'user', targetId: userId, details: { email: updated.email }, ipAddress: request.ip,
     })

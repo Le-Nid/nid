@@ -55,7 +55,9 @@
     "errorPasswordMin": "Password must be at least {{count}} characters",
     "showPassword": "Show password",
     "hidePassword": "Hide password",
-    "forgotPassword": "Forgot your password?"
+    "forgotPassword": "Forgot your password?",
+    "passkey": "Sign in with a passkey",
+    "errorPasskey": "Passkey sign-in cancelled or failed. Try again, or sign in another way."
   },
   "resetPassword": {
     "title": "Forgot your password",
@@ -518,6 +520,21 @@
       "submit": "Change password",
       "mismatch": "The two passwords do not match.",
       "changed": "Password changed"
+    },
+    "passkeys": {
+      "title": "Passkeys",
+      "hint": "Sign in with your device's PIN or biometrics (Face ID, Windows Hello, fingerprint, security key), without a password nor a 2FA code.",
+      "name": "Passkey name",
+      "namePlaceholder": "E.g. iPhone, office PC",
+      "add": "Add a passkey",
+      "added": "Passkey added",
+      "addFailed": "The passkey was not added (cancelled, or already registered on this device).",
+      "lastUsed": "Used {{when}}",
+      "neverUsed": "Never used",
+      "remove": "Remove the passkey {{name}}",
+      "removeTitle": "Remove the passkey \"{{name}}\"?",
+      "removeConfirm": "It will no longer sign in to Nid. Remove it from the device's password manager too.",
+      "removeLabel": "Remove the passkey"
     },
     "twoFactor": {
       "title": "Two-factor authentication (2FA)",

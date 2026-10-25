@@ -14,7 +14,7 @@ test.describe('Login', () => {
     await expect(page.getByRole('tab', { name: t('login.tabLogin') })).toBeVisible()
     await expect(page.getByLabel(t('login.email'))).toBeVisible()
     await expect(page.getByLabel(t('login.password'), { exact: true })).toBeVisible()
-    await expect(page.getByRole('button', { name: t('login.submit') })).toBeVisible()
+    await expect(page.getByRole('button', { name: t('login.submit'), exact: true })).toBeVisible()
   })
 
   test('shows the server error on bad credentials', async ({ page }) => {
@@ -23,7 +23,7 @@ test.describe('Login', () => {
     await page.goto('/login')
     await page.getByLabel(t('login.email')).fill('alice@example.com')
     await page.getByLabel(t('login.password'), { exact: true }).fill('wrong-password')
-    await page.getByRole('button', { name: t('login.submit') }).click()
+    await page.getByRole('button', { name: t('login.submit'), exact: true }).click()
     await expect(page.getByRole('alert').filter({ hasText: 'Identifiants invalides' })).toBeVisible()
     await expect(page).toHaveURL(/\/login$/)
   })

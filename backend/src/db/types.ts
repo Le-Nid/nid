@@ -319,6 +319,18 @@ export interface ArchiveSharesTable {
   created_at:       Generated<Date>
 }
 
+export interface PasskeysTable {
+  id:            Generated<string>
+  user_id:       string
+  credential_id: string     // base64url
+  public_key:    Buffer
+  counter:       ColumnType<string, number, number>   // bigint: pg returns it as a string
+  transports:    ColumnType<string[], string[] | undefined, string[]>
+  name:          string
+  created_at:    Generated<Date>
+  last_used_at:  Date | null
+}
+
 // ─── Database interface ───────────────────────────────────
 
 export interface Database {
@@ -345,6 +357,7 @@ export interface Database {
   email_expirations:    EmailExpirationsTable
   archive_shares:       ArchiveSharesTable
   newsletter_scans:     NewsletterScansTable
+  passkeys:             PasskeysTable
 }
 
 // ─── Row types (Selectable = what you get back from SELECT) ─

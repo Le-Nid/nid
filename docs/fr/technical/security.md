@@ -35,6 +35,10 @@ Les mots de passe sont hashés avec **bcrypt** (12 rounds). Un hash factice est 
 
 L'authentification à deux facteurs est optionnelle pour les comptes locaux. Elle utilise **TOTP** (RFC 6238) via `otplib`, avec génération de QR code pour la configuration.
 
+### Passkeys (WebAuthn)
+
+Connexion sans mot de passe via `@simplewebauthn/server`, liée au site du frontend (`FRONTEND_URL`). La vérification utilisateur (code ou biométrie de l'appareil) est obligatoire, donc la passkey vaut à elle seule deux facteurs : la 2FA TOTP n'est pas redemandée. Seule la clé publique est stockée ; les challenges sont à usage unique (Redis, 5 min). Voir [API › Passkeys](api/auth.md#passkeys-webauthn).
+
 ### SSO multi-providers
 
 Le Social Login utilise la librairie **Arctic** avec échange de code OAuth2 côté serveur. Les tokens sociaux ne transitent jamais par le frontend.

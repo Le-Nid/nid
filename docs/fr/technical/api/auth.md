@@ -368,3 +368,43 @@ Désactiver la 2FA (nécessite un code TOTP valide).
 ::: warning Google SSO et 2FA
 La 2FA ne s'applique qu'aux comptes avec mot de passe local. Les utilisateurs connectés via Google SSO sont protégés par la 2FA de Google.
 :::
+
+---
+
+## Passkeys (WebAuthn)
+
+Connexion sans mot de passe avec le code ou la biométrie de l'appareil, via `@simplewebauthn/server`. Le *relying party* est le site du frontend : `rpID` = nom d'hôte de `FRONTEND_URL`, origine attendue = `FRONTEND_URL`. Une passkey ne fonctionne donc que sur cette adresse exacte. Les passkeys sont *discoverables* (l'utilisateur ne tape pas son e-mail) et la vérification utilisateur est **obligatoire** : une passkey vérifiée est déjà multi-facteur, la 2FA TOTP n'est pas demandée en plus. Les challenges sont à usage unique, conservés 5 minutes dans Redis.
+
+### GET /api/auth/passkeys 🔒
+
+Liste des passkeys de l'utilisateur : `[{ "id", "name", "created_at", "last_used_at" }]`.
+
+### POST /api/auth/passkeys/register/options 🔒
+
+Options de création à passer à `startRegistration()` (navigateur). Les passkeys déjà enregistrées sont exclues.
+
+### POST /api/auth/passkeys/register/verify 🔒
+
+```json
+{ "name": "iPhone", "response": { "id": "…", "type": "public-key", "...": "réponse de startRegistration()" } }
+```
+
+**Réponse 201** : la passkey créée. `400` si le challenge a expiré ou si la réponse ne se vérifie pas. Tracé `user.passkey_add`. Rate limit : 10/min.
+
+### DELETE /api/auth/passkeys/:id 🔒
+
+**Réponse 204**, `404` si la passkey n'est pas à l'utilisateur. Tracé `user.passkey_remove`.
+
+### POST /api/auth/passkeys/login/options
+
+Public. **Réponse 200** : `{ "challengeId": "32 hex", "options": { … } }`, options à passer à `startAuthentication()`. Rate limit : 10/min.
+
+### POST /api/auth/passkeys/login/verify
+
+Public. Rate limit : 10/min.
+
+```json
+{ "challengeId": "…", "response": { "id": "…", "type": "public-key", "...": "réponse de startAuthentication()" } }
+```
+
+**Réponse 200** : `{ "user": { "id", "email", "role" } }`, cookie de session posé, compteur de la passkey mis à jour. Tracé `user.login_passkey`. `401` identique pour un challenge expiré, une passkey inconnue, un compte désactivé ou une signature invalide.
