@@ -2,7 +2,7 @@
 ARG APP_VERSION=0.1.0
 
 # ── Stage 1: Build frontend ──────────────────────────────
-FROM node:26-alpine AS frontend-builder
+FROM node:26.12.1-alpine AS frontend-builder
 WORKDIR /app/frontend
 
 # Layer cache: deps first, then source
@@ -13,7 +13,7 @@ COPY frontend/ .
 RUN npm run build
 
 # ── Stage 2: Build backend ───────────────────────────────
-FROM node:26-alpine AS backend-builder
+FROM node:26.12.1-alpine AS backend-builder
 WORKDIR /app/backend
 
 COPY backend/package*.json ./
@@ -24,7 +24,7 @@ COPY backend/src ./src
 RUN npm run build
 
 # ── Stage 3: Production dependencies ────────────────────
-FROM node:26-alpine AS deps
+FROM node:26.12.1-alpine AS deps
 WORKDIR /app/backend
 
 COPY backend/package*.json ./
@@ -32,7 +32,7 @@ RUN npm ci --omit=dev --ignore-scripts \
     && npm cache clean --force
 
 # ── Stage 4: Production image ───────────────────────────
-FROM node:26-alpine AS runner
+FROM node:26.12.1-alpine AS runner
 ARG APP_VERSION=0.1.0
 LABEL org.opencontainers.image.source="https://github.com/le-nid/nid"
 LABEL org.opencontainers.image.description="Nid — All-in-one (Frontend + Backend)"
