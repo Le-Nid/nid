@@ -32,7 +32,7 @@ export async function passkeyRoutes(app: FastifyInstance) {
   const { auth } = authPresets(app)
 
   // ─── List ─────────────────────────────────────────────────
-  app.get('/', auth, async (request) => db
+  app.get('/', auth, (request) => db
     .selectFrom('passkeys')
     .select(['id', 'name', 'created_at', 'last_used_at'])
     .where('user_id', '=', request.user.sub)
@@ -116,15 +116,15 @@ export async function passkeyRoutes(app: FastifyInstance) {
   }, async (request, reply) => {
     const body = loginSchema.parse(request.body)
     const challenge = await getRedis().getdel(`webauthn:auth:${body.challengeId}`)
-    const passkey = challenge && await db
+    const passkey = challenge ? await db
       .selectFrom('passkeys')
       .innerJoin('users', 'users.id', 'passkeys.user_id')
       .select(['passkeys.id', 'passkeys.public_key', 'passkeys.counter', 'passkeys.transports',
         'users.id as user_id', 'users.email', 'users.role', 'users.is_active'])
       .where('passkeys.credential_id', '=', body.response.id)
-      .executeTakeFirst()
+      .executeTakeFirst() : undefined
     // Same answer for an expired challenge, an unknown passkey or a disabled account
-    if (!passkey || !passkey.is_active) return reply.code(401).send({ error: 'Passkey sign-in failed' })
+    if (!challenge || !passkey?.is_active) return reply.code(401).send({ error: 'Passkey sign-in failed' })
 
     const result = await verifyAuthenticationResponse({
       response: body.response as unknown as AuthenticationResponseJSON,

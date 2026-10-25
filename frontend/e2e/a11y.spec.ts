@@ -29,7 +29,7 @@ for (const [name, path, ready] of PAGES) {
       await page.route('**/api/auth/me', (route) => route.fulfill({ status: 401, json: { error: 'Unauthorized' } }))
     }
     await page.goto(path)
-    await expect(page.getByRole(name === 'login' ? 'button' : 'heading', { name: t(ready) })).toBeVisible()
+    await expect(page.getByRole(name === 'login' ? 'button' : 'heading', { name: t(ready), exact: true })).toBeVisible()
     await page.waitForLoadState('networkidle')
 
     const { violations } = await new AxeBuilder({ page })
