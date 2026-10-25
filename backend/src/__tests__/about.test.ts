@@ -5,7 +5,7 @@ vi.mock('../config', () => ({ config: cfg }))
 
 const { compareVersions, fetchLatestVersion, checkForUpdate, getAbout } = await import('../about/about.service')
 
-const registry = (tags: string[]) => vi.fn(async (url: string) => ({
+const registry = (tags: string[]) => vi.fn(async (url: string, _init?: RequestInit) => ({
   ok: true,
   json: async () => (url.includes('/token') ? { token: 't' } : { tags }),
 }))
@@ -26,7 +26,7 @@ describe('update check', () => {
     const fetchMock = registry(['latest', 'main', 'sha-abc', '0.9.0', '0.10.0', '0.2.3'])
     vi.stubGlobal('fetch', fetchMock)
     expect(await fetchLatestVersion()).toBe('0.10.0')
-    expect(fetchMock.mock.calls[1][1].headers).toEqual({ Authorization: 'Bearer t' })
+    expect(fetchMock.mock.calls[1]?.[1]?.headers).toEqual({ Authorization: 'Bearer t' })
   })
 
   it('flags a newer published version', async () => {
