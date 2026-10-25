@@ -115,7 +115,7 @@ Exemple : `http://localhost:3000/api/auth/social/microsoft/callback`
 
 | Variable | Défaut | Description |
 |---|---|---|
-| `SMTP_URL` | *(vide)* | Serveur d'envoi, au format URL : `smtps://user:pass@smtp.example.com:465` (TLS) ou `smtp://user:pass@smtp.example.com:587` (STARTTLS). Encodez les caractères spéciaux du mot de passe (`@` → `%40`). Active « Mot de passe oublié » ; vide : désactivé (seul un admin peut réinitialiser un mot de passe) |
+| `SMTP_URL` | *(vide)* | Serveur d'envoi, au format URL : `smtps://user:pass@smtp.example.com:465` (TLS) ou `smtp://user:pass@smtp.example.com:587` (STARTTLS **obligatoire** : un serveur sans TLS est refusé, rien ne part en clair). Encodez les caractères spéciaux du mot de passe (`@` → `%40`). Active « Mot de passe oublié » ; vide : désactivé (seul un admin peut réinitialiser un mot de passe) |
 | `SMTP_FROM` | `Nid <nid@localhost>` | Expéditeur des e-mails ; doit être autorisé par le serveur SMTP |
 
 ---

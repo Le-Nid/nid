@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { FormField } from '@/components/app/FormField'
 
 const field = 'h-11 md:h-9'
+const text = (form: FormData, name: string) => { const v = form.get(name); return typeof v === 'string' ? v : '' }
 
 /**
  * Public « mot de passe oublié » page. Without `?token`: asks for the e-mail and sends the link (same answer for
@@ -30,15 +31,15 @@ export default function ResetPasswordPage() {
 
   const askLink = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const email = String(new FormData(e.currentTarget).get('email') ?? '').trim()
+    const email = text(new FormData(e.currentTarget), 'email').trim()
     run(() => authApi.forgotPassword(email), t('resetPassword.errorSend'))
   }
 
   const setPassword = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const form = new FormData(e.currentTarget)
-    const password = String(form.get('password') ?? '')
-    if (password !== form.get('confirm')) {
+    const password = text(form, 'password')
+    if (password !== text(form, 'confirm')) {
       setError(t('settings.password.mismatch'))
       return
     }
@@ -47,7 +48,7 @@ export default function ResetPasswordPage() {
 
   let content
   if (done) {
-    content = <p role="status" className="text-sm">{token ? t('resetPassword.changed') : t('resetPassword.sent')}</p>
+    content = <output className="block text-sm">{token ? t('resetPassword.changed') : t('resetPassword.sent')}</output>
   } else if (token) {
     content = (
       <form onSubmit={setPassword} className="flex flex-col gap-4">
