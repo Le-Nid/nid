@@ -18,7 +18,6 @@ Nid manages and archives your Gmail mailboxes from your own server (NAS, home se
 | [**Attachments**](attachments.md) | `/attachments` | Full attachment list (from the ⌘K palette) |
 | [**Notifications**](notifications.md) | bell + Settings | In-app notifications, toasts, webhooks |
 | [**Administration**](admin.md) | `/admin` | Users, instance settings, audit (admins) |
-| [**MCP Server**](mcp-server.md) | — | Drive Nid from an AI assistant |
 
 New to Nid? Start with [**First Steps**](first-steps.md).
 

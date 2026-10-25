@@ -18,7 +18,6 @@ Nid gère et archive vos boîtes Gmail depuis votre propre serveur (NAS, serveur
 | [**Pièces jointes**](attachments.md) | `/attachments` | Liste complète des pièces jointes (depuis la palette ⌘K) |
 | [**Notifications**](notifications.md) | cloche + Paramètres | Notifications in-app, toasts, webhooks |
 | [**Administration**](admin.md) | `/admin` | Utilisateurs, réglages de l'instance, audit (admins) |
-| [**Serveur MCP**](mcp-server.md) | — | Piloter Nid depuis un assistant IA |
 
 Nouveau sur Nid ? Commencez par les [**Premiers pas**](first-steps.md).
 

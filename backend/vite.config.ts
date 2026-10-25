@@ -28,7 +28,6 @@ export default defineConfig({
         'pino-pretty',
         'zod',
         /^dotenv(\/.*)?$/,
-        /^@modelcontextprotocol\//,
         /^zod\//,
         'imapflow',
         'qrcode',

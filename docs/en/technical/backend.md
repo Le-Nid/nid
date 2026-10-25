@@ -21,9 +21,8 @@
 | `bcrypt` | Password hashing |
 | `otplib` + `qrcode` | TOTP 2FA |
 | `pino` + `pino-pretty` | Structured logs |
-| `@modelcontextprotocol/sdk` | MCP server (`src/mcp-server.ts`) |
 
-The build uses Vite in ESM (`"type": "module"`, `build.lib.formats: ['es']`); `vite.config.mcp.ts` builds the MCP server separately (`npm run build:mcp`, `npm run start:mcp`, stdio transport).
+The build uses Vite in ESM (`"type": "module"`, `build.lib.formats: ['es']`).
 
 ---
 
@@ -46,10 +45,9 @@ src/
 ├── notifications/      ← notify.ts, notification-prefs.service.ts
 ├── webhooks/  audit/  reports/  privacy/ (encryption.service.ts)  storage/
 ├── utils/              ← auth.ts (authPresets), db.ts, pagination.ts
-└── mcp-server.ts
 ```
 
-Business logic goes into a service (`src/{module}/{module}.service.ts`) as soon as it has more than one consumer (route, MCP, scheduler, worker) or needs a transaction; a trivial single-consumer CRUD can stay in the route.
+Business logic goes into a service (`src/{module}/{module}.service.ts`) as soon as it has more than one consumer (route, scheduler, worker) or needs a transaction; a trivial single-consumer CRUD can stay in the route.
 
 ---
 
