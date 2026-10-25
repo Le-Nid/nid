@@ -31,14 +31,14 @@ function UpdateStatus({ about }: Readonly<{ about: About }>) {
 
   if (about.updateAvailable && about.latestVersion) {
     return (
-      <div role="status" className="flex flex-col gap-2 rounded-lg border border-primary bg-primary-soft p-3 text-sm">
-        <p className="flex items-center gap-2 font-medium">
+      <output className="flex flex-col gap-2 rounded-lg border border-primary bg-primary-soft p-3 text-sm">
+        <span className="flex items-center gap-2 font-medium">
           <CircleAlert className="size-4 shrink-0" aria-hidden="true" />{t('settings.about.updateAvailable', { version: about.latestVersion })}
-        </p>
-        <p>{t('settings.about.howToUpdate')} <code className="font-mono">docker compose pull &amp;&amp; docker compose up -d</code></p>
+        </span>
+        <span>{t('settings.about.howToUpdate')} <code className="font-mono">docker compose pull &amp;&amp; docker compose up -d</code></span>
         <ExtLink href={`${REPO}/releases/tag/${about.latestVersion}`}>{t('settings.about.releaseNotes')}</ExtLink>
-        <p className="text-muted-foreground">{checked}</p>
-      </div>
+        <span className="text-muted-foreground">{checked}</span>
+      </output>
     )
   }
   return (
