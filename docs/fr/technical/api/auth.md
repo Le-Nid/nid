@@ -12,8 +12,10 @@ Indique au frontend les modes de connexion disponibles. Public.
 
 **Réponse 200**
 ```json
-{ "allowRegistration": true, "googleSsoEnabled": true, "socialProviders": ["google", "microsoft"] }
+{ "allowRegistration": true, "googleSsoEnabled": true, "passwordResetEnabled": false, "socialProviders": ["google", "microsoft"] }
 ```
+
+`passwordResetEnabled` : SMTP configuré (`SMTP_URL`), « Mot de passe oublié » disponible.
 
 ---
 
@@ -90,6 +92,30 @@ Réémet un JWT neuf (cookie) sans se reconnecter.
 ```json
 { "user": { "id": "uuid", "email": "user@example.com", "role": "user" } }
 ```
+
+---
+
+### POST /api/auth/password/forgot
+
+Envoie par e-mail un lien `FRONTEND_URL/reset-password?token=…`, valable 1 heure. Public, rate limit 3/min par IP et au plus un e-mail par compte et par minute.
+
+```json
+{ "email": "user@example.com" }
+```
+
+**Réponse 204** dans tous les cas (adresse inconnue, compte SSO uniquement ou désactivé : aucun e-mail), et l'envoi n'est pas attendu : ni la réponse ni sa durée ne révèlent si un compte existe. `404` si `SMTP_URL` n'est pas configuré. Le token est stocké dans Redis sous son SHA-256.
+
+---
+
+### POST /api/auth/password/reset
+
+Choisit le nouveau mot de passe avec le token de l'e-mail (usage unique). Révoque toutes les sessions et n'en ouvre pas : l'utilisateur se reconnecte, 2FA comprise. Tracé `user.password_reset`. Rate limit : 5/min.
+
+```json
+{ "token": "64 caractères hexadécimaux", "newPassword": "nouveau-8-caracteres-min" }
+```
+
+**Réponse 204**. `400` si le lien est inconnu, déjà utilisé, expiré, ou émis avant le dernier changement de mot de passe.
 
 ---
 

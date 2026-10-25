@@ -11,7 +11,7 @@ const register = vi.fn()
 const loginWithSsoCode = vi.fn()
 const get = vi.mocked(api.get)
 
-function setup(config = { allowRegistration: true, socialProviders: [] as string[] }, initialEntry = '/login') {
+function setup(config: { allowRegistration: boolean; socialProviders: string[]; passwordResetEnabled?: boolean } = { allowRegistration: true, socialProviders: [] }, initialEntry = '/login') {
   get.mockImplementation((url: string) => url === '/api/auth/config'
     ? Promise.resolve({ data: config })
     : Promise.reject(new Error('down')))
@@ -33,6 +33,18 @@ beforeAll(() => i18n.changeLanguage('fr'))
 beforeEach(() => vi.clearAllMocks())
 
 describe('Login (/login)', () => {
+  it('offers « Mot de passe oublié ? » only when the instance can send e-mails', async () => {
+    const router = setup({ allowRegistration: true, socialProviders: [], passwordResetEnabled: true })
+    await userEvent.click(await screen.findByRole('link', { name: 'Mot de passe oublié ?' }))
+    expect(router.state.location.pathname).toBe('/reset-password')
+  })
+
+  it('hides « Mot de passe oublié ? » without SMTP', async () => {
+    setup()
+    await vi.waitFor(() => expect(get).toHaveBeenCalled())
+    expect(screen.queryByRole('link', { name: 'Mot de passe oublié ?' })).not.toBeInTheDocument()
+  })
+
   it('checks the fields before calling the server', async () => {
     setup()
     await userEvent.click(screen.getByRole('button', { name: 'Se connecter' }))

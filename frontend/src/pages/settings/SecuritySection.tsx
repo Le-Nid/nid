@@ -124,7 +124,7 @@ function PasswordCard() {
     e.preventDefault()
     const formEl = e.currentTarget
     const form = new FormData(formEl)
-    const value = (name: string) => String(form.get(name) ?? '')
+    const value = (name: string) => { const v = form.get(name); return typeof v === 'string' ? v : '' }
     if (value('new') !== value('confirm')) {
       toast.error(t('settings.password.mismatch'))
       return

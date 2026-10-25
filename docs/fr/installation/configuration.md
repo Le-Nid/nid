@@ -102,11 +102,21 @@ Exemple : `http://localhost:3000/api/auth/social/microsoft/callback`
 |---|---|---|
 | `ADMIN_EMAIL` | *(vide)* | L'utilisateur qui s'inscrit avec cet email obtient automatiquement le rôle `admin` |
 | `ALLOW_REGISTRATION` | `true` | `false` pour fermer les inscriptions (formulaire et SSO). Les tentatives retourneront une erreur 403 |
+| `TRUST_PROXY` | `loopback` | Proxies dont l'en-tête `X-Forwarded-For` est cru, pour connaître l'IP réelle des clients (rate limits de la connexion, du mot de passe oublié…). `loopback` = le nginx intégré. Derrière un autre reverse proxy (Caddy, Traefik), ajoutez l'adresse depuis laquelle il joint le conteneur, ex. `loopback,172.16.0.0/12` (réseaux Docker) ; sinon tous les clients partagent la même IP et les mêmes limites |
 | `METRICS_TOKEN` | *(vide)* | Jeton Bearer de `GET /api/metrics` (Prometheus, voir [Production](production.md#supervision-prometheus)). Vide : endpoint désactivé |
 | `WEBHOOK_ALLOW_PRIVATE_NETWORKS` | `false` | `true` pour autoriser les webhooks vers le réseau local (ntfy, Home Assistant sur le LAN). Désactivé par défaut : sinon tout utilisateur peut sonder les services internes (SSRF) |
 | `BULK_QUERY_MAX` | `50000` | Nombre max de mails traités par une action de masse envoyée avec une `query` Gmail (« sélectionner tous les résultats ») ; le job s'arrête là et le signale. Plafonne aussi les nouveaux mails d'une sauvegarde NAS par `query` |
 | `ARCHIVE_CONTINUE_DELAY_MIN` | `15` | Une sauvegarde NAS par `query` arrêtée à `BULK_QUERY_MAX` reprend automatiquement après ce nombre de minutes |
 | `ARCHIVE_CHAIN_MAX` | `20` | Nombre max de reprises automatiques d'affilée pour une sauvegarde NAS par `query` |
+
+---
+
+## E-mail (SMTP)
+
+| Variable | Défaut | Description |
+|---|---|---|
+| `SMTP_URL` | *(vide)* | Serveur d'envoi, au format URL : `smtps://user:pass@smtp.example.com:465` (TLS) ou `smtp://user:pass@smtp.example.com:587` (STARTTLS **obligatoire** : un serveur sans TLS est refusé, rien ne part en clair). Encodez les caractères spéciaux du mot de passe (`@` → `%40`). Active « Mot de passe oublié » ; vide : désactivé (seul un admin peut réinitialiser un mot de passe) |
+| `SMTP_FROM` | `Nid <nid@localhost>` | Expéditeur des e-mails ; doit être autorisé par le serveur SMTP |
 
 ---
 

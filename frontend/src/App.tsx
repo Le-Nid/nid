@@ -18,6 +18,7 @@ const AdminPage = lazy(() => import("./pages/Admin"));
 const CleanupPage = lazy(() => import("./pages/Cleanup"));
 const AttachmentsPage = lazy(() => import("./pages/Attachments"));
 const SharedMailPage = lazy(() => import("./pages/SharedMail"));
+const ResetPasswordPage = lazy(() => import("./pages/ResetPassword"));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const initialLoading = useAuthStore((s) => s.initialLoading);
@@ -64,6 +65,7 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/shared/:token" element={<SharedMailPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route
           path="/"
           element={

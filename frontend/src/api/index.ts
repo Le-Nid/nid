@@ -154,6 +154,14 @@ export const authApi = {
   getSocialAuthUrl: (provider: string) =>
     api.get(`/api/auth/social/${provider}/url`).then((r) => r.data),
 
+  /** Always 204 (no user enumeration); 404 when SMTP is not configured. */
+  forgotPassword: (email: string) =>
+    api.post('/api/auth/password/forgot', { email }).then((r) => r.data),
+
+  /** `token` from the e-mailed link; 400 when unknown, used or expired. */
+  resetPassword: (token: string, newPassword: string) =>
+    api.post('/api/auth/password/reset', { token, newPassword }).then((r) => r.data),
+
   changePassword: (body: { currentPassword: string; newPassword: string }) =>
     api.patch('/api/auth/password', body).then((r) => r.data),
 

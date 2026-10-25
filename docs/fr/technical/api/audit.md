@@ -54,6 +54,7 @@ Retourne les logs d'audit de l'utilisateur authentifié, paginés et triés par 
 | `user.2fa_enable` | Activation de la 2FA |
 | `user.2fa_disable` | Désactivation de la 2FA |
 | `user.password_change` | Changement du mot de passe |
+| `user.password_reset` | Mot de passe réinitialisé par le lien « mot de passe oublié » |
 | `user.export_data` | Export RGPD des données |
 | `admin.reset_password` | Réinitialisation d'un mot de passe par un admin |
 | `admin.delete_user` | Suppression d'un utilisateur par un admin |

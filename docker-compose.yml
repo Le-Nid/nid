@@ -27,6 +27,9 @@ services:
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
       ARCHIVE_PATH: /archives
       METRICS_TOKEN: ${METRICS_TOKEN:-}
+      SMTP_URL: ${SMTP_URL:-}
+      TRUST_PROXY: ${TRUST_PROXY:-loopback}
+      SMTP_FROM: ${SMTP_FROM:-Nid <nid@localhost>}
     volumes:
       - ./volumes/archives:/archives
     security_opt:

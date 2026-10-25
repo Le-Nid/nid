@@ -12,8 +12,10 @@ Tells the frontend which sign-in methods are available. Public.
 
 **Response 200**
 ```json
-{ "allowRegistration": true, "googleSsoEnabled": true, "socialProviders": ["google", "microsoft"] }
+{ "allowRegistration": true, "googleSsoEnabled": true, "passwordResetEnabled": false, "socialProviders": ["google", "microsoft"] }
 ```
+
+`passwordResetEnabled`: SMTP is configured (`SMTP_URL`), "Forgot your password" is available.
 
 ---
 
@@ -90,6 +92,30 @@ Issues a fresh JWT (cookie) without signing in again.
 ```json
 { "user": { "id": "uuid", "email": "user@example.com", "role": "user" } }
 ```
+
+---
+
+### POST /api/auth/password/forgot
+
+E-mails a `FRONTEND_URL/reset-password?token=…` link, valid for 1 hour. Public, rate limit 3/min per IP and at most one e-mail per account per minute.
+
+```json
+{ "email": "user@example.com" }
+```
+
+**Response 204** in every case (unknown address, SSO-only or disabled account: no e-mail), and sending is not awaited: neither the answer nor its timing tells whether an account exists. `404` if `SMTP_URL` is not set. The token is stored in Redis under its SHA-256.
+
+---
+
+### POST /api/auth/password/reset
+
+Sets the new password with the e-mailed token (single use). Revokes every session and opens none: the user signs in again, 2FA included. Logged as `user.password_reset`. Rate limit: 5/min.
+
+```json
+{ "token": "64 hex characters", "newPassword": "new-at-least-8-chars" }
+```
+
+**Response 204**. `400` if the link is unknown, already used, expired, or issued before the last password change.
 
 ---
 

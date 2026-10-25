@@ -54,7 +54,19 @@
     "errorPassword": "Saisissez votre mot de passe",
     "errorPasswordMin": "Le mot de passe doit contenir au moins {{count}} caractères",
     "showPassword": "Afficher le mot de passe",
-    "hidePassword": "Masquer le mot de passe"
+    "hidePassword": "Masquer le mot de passe",
+    "forgotPassword": "Mot de passe oublié ?"
+  },
+  "resetPassword": {
+    "title": "Mot de passe oublié",
+    "hint": "Saisissez l'adresse de votre compte Nid : vous recevrez un lien pour choisir un nouveau mot de passe, valable 1 heure.",
+    "send": "Envoyer le lien",
+    "sent": "Si un compte avec mot de passe existe pour cette adresse, un e-mail vient de lui être envoyé. Pensez à vérifier les indésirables.",
+    "submit": "Enregistrer le nouveau mot de passe",
+    "changed": "Mot de passe changé. Vous pouvez vous connecter.",
+    "errorSend": "L'envoi a échoué. Réessayez dans une minute.",
+    "errorLink": "Ce lien est invalide, déjà utilisé ou expiré. Demandez-en un nouveau.",
+    "backToLogin": "Retour à la connexion"
   },
   "labels": {
     "INBOX": "Boîte de réception",
