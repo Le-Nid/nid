@@ -166,11 +166,17 @@ services:
 
 ## Mises à jour
 
+Deux fois par jour, Nid regarde si une version plus récente de l'image est publiée et l'indique dans **Paramètres › À propos** (désactivable avec `UPDATE_CHECK=false`). Avec l'image publiée (`ghcr.io/le-nid/nid:latest`) :
+
 ```bash
-cd nid
-git pull
-docker compose up -d --build
+docker compose pull app && docker compose up -d app
 ```
+
+::: warning Tag `main`
+Les anciens `docker-compose.yml` utilisaient `ghcr.io/le-nid/nid:main`. Ce tag n'est plus publié et reste bloqué sur une ancienne version : passez à `latest` (ou à une version `X.Y.Z` précise).
+:::
+
+Avec un build local (`build:` dans le compose) : `git pull && docker compose up -d --build`.
 
 Les données sont persistées dans les volumes Docker (PostgreSQL, Redis, archives EML). La reconstruction des conteneurs ne les efface pas.
 

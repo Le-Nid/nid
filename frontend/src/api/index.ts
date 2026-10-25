@@ -174,6 +174,12 @@ export const authApi = {
     api.delete('/api/auth/me', { data: body }).then((r) => r.data),
 }
 
+// ─── About (version, update check) ──────────────────────
+export const aboutApi = {
+  get: () =>
+    api.get('/api/about').then((r) => r.data),
+}
+
 // ─── Passkeys (WebAuthn) ──────────────────────────────────
 export const passkeysApi = {
   list: () =>

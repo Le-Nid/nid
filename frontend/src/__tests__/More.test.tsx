@@ -27,7 +27,7 @@ beforeAll(() => i18n.changeLanguage('fr'))
 beforeEach(() => vi.clearAllMocks())
 
 describe('« Plus » (/more)', () => {
-  it('groups tools, the five settings sections with a summary, and admin', () => {
+  it('groups tools, the six settings sections with a summary, and admin', () => {
     setup('admin', { mails: {}, activeRules: 3, activeJobs: 2 })
     const tools = screen.getByRole('region', { name: 'Outils' })
     expect(within(tools).getByRole('link', { name: 'Activité 2 en cours' })).toHaveAttribute('href', '/activity')
@@ -35,11 +35,12 @@ describe('« Plus » (/more)', () => {
 
     const settings = screen.getByRole('region', { name: 'Paramètres' })
     expect(within(settings).getAllByRole('link').map((l) => l.getAttribute('href'))).toEqual([
-      '/settings/account', '/settings/security', '/settings/gmail', '/settings/notifications', '/settings/data',
+      '/settings/account', '/settings/security', '/settings/gmail', '/settings/notifications', '/settings/data', '/settings/about',
     ])
     expect(within(settings).getByRole('link', { name: /Sécurité.*2FA activée/ })).toBeInTheDocument()
     expect(within(settings).getByRole('link', { name: /Comptes Gmail.*1 action requise/ })).toBeInTheDocument()
     expect(within(settings).getByRole('link', { name: /Données.*Import, export/ })).toBeInTheDocument()
+    expect(within(settings).getByRole('link', { name: /À propos.*Version, transparence/ })).toBeInTheDocument()
 
     expect(within(screen.getByRole('region', { name: 'Administration' })).getByRole('link', { name: /Admin/ })).toHaveAttribute('href', '/admin')
   })

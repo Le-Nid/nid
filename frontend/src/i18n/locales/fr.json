@@ -479,7 +479,8 @@
       "security": "Sécurité",
       "gmail": "Comptes Gmail",
       "notifications": "Notifications & webhooks",
-      "data": "Données"
+      "data": "Données",
+      "about": "À propos"
     },
     "summary": {
       "twoFactorOn": "2FA activée",
@@ -490,7 +491,8 @@
       "accounts_other": "{{count}} comptes connectés",
       "notifications": "Préférences, webhooks",
       "data": "Import, export",
-      "admin": "Admin de l'instance"
+      "admin": "Admin de l'instance",
+      "about": "Version, transparence"
     },
     "signedInAs": "Connecté(e) en tant que {{email}}",
     "logoutOfNid": "Se déconnecter de Nid",
@@ -689,6 +691,34 @@
       "deleteTitle": "Supprimer votre compte ?",
       "deleteConfirm": "Vos archives et tous vos réglages seront perdus. Cette action est irréversible.",
       "deleteFailed": "La suppression a échoué : vérifiez la confirmation saisie."
+    },
+    "about": {
+      "versionTitle": "Version",
+      "version": "Nid {{version}}",
+      "devVersion": "Version de développement (hors image Docker publiée)",
+      "checkOff": "Vérification des mises à jour désactivée (UPDATE_CHECK=false).",
+      "notChecked": "Pas encore vérifié : la première vérification a lieu une minute après le démarrage.",
+      "checkedAt": "vérifié {{when}}",
+      "upToDate": "À jour",
+      "checkFailed": "Dernière vérification impossible (registry injoignable)",
+      "updateAvailable": "Nid {{version}} est disponible",
+      "howToUpdate": "Pour mettre à jour, depuis le dossier du docker-compose.yml :",
+      "releaseNotes": "Voir les nouveautés",
+      "transparencyTitle": "Ce que Nid contacte",
+      "transparencyHint": "Nid tourne sur votre serveur et vos données y restent. Il ne contacte que :",
+      "services": {
+        "google": "Google : l'API Gmail et la connexion OAuth de vos comptes, pour lire et gérer vos mails.",
+        "registry": "GitHub Container Registry (ghcr.io), deux fois par jour : la liste des versions publiées de Nid, sans rien envoyer sur votre instance. Désactivable avec UPDATE_CHECK=false.",
+        "smtp": "Votre serveur SMTP, s'il est configuré : l'e-mail de « mot de passe oublié ».",
+        "webhooks": "Les webhooks que vous avez créés, et rien d'autre.",
+        "sso": "Les fournisseurs de connexion (Microsoft, Discord, Keycloak…) que l'administrateur a configurés."
+      },
+      "noTracking": "Aucune télémétrie, aucune statistique d'usage, aucun pixel de suivi.",
+      "projectTitle": "Projet",
+      "license": "Logiciel libre sous licence MIT.",
+      "source": "Code source",
+      "releases": "Historique des versions",
+      "issues": "Signaler un problème"
     }
   },
   "admin": {

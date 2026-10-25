@@ -166,11 +166,17 @@ services:
 
 ## Updates
 
+Twice a day, Nid checks whether a newer image is published and shows it in **Settings › About** (turn it off with `UPDATE_CHECK=false`). With the published image (`ghcr.io/le-nid/nid:latest`):
+
 ```bash
-cd nid
-git pull
-docker compose up -d --build
+docker compose pull app && docker compose up -d app
 ```
+
+::: warning `main` tag
+Older `docker-compose.yml` files used `ghcr.io/le-nid/nid:main`. That tag is no longer published and is stuck on an old version: switch to `latest` (or a precise `X.Y.Z` version).
+:::
+
+With a local build (`build:` in the compose file): `git pull && docker compose up -d --build`.
 
 Data is persisted in Docker volumes (PostgreSQL, Redis, EML archives). Rebuilding containers does not erase them.
 

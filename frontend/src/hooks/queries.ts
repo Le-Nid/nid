@@ -5,7 +5,7 @@ import {
   analyticsApi, notificationsApi,
   auditApi, webhooksApi, savedSearchesApi, unifiedApi, archiveThreadsApi,
   retentionApi, importApi,
-  sharingApi, labelsApi, gmailAccountsApi, twoFactorApi, configApi, integrityApi, authApi, passkeysApi,
+  sharingApi, labelsApi, gmailAccountsApi, twoFactorApi, configApi, integrityApi, authApi, aboutApi, passkeysApi,
 } from '../api'
 import { startRegistration } from '@simplewebauthn/browser'
 import { useAuthStore } from '../store/auth.store'
@@ -60,6 +60,7 @@ export const queryKeys = {
   webhooks: () => ['webhooks'] as const,
   retention: () => ['retention'] as const,
   shares: () => ['shares'] as const,
+  about: () => ['about'] as const,
   passkeys: () => ['passkeys'] as const,
 }
 
@@ -504,6 +505,11 @@ export const useSyncGmailAccount = () => useMeMutation(labelsApi.sync)
 export const useTwoFactorSetup = () => useMutation({ mutationFn: twoFactorApi.setup })
 export const useTwoFactorEnable = () => useMeMutation(twoFactorApi.enable)
 export const useTwoFactorDisable = () => useMeMutation(twoFactorApi.disable)
+
+/** Settings › À propos; the server re-checks the registry twice a day, so 5 min staleness is plenty. */
+export function useAbout() {
+  return useQuery({ queryKey: queryKeys.about(), queryFn: aboutApi.get })
+}
 
 // ─── Passkeys ─────────────────────────────────────────────
 
