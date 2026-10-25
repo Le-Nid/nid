@@ -57,7 +57,7 @@ Le script CI (`.github/workflows/ci.yml`) exécute : `npm ci` → `typecheck` �
 
 - Le backend doit builder en ESM (`build.lib.formats: ['es']` dans `backend/vite.config.ts`). Un format CommonJS cause `require is not defined` au runtime.
 - En dev local (hors Docker), `backend/.env` pointe vers `localhost` pour DATABASE_URL/REDIS_URL. En Docker, utiliser les noms de service `postgres`/`redis`.
-- Les lockfiles générés sur le host peuvent manquer des dépendances musl pour `node:26-alpine`. Regénérer dans le conteneur si `npm ci` échoue en Docker.
+- Les lockfiles générés sur le host peuvent manquer des dépendances musl pour `node:26.x-alpine`. Regénérer dans le conteneur si `npm ci` échoue en Docker.
 
 ## Workflow agent
 

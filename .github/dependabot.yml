@@ -93,6 +93,19 @@ updates:
       - ci
 
   # ─── Docker base images ──────────────────────────────────
+  # Dockerfile racine = l'image publiée (ghcr.io/le-nid/nid)
+  - package-ecosystem: docker
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:00"
+      timezone: Europe/Paris
+    labels:
+      - dependencies
+      - docker
+
   - package-ecosystem: docker
     directory: /backend
     target-branch: develop
