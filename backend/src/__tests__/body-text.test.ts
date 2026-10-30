@@ -214,7 +214,7 @@ describe('GET /:accountId/mails', () => {
       expect(q.sql).toContain('"sender" ilike')
       expect(q.sql).toContain('"has_attachments" =')
       expect(q.sql).toContain('label_ids @> ARRAY[')
-      expect(q.sql).toContain("search_vector @@ plainto_tsquery('french'")
+      expect(q.sql).toContain("search_vector @@ websearch_to_tsquery('nid_french'")
       expect(q.parameters).toEqual(expect.arrayContaining(['acc-1', '%edf%', 'Label_7', 'facture', true]))
     }
     expect(list.sql).toContain('ts_headline')
@@ -230,7 +230,7 @@ describe('GET /:accountId/mails', () => {
     const res = await app.inject({ method: 'GET', url: '/acc-1/mails?q=%20%20' })
     expect(res.statusCode).toBe(200)
     expect(res.json().mails[0]).toEqual({ id: 'm1' })
-    expect(queries.some((q) => q.sql.includes('ts_headline') || q.sql.includes('plainto_tsquery'))).toBe(false)
+    expect(queries.some((q) => q.sql.includes('ts_headline') || q.sql.includes('websearch_to_tsquery'))).toBe(false)
     await app.close()
   })
 
@@ -289,5 +289,23 @@ describe('migration 007_archive_body_text', () => {
     expect(queries[0].sql).not.toContain('body_text')
     expect(queries[0].sql).toContain("COALESCE(NEW.attachment_names, '')), 'B');")
     expect(queries[1].sql).toBe('alter table "archived_mails" drop column "body_text"')
+  })
+})
+
+// ─── Migration 012 ──────────────────────────────────────────
+describe('migration 012_search_improvements', () => {
+  it('up switches every weight to nid_french, recomputes vectors and adds trigram indexes; down restores french', async () => {
+    const m = await import('../db/migrations/012_search_improvements')
+    await m.up(testDb)
+    const up = queries.map((q) => q.sql).join('\n')
+    expect(up).toContain('WITH unaccent, french_stem')
+    expect(up.match(/to_tsvector\('nid_french'/g)).toHaveLength(5)
+    expect(up).toContain('UPDATE archived_mails SET search_vector = NULL')
+    expect(up.match(/gin_trgm_ops/g)).toHaveLength(3)
+    queries.length = 0
+    await m.down(testDb)
+    const down = queries.map((q) => q.sql).join('\n')
+    expect(down.match(/to_tsvector\('french'/g)).toHaveLength(5)
+    expect(down).toContain('DROP TEXT SEARCH CONFIGURATION IF EXISTS nid_french')
   })
 })

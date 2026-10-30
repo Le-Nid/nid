@@ -5,13 +5,15 @@ import { createMemoryRouter, Outlet, RouterProvider } from 'react-router'
 import { toast } from 'sonner'
 import i18n from '../i18n'
 import {
-  authApi, configApi, dashboardApi, gmailAccountsApi, importApi, labelsApi, notificationsApi, sharingApi, twoFactorApi, webhooksApi,
+  aboutApi, authApi, configApi, dashboardApi, gmailAccountsApi, importApi, labelsApi, notificationsApi, sharingApi, twoFactorApi, webhooksApi, passkeysApi,
 } from '../api'
 import { useAuthStore } from '../store/auth.store'
 import { useThemeStore } from '../store/theme.store'
 import { saveBlob } from '../utils/download'
 
 vi.mock('../api', () => ({
+  aboutApi: { get: vi.fn() },
+  passkeysApi: { list: vi.fn(), registerOptions: vi.fn(), registerVerify: vi.fn(), remove: vi.fn() },
   authApi: { changePassword: vi.fn(), exportMyData: vi.fn(), deleteMe: vi.fn() },
   dashboardApi: { getArchiveStats: vi.fn() },
   notificationsApi: { getPreferences: vi.fn(), updatePreferences: vi.fn() },
@@ -24,6 +26,8 @@ vi.mock('../api', () => ({
   gmailAccountsApi: { connectUrl: vi.fn(), update: vi.fn(), disconnect: vi.fn() },
 }))
 vi.mock('../utils/download', () => ({ saveBlob: vi.fn() }))
+const webauthn = vi.hoisted(() => ({ supported: false, startRegistration: vi.fn() }))
+vi.mock('@simplewebauthn/browser', () => ({ browserSupportsWebAuthn: () => webauthn.supported, startRegistration: webauthn.startRegistration }))
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
 import SettingsPage from '../pages/Settings'
@@ -71,11 +75,11 @@ beforeEach(() => {
 })
 
 describe('desktop layout', () => {
-  it('shows the five sections as tabs and switches section in the URL', async () => {
+  it('shows the six sections as tabs and switches section in the URL', async () => {
     const router = setup('/settings/account')
     expect(screen.getByRole('heading', { level: 1, name: 'Paramètres' })).toBeInTheDocument()
     const tabs = screen.getByRole('tablist', { name: 'Sections des paramètres' })
-    expect(within(tabs).getAllByRole('tab').map((t) => t.textContent)).toEqual(['Compte', 'Sécurité', 'Comptes Gmail', 'Notifications & webhooks', 'Données'])
+    expect(within(tabs).getAllByRole('tab').map((t) => t.textContent)).toEqual(['Compte', 'Sécurité', 'Comptes Gmail', 'Notifications & webhooks', 'Données', 'À propos'])
     await userEvent.click(within(tabs).getByRole('tab', { name: 'Données' }))
     expect(router.state.location.pathname).toBe('/settings/data')
   })
@@ -176,6 +180,46 @@ describe('Sécurité', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Changer le mot de passe' }))
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Mot de passe changé'))
     expect(authApi.changePassword).toHaveBeenCalledWith({ currentPassword: 'old-password', newPassword: 'new-password' }, expect.anything())
+  })
+
+  it('adds a named passkey through the browser dialog, then lists it', async () => {
+    webauthn.supported = true
+    vi.mocked(passkeysApi.list).mockResolvedValueOnce([]).mockResolvedValue([{ id: 'pk1', name: 'iPhone', created_at: '2026-10-25T08:00:00Z', last_used_at: null }])
+    vi.mocked(passkeysApi.registerOptions).mockResolvedValue({ challenge: 'c' })
+    webauthn.startRegistration.mockResolvedValue({ id: 'cred' })
+    vi.mocked(passkeysApi.registerVerify).mockResolvedValue({ id: 'pk1' })
+    setup('/settings/security')
+    await userEvent.type(screen.getByLabelText('Nom de la passkey'), 'iPhone')
+    await userEvent.click(screen.getByRole('button', { name: 'Ajouter une passkey' }))
+    await waitFor(() => expect(passkeysApi.registerVerify).toHaveBeenCalledWith('iPhone', { id: 'cred' }))
+    expect(webauthn.startRegistration).toHaveBeenCalledWith({ optionsJSON: { challenge: 'c' } })
+    expect(toast.success).toHaveBeenCalledWith('Passkey ajoutée')
+    expect(await screen.findByText('iPhone')).toBeInTheDocument()
+    expect(screen.getByText('Jamais utilisée')).toBeInTheDocument()
+    webauthn.supported = false
+  })
+
+  it('removes a passkey after confirmation; a cancelled browser dialog says so', async () => {
+    webauthn.supported = true
+    vi.mocked(passkeysApi.list).mockResolvedValue([{ id: 'pk1', name: 'iPhone', created_at: '2026-10-25T08:00:00Z', last_used_at: null }])
+    vi.mocked(passkeysApi.remove).mockResolvedValue(undefined)
+    vi.mocked(passkeysApi.registerOptions).mockResolvedValue({ challenge: 'c' })
+    webauthn.startRegistration.mockRejectedValue(Object.assign(new Error('cancelled'), { name: 'NotAllowedError' }))
+    setup('/settings/security')
+    await userEvent.click(await screen.findByRole('button', { name: 'Supprimer la passkey iPhone' }))
+    await userEvent.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Supprimer la passkey' }))
+    await waitFor(() => expect(passkeysApi.remove).toHaveBeenCalledWith('pk1', expect.anything()))
+
+    await userEvent.type(screen.getByLabelText('Nom de la passkey'), 'PC')
+    await userEvent.click(screen.getByRole('button', { name: 'Ajouter une passkey' }))
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("La passkey n'a pas été ajoutée (annulée, ou déjà enregistrée sur cet appareil)."))
+    expect(passkeysApi.registerVerify).not.toHaveBeenCalled()
+    webauthn.supported = false
+  })
+
+  it('hides the passkeys card when the browser has no WebAuthn', () => {
+    setup('/settings/security')
+    expect(screen.queryByRole('heading', { name: 'Passkeys' })).not.toBeInTheDocument()
   })
 
   it('hides the password card for an SSO-only account', () => {
@@ -309,6 +353,34 @@ describe('Notifications & webhooks', () => {
       expect.anything(),
     )
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  })
+})
+
+describe('À propos', () => {
+  const ABOUT = { version: '0.5.1', updateCheck: true, latestVersion: '0.5.1', updateAvailable: false, checkedAt: '2026-10-25T08:00:00Z', checkFailed: false }
+
+  it('shows the version, up to date, and what Nid talks to', async () => {
+    vi.mocked(aboutApi.get).mockResolvedValue(ABOUT)
+    setup('/settings/about')
+    expect(await screen.findByText('Nid 0.5.1')).toBeInTheDocument()
+    expect(screen.getByText('À jour')).toBeInTheDocument()
+    expect(screen.getByText(/GitHub Container Registry \(ghcr.io\), deux fois par jour/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Code source' })).toHaveAttribute('href', 'https://github.com/Le-Nid/nid')
+  })
+
+  it('announces a newer version with its release notes and how to update', async () => {
+    vi.mocked(aboutApi.get).mockResolvedValue({ ...ABOUT, latestVersion: '0.6.0', updateAvailable: true })
+    setup('/settings/about')
+    expect(await screen.findByRole('status')).toHaveTextContent('Nid 0.6.0 est disponible')
+    expect(screen.getByText('docker compose pull && docker compose up -d')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Voir les nouveautés' })).toHaveAttribute('href', 'https://github.com/Le-Nid/nid/releases/tag/0.6.0')
+  })
+
+  it('says when the check is off, and for a dev build', async () => {
+    vi.mocked(aboutApi.get).mockResolvedValue({ ...ABOUT, version: 'dev', updateCheck: false, checkedAt: null })
+    setup('/settings/about')
+    expect(await screen.findByText('Version de développement (hors image Docker publiée)')).toBeInTheDocument()
+    expect(screen.getByText('Vérification des mises à jour désactivée (UPDATE_CHECK=false).')).toBeInTheDocument()
   })
 })
 

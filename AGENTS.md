@@ -29,7 +29,7 @@ Le script CI (`.github/workflows/ci.yml`) exécute : `npm ci` → `typecheck` �
 
 - **Routes** : un fichier par module dans `backend/src/routes/`, enregistré comme plugin Fastify dans `routes/index.ts` sous le préfixe `/api/`. Validation des entrées avec **Zod** (schémas dans le fichier route).
 - **Auth** : JWT en httpOnly cookie. Décorateurs Fastify `app.authenticate`, `requireAdmin()`, `requireAccountOwnership()`. Rate limiting par route.
-- **Services** : logique métier dans `backend/src/{module}/{module}.service.ts`. La logique va dans un service dès qu'elle a plus d'un consommateur (route, MCP, scheduler, worker) ou qu'elle nécessite une transaction ; un CRUD trivial à consommateur unique peut rester dans la route.
+- **Services** : logique métier dans `backend/src/{module}/{module}.service.ts`. La logique va dans un service dès qu'elle a plus d'un consommateur (route, scheduler, worker) ou qu'elle nécessite une transaction ; un CRUD trivial à consommateur unique peut rester dans la route.
 - **Base de données** : requêtes Kysely typées. Migrations in-code dans `backend/src/db/migrations/` (numérotées 001–003). Types DB dans `backend/src/db/types.ts` avec `Generated<>` et `ColumnType<>`.
 - **Jobs** : un seul worker BullMQ unifié (`backend/src/jobs/workers/unified.worker.ts`, concurrence 3). Enqueue via `enqueueJob()` dans `backend/src/jobs/queue.ts`. Chaque job type a un handler dédié. Progress tracké en DB + SSE.
 - **Gmail API** : throttling dans `backend/src/gmail/gmail-throttle.ts` (semaphore par compte, 5 concurrent max, retry exponentiel sur 429/500/503 et 403 rateLimitExceeded).
@@ -57,7 +57,7 @@ Le script CI (`.github/workflows/ci.yml`) exécute : `npm ci` → `typecheck` �
 
 - Le backend doit builder en ESM (`build.lib.formats: ['es']` dans `backend/vite.config.ts`). Un format CommonJS cause `require is not defined` au runtime.
 - En dev local (hors Docker), `backend/.env` pointe vers `localhost` pour DATABASE_URL/REDIS_URL. En Docker, utiliser les noms de service `postgres`/`redis`.
-- Les lockfiles générés sur le host peuvent manquer des dépendances musl pour `node:26-alpine`. Regénérer dans le conteneur si `npm ci` échoue en Docker.
+- Les lockfiles générés sur le host peuvent manquer des dépendances musl pour `node:26.x-alpine`. Regénérer dans le conteneur si `npm ci` échoue en Docker.
 
 ## Workflow agent
 
@@ -87,7 +87,7 @@ Les deux outils travaillent ensemble : ponytail décide quoi chercher, graphify 
 **Pendant une feature**
 
 - Étape ponytail « Already in this codebase? » = `graphify query "<besoin>"` (helper, composant, hook, service) avant d'écrire quoi que ce soit.
-- Étape ponytail « list every place your change must reach » = `graphify explain "<symbole>()"` sur chaque fonction/composant touché (liens entrants = appelants, tests, MCP, worker).
+- Étape ponytail « list every place your change must reach » = `graphify explain "<symbole>()"` sur chaque fonction/composant touché (liens entrants = appelants, tests, worker).
 - Lire uniquement les lignes que le graphe a localisées (`sed -n 'L1,L2p'` / Read avec offset+limit), jamais un fichier entier « pour voir ». Imposé par le hook `.claude/hooks/read-guard.js` : Read sans offset/limit ou `cat` seul d'un fichier du projet de plus de 300 lignes est refusé (Read avec `limit` explicite si la lecture complète est vraiment nécessaire). `GRAPH_REPORT.md` seulement pour une question d'architecture.
 - `graphify update .` après chaque lot de modifications, pour que la recherche suivante voie le nouveau code.
 - Prompts de sous-agents : y recopier ces règles et demander un rapport court (fichiers, sha, tests, écarts).

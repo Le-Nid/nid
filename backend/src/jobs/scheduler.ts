@@ -123,6 +123,7 @@ export function startRuleScheduler() {
         ])
         .where("rules.is_active", "=", true)
         .where("gmail_accounts.is_active", "=", true) // disconnected accounts have no Gmail access
+        .where("gmail_accounts.auth_error_at", "is", null) // pending reconnection: every run would fail and notify
         .where("rules.schedule", "is not", null)
         .execute();
 

@@ -33,6 +33,11 @@ export const config = {
   SMTP_URL: process.env.SMTP_URL ?? '',
   SMTP_FROM: process.env.SMTP_FROM ?? 'Nid <nid@localhost>',
 
+  // Version baked into the image by the release (Dockerfile ARG); « dev » outside an image
+  APP_VERSION: process.env.APP_VERSION ?? 'dev',
+  // Twice-a-day look at the published image tags on ghcr.io (Settings › À propos); false = never contacted
+  UPDATE_CHECK: process.env.UPDATE_CHECK !== 'false',
+
   // Bearer token of GET /api/metrics (Prometheus); empty = endpoint disabled
   METRICS_TOKEN: process.env.METRICS_TOKEN ?? '',
 

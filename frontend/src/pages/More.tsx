@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Link, useNavigate, useOutletContext } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { Bell, ChevronRight, Database, LogOut, Mail, ShieldCheck, User, type LucideIcon } from 'lucide-react'
+import { Bell, ChevronRight, Database, Info, LogOut, Mail, ShieldCheck, User, type LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/app/PageHeader'
 import { NAV, badgeClass, navBadge } from '@/components/app/nav'
@@ -9,7 +9,7 @@ import type { LiveCounters } from '@/hooks/useLiveCounters'
 import { useAuthStore } from '@/store/auth.store'
 import { SETTINGS_SECTIONS, type SettingsSection } from './settings/shared'
 
-const SECTION_ICONS: Record<SettingsSection, LucideIcon> = { account: User, security: ShieldCheck, gmail: Mail, notifications: Bell, data: Database }
+const SECTION_ICONS: Record<SettingsSection, LucideIcon> = { account: User, security: ShieldCheck, gmail: Mail, notifications: Bell, data: Database, about: Info }
 
 type Row = { to: string; icon: LucideIcon; label: string; summary?: string; badge?: ReactNode }
 
@@ -55,6 +55,7 @@ export default function MorePage() {
     gmail: reauth ? t('settings.summary.actionRequired', { count: reauth }) : t('settings.summary.accounts', { count: gmailAccounts.length }),
     notifications: t('settings.summary.notifications'),
     data: t('settings.summary.data'),
+    about: t('settings.summary.about'),
   }
 
   return (

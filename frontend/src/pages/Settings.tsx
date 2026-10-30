@@ -10,6 +10,7 @@ import { SecuritySection } from './settings/SecuritySection'
 import { GmailSection } from './settings/GmailSection'
 import { NotificationsSection } from './settings/NotificationsSection'
 import { DataSection } from './settings/DataSection'
+import { AboutSection } from './settings/AboutSection'
 import { SETTINGS_SECTIONS, type SettingsSection } from './settings/shared'
 
 const CONTENT: Record<SettingsSection, () => ReactNode> = {
@@ -18,6 +19,7 @@ const CONTENT: Record<SettingsSection, () => ReactNode> = {
   gmail: () => <GmailSection />,
   notifications: () => <NotificationsSection />,
   data: () => <DataSection />,
+  about: () => <AboutSection />,
 }
 
 /**

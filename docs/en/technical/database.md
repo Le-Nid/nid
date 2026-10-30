@@ -18,6 +18,7 @@ In-code migrations in `backend/src/db/migrations/`, registered in `backend/src/d
 | `008_account_backup_prefs` | `gmail_accounts.backup_enabled`, `backup_interval`, `last_backup_at`, `auth_error_at` ; nullable tokens ; `notification_preferences.remote_images` |
 | `009_drop_pii_tracking` | Drops the `pii_findings` and `tracking_pixels` tables |
 | `010_password_changed_at` | `users.password_changed_at`: JWTs issued before it are rejected (password change / reset) |
+| `011_passkeys` | `passkeys` table (WebAuthn): unique `credential_id`, public key, counter, transports, name; removed with the user |
 
 ---
 
@@ -406,25 +407,29 @@ The `search_vector` field is updated by the `mail_search_vector_update` trigger 
 -- C: snippet
 -- D: mail body (body_text, migration 007)
 NEW.search_vector :=
-  setweight(to_tsvector('french', COALESCE(NEW.subject,          '')), 'A') ||
-  setweight(to_tsvector('french', COALESCE(NEW.sender,           '')), 'B') ||
-  setweight(to_tsvector('french', COALESCE(NEW.snippet,          '')), 'C') ||
-  setweight(to_tsvector('french', COALESCE(NEW.attachment_names, '')), 'B') ||
-  setweight(to_tsvector('french', COALESCE(NEW.body_text,        '')), 'D');
+  setweight(to_tsvector('nid_french', COALESCE(NEW.subject,          '')), 'A') ||
+  setweight(to_tsvector('nid_french', COALESCE(NEW.sender,           '')), 'B') ||
+  setweight(to_tsvector('nid_french', COALESCE(NEW.snippet,          '')), 'C') ||
+  setweight(to_tsvector('nid_french', COALESCE(NEW.attachment_names, '')), 'B') ||
+  setweight(to_tsvector('nid_french', COALESCE(NEW.body_text,        '')), 'D');
 ```
 
 `body_text` stays `NULL` for encrypted archives. Archives older than migration 007 are filled by the `backfill_body_text` job.
 
-Queries use `plainto_tsquery` (operators typed by the user are neutralized):
+The `nid_french` configuration (migration 012) is a copy of `french` with `unaccent` before stemming: `electricite` matches `Électricité`, `factures` matches `facture`.
+
+Queries use `websearch_to_tsquery` — Google-like syntax (`"exact phrase"`, `-excluded`, `OR`), never raises a syntax error on arbitrary input (helper `ftsQuery()` in `utils/db.ts`):
 
 ```sql
 SELECT *, ts_rank(search_vector, query) AS rank
-FROM archived_mails, plainto_tsquery('french', 'invoice 2024') query
+FROM archived_mails, websearch_to_tsquery('nid_french', 'invoice 2024') query
 WHERE gmail_account_id = $1
   AND deleted_at IS NULL
   AND search_vector @@ query
 ORDER BY rank DESC, date DESC;
 ```
+
+The `ILIKE '%…%'` filters (`sender`, `subject`, attachment `filename`) are backed by `pg_trgm` GIN indexes (migration 012).
 
 ---
 

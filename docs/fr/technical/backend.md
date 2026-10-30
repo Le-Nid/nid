@@ -21,9 +21,8 @@
 | `bcrypt` | Hashage des mots de passe |
 | `otplib` + `qrcode` | 2FA TOTP |
 | `pino` + `pino-pretty` | Logs structurés |
-| `@modelcontextprotocol/sdk` | Serveur MCP (`src/mcp-server.ts`) |
 
-Le build se fait avec Vite en ESM (`"type": "module"`, `build.lib.formats: ['es']`) ; `vite.config.mcp.ts` construit le serveur MCP séparément (`npm run build:mcp`, `npm run start:mcp`, transport stdio).
+Le build se fait avec Vite en ESM (`"type": "module"`, `build.lib.formats: ['es']`).
 
 ---
 
@@ -46,10 +45,9 @@ src/
 ├── notifications/      ← notify.ts, notification-prefs.service.ts
 ├── webhooks/  audit/  reports/  privacy/ (encryption.service.ts)  storage/
 ├── utils/              ← auth.ts (authPresets), db.ts, pagination.ts
-└── mcp-server.ts
 ```
 
-La logique métier va dans un service (`src/{module}/{module}.service.ts`) dès qu'elle a plus d'un consommateur (route, MCP, scheduler, worker) ou qu'elle a besoin d'une transaction ; un CRUD trivial à consommateur unique peut rester dans la route.
+La logique métier va dans un service (`src/{module}/{module}.service.ts`) dès qu'elle a plus d'un consommateur (route, scheduler, worker) ou qu'elle a besoin d'une transaction ; un CRUD trivial à consommateur unique peut rester dans la route.
 
 ---
 

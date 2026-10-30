@@ -19,7 +19,7 @@ D'autres façons d'alimenter les archives : **Sauvegarder sur le NAS** dans [Mai
 ## Onglet Mails : rechercher
 
 - **Arbre des libellés** (à gauche sur ordinateur) : **Tous les mails** puis les libellés qui contiennent des mails archivés, avec leur nombre.
-- **Recherche plein texte** : « Rechercher dans les archives (objet, expéditeur, contenu…) ». Les termes trouvés sont surlignés dans l'extrait.
+- **Recherche plein texte** : objet, expéditeur, contenu et corps, insensible aux accents, avec `"phrase exacte"`, `-exclure` et `OR`. Les termes trouvés sont surlignés dans l'extrait.
 - **Filtres** : **Expéditeur**, période (**Du** / **Au**), **Avec pièce jointe**. Sur mobile, ils sont regroupés dans le panneau **Filtres (N)** avec le **Libellé**, puis **Afficher les résultats**.
 
 Les résultats (« N résultats ») affichent **Objet**, **Extrait**, **Date**, **Expéditeur**, **Taille**. **Effacer la recherche et les filtres** revient à la liste complète.

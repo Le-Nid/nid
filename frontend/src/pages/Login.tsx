@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
-import { Eye, EyeOff, Loader2, Lock, Mail, ShieldCheck } from 'lucide-react'
+import { Eye, EyeOff, KeyRound, Loader2, Lock, Mail, ShieldCheck } from 'lucide-react'
+import { browserSupportsWebAuthn, startAuthentication } from '@simplewebauthn/browser'
 import { SiGoogle, SiDiscord, SiFacebook } from '@icons-pack/react-simple-icons'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/auth.store'
 import { useThemeStore } from '../store/theme.store'
-import { authApi } from '../api'
+import { authApi, passkeysApi } from '../api'
 import api from '../api/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -100,6 +101,7 @@ export default function LoginPage() {
   const [searchParams] = useSearchParams()
   const { login, register, loginWithSsoCode, initialLoading, isAuthenticated } = useAuthStore()
   const { mode } = useThemeStore()
+  const fetchMe = useAuthStore((s) => s.fetchMe)
   const [loading, setLoading] = useState(false)
   const [socialLoading, setSocialLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -193,6 +195,19 @@ export default function LoginPage() {
     } finally { setLoading(false) }
   }
 
+  // Passkey: no e-mail typed, the browser lists the passkeys it holds for this site
+  async function handlePasskeyLogin() {
+    setSocialLoading('passkey'); setError(null)
+    try {
+      const { challengeId, options } = await passkeysApi.loginOptions()
+      await passkeysApi.loginVerify(challengeId, await startAuthentication({ optionsJSON: options }))
+      await fetchMe()
+      navigate('/overview', { replace: true })
+    } catch {
+      setError(t('login.errorPasskey'))
+    } finally { setSocialLoading(null) }
+  }
+
   async function handleSocialLogin(provider: string) {
     setSocialLoading(provider); setError(null)
     try {
@@ -224,6 +239,13 @@ export default function LoginPage() {
     linkedin:  <LinkedInIcon />,
     keycloak:  <ShieldCheck size={16} />,
   }
+
+  const passkeyButton = browserSupportsWebAuthn() && (
+    <Button type="button" variant="outline" className={field} disabled={socialLoading === 'passkey'} onClick={handlePasskeyLogin}>
+      {socialLoading === 'passkey' ? <Loader2 className="animate-spin" aria-hidden="true" /> : <KeyRound aria-hidden="true" />}
+      {t('login.passkey')}
+    </Button>
+  )
 
   const social = socialProviders.length > 0 && (
     <>
@@ -277,6 +299,7 @@ export default function LoginPage() {
       id="login" passwordPlaceholder={t('login.passwordPlaceholder')} submitLabel={t('login.submit')}
       loading={loading} error={error} onSubmit={handleLogin}
     >
+      {passkeyButton}
       {passwordResetEnabled && (
         <Link to="/reset-password" className="inline-flex min-h-11 items-center justify-center text-sm font-medium text-primary-text underline-offset-4 hover:underline md:min-h-0">
           {t('login.forgotPassword')}

@@ -239,7 +239,8 @@ async function autoRegisterGmailAccount(userId: string, email: string, tokens: a
         user_id:       userId,
         email,
         access_token:  accessToken,
-        refresh_token: refreshToken ?? '',
+        // null, not '': COALESCE below must keep the stored token (Google only sends it on first consent)
+        refresh_token: refreshToken,
         token_expiry:  expiresAt,
       })
       .onConflict((oc) =>

@@ -2,12 +2,17 @@ import { useId, useState, type FormEvent, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { ShieldCheck } from 'lucide-react'
+import { KeyRound, ShieldCheck, Trash2 } from 'lucide-react'
+import { browserSupportsWebAuthn } from '@simplewebauthn/browser'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { ConfirmDialog } from '@/components/app/ConfirmDialog'
 import { FormField } from '@/components/app/FormField'
-import { useChangePassword, useShares, useTwoFactorDisable, useTwoFactorEnable, useTwoFactorSetup } from '@/hooks/queries'
+import {
+  useAddPasskey, useChangePassword, usePasskeys, useRemovePasskey, useShares, useTwoFactorDisable, useTwoFactorEnable, useTwoFactorSetup,
+} from '@/hooks/queries'
 import { useAuthStore } from '@/store/auth.store'
+import { formatRelative } from '@/utils/format'
 import { SettingsCard } from './shared'
 
 /** Server message of a refused request (wrong code…), else the generic one. */
@@ -156,7 +161,72 @@ function PasswordCard() {
   )
 }
 
-/** « Sécurité » (§7.7): password, 2FA, and the active share links, managed in Archives (not duplicated here). */
+type Passkey = { id: string; name: string; created_at: string; last_used_at: string | null }
+
+/** Passkeys (WebAuthn): sign in with the device's PIN or biometrics, no password nor TOTP. */
+function PasskeysCard() {
+  const { t, i18n } = useTranslation()
+  const id = useId()
+  const passkeys = (usePasskeys().data ?? []) as Passkey[]
+  const add = useAddPasskey()
+  const remove = useRemovePasskey()
+  const [name, setName] = useState('')
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault()
+    add.mutate(name.trim(), {
+      onSuccess: () => {
+        setName('')
+        toast.success(t('settings.passkeys.added'))
+      },
+      // The browser dialog cancelled or refused (NotAllowedError) lands here too
+      onError: () => toast.error(t('settings.passkeys.addFailed')),
+    })
+  }
+
+  return (
+    <SettingsCard title={t('settings.passkeys.title')} description={t('settings.passkeys.hint')}>
+      {passkeys.length > 0 && (
+        <ul className="flex flex-col divide-y rounded-lg border">
+          {passkeys.map((p) => (
+            <li key={p.id} className="flex min-h-11 items-center justify-between gap-3 px-3 py-2">
+              <div className="flex min-w-0 flex-col">
+                <span className="truncate text-sm font-medium">{p.name}</span>
+                <span className="text-sm text-muted-foreground">
+                  {p.last_used_at
+                    ? t('settings.passkeys.lastUsed', { when: formatRelative(p.last_used_at, i18n.language) })
+                    : t('settings.passkeys.neverUsed')}
+                </span>
+              </div>
+              <ConfirmDialog
+                trigger={(
+                  <Button variant="ghost" size="icon" className="size-11 md:size-8" aria-label={t('settings.passkeys.remove', { name: p.name })}>
+                    <Trash2 aria-hidden="true" />
+                  </Button>
+                )}
+                title={t('settings.passkeys.removeTitle', { name: p.name })}
+                description={t('settings.passkeys.removeConfirm')}
+                confirmLabel={t('settings.passkeys.removeLabel')}
+                onConfirm={() => remove.mutate(p.id, { onError: () => toast.error(t('common.error')) })}
+                destructive
+              />
+            </li>
+          ))}
+        </ul>
+      )}
+      <form onSubmit={submit} className="flex flex-col gap-3 md:flex-row md:items-end">
+        <FormField id={id} label={t('settings.passkeys.name')}>
+          <Input id={id} required maxLength={64} placeholder={t('settings.passkeys.namePlaceholder')} value={name} onChange={(e) => setName(e.target.value)} className="h-11 text-base md:h-9 md:w-64 md:text-sm" />
+        </FormField>
+        <Button type="submit" className="h-11 w-fit md:h-9" disabled={add.isPending || !name.trim()}>
+          <KeyRound aria-hidden="true" />{t('settings.passkeys.add')}
+        </Button>
+      </form>
+    </SettingsCard>
+  )
+}
+
+/** « Sécurité » (§7.7): password, passkeys, 2FA, and the active share links, managed in Archives (not duplicated here). */
 export function SecuritySection() {
   const { t } = useTranslation()
   const shares = useShares().data as unknown[] | undefined
@@ -164,6 +234,7 @@ export function SecuritySection() {
   return (
     <div className="flex flex-col gap-4">
       {hasPassword && <PasswordCard />}
+      {browserSupportsWebAuthn() && <PasskeysCard />}
       <TwoFactorCard />
       <SettingsCard
         title={t('settings.shares.title')}

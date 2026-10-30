@@ -115,7 +115,8 @@ export async function getAuthenticatedClient(accountId: string) {
     try {
       await oauth2Client.getAccessToken()
     } catch (err) {
-      if (isInvalidGrant(err)) {
+      // No refresh token stored (pre-fix SSO logins wrote ''): same outcome as a revoked grant
+      if (isInvalidGrant(err) || !account.refresh_token) {
         logger.warn({ accountId }, 'Google refused the refresh token: reconnection required')
         await db.updateTable('gmail_accounts').set({ auth_error_at: new Date() }).where('id', '=', accountId).execute()
       }

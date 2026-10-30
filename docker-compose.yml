@@ -3,7 +3,8 @@ services:
     # build:
     #   context: .
     #   dockerfile: Dockerfile
-    image: ghcr.io/le-nid/nid:main
+    # latest = the last release (X.Y.Z tags); « main » is no longer published
+    image: ghcr.io/le-nid/nid:latest
     ports:
       - "${APP_PORT:-3000}:3000"
     depends_on:
@@ -29,6 +30,7 @@ services:
       METRICS_TOKEN: ${METRICS_TOKEN:-}
       SMTP_URL: ${SMTP_URL:-}
       TRUST_PROXY: ${TRUST_PROXY:-loopback}
+      UPDATE_CHECK: ${UPDATE_CHECK:-true}
       SMTP_FROM: ${SMTP_FROM:-Nid <nid@localhost>}
     volumes:
       - ./volumes/archives:/archives

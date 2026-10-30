@@ -1,4 +1,4 @@
-FROM node:26-alpine AS builder
+FROM node:26.12.1-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --ignore-scripts
@@ -6,13 +6,13 @@ COPY tsconfig.json vite.config.ts ./
 COPY src ./src
 RUN npm run build
 
-FROM node:26-alpine AS deps
+FROM node:26.12.1-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev --ignore-scripts \
     && npm cache clean --force
 
-FROM node:26-alpine AS runner
+FROM node:26.12.1-alpine AS runner
 LABEL org.opencontainers.image.source="https://github.com/le-nid/nid"
 LABEL org.opencontainers.image.description="Nid — Backend API"
 LABEL org.opencontainers.image.licenses="MIT"

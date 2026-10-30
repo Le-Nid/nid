@@ -55,7 +55,9 @@
     "errorPasswordMin": "Password must be at least {{count}} characters",
     "showPassword": "Show password",
     "hidePassword": "Hide password",
-    "forgotPassword": "Forgot your password?"
+    "forgotPassword": "Forgot your password?",
+    "passkey": "Sign in with a passkey",
+    "errorPasskey": "Passkey sign-in cancelled or failed. Try again, or sign in another way."
   },
   "resetPassword": {
     "title": "Forgot your password",
@@ -141,7 +143,7 @@
     "allMails": "All mails",
     "labelTree": "Labels",
     "search": "Search the archives",
-    "searchPlaceholder": "Search the archives (subject, sender, content…)",
+    "searchPlaceholder": "Subject, sender, content — \"exact phrase\", -exclude, OR",
     "filters": "Filters",
     "filtersCount_one": "Filters ({{count}})",
     "filtersCount_other": "Filters ({{count}})",
@@ -477,7 +479,8 @@
       "security": "Security",
       "gmail": "Gmail accounts",
       "notifications": "Notifications & webhooks",
-      "data": "Data"
+      "data": "Data",
+      "about": "About"
     },
     "summary": {
       "twoFactorOn": "2FA on",
@@ -488,7 +491,8 @@
       "accounts_other": "{{count}} accounts connected",
       "notifications": "Preferences, webhooks",
       "data": "Import, export",
-      "admin": "Instance admin"
+      "admin": "Instance admin",
+      "about": "Version, transparency"
     },
     "signedInAs": "Signed in as {{email}}",
     "logoutOfNid": "Sign out of Nid",
@@ -516,6 +520,21 @@
       "submit": "Change password",
       "mismatch": "The two passwords do not match.",
       "changed": "Password changed"
+    },
+    "passkeys": {
+      "title": "Passkeys",
+      "hint": "Sign in with your device's PIN or biometrics (Face ID, Windows Hello, fingerprint, security key), without a password nor a 2FA code.",
+      "name": "Passkey name",
+      "namePlaceholder": "E.g. iPhone, office PC",
+      "add": "Add a passkey",
+      "added": "Passkey added",
+      "addFailed": "The passkey was not added (cancelled, or already registered on this device).",
+      "lastUsed": "Used {{when}}",
+      "neverUsed": "Never used",
+      "remove": "Remove the passkey {{name}}",
+      "removeTitle": "Remove the passkey \"{{name}}\"?",
+      "removeConfirm": "It will no longer sign in to Nid. Remove it from the device's password manager too.",
+      "removeLabel": "Remove the passkey"
     },
     "twoFactor": {
       "title": "Two-factor authentication (2FA)",
@@ -672,6 +691,34 @@
       "deleteTitle": "Delete your account?",
       "deleteConfirm": "Your archives and all your settings will be lost. This cannot be undone.",
       "deleteFailed": "Deletion failed: check the confirmation you typed."
+    },
+    "about": {
+      "versionTitle": "Version",
+      "version": "Nid {{version}}",
+      "devVersion": "Development build (not a published Docker image)",
+      "checkOff": "Update check disabled (UPDATE_CHECK=false).",
+      "notChecked": "Not checked yet: the first check runs one minute after start-up.",
+      "checkedAt": "checked {{when}}",
+      "upToDate": "Up to date",
+      "checkFailed": "Last check failed (registry unreachable)",
+      "updateAvailable": "Nid {{version}} is available",
+      "howToUpdate": "To update, from the docker-compose.yml folder:",
+      "releaseNotes": "See what's new",
+      "transparencyTitle": "What Nid talks to",
+      "transparencyHint": "Nid runs on your server and your data stays there. It only contacts:",
+      "services": {
+        "google": "Google: the Gmail API and the OAuth sign-in of your accounts, to read and manage your mail.",
+        "registry": "GitHub Container Registry (ghcr.io), twice a day: the list of published Nid versions, sending nothing about your instance. Turn it off with UPDATE_CHECK=false.",
+        "smtp": "Your SMTP server, when configured: the \"forgot password\" e-mail.",
+        "webhooks": "The webhooks you created, and nothing else.",
+        "sso": "The sign-in providers (Microsoft, Discord, Keycloak…) the administrator configured."
+      },
+      "noTracking": "No telemetry, no usage statistics, no tracking pixel.",
+      "projectTitle": "Project",
+      "license": "Free software under the MIT licence.",
+      "source": "Source code",
+      "releases": "Release history",
+      "issues": "Report a problem"
     }
   },
   "admin": {

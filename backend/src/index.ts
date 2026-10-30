@@ -5,6 +5,7 @@ import { registerPlugins } from "./plugins";
 import { registerRoutes } from "./routes";
 import { startUnifiedWorker } from "./jobs/workers/unified.worker";
 import { startReportScheduler } from "./reports/report.scheduler";
+import { startUpdateChecker } from "./about/about.service";
 import { startRuleScheduler } from "./jobs/scheduler";
 import type { Worker } from "bullmq";
 
@@ -33,6 +34,7 @@ async function bootstrap() {
     workers.push(startUnifiedWorker());
     startRuleScheduler();
     startReportScheduler();
+    startUpdateChecker();
     server.log.info("✅ BullMQ workers started");
 
     await server.listen({ port: config.PORT, host: "0.0.0.0" });

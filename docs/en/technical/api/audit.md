@@ -55,6 +55,9 @@ Returns audit logs for the authenticated user, paginated and sorted by descendin
 | `user.2fa_disable` | 2FA deactivation |
 | `user.password_change` | Password change |
 | `user.password_reset` | Password reset through the "forgot password" link |
+| `user.login_passkey` | Passkey sign-in |
+| `user.passkey_add` | Passkey added |
+| `user.passkey_remove` | Passkey removed |
 | `user.export_data` | GDPR data export |
 | `admin.reset_password` | Password reset by an admin |
 | `admin.delete_user` | User deleted by an admin |

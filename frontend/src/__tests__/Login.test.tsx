@@ -6,6 +6,11 @@ import api from '../api/client'
 import { useAuthStore } from '../store/auth.store'
 import LoginPage from '../pages/Login'
 
+const webauthn = vi.hoisted(() => ({ supported: false, startAuthentication: vi.fn() }))
+vi.mock('@simplewebauthn/browser', () => ({ browserSupportsWebAuthn: () => webauthn.supported, startAuthentication: webauthn.startAuthentication }))
+const post = vi.mocked(api.post)
+const fetchMe = vi.fn()
+
 const login = vi.fn()
 const register = vi.fn()
 const loginWithSsoCode = vi.fn()
@@ -15,7 +20,7 @@ function setup(config: { allowRegistration: boolean; socialProviders: string[]; 
   get.mockImplementation((url: string) => url === '/api/auth/config'
     ? Promise.resolve({ data: config })
     : Promise.reject(new Error('down')))
-  useAuthStore.setState({ login, register, loginWithSsoCode, initialLoading: true, isAuthenticated: false })
+  useAuthStore.setState({ login, register, loginWithSsoCode, fetchMe, initialLoading: true, isAuthenticated: false })
   const router = createMemoryRouter([
     { path: '/login', element: <LoginPage /> },
     { path: '*', element: <h1>elsewhere</h1> },
@@ -33,6 +38,37 @@ beforeAll(() => i18n.changeLanguage('fr'))
 beforeEach(() => vi.clearAllMocks())
 
 describe('Login (/login)', () => {
+  it('signs in with a passkey: options, browser dialog, verification, then the overview', async () => {
+    webauthn.supported = true
+    post.mockImplementation((url: string) => Promise.resolve({ data: url.endsWith('/login/options')
+      ? { challengeId: 'c1', options: { challenge: 'x' } }
+      : { user: { id: 'u1' } } }))
+    webauthn.startAuthentication.mockResolvedValue({ id: 'cred' })
+    fetchMe.mockResolvedValue(undefined)
+    const router = setup()
+    await userEvent.click(screen.getByRole('button', { name: 'Se connecter avec une passkey' }))
+    await vi.waitFor(() => expect(router.state.location.pathname).toBe('/overview'))
+    expect(webauthn.startAuthentication).toHaveBeenCalledWith({ optionsJSON: { challenge: 'x' } })
+    expect(post).toHaveBeenCalledWith('/api/auth/passkeys/login/verify', { challengeId: 'c1', response: { id: 'cred' } })
+    expect(fetchMe).toHaveBeenCalled()
+    webauthn.supported = false
+  })
+
+  it('says when the passkey sign-in is cancelled, and hides the button without WebAuthn', async () => {
+    webauthn.supported = true
+    post.mockResolvedValue({ data: { challengeId: 'c1', options: {} } })
+    webauthn.startAuthentication.mockRejectedValue(new Error('NotAllowedError'))
+    setup()
+    await userEvent.click(screen.getByRole('button', { name: 'Se connecter avec une passkey' }))
+    expect(await screen.findByText('Connexion par passkey annulée ou impossible. Réessayez, ou connectez-vous autrement.')).toBeInTheDocument()
+    webauthn.supported = false
+  })
+
+  it('has no passkey button when the browser cannot do WebAuthn', () => {
+    setup()
+    expect(screen.queryByRole('button', { name: 'Se connecter avec une passkey' })).not.toBeInTheDocument()
+  })
+
   it('offers « Mot de passe oublié ? » only when the instance can send e-mails', async () => {
     const router = setup({ allowRegistration: true, socialProviders: [], passwordResetEnabled: true })
     await userEvent.click(await screen.findByRole('link', { name: 'Mot de passe oublié ?' }))

@@ -9,6 +9,7 @@ Les **Paramètres** (`/settings/…`) sont découpés en cinq sections, en ongle
 | [Comptes Gmail](#comptes-gmail) | `/settings/gmail` |
 | [Notifications & webhooks](#notifications-webhooks) | `/settings/notifications` |
 | [Données](#donnees) | `/settings/data` |
+| [À propos](#a-propos) | `/settings/about` |
 
 ---
 
@@ -29,6 +30,12 @@ Les **Paramètres** (`/settings/…`) sont découpés en cinq sections, en ongle
 Comptes locaux uniquement (un compte Google ou SSO n'a pas de mot de passe Nid) : **Mot de passe actuel**, **Nouveau mot de passe** (8 caractères minimum) et sa confirmation, puis **Changer le mot de passe**. Vos autres sessions ouvertes sont déconnectées.
 
 Mot de passe oublié : sur l'écran de connexion, **Mot de passe oublié ?** envoie un lien valable 1 heure (si l'instance a un serveur SMTP, voir [Configuration](../installation/configuration.md#e-mail-smtp)). Sinon, demandez à un administrateur de le réinitialiser ([Administration](admin.md#utilisateurs)).
+
+### Passkeys
+
+Une passkey remplace mot de passe et code 2FA : on se connecte avec le code ou la biométrie de l'appareil (Face ID, Windows Hello, empreinte, clé de sécurité). Donnez-lui un **Nom** (ex. « iPhone »), puis **Ajouter une passkey** et suivez la fenêtre du navigateur. Ensuite, sur l'écran de connexion : **Se connecter avec une passkey**, sans saisir d'e-mail. La liste indique la dernière utilisation de chaque passkey ; l'icône corbeille la supprime.
+
+La carte n'apparaît que si le navigateur gère les passkeys. Une passkey est liée à l'adresse de l'instance : si cette adresse change, il faut en recréer.
 
 ### Authentification à deux facteurs (2FA)
 
@@ -102,3 +109,11 @@ Vos règles et webhooks dans un fichier JSON, pour les sauvegarder ou les repren
 ### Supprimer mon compte
 
 Saisissez votre mot de passe (ou, pour un compte Google/SSO, votre adresse e-mail), puis **Supprimer définitivement mon compte** et confirmez. Votre compte, vos comptes Gmail connectés, vos archives et vos règles sont supprimés de Nid ; rien n'est supprimé dans Gmail. Le dernier administrateur de l'instance ne peut pas supprimer son compte.
+
+---
+
+## À propos
+
+- **Version** : la version de Nid installée, et si une plus récente est publiée (vérification deux fois par jour, avec la date de la dernière). Quand une mise à jour existe, la carte donne le lien vers les nouveautés et la commande à lancer.
+- **Ce que Nid contacte** : la liste des services externes auxquels l'instance parle (Google, ghcr.io pour la vérification des versions, votre SMTP, vos webhooks, les fournisseurs SSO configurés). Aucune télémétrie.
+- **Projet** : licence MIT, code source, historique des versions, signalement d'un problème.

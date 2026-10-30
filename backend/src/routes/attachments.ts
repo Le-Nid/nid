@@ -100,9 +100,9 @@ export async function attachmentsRoutes(app: FastifyInstance) {
     if (q) {
       countQuery = countQuery.where((eb: any) =>
         eb.or([
-          eb('archived_attachments.filename', 'ilike', `%${q}%`),
-          eb('archived_mails.subject', 'ilike', `%${q}%`),
-          eb('archived_mails.sender', 'ilike', `%${q}%`),
+          eb('archived_attachments.filename', 'ilike', `%${escapeIlike(q)}%`),
+          eb('archived_mails.subject', 'ilike', `%${escapeIlike(q)}%`),
+          eb('archived_mails.sender', 'ilike', `%${escapeIlike(q)}%`),
         ])
       )
     }

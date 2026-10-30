@@ -28,12 +28,12 @@ export default defineConfig({
         'pino-pretty',
         'zod',
         /^dotenv(\/.*)?$/,
-        /^@modelcontextprotocol\//,
         /^zod\//,
         'imapflow',
         'qrcode',
         'prom-client',
         'nodemailer',
+        /^@simplewebauthn\//,
       ],
     },
     // Pas de minification pour un serveur Node (debug plus facile + pas de gain réel)

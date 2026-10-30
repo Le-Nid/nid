@@ -31,6 +31,7 @@ test('each section renders', async ({ page, isMobile }) => {
     ['gmail', 'settings.gmail.sync'],
     ['notifications', 'settings.webhooks.title'],
     ['data', 'settings.data.config'],
+    ['about', 'settings.about.transparencyTitle'],
   ]
   for (const [section, heading] of ready) {
     await openSection(page, isMobile, section)
@@ -107,7 +108,7 @@ test.describe('« Plus » (mobile)', () => {
     await page.goto('/overview')
     await page.getByRole('navigation', { name: t('shell.mainNav') }).getByRole('link', { name: t('shell.more') }).click()
     const settings = page.getByRole('region', { name: t('shell.settings') })
-    await expect(settings.getByRole('link')).toHaveCount(5)
+    await expect(settings.getByRole('link')).toHaveCount(6)
     await expect(settings.getByRole('link', { name: new RegExp(t('settings.summary.twoFactorOff')) })).toBeVisible()
     await expect(page.getByText(t('settings.signedInAs', { email: 'alice@example.com' }))).toBeVisible()
 

@@ -13,6 +13,7 @@ import { reportsRoutes } from './reports'
 import { notificationsRoutes } from './notifications'
 import { auditRoutes } from './audit'
 import { twoFactorRoutes } from './2fa'
+import { passkeyRoutes } from './passkeys'
 import { integrityRoutes } from './integrity'
 import { webhookRoutes } from './webhooks'
 import { configRoutes } from './config'
@@ -28,6 +29,8 @@ import { sharingRoutes } from './sharing'
 import { eventsRoutes } from './events'
 import { labelsRoutes } from './labels'
 import { registerMetrics } from './metrics'
+import { aboutRoutes } from './about'
+import { config } from '../config'
 
 export async function registerRoutes(app: FastifyInstance) {
   await registerMetrics(app)
@@ -35,7 +38,7 @@ export async function registerRoutes(app: FastifyInstance) {
   // Health check
   app.get('/health', async () => ({
     status: 'ok',
-    version: process.env.APP_VERSION ?? '0.1.0',
+    version: config.APP_VERSION,
     timestamp: new Date().toISOString(),
   }))
 
@@ -54,6 +57,7 @@ export async function registerRoutes(app: FastifyInstance) {
   await app.register(notificationsRoutes, { prefix: '/api/notifications' })
   await app.register(auditRoutes,         { prefix: '/api/audit' })
   await app.register(twoFactorRoutes,     { prefix: '/api/auth/2fa' })
+  await app.register(passkeyRoutes,       { prefix: '/api/auth/passkeys' })
   await app.register(integrityRoutes,     { prefix: '/api/integrity' })
   await app.register(webhookRoutes,       { prefix: '/api/webhooks' })
   await app.register(configRoutes,        { prefix: '/api/config' })
@@ -68,6 +72,7 @@ export async function registerRoutes(app: FastifyInstance) {
   await app.register(sharingRoutes,       { prefix: '/api/shares' })
   await app.register(eventsRoutes,        { prefix: '/api/events' })
   await app.register(labelsRoutes,        { prefix: '/api/labels' })
+  await app.register(aboutRoutes,         { prefix: '/api/about' })
 
   // Démarrer le broadcaster SSE ← QueueEvents BullMQ
   startQueueEventBroadcaster()
