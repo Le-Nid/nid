@@ -2,18 +2,19 @@ import { useId, useState, type FormEvent, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { KeyRound, ShieldCheck, Trash2 } from 'lucide-react'
+import { Copy, KeyRound, Plus, ShieldCheck, Trash2 } from 'lucide-react'
 import { browserSupportsWebAuthn } from '@simplewebauthn/browser'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ConfirmDialog } from '@/components/app/ConfirmDialog'
 import { FormField } from '@/components/app/FormField'
 import {
-  useAddPasskey, useChangePassword, usePasskeys, useRemovePasskey, useShares, useTwoFactorDisable, useTwoFactorEnable, useTwoFactorSetup,
+  useAddPasskey, useApiTokens, useChangePassword, useCreateApiToken, usePasskeys, useRemovePasskey, useRevokeApiToken, useShares,
+  useTwoFactorDisable, useTwoFactorEnable, useTwoFactorSetup,
 } from '@/hooks/queries'
 import { useAuthStore } from '@/store/auth.store'
 import { formatRelative } from '@/utils/format'
-import { SettingsCard } from './shared'
+import { SettingsCard, selectClass } from './shared'
 
 /** Server message of a refused request (wrong code…), else the generic one. */
 const serverError = (err: unknown, fallback: string) =>
@@ -226,7 +227,107 @@ function PasskeysCard() {
   )
 }
 
-/** « Sécurité » (§7.7): password, passkeys, 2FA, and the active share links, managed in Archives (not duplicated here). */
+type ApiToken = { id: string; name: string; scope: 'read' | 'write'; expires_at: string | null; last_used_at: string | null }
+
+const EXPIRY_DAYS = [30, 90, 365] as const
+
+/** API tokens (Home Assistant, scripts): shown once at creation, only their hash is stored. */
+function ApiTokensCard() {
+  const { t, i18n } = useTranslation()
+  const id = useId()
+  const tokens = (useApiTokens().data ?? []) as ApiToken[]
+  const create = useCreateApiToken()
+  const revoke = useRevokeApiToken()
+  const [name, setName] = useState('')
+  const [scope, setScope] = useState<ApiToken['scope']>('read')
+  const [expiry, setExpiry] = useState('')
+  const [created, setCreated] = useState<string | null>(null)
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault()
+    create.mutate({ name: name.trim(), scope, expires_in_days: expiry ? Number(expiry) : null }, {
+      onSuccess: (res: { token: string }) => {
+        setName('')
+        setCreated(res.token)
+      },
+      onError: (err) => toast.error(serverError(err, t('common.error'))),
+    })
+  }
+  const copy = (token: string) => navigator.clipboard.writeText(token).then(
+    () => toast.success(t('settings.apiTokens.copied')),
+    () => toast.error(t('settings.apiTokens.copyFailed')),
+  )
+  const status = (tk: ApiToken) => [
+    t(`settings.apiTokens.scope.${tk.scope}`),
+    tk.last_used_at ? t('settings.apiTokens.lastUsed', { when: formatRelative(tk.last_used_at, i18n.language) }) : t('settings.apiTokens.neverUsed'),
+    tk.expires_at && (new Date(tk.expires_at) < new Date()
+      ? t('settings.apiTokens.expired')
+      : t('settings.apiTokens.expires', { date: new Date(tk.expires_at).toLocaleDateString(i18n.language) })),
+  ].filter(Boolean).join(' · ')
+
+  return (
+    <SettingsCard title={t('settings.apiTokens.title')} description={t('settings.apiTokens.hint')}>
+      {created && (
+        <div role="status" className="flex flex-col gap-2 rounded-lg border border-primary/40 bg-primary/5 p-3">
+          <p className="text-sm font-medium">{t('settings.apiTokens.createdOnce')}</p>
+          <div className="flex items-center gap-2">
+            <code className="min-w-0 flex-1 break-all rounded bg-muted px-2 py-1 text-sm">{created}</code>
+            <Button variant="ghost" size="icon" className="size-11 shrink-0 md:size-8" aria-label={t('settings.apiTokens.copy')} onClick={() => void copy(created)}>
+              <Copy aria-hidden="true" />
+            </Button>
+          </div>
+          <Button variant="outline" className="h-11 w-fit md:h-9" onClick={() => setCreated(null)}>{t('settings.apiTokens.done')}</Button>
+        </div>
+      )}
+      {tokens.length > 0 && (
+        <ul className="flex flex-col divide-y rounded-lg border">
+          {tokens.map((tk) => (
+            <li key={tk.id} className="flex min-h-11 items-center justify-between gap-3 px-3 py-2">
+              <div className="flex min-w-0 flex-col">
+                <span className="truncate text-sm font-medium">{tk.name}</span>
+                <span className="text-sm text-muted-foreground">{status(tk)}</span>
+              </div>
+              <ConfirmDialog
+                trigger={(
+                  <Button variant="ghost" size="icon" className="size-11 md:size-8" aria-label={t('settings.apiTokens.revoke', { name: tk.name })}>
+                    <Trash2 aria-hidden="true" />
+                  </Button>
+                )}
+                title={t('settings.apiTokens.revokeTitle', { name: tk.name })}
+                description={t('settings.apiTokens.revokeConfirm')}
+                confirmLabel={t('settings.apiTokens.revokeLabel')}
+                onConfirm={() => revoke.mutate(tk.id, { onError: () => toast.error(t('common.error')) })}
+                destructive
+              />
+            </li>
+          ))}
+        </ul>
+      )}
+      <form onSubmit={submit} className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-end">
+        <FormField id={`${id}-name`} label={t('settings.apiTokens.name')}>
+          <Input id={`${id}-name`} required maxLength={64} placeholder={t('settings.apiTokens.namePlaceholder')} value={name} onChange={(e) => setName(e.target.value)} className="h-11 text-base md:h-9 md:w-56 md:text-sm" />
+        </FormField>
+        <FormField id={`${id}-scope`} label={t('settings.apiTokens.scopeLabel')}>
+          <select id={`${id}-scope`} value={scope} onChange={(e) => setScope(e.target.value as ApiToken['scope'])} className={selectClass}>
+            <option value="read">{t('settings.apiTokens.scope.read')}</option>
+            <option value="write">{t('settings.apiTokens.scope.write')}</option>
+          </select>
+        </FormField>
+        <FormField id={`${id}-expiry`} label={t('settings.apiTokens.expiryLabel')}>
+          <select id={`${id}-expiry`} value={expiry} onChange={(e) => setExpiry(e.target.value)} className={selectClass}>
+            <option value="">{t('settings.apiTokens.never')}</option>
+            {EXPIRY_DAYS.map((d) => <option key={d} value={d}>{t('settings.apiTokens.days', { count: d })}</option>)}
+          </select>
+        </FormField>
+        <Button type="submit" className="h-11 w-fit md:h-9" disabled={create.isPending || !name.trim()}>
+          <Plus aria-hidden="true" />{t('settings.apiTokens.create')}
+        </Button>
+      </form>
+    </SettingsCard>
+  )
+}
+
+/** « Sécurité » (§7.7): password, passkeys, 2FA, API tokens, and the active share links, managed in Archives (not duplicated here). */
 export function SecuritySection() {
   const { t } = useTranslation()
   const shares = useShares().data as unknown[] | undefined
@@ -236,6 +337,7 @@ export function SecuritySection() {
       {hasPassword && <PasswordCard />}
       {browserSupportsWebAuthn() && <PasskeysCard />}
       <TwoFactorCard />
+      <ApiTokensCard />
       <SettingsCard
         title={t('settings.shares.title')}
         description={shares ? t('settings.shares.count', { count: shares.length }) : t('settings.shares.description')}

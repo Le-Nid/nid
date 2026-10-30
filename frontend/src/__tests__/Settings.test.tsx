@@ -5,7 +5,7 @@ import { createMemoryRouter, Outlet, RouterProvider } from 'react-router'
 import { toast } from 'sonner'
 import i18n from '../i18n'
 import {
-  aboutApi, authApi, configApi, dashboardApi, gmailAccountsApi, importApi, labelsApi, notificationsApi, sharingApi, twoFactorApi, webhooksApi, passkeysApi,
+  aboutApi, authApi, configApi, dashboardApi, gmailAccountsApi, importApi, labelsApi, notificationsApi, sharingApi, twoFactorApi, webhooksApi, passkeysApi, apiTokensApi,
 } from '../api'
 import { useAuthStore } from '../store/auth.store'
 import { useThemeStore } from '../store/theme.store'
@@ -14,6 +14,7 @@ import { saveBlob } from '../utils/download'
 vi.mock('../api', () => ({
   aboutApi: { get: vi.fn() },
   passkeysApi: { list: vi.fn(), registerOptions: vi.fn(), registerVerify: vi.fn(), remove: vi.fn() },
+  apiTokensApi: { list: vi.fn(), create: vi.fn(), revoke: vi.fn() },
   authApi: { changePassword: vi.fn(), exportMyData: vi.fn(), deleteMe: vi.fn() },
   dashboardApi: { getArchiveStats: vi.fn() },
   notificationsApi: { getPreferences: vi.fn(), updatePreferences: vi.fn() },
@@ -72,6 +73,7 @@ beforeEach(() => {
   vi.mocked(dashboardApi.getArchiveStats).mockResolvedValue({ total_mails: 24106, last_archived_at: '2026-10-21T03:00:00Z' })
   vi.mocked(sharingApi.list).mockResolvedValue([{ id: 's1' }, { id: 's2' }])
   vi.mocked(webhooksApi.list).mockResolvedValue([WEBHOOK])
+  vi.mocked(apiTokensApi.list).mockResolvedValue([])
 })
 
 describe('desktop layout', () => {
@@ -225,6 +227,47 @@ describe('Sécurité', () => {
   it('hides the password card for an SSO-only account', () => {
     setup('/settings/security')
     expect(screen.queryByRole('heading', { name: 'Mot de passe' })).not.toBeInTheDocument()
+  })
+
+  it('creates a read-only API token for 90 days and shows it once, with a copy button', async () => {
+    const TOKEN = `nid_${'a'.repeat(43)}`
+    vi.mocked(apiTokensApi.create).mockResolvedValue({ id: 't1', token: TOKEN })
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
+    setup('/settings/security')
+    await userEvent.type(screen.getByLabelText('Nom du jeton'), ' Home Assistant ')
+    await userEvent.selectOptions(screen.getByLabelText('Expiration'), '90')
+    await userEvent.click(screen.getByRole('button', { name: 'Créer le jeton' }))
+    await waitFor(() => expect(apiTokensApi.create).toHaveBeenCalledWith({ name: 'Home Assistant', scope: 'read', expires_in_days: 90 }, expect.anything()))
+
+    expect(await screen.findByText(TOKEN)).toBeInTheDocument()
+    expect(screen.getByText('Copiez ce jeton maintenant : il ne sera plus jamais affiché.')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Copier le jeton' }))
+    expect(writeText).toHaveBeenCalledWith(TOKEN)
+    await userEvent.click(screen.getByRole('button', { name: "J'ai copié le jeton" }))
+    expect(screen.queryByText(TOKEN)).not.toBeInTheDocument()
+  })
+
+  it('lists API tokens with their rights and expiry, revokes one, and shows a refused creation', async () => {
+    vi.mocked(apiTokensApi.list).mockResolvedValue([
+      { id: 't1', name: 'Home Assistant', scope: 'write', expires_at: null, last_used_at: null },
+      { id: 't2', name: 'Vieux script', scope: 'read', expires_at: '2020-01-01T00:00:00Z', last_used_at: null },
+    ])
+    vi.mocked(apiTokensApi.revoke).mockResolvedValue(undefined)
+    vi.mocked(apiTokensApi.create).mockRejectedValue({ response: { data: { error: 'Maximum 20 API tokens: revoke one first' } } })
+    setup('/settings/security')
+    expect(await screen.findByText('Lecture et actions · Jamais utilisé')).toBeInTheDocument()
+    expect(screen.getByText('Lecture seule · Jamais utilisé · Expiré')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Révoquer le jeton Home Assistant' }))
+    await userEvent.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Révoquer' }))
+    await waitFor(() => expect(apiTokensApi.revoke).toHaveBeenCalledWith('t1', expect.anything()))
+
+    await userEvent.type(screen.getByLabelText('Nom du jeton'), 'Encore un')
+    await userEvent.selectOptions(screen.getByLabelText('Droits'), 'write')
+    await userEvent.click(screen.getByRole('button', { name: 'Créer le jeton' }))
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Maximum 20 API tokens: revoke one first'))
+    expect(apiTokensApi.create).toHaveBeenCalledWith({ name: 'Encore un', scope: 'write', expires_in_days: null }, expect.anything())
   })
 
   it('links to the share links in Archives instead of listing them', async () => {

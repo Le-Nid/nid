@@ -408,3 +408,27 @@ Public. Rate limit : 10/min.
 ```
 
 **Réponse 200** : `{ "user": { "id", "email", "role" } }`, cookie de session posé, compteur de la passkey mis à jour. Tracé `user.login_passkey`. `401` identique pour un challenge expiré, une passkey inconnue, un compte désactivé ou une signature invalide.
+
+## Jetons d'API
+
+Jetons de longue durée pour Home Assistant ou un script, envoyés en `Authorization: Bearer nid_…`. Seul le SHA-256 du jeton est stocké : il n'est affiché qu'une fois, à la création. Un jeton connecte son propriétaire **jamais en admin**, et il est refusé (`403`) sur `/api/auth/*` (sécurité du compte, jetons eux-mêmes), `/api/admin/*`, `/api/privacy/*`, `/api/webhooks/*` et `/api/shares/*`. Un jeton `read` ne passe que `GET`/`HEAD`. Un jeton expiré, ou dont l'utilisateur est désactivé, reçoit `401`. Ces routes demandent le cookie de session.
+
+```bash
+curl -H "Authorization: Bearer nid_…" https://nid.example.com/api/dashboard/<accountId>/stats
+```
+
+### GET /api/auth/api-tokens 🔒
+
+Les jetons de l'utilisateur, sans le jeton ni son hash : `[{ "id", "name", "scope", "expires_at", "last_used_at", "created_at" }]`. `last_used_at` est mis à jour au plus une fois par minute.
+
+### POST /api/auth/api-tokens 🔒
+
+```json
+{ "name": "Home Assistant", "scope": "read", "expires_in_days": 365 }
+```
+
+`scope` : `read` (défaut) ou `write`. `expires_in_days` : 1–3650, ou `null` (défaut) pour aucune expiration. **Réponse 201** : la ligne du jeton plus `"token": "nid_…"`, seule fois où il est renvoyé. `409` au-delà de 20 jetons. Tracé `user.api_token_create`. Rate limit : 10/min.
+
+### DELETE /api/auth/api-tokens/:id 🔒
+
+**Réponse 204**, `404` si le jeton n'est pas à l'utilisateur. Tracé `user.api_token_revoke`.

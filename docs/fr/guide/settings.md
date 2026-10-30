@@ -45,6 +45,10 @@ La carte n'apparaît que si le navigateur gère les passkeys. Une passkey est li
 
 Une fois activée, un code est demandé à chaque connexion, y compris avec Google ou un autre fournisseur (SSO). Pour la désactiver, saisissez un code puis **Désactiver la 2FA**.
 
+### Jetons d'API
+
+Pour Home Assistant ou un script. Donnez un **Nom** au jeton, choisissez ses **Droits** (*Lecture seule*, ou *Lecture et actions* pour lancer des jobs ou des règles) et son **Expiration**, puis **Créer le jeton**. Copiez-le tout de suite : il n'est affiché qu'une fois. Envoyez-le dans l'en-tête `Authorization: Bearer nid_…`. Un jeton n'a jamais accès à la sécurité du compte, à l'administration, au chiffrement, aux webhooks ni aux liens de partage. La liste indique la dernière utilisation de chaque jeton ; l'icône corbeille le révoque. Voir la [référence API](../technical/api/auth.md#jetons-d-api).
+
 ### Liens de partage
 
 Nombre de liens de partage actifs vers vos mails archivés, avec le lien **Gérer les liens de partage dans Archives** (onglet [Partages](archives.md#onglet-partages)).

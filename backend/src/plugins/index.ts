@@ -10,6 +10,7 @@ import { ZodError } from 'zod'
 import { config } from '../config'
 import { connectDb } from './db'
 import { connectRedis } from './redis'
+import { API_TOKEN_RE, verifyApiToken } from '../auth/api-tokens.service'
 
 export async function registerPlugins(app: FastifyInstance) {
   // CORS
@@ -76,6 +77,8 @@ export async function registerPlugins(app: FastifyInstance) {
 
   // ─── Auth helper: verify JWT + check blacklist + check user is still active (Point 6, 13) ──
   app.decorate('authenticate', async function (request: any, reply: any) {
+    const apiToken = request.headers.authorization?.match(/^Bearer (nid_\S+)$/)?.[1]
+    if (apiToken) return authenticateApiToken(request, reply, apiToken)
     try {
       await request.jwtVerify()
 
@@ -139,6 +142,24 @@ export async function registerPlugins(app: FastifyInstance) {
       return reply.code(403).send({ error: 'Admin access required' })
     }
   })
+}
+
+// Account security, tokens, administration, and what could leak or lock the archives stay session-only
+const API_TOKEN_DENIED = ['/api/auth', '/api/admin', '/api/privacy', '/api/webhooks', '/api/shares']
+
+async function authenticateApiToken(request: any, reply: any, raw: string) {
+  const found = API_TOKEN_RE.test(raw) ? await verifyApiToken(raw) : null
+  if (!found) return reply.code(401).send({ error: 'Unauthorized' })
+  // The matched route pattern, not request.url: an encoded path cannot slip past the prefix check
+  const route: string = request.routeOptions?.url ?? ''
+  if (API_TOKEN_DENIED.some((prefix) => route === prefix || route.startsWith(`${prefix}/`))) {
+    return reply.code(403).send({ error: 'Not available with an API token' })
+  }
+  if (found.scope === 'read' && request.method !== 'GET' && request.method !== 'HEAD') {
+    return reply.code(403).send({ error: 'Read-only API token' })
+  }
+  // Never admin through a token, whatever the owner's role
+  request.user = { sub: found.userId, email: found.email, role: 'user' }
 }
 
 /** Helper to set auth cookie on reply */

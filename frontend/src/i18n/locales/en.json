@@ -536,6 +536,35 @@
       "removeConfirm": "It will no longer sign in to Nid. Remove it from the device's password manager too.",
       "removeLabel": "Remove the passkey"
     },
+    "apiTokens": {
+      "title": "API tokens",
+      "hint": "For Home Assistant or a script: send the token in the \"Authorization: Bearer …\" header. A token never reaches account security, administration, encryption, webhooks or share links.",
+      "name": "Token name",
+      "namePlaceholder": "E.g. Home Assistant",
+      "scopeLabel": "Permissions",
+      "scope": {
+        "read": "Read only",
+        "write": "Read and actions"
+      },
+      "expiryLabel": "Expiration",
+      "never": "Never",
+      "days_one": "{{count}} day",
+      "days_other": "{{count}} days",
+      "create": "Create token",
+      "createdOnce": "Copy this token now: it will never be shown again.",
+      "copy": "Copy token",
+      "copied": "Token copied",
+      "copyFailed": "Could not copy: select the token by hand.",
+      "done": "I copied the token",
+      "lastUsed": "Used {{when}}",
+      "neverUsed": "Never used",
+      "expires": "Expires on {{date}}",
+      "expired": "Expired",
+      "revoke": "Revoke token {{name}}",
+      "revokeTitle": "Revoke token \"{{name}}\"?",
+      "revokeConfirm": "Integrations using it will lose access to Nid.",
+      "revokeLabel": "Revoke"
+    },
     "twoFactor": {
       "title": "Two-factor authentication (2FA)",
       "hint": "Protect your account with a code from an authenticator app.",

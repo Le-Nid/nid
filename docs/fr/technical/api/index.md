@@ -8,7 +8,7 @@ La documentation Swagger interactive est disponible en développement à `http:/
 
 ## Authentification
 
-Toutes les routes requièrent un JWT dans le cookie httpOnly `token` (ou un header `Authorization: Bearer`), sauf : `/api/auth/config`, `/api/auth/register`, `/api/auth/login`, `/api/auth/google` (+ `/callback`, `/exchange`), `/api/auth/social/:provider/*`, `/api/auth/gmail/callback` et `/api/shares/public/:token`. Les routes avec `:accountId` vérifient en plus que le compte Gmail appartient à l'utilisateur (`403` sinon).
+Toutes les routes requièrent un JWT dans le cookie httpOnly `token` (ou un header `Authorization: Bearer`), sauf : `/api/auth/config`, `/api/auth/register`, `/api/auth/login`, `/api/auth/google` (+ `/callback`, `/exchange`), `/api/auth/social/:provider/*`, `/api/auth/gmail/callback` et `/api/shares/public/:token`. Les routes avec `:accountId` vérifient en plus que le compte Gmail appartient à l'utilisateur (`403` sinon). Les scripts et Home Assistant utilisent un [jeton d'API](auth.md#jetons-d-api) (`Authorization: Bearer nid_…`) à la place de la session.
 
 ---
 
