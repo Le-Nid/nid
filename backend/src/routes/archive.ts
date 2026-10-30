@@ -7,7 +7,7 @@ import { streamArchiveZip } from "../archive/export.service";
 import { invalidateDashboardCache } from "../dashboard/cache.service";
 import { deleteArchivedMails } from "../archive/trash.service";
 import fs from "node:fs";
-import { escapeIlike, notFound } from "../utils/db";
+import { escapeIlike, FTS_CONFIG, ftsQuery, notFound } from "../utils/db";
 import { extractPagination } from "../utils/pagination";
 import { authPresets } from "../utils/auth";
 import { createLogger } from "../logger";
@@ -62,8 +62,7 @@ export async function archiveRoutes(app: FastifyInstance) {
     if (to_date) base = base.where("date", "<=", to_date);
     if (has_attachments) base = base.where("has_attachments", "=", has_attachments === "true");
     if (label) base = base.where(sql<boolean>`label_ids @> ARRAY[${label}]::text[]`);
-    // plainto_tsquery: safe against operator injection (Point 11)
-    const tsQuery = sql`plainto_tsquery('french', ${searchTerm})`;
+    const tsQuery = ftsQuery(searchTerm ?? "");
     if (searchTerm) base = base.where(sql<boolean>`search_vector @@ ${tsQuery}`);
 
     const [rows, { count }] = await Promise.all([
@@ -71,7 +70,7 @@ export async function archiveRoutes(app: FastifyInstance) {
         .select(MAIL_LIST_COLUMNS)
         .$if(!!searchTerm, (qb) =>
           qb
-            .select(sql<string>`ts_headline('french', COALESCE(body_text, snippet, ''), ${tsQuery}, ${HEADLINE_OPTIONS})`.as("highlight"))
+            .select(sql<string>`ts_headline(${FTS_CONFIG}, COALESCE(body_text, snippet, ''), ${tsQuery}, ${HEADLINE_OPTIONS})`.as("highlight"))
             .orderBy(sql`ts_rank(search_vector, ${tsQuery})`, "desc"),
         )
         .orderBy("date", "desc")
@@ -229,7 +228,7 @@ export async function archiveRoutes(app: FastifyInstance) {
     if (q) {
       const searchTerm = q.trim().slice(0, 200);
       baseQuery = (baseQuery as any).where(
-        sql`search_vector @@ plainto_tsquery('french', ${searchTerm})`
+        sql`search_vector @@ ${ftsQuery(searchTerm)}`
       );
     }
 
@@ -256,7 +255,7 @@ export async function archiveRoutes(app: FastifyInstance) {
           ${from_date ? sql`AND date >= ${new Date(from_date)}` : sql``}
           ${to_date ? sql`AND date <= ${new Date(to_date)}` : sql``}
           ${has_attachments === "true" ? sql`AND has_attachments = true` : has_attachments === "false" ? sql`AND has_attachments = false` : sql``}
-          ${q ? sql`AND search_vector @@ plainto_tsquery('french', ${q.trim().slice(0, 200)})` : sql``}
+          ${q ? sql`AND search_vector @@ ${ftsQuery(q.trim().slice(0, 200))}` : sql``}
         GROUP BY thread_id
         ORDER BY latest_date DESC
         LIMIT ${lim} OFFSET ${offset}
@@ -385,7 +384,7 @@ export async function archiveRoutes(app: FastifyInstance) {
     if (q) {
       const searchTerm = q.trim().slice(0, 200);
       query = (query as any).where(
-        sql`search_vector @@ plainto_tsquery('french', ${searchTerm})`
+        sql`search_vector @@ ${ftsQuery(searchTerm)}`
       );
     }
 

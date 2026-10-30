@@ -19,7 +19,7 @@ Other ways to fill the archives: **Save to the NAS** in [Mail](mails.md), an acc
 ## Mails tab: search
 
 - **Label tree** (on the left on desktop): **All mails** then the labels that hold archived mails, with their count.
-- **Full-text search**: "Search the archives (subject, sender, content…)". Matching terms are highlighted in the extract.
+- **Full-text search**: subject, sender, content and body, accent-insensitive, with `"exact phrase"`, `-excluded` and `OR`. Matching terms are highlighted in the extract.
 - **Filters**: **Sender**, period (**From** / **To**), **With attachment**. On mobile they sit in the **Filters (N)** panel with the **Label**, then **Show results**.
 
 Results ("N results") show **Subject**, **Extract**, **Date**, **Sender**, **Size**. **Clear search and filters** goes back to the full list.
