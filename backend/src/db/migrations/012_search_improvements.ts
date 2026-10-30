@@ -1,4 +1,7 @@
 import { Kysely, sql } from 'kysely'
+import { createLogger } from '../../logger'
+
+const logger = createLogger('db')
 
 // Search config: french stemming + accent-insensitive ("electricite" matches "Électricité").
 // Kept in sync with FTS_CONFIG in utils/db.ts.
@@ -21,7 +24,8 @@ async function setSearchVectorFunction(db: Kysely<any>, config: string): Promise
     $$ LANGUAGE plpgsql
   `.execute(db)
   // Recompute existing vectors through the BEFORE UPDATE trigger.
-  // shortcut: one blocking UPDATE at startup (seconds per 100k mails), move to a batched job if archives reach millions.
+  // shortcut: one blocking UPDATE at startup (~30 s per 100k mails with body), move to a batched job if archives reach millions.
+  logger.info(`Rebuilding archive search index (${config}), may take a few minutes on large archives`)
   await sql`UPDATE archived_mails SET search_vector = NULL`.execute(db)
 }
 
