@@ -2,12 +2,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // ─── DB + dependence mocks ──────────────────────────────────
 const mockExecute = vi.fn().mockResolvedValue([])
+const mockSet = vi.fn()
 const chainable: any = () => {
   const chain: any = new Proxy({}, {
     get: (_target, prop) => {
       if (prop === 'execute') return mockExecute
       if (prop === 'executeTakeFirst') return vi.fn().mockResolvedValue(null)
-      return (..._args: any[]) => chain
+      return (...args: any[]) => { if (prop === 'set') mockSet(...args); return chain }
     },
   })
   return chain
@@ -272,6 +273,23 @@ describe('unified worker handlers', () => {
     mockGetRule.mockResolvedValue(null)
     const job = makeJob('run_rule', { accountId: 'acc-1', ruleId: 'bad', userId: 'user-1' })
     await expect(processJob(job)).rejects.toThrow('Rule bad not found')
+  })
+
+  it('run_rule failure stamps last_run_at and notifies only on the last attempt', async () => {
+    mockGetRule.mockResolvedValue({ id: 'rule-1', name: 'Test', is_active: true })
+    mockRunRule.mockRejectedValue(new Error('No refresh token or refresh handler callback is set.'))
+    const job: any = { ...makeJob('run_rule', { accountId: 'acc-1', ruleId: 'rule-1', userId: 'user-1' }), opts: { attempts: 3 } }
+    mockNotify.mockClear()
+    mockSet.mockClear()
+
+    for (const attemptsMade of [0, 1]) {
+      await expect(processJob({ ...job, attemptsMade })).rejects.toThrow('No refresh token')
+    }
+    expect(mockNotify).not.toHaveBeenCalled()
+    await expect(processJob({ ...job, attemptsMade: 2 })).rejects.toThrow('No refresh token')
+    expect(mockNotify).toHaveBeenCalledTimes(1)
+    expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ title: 'Règle échouée' }))
+    expect(mockSet).toHaveBeenCalledWith({ last_run_at: expect.any(Date) })
   })
 
   it('handles run_rule disabled', async () => {

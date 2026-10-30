@@ -364,8 +364,11 @@ async function handleRule(job: Job) {
       .set({ status: 'failed', error: String(err) })
       .where('bullmq_id', '=', String(job.id))
       .execute()
+    // A failed run counts as a run: otherwise the scheduler re-enqueues the rule every minute until it succeeds
+    await db.updateTable('rules').set({ last_run_at: new Date() }).where('id', '=', ruleId).execute()
 
-    if (job.data.userId) {
+    // BullMQ retries the job: notify once, when the last attempt fails
+    if (job.data.userId && (job.attemptsMade ?? 0) + 1 >= (job.opts?.attempts ?? 1)) {
       await notify({
         userId: job.data.userId,
         category: 'job_failed',
