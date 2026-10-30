@@ -5,13 +5,14 @@ const mockExecute = vi.fn()
 const mockExecuteTakeFirst = vi.fn()
 const mockExecuteTakeFirstOrThrow = vi.fn()
 
+const insertedValues: any[] = []
 const chainable: any = () => {
   const chain: any = new Proxy({}, {
     get: (_target, prop) => {
       if (prop === 'execute') return mockExecute
       if (prop === 'executeTakeFirst') return mockExecuteTakeFirst
       if (prop === 'executeTakeFirstOrThrow') return mockExecuteTakeFirstOrThrow
-      return (..._args: any[]) => chain
+      return (...args: any[]) => { if (prop === 'values') insertedValues.push(args[0]); return chain }
     },
   })
   return chain
@@ -140,7 +141,7 @@ describe('social.service - gap coverage', () => {
   // Note: Registration disabled test removed since config mock is hoisted and immutable.
   // This scenario is already tested in social-deep.test.ts.
 
-  it('autoRegisterGmailAccount with no refresh token uses empty string', async () => {
+  it('autoRegisterGmailAccount without refresh token stores null so the existing one is kept', async () => {
     mockValidateAuthorizationCode.mockResolvedValueOnce(makeMockTokens(false))
 
     mockExecuteTakeFirst
@@ -154,5 +155,6 @@ describe('social.service - gap coverage', () => {
 
     const result = await exchangeSocialCode('google', 'code', 'verifier')
     expect(result.id).toBe('u3')
+    await vi.waitFor(() => expect(insertedValues.findLast((v) => 'refresh_token' in v)).toMatchObject({ refresh_token: null }))
   })
 })
