@@ -407,25 +407,29 @@ Le champ `search_vector` est mis à jour par le trigger `mail_search_vector_upda
 -- C : snippet
 -- D : corps du mail (body_text, migration 007)
 NEW.search_vector :=
-  setweight(to_tsvector('french', COALESCE(NEW.subject,          '')), 'A') ||
-  setweight(to_tsvector('french', COALESCE(NEW.sender,           '')), 'B') ||
-  setweight(to_tsvector('french', COALESCE(NEW.snippet,          '')), 'C') ||
-  setweight(to_tsvector('french', COALESCE(NEW.attachment_names, '')), 'B') ||
-  setweight(to_tsvector('french', COALESCE(NEW.body_text,        '')), 'D');
+  setweight(to_tsvector('nid_french', COALESCE(NEW.subject,          '')), 'A') ||
+  setweight(to_tsvector('nid_french', COALESCE(NEW.sender,           '')), 'B') ||
+  setweight(to_tsvector('nid_french', COALESCE(NEW.snippet,          '')), 'C') ||
+  setweight(to_tsvector('nid_french', COALESCE(NEW.attachment_names, '')), 'B') ||
+  setweight(to_tsvector('nid_french', COALESCE(NEW.body_text,        '')), 'D');
 ```
 
 `body_text` reste `NULL` pour les archives chiffrées. Les archives antérieures à la migration 007 sont complétées par le job `backfill_body_text`.
 
-Les requêtes utilisent `plainto_tsquery` (les opérateurs saisis par l'utilisateur sont neutralisés) :
+La configuration `nid_french` (migration 012) est une copie de `french` avec `unaccent` avant la racinisation : `electricite` trouve `Électricité`, `factures` trouve `facture`.
+
+Les requêtes utilisent `websearch_to_tsquery` — syntaxe à la Google (`"phrase exacte"`, `-exclu`, `OR`), sans erreur de syntaxe possible quelle que soit la saisie (helper `ftsQuery()` dans `utils/db.ts`) :
 
 ```sql
 SELECT *, ts_rank(search_vector, query) AS rank
-FROM archived_mails, plainto_tsquery('french', 'facture 2024') query
+FROM archived_mails, websearch_to_tsquery('nid_french', 'facture 2024') query
 WHERE gmail_account_id = $1
   AND deleted_at IS NULL
   AND search_vector @@ query
 ORDER BY rank DESC, date DESC;
 ```
+
+Les filtres `ILIKE '%…%'` (`sender`, `subject`, `filename` des pièces jointes) s'appuient sur des index GIN `pg_trgm` (migration 012).
 
 ---
 

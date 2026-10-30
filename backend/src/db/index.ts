@@ -14,6 +14,7 @@ import * as migration008 from './migrations/008_account_backup_prefs'
 import * as migration009 from './migrations/009_drop_pii_tracking'
 import * as migration010 from './migrations/010_password_changed_at'
 import * as migration011 from './migrations/011_passkeys'
+import * as migration012 from './migrations/012_search_improvements'
 import { createLogger } from '../logger'
 
 const logger = createLogger('db')
@@ -49,6 +50,7 @@ const migrations: Record<string, Migration> = {
   '009_drop_pii_tracking': migration009,
   '010_password_changed_at': migration010,
   '011_passkeys': migration011,
+  '012_search_improvements': migration012,
 }
 
 class InCodeMigrationProvider implements MigrationProvider {

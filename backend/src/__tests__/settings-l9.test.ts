@@ -183,6 +183,13 @@ describe('« Action requise » — expired Google grant', () => {
     expect(calls.find((c) => c.method === 'set')?.args[0]).toEqual({ auth_error_at: expect.any(Date) })
   })
 
+  it('flags the account when no refresh token is stored (SSO login used to wipe it)', async () => {
+    mockTakeFirst.mockResolvedValueOnce({ access_token: 'a', refresh_token: '', token_expiry: hoursAgo(1) })
+    mockGetAccessToken.mockRejectedValueOnce(new Error('No refresh token or refresh handler callback is set.'))
+    await expect(getAuthenticatedClient(ACCOUNT)).rejects.toThrow('No refresh token')
+    expect(calls.find((c) => c.method === 'set')?.args[0]).toEqual({ auth_error_at: expect.any(Date) })
+  })
+
   it('leaves the account alone on other failures and does not refresh a valid token', async () => {
     mockTakeFirst.mockResolvedValueOnce({ access_token: 'a', refresh_token: 'r', token_expiry: hoursAgo(1) })
     mockGetAccessToken.mockRejectedValueOnce(new Error('ETIMEDOUT'))
@@ -237,6 +244,8 @@ describe('soft disconnect', () => {
     startRuleScheduler()
     await vi.advanceTimersByTimeAsync(60_000)
     vi.useRealTimers()
-    expect(calls.filter((c) => c.method === 'where').map((c) => c.args)).toContainEqual(['gmail_accounts.is_active', '=', true])
+    const wheres = calls.filter((c) => c.method === 'where').map((c) => c.args)
+    expect(wheres).toContainEqual(['gmail_accounts.is_active', '=', true])
+    expect(wheres).toContainEqual(['gmail_accounts.auth_error_at', 'is', null])
   })
 })

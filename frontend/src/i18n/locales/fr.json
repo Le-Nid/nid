@@ -143,7 +143,7 @@
     "allMails": "Tous les mails",
     "labelTree": "Libellés",
     "search": "Rechercher dans les archives",
-    "searchPlaceholder": "Rechercher dans les archives (objet, expéditeur, contenu…)",
+    "searchPlaceholder": "Objet, expéditeur, contenu — \"phrase exacte\", -exclure, OR",
     "filters": "Filtres",
     "filtersCount_one": "Filtres ({{count}})",
     "filtersCount_other": "Filtres ({{count}})",

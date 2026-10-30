@@ -407,25 +407,29 @@ The `search_vector` field is updated by the `mail_search_vector_update` trigger 
 -- C: snippet
 -- D: mail body (body_text, migration 007)
 NEW.search_vector :=
-  setweight(to_tsvector('french', COALESCE(NEW.subject,          '')), 'A') ||
-  setweight(to_tsvector('french', COALESCE(NEW.sender,           '')), 'B') ||
-  setweight(to_tsvector('french', COALESCE(NEW.snippet,          '')), 'C') ||
-  setweight(to_tsvector('french', COALESCE(NEW.attachment_names, '')), 'B') ||
-  setweight(to_tsvector('french', COALESCE(NEW.body_text,        '')), 'D');
+  setweight(to_tsvector('nid_french', COALESCE(NEW.subject,          '')), 'A') ||
+  setweight(to_tsvector('nid_french', COALESCE(NEW.sender,           '')), 'B') ||
+  setweight(to_tsvector('nid_french', COALESCE(NEW.snippet,          '')), 'C') ||
+  setweight(to_tsvector('nid_french', COALESCE(NEW.attachment_names, '')), 'B') ||
+  setweight(to_tsvector('nid_french', COALESCE(NEW.body_text,        '')), 'D');
 ```
 
 `body_text` stays `NULL` for encrypted archives. Archives older than migration 007 are filled by the `backfill_body_text` job.
 
-Queries use `plainto_tsquery` (operators typed by the user are neutralized):
+The `nid_french` configuration (migration 012) is a copy of `french` with `unaccent` before stemming: `electricite` matches `Électricité`, `factures` matches `facture`.
+
+Queries use `websearch_to_tsquery` — Google-like syntax (`"exact phrase"`, `-excluded`, `OR`), never raises a syntax error on arbitrary input (helper `ftsQuery()` in `utils/db.ts`):
 
 ```sql
 SELECT *, ts_rank(search_vector, query) AS rank
-FROM archived_mails, plainto_tsquery('french', 'invoice 2024') query
+FROM archived_mails, websearch_to_tsquery('nid_french', 'invoice 2024') query
 WHERE gmail_account_id = $1
   AND deleted_at IS NULL
   AND search_vector @@ query
 ORDER BY rank DESC, date DESC;
 ```
+
+The `ILIKE '%…%'` filters (`sender`, `subject`, attachment `filename`) are backed by `pg_trgm` GIN indexes (migration 012).
 
 ---
 

@@ -21,7 +21,7 @@ const mockDb = new Proxy({}, { get: () => () => chainable() })
 vi.mock('../db', () => ({ getDb: () => mockDb }))
 
 // Mock kysely sql tagged template
-const mockSqlExecute = vi.fn().mockResolvedValue({ rows: [] })
+const mockSqlExecute = vi.hoisted(() => vi.fn().mockResolvedValue({ rows: [] }))
 vi.mock('kysely', async () => {
   const actual = await vi.importActual<typeof import('kysely')>('kysely')
   return {
