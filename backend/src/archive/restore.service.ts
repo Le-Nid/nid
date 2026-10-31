@@ -54,7 +54,10 @@ export async function restoreToGmail(
     try {
       // Sequential on purpose: one account, Gmail's per-user quota (gmailRetry backs off on 429)
       const present = await gmailRetry(() => gmail.users.messages.get({ userId: 'me', id: mail.gmail_message_id, format: 'minimal' })) // NOSONAR
-        .then((r) => r.data, (err) => { if (status(err) === 404) return null; throw err })
+        .then((r) => r.data, (err) => {
+          if (status(err) === 404) return null
+          throw err
+        })
       if (present?.labelIds?.includes('TRASH')) {
         await gmailRetry(() => gmail.users.messages.untrash({ userId: 'me', id: mail.gmail_message_id })) // NOSONAR
         result.imported++
