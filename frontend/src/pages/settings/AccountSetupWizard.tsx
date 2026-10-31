@@ -25,9 +25,12 @@ type FirstBackup = 'year' | 'all' | 'none'
 
 const INTERVALS: BackupInterval[] = ['1h', '6h', '24h']
 const FIRST_BACKUPS: FirstBackup[] = ['year', 'all', 'none']
+// An IMAP sync takes whole folders (no date filter), and rules act through Gmail
+const IMAP_FIRST_BACKUPS: FirstBackup[] = ['all', 'none']
 // Label and expiry templates already live in Règles & libellés › Libellés
 const WIZARD_CATEGORIES = new Set(['cleanup', 'archive', 'organize'])
-const STEPS = ['google', 'backup', 'rules', 'summary'] as const
+const GMAIL_STEPS = ['google', 'backup', 'rules', 'summary'] as const
+const IMAP_STEPS = ['imap', 'backup', 'summary'] as const
 
 /** What a template would act on right now (Gmail estimate), loaded when the rules step is shown. */
 function TemplateRow({ accountId, template, checked, onChange }: Readonly<{
@@ -65,10 +68,13 @@ export function AccountSetupWizard({ account, onClose }: Readonly<{ account: Gma
   const templates = ((useRuleTemplates().data ?? []) as Template[]).filter((tpl) => WIZARD_CATEGORIES.has(tpl.category))
   const update = useUpdateGmailAccount()
   const fromTemplate = useCreateRuleFromTemplate(account.id)
+  const imap = account.provider === 'imap'
+  const steps: readonly string[] = imap ? IMAP_STEPS : GMAIL_STEPS
   const [step, setStep] = useState(1)
+  const current = steps[step]
   const [backupEnabled, setBackupEnabled] = useState(!!account.backup_enabled)
   const [every, setEvery] = useState<BackupInterval>(account.backup_interval ?? '24h')
-  const [firstBackup, setFirstBackup] = useState<FirstBackup>('year')
+  const [firstBackup, setFirstBackup] = useState<FirstBackup>(imap ? 'all' : 'year')
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [saving, setSaving] = useState(false)
 
@@ -107,7 +113,7 @@ export function AccountSetupWizard({ account, onClose }: Readonly<{ account: Gma
         </DialogHeader>
 
         <ol className="flex gap-2 text-xs" aria-label={t('settings.gmail.wizard.steps')}>
-          {STEPS.map((key, i) => (
+          {steps.map((key, i) => (
             <li key={key} aria-current={i === step ? 'step' : undefined} className="flex flex-1 flex-col gap-1">
               <span className={cn('h-1 rounded-full', i <= step ? 'bg-primary' : 'bg-muted')} aria-hidden="true" />
               <span className={cn('flex items-center gap-1', i === step ? 'font-semibold' : 'text-muted-foreground')}>
@@ -118,7 +124,7 @@ export function AccountSetupWizard({ account, onClose }: Readonly<{ account: Gma
           ))}
         </ol>
 
-        {step === 1 && (
+        {current === 'backup' && (
           <div className="flex flex-col gap-4">
             <SwitchRow
               label={t('settings.gmail.autoBackup')}
@@ -134,7 +140,7 @@ export function AccountSetupWizard({ account, onClose }: Readonly<{ account: Gma
             </div>
             <fieldset className="flex flex-col gap-2">
               <legend className="mb-1 text-sm font-medium">{t('settings.gmail.wizard.firstBackup')}</legend>
-              {FIRST_BACKUPS.map((value) => (
+              {(imap ? IMAP_FIRST_BACKUPS : FIRST_BACKUPS).map((value) => (
                 <label key={value} className="flex min-h-11 items-center gap-3 text-sm md:min-h-0">
                   <input type="radio" name={`${id}-first`} value={value} checked={firstBackup === value} onChange={() => setFirstBackup(value)} className="size-4 accent-primary" />
                   {t(`settings.gmail.wizard.first.${value}`)}
@@ -144,7 +150,7 @@ export function AccountSetupWizard({ account, onClose }: Readonly<{ account: Gma
           </div>
         )}
 
-        {step === 2 && (
+        {current === 'rules' && (
           <div className="flex flex-col gap-2">
             <p className="text-sm text-muted-foreground">{t('settings.gmail.wizard.rulesHint')}</p>
             <ul className="flex flex-col divide-y">
@@ -155,25 +161,27 @@ export function AccountSetupWizard({ account, onClose }: Readonly<{ account: Gma
           </div>
         )}
 
-        {step === 3 && (
+        {current === 'summary' && (
           <dl className="grid gap-x-4 gap-y-2 text-sm sm:grid-cols-[auto_1fr]">
             <dt className="font-medium">{t('settings.gmail.autoBackup')}</dt>
             <dd>{backupEnabled ? t(`settings.gmail.every.${every}`) : t('settings.gmail.wizard.off')}</dd>
             <dt className="font-medium">{t('settings.gmail.wizard.firstBackup')}</dt>
             <dd>{t(`settings.gmail.wizard.first.${firstBackup}`)}</dd>
-            <dt className="font-medium">{t('settings.gmail.wizard.step.rules')}</dt>
-            <dd>
-              {chosen.length
-                ? <ul className="list-disc pl-4">{chosen.map((tpl) => <li key={tpl.id}>{tpl.name} ({t(`rules.action.${tpl.dto.action.type}`)}, {t(`rules.schedule.${tpl.dto.schedule}`)})</li>)}</ul>
-                : t('settings.gmail.wizard.noRules')}
-            </dd>
+            {!imap && <dt className="font-medium">{t('settings.gmail.wizard.step.rules')}</dt>}
+            {!imap && (
+              <dd>
+                {chosen.length
+                  ? <ul className="list-disc pl-4">{chosen.map((tpl) => <li key={tpl.id}>{tpl.name} ({t(`rules.action.${tpl.dto.action.type}`)}, {t(`rules.schedule.${tpl.dto.schedule}`)})</li>)}</ul>
+                  : t('settings.gmail.wizard.noRules')}
+              </dd>
+            )}
           </dl>
         )}
 
         <DialogFooter className="gap-2">
           {step > 1 && <Button variant="outline" className="h-11 md:h-9" disabled={saving} onClick={() => setStep(step - 1)}>{t('settings.gmail.wizard.back')}</Button>}
           <Button variant="ghost" className="h-11 md:h-9" disabled={saving} onClick={onClose}>{t('settings.gmail.wizard.later')}</Button>
-          {step < 3
+          {step < steps.length - 1
             ? <Button className="h-11 md:h-9" onClick={() => setStep(step + 1)}>{t('settings.gmail.wizard.next')}</Button>
             : <Button className="h-11 md:h-9" disabled={saving} onClick={() => void finish()}>{t('settings.gmail.wizard.finish')}</Button>}
         </DialogFooter>

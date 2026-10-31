@@ -77,6 +77,10 @@ Au retour de Google, un assistant **Configurer le compte** s'ouvre pour ce nouve
 
 Chaque étape peut être passée ; **Plus tard** ferme l'assistant sans rien enregistrer. Les règles créées se modifient ensuite dans [Règles & libellés](rules.md).
 
+**Ajouter un compte IMAP** connecte un compte d'un autre fournisseur (OVH, Infomaniak, Fastmail, Outlook…) en **archivage seul** : adresse, serveur IMAP, port (993 par défaut), connexion chiffrée, identifiant (l'adresse par défaut) et mot de passe — avec la double authentification, un mot de passe d'application. Nid teste la connexion avant d'enregistrer et affiche la raison donnée par le serveur s'il refuse. Le mot de passe est stocké chiffré. Le même assistant s'ouvre ensuite (sauvegarde automatique, première sauvegarde : toute la boîte ou plus tard ; pas de règles, réservées à Gmail).
+
+Un compte IMAP porte le badge **IMAP · archivage**. Ses dossiers sont sauvegardés sur le NAS et deviennent des libellés dans [Archives](archives.md) ; la Vue d'ensemble n'affiche que ses chiffres d'archives, et Mails, Nettoyage et Règles renvoient vers Archives. Si le serveur refuse la connexion (mot de passe changé), le compte passe en **Action requise** : **Mettre à jour le serveur ou le mot de passe**.
+
 ---
 
 ## Notifications & webhooks

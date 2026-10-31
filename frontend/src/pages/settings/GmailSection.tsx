@@ -15,6 +15,7 @@ import { useAuthStore, type GmailAccount } from '@/store/auth.store'
 import { formatRelative } from '@/utils/format'
 import { SettingsCard, SwitchRow, selectClass } from './shared'
 import { AccountSetupWizard } from './AccountSetupWizard'
+import { ImapAccountDialog } from './ImapAccountDialog'
 
 const INTERVALS: BackupInterval[] = ['1h', '6h', '24h']
 
@@ -36,6 +37,13 @@ function useConnectGmail() {
 
 function Status({ account }: Readonly<{ account: GmailAccount }>) {
   const { t } = useTranslation()
+  const state = <AccountState account={account} />
+  if (account.provider !== 'imap') return state
+  return <span className="flex flex-wrap items-center gap-2">{state}<span className="rounded-full border px-2 text-xs leading-[22px] font-medium">{t('settings.imap.badge')}</span></span>
+}
+
+function AccountState({ account }: Readonly<{ account: GmailAccount }>) {
+  const { t } = useTranslation()
   if (!account.is_active) return <span className="rounded-full bg-muted px-2 text-xs leading-[22px] font-medium text-muted-foreground">{t('settings.gmail.disconnectedState')}</span>
   if (account.needs_reauth) {
     return <span className="rounded-full border border-warning-border bg-warning-soft px-2 text-xs leading-[22px] font-medium text-warning">{t('settings.gmail.actionRequired')}</span>
@@ -43,8 +51,12 @@ function Status({ account }: Readonly<{ account: GmailAccount }>) {
   return <span className="rounded-full bg-success-soft px-2 text-xs leading-[22px] font-medium text-success">{t('settings.gmail.synced')}</span>
 }
 
-function AccountCard({ account, mails, onReconnect }: Readonly<{ account: GmailAccount; mails: number | null | undefined; onReconnect: () => void }>) {
+function AccountCard({ account, mails, onReconnect: reconnectGmail }: Readonly<{ account: GmailAccount; mails: number | null | undefined; onReconnect: () => void }>) {
   const { t, i18n } = useTranslation()
+  const imap = account.provider === 'imap'
+  // An IMAP account is « reconnected » by giving its server and password again
+  const [editing, setEditing] = useState(false)
+  const onReconnect = imap ? () => setEditing(true) : reconnectGmail
   const id = useId()
   const archive = useDashboardArchiveStats(account.id).data
   const update = useUpdateGmailAccount()
@@ -68,11 +80,12 @@ function AccountCard({ account, mails, onReconnect }: Readonly<{ account: GmailA
 
   return (
     <SettingsCard title={account.email} description={<Status account={account} />}>
-      {account.needs_reauth && account.is_active && <p className="text-sm text-warning">{t('settings.gmail.actionRequiredHint')}</p>}
+      {editing && <ImapAccountDialog account={account} onClose={() => setEditing(false)} />}
+      {account.needs_reauth && account.is_active && <p className="text-sm text-warning">{t(imap ? 'settings.imap.actionRequiredHint' : 'settings.gmail.actionRequiredHint')}</p>}
       {!account.is_active && <p className="text-sm text-muted-foreground">{t('settings.gmail.disconnectedHint')}</p>}
       <dl className="grid gap-2 text-sm md:grid-cols-[max-content_1fr] md:gap-x-6">
-        <dt className="text-muted-foreground">{t('settings.gmail.sync')}</dt>
-        <dd>{syncLine.filter(Boolean).join(' · ')}</dd>
+        {!imap && <dt className="text-muted-foreground">{t('settings.gmail.sync')}</dt>}
+        {!imap && <dd>{syncLine.filter(Boolean).join(' · ')}</dd>}
         <dt className="text-muted-foreground">{t('settings.gmail.backup')}</dt>
         <dd>{backupLine.filter(Boolean).join(' · ')}</dd>
       </dl>
@@ -98,16 +111,16 @@ function AccountCard({ account, mails, onReconnect }: Readonly<{ account: GmailA
             </select>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button
+            {!imap && <Button
               variant="outline"
               className="h-11 md:h-9"
               disabled={sync.isPending || account.needs_reauth}
               onClick={() => sync.mutate(account.id, { onSuccess: () => toast.success(t('settings.gmail.syncDone')), onError: () => toast.error(t('settings.gmail.syncFailed')) })}
             >
               <RefreshCw aria-hidden="true" />{t('settings.gmail.syncNow')}
-            </Button>
+            </Button>}
             <Button variant={account.needs_reauth ? 'default' : 'outline'} className="h-11 md:h-9" onClick={onReconnect}>
-              {t('settings.gmail.reconnect')}
+              {t(imap ? 'settings.imap.updateTitle' : 'settings.gmail.reconnect')}
             </Button>
             <ConfirmDialog
               trigger={<Button variant="destructive" className="h-11 md:h-9">{t('settings.gmail.disconnect')}</Button>}
@@ -124,7 +137,7 @@ function AccountCard({ account, mails, onReconnect }: Readonly<{ account: GmailA
         </>
       ) : (
         // Reconnecting the same address brings this account back, archives included (same row server-side)
-        <Button className="h-11 w-fit md:h-9" onClick={onReconnect}>{t('settings.gmail.reconnect')}</Button>
+        <Button className="h-11 w-fit md:h-9" onClick={onReconnect}>{t(imap ? 'settings.imap.updateTitle' : 'settings.gmail.reconnect')}</Button>
       )}
     </SettingsCard>
   )
@@ -142,11 +155,23 @@ export function GmailSection() {
   // new=1: Google just added this account (not a reconnection) → setup wizard, once
   const added = params.get('new') === '1' ? gmailAccounts.find((a) => a.email === params.get('account')) : undefined
   const closeWizard = () => setParams((p) => { p.delete('new'); return p }, { replace: true })
+  const [addingImap, setAddingImap] = useState(false)
+  // Same setup wizard as after Google: it opens on new=1 for the account just added
+  const imapAdded = (email: string) => {
+    setAddingImap(false)
+    setParams({ account: email, new: '1' }, { replace: true })
+  }
 
+  const full = gmailAccounts.length >= max
   const add = (
-    <Button className="h-11 w-fit md:h-9" disabled={pending || gmailAccounts.length >= max} onClick={connect}>
-      <Plus aria-hidden="true" />{t('settings.gmail.add')}
-    </Button>
+    <div className="flex flex-wrap gap-2">
+      <Button className="h-11 w-fit md:h-9" disabled={pending || full} onClick={connect}>
+        <Plus aria-hidden="true" />{t('settings.gmail.add')}
+      </Button>
+      <Button variant="outline" className="h-11 w-fit md:h-9" disabled={full} onClick={() => setAddingImap(true)}>
+        <Plus aria-hidden="true" />{t('settings.imap.add')}
+      </Button>
+    </div>
   )
 
   return (
@@ -154,6 +179,7 @@ export function GmailSection() {
       {/* Back from Google's consent page (OAuth callback) */}
       {status === 'connected' && <output className="block rounded-lg bg-success-soft px-4 py-3 text-success">{t('settings.gmail.connected', { email: params.get('account') ?? '' })}</output>}
       {added && <AccountSetupWizard account={added} onClose={closeWizard} />}
+      {addingImap && <ImapAccountDialog onClose={() => setAddingImap(false)} onCreated={imapAdded} />}
       {status === 'error' && <p role="alert" className="rounded-lg bg-destructive-soft px-4 py-3 text-destructive">{t('settings.gmail.connectFailed')}</p>}
       {gmailAccounts.length === 0 ? (
         <EmptyState title={t('settings.gmail.none')} description={t('settings.gmail.scopeHint')} action={add} />

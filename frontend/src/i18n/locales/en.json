@@ -634,7 +634,8 @@
           "google": "Google sign-in",
           "backup": "Backup",
           "rules": "Rules",
-          "summary": "Summary"
+          "summary": "Summary",
+          "imap": "IMAP server"
         },
         "firstBackup": "First backup",
         "first": {
@@ -778,6 +779,30 @@
       "source": "Source code",
       "releases": "Release history",
       "issues": "Report a problem"
+    },
+    "imap": {
+      "badge": "IMAP · archive",
+      "add": "Add an IMAP account",
+      "addTitle": "Add an IMAP account",
+      "updateTitle": "Update the server or password",
+      "description": "For a provider other than Gmail (OVH, Infomaniak, Fastmail, Outlook…). The account is backed up to the NAS and searchable in Archives; Mail, Cleanup and Rules stay Gmail-only.",
+      "email": "Email address",
+      "host": "IMAP server",
+      "port": "Port",
+      "secure": "Encrypted connection (TLS)",
+      "user": "Username",
+      "userPlaceholder": "Default: the email address",
+      "password": "Password",
+      "passwordHint": "With two-factor authentication, use an app password. It is stored encrypted and never shown again.",
+      "failed": "Could not connect to the IMAP server.",
+      "testing": "Testing the connection…",
+      "save": "Save",
+      "connect": "Test and add",
+      "actionRequiredHint": "The IMAP server refused the login: update the password to resume backups.",
+      "gmailOnlyPage": "{{email}} is an IMAP account",
+      "gmailOnlyPageHint": "This page acts on Gmail. An IMAP account is archived only: its mails are in Archives.",
+      "openArchives": "Open the archives",
+      "overviewHint": "IMAP account: backup and archives only."
     }
   },
   "admin": {

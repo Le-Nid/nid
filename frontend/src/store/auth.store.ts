@@ -20,9 +20,15 @@ export interface GmailAccount {
   is_active: boolean
   backup_enabled?: boolean
   backup_interval?: '1h' | '6h' | '24h'
-  /** « Action requise »: Google refused the refresh token, the account must be reconnected. */
+  /** « Action requise »: Google (or the IMAP server) refused the credentials, the account must be reconnected. */
   needs_reauth?: boolean
   last_sync_at?: string | null
+  /** IMAP accounts are archived only: Mails, Nettoyage and Règles need Gmail. */
+  provider?: 'gmail' | 'imap'
+  imap_host?: string | null
+  imap_port?: number | null
+  imap_secure?: boolean | null
+  imap_user?: string | null
 }
 
 interface AuthState {

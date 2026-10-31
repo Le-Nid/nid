@@ -634,7 +634,8 @@
           "google": "Connexion Google",
           "backup": "Sauvegarde",
           "rules": "Règles",
-          "summary": "Récapitulatif"
+          "summary": "Récapitulatif",
+          "imap": "Serveur IMAP"
         },
         "firstBackup": "Première sauvegarde",
         "first": {
@@ -778,6 +779,30 @@
       "source": "Code source",
       "releases": "Historique des versions",
       "issues": "Signaler un problème"
+    },
+    "imap": {
+      "badge": "IMAP · archivage",
+      "add": "Ajouter un compte IMAP",
+      "addTitle": "Ajouter un compte IMAP",
+      "updateTitle": "Mettre à jour le serveur ou le mot de passe",
+      "description": "Pour un autre fournisseur que Gmail (OVH, Infomaniak, Fastmail, Outlook…). Le compte est sauvegardé sur le NAS et consultable dans Archives ; Mails, Nettoyage et Règles restent réservés à Gmail.",
+      "email": "Adresse e-mail",
+      "host": "Serveur IMAP",
+      "port": "Port",
+      "secure": "Connexion chiffrée (TLS)",
+      "user": "Identifiant",
+      "userPlaceholder": "Par défaut : l'adresse e-mail",
+      "password": "Mot de passe",
+      "passwordHint": "Avec la double authentification, utilisez un mot de passe d'application. Il est stocké chiffré et n'est jamais réaffiché.",
+      "failed": "Connexion au serveur IMAP impossible.",
+      "testing": "Test de la connexion…",
+      "save": "Enregistrer",
+      "connect": "Tester et ajouter",
+      "actionRequiredHint": "Le serveur IMAP a refusé la connexion : mettez à jour le mot de passe pour reprendre les sauvegardes.",
+      "gmailOnlyPage": "{{email}} est un compte IMAP",
+      "gmailOnlyPageHint": "Cette page agit sur Gmail. Un compte IMAP est archivé uniquement : ses mails sont dans Archives.",
+      "openArchives": "Ouvrir les archives",
+      "overviewHint": "Compte IMAP : sauvegarde et archives uniquement."
     }
   },
   "admin": {

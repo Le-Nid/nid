@@ -75,7 +75,7 @@ export default function App() {
           }
         >
           {/* Own Suspense so the shell stays while the chunk loads */}
-          <Route path="overview" element={<RequireGmailAccess title="shell.overview"><Suspense fallback={<RouteFallback />}><OverviewPage /></Suspense></RequireGmailAccess>} />
+          <Route path="overview" element={<RequireGmailAccess title="shell.overview" imapOk><Suspense fallback={<RouteFallback />}><OverviewPage /></Suspense></RequireGmailAccess>} />
           <Route path="mails" element={<RequireGmailAccess title="mails.title"><Suspense fallback={<RouteFallback />}><MailsPage /></Suspense></RequireGmailAccess>} />
           <Route path="cleanup" element={<RequireGmailAccess title="cleanup.title"><Suspense fallback={<RouteFallback />}><CleanupPage /></Suspense></RequireGmailAccess>} />
           <Route path="rules" element={<RequireGmailAccess title="rules.title"><Suspense fallback={<RouteFallback />}><RulesPage /></Suspense></RequireGmailAccess>} />

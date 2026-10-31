@@ -63,6 +63,15 @@ export const gmailAccountsApi = {
   disconnect: (accountId: string) => api.delete(`/api/auth/gmail/${accountId}`).then((r) => r.data),
 }
 
+export interface ImapSettings { host: string; port: number; secure: boolean; user: string; password: string }
+
+// ─── IMAP accounts (archive only) ─────────────────────────
+export const imapAccountsApi = {
+  /** The server tests the login first; 400 carries its reason. */
+  create: (body: ImapSettings & { email: string }) => api.post('/api/auth/imap', body).then((r) => r.data as { id: string; email: string }),
+  update: (accountId: string, body: ImapSettings) => api.put(`/api/auth/imap/${accountId}`, body).then((r) => r.data),
+}
+
 // ─── Archive ──────────────────────────────────────────────
 export const archiveApi = {
   listMails: (accountId: string, params: Record<string, any> = {}) =>

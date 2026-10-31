@@ -10,9 +10,9 @@ import { useAuthStore } from '../store/auth.store'
 import type { LiveCounters } from '../hooks/useLiveCounters'
 import type { JobState } from '../hooks/useJobSSE'
 
-const account = vi.hoisted(() => ({ id: 'acc-1' as string | null }))
+const account = vi.hoisted(() => ({ id: 'acc-1' as string | null, provider: 'gmail' as 'gmail' | 'imap' }))
 vi.mock('../hooks/useAccount', () => ({
-  useAccount: () => ({ accountId: account.id, account: account.id ? { id: account.id, email: 'ana@gmail.com' } : null }),
+  useAccount: () => ({ accountId: account.id, account: account.id ? { id: account.id, email: 'ana@gmail.com', provider: account.provider } : null }),
 }))
 vi.mock('../api', () => ({
   dashboardApi: { getStats: vi.fn(), getArchiveStats: vi.fn() },
@@ -69,6 +69,7 @@ beforeAll(() => i18n.changeLanguage('fr'))
 beforeEach(() => {
   vi.clearAllMocks()
   account.id = 'acc-1'
+  account.provider = 'gmail'
   useAuthStore.setState({ user: { id: 'u1', email: 'ana@example.com', role: 'user', display_name: 'Ana' } })
   vi.mocked(dashboardApi.getStats).mockResolvedValue(STATS)
   vi.mocked(dashboardApi.getArchiveStats).mockResolvedValue({ total_mails: 617, total_size: 1024, last_archived_at: null })
@@ -181,6 +182,17 @@ describe('OverviewPage', () => {
     expect(screen.getByText('devis.pdf')).toBeInTheDocument()
     expect(await kpi(/Sauvegarde NAS/)).toHaveTextContent('2 Ko économisés par la déduplication')
     expect(screen.getByRole('link', { name: 'Tout voir : Plus grosses pièces jointes' })).toHaveAttribute('href', '/attachments')
+  })
+
+  it('an IMAP account: archive figures only, no Gmail call', async () => {
+    account.provider = 'imap'
+    vi.mocked(dashboardApi.getArchiveStats).mockResolvedValue({ total_mails: 3, daily: [{ day: '2026-10-30', count: 3 }], biggestMails: [], biggestAttachments: [] })
+    setup()
+    expect(await screen.findByText('Compte IMAP : sauvegarde et archives uniquement.')).toBeInTheDocument()
+    expect(await screen.findByRole('table', { name: 'Mails reçus — 30 derniers jours' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Mails dans Gmail/ })).not.toBeInTheDocument()
+    expect(dashboardApi.getStats).not.toHaveBeenCalled()
+    expect(unsubscribeApi.getNewsletters).not.toHaveBeenCalled()
   })
 
   it('no mail archived over 30 days, nothing archived yet: empty states', async () => {

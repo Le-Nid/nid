@@ -183,6 +183,16 @@ function HeaviestSections({ archive }: Readonly<{ archive: ArchiveStats }>) {
   )
 }
 
+/** IMAP accounts (archive only): the archive figures, nothing that needs Gmail. */
+function ImapOverview({ archive }: Readonly<{ archive: ArchiveStats & { total_mails?: string | number } }>) {
+  return (
+    <>
+      <DailySection archive={archive} />
+      <HeaviestSections archive={archive} />
+    </>
+  )
+}
+
 function ActiveJobs({ activeJobs }: Readonly<{ activeJobs?: number }>) {
   const { t } = useTranslation()
   const jobs = useJobs({ status: 'active' })
@@ -217,10 +227,12 @@ export default function OverviewPage() {
   const { accountId, account } = useAccount()
   // AppShell's live counters (B3); null until the first frame, then they win over the cached figures
   const counters = useOutletContext<LiveCounters | null>()
-  const stats = useDashboardStats(accountId)
+  // An IMAP account is archived only: no Gmail figures, cleanup scan or rules to fetch
+  const gmailId = account?.provider === 'imap' ? null : accountId
+  const stats = useDashboardStats(gmailId)
   const archive = useDashboardArchiveStats(accountId).data
-  const scan = useNewsletters(accountId).data
-  const rules = useRuleStats(accountId).data
+  const scan = useNewsletters(gmailId).data
+  const rules = useRuleStats(gmailId).data
 
   const name = user?.display_name || user?.email.split('@')[0] || ''
   const greeting = t('overview.greeting', { name })
@@ -253,48 +265,55 @@ export default function OverviewPage() {
     <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-4 p-4 md:px-6 md:pt-8">
       <PageHeader title={greeting} description={[account?.email, archive && backup].filter(Boolean).join(' · ')} />
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <KpiCard
-          to="/mails"
-          label={t('overview.kpi.mails')}
-          value={kpiValue(mails, !stats.isLoading, n)}
-          hint={stats.data ? t('overview.kpi.unread', { count: stats.data.unreadCount ?? 0 }) : undefined}
-        />
-        <KpiCard
-          to="/cleanup"
-          label={t('overview.kpi.recoverable')}
-          value={scan ? recoverable : undefined}
-          hint={scan && t(scan.scannedAt ? 'overview.kpi.recoverableHint' : 'overview.kpi.notScanned', { count: senders.length })}
-        />
-        <KpiCard
-          to="/archives"
-          label={t('overview.kpi.backup')}
-          value={coverage === undefined ? kpiValue(undefined, !!archive, n) : new Intl.NumberFormat(i18n.language, { style: 'percent' }).format(coverage / 100)}
-          hint={archived === undefined ? undefined : backupHint(t, archived, archive.dedup_saved_bytes)}
-          progress={coverage}
-        />
-        <KpiCard
-          to="/rules"
-          label={t('overview.kpi.rules')}
-          value={kpiValue(activeRules, !!rules, n)}
-          hint={rules && t('overview.kpi.rulesHint', { count: rules.processed30d })}
-        />
-      </div>
+      {gmailId === null && <p className="text-sm text-muted-foreground">{t('settings.imap.overviewHint')}</p>}
+      {gmailId === null ? <ImapOverview archive={archive} /> : (
+        <>
 
-      <DailySection archive={archive} />
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <KpiCard
+              to="/mails"
+              label={t('overview.kpi.mails')}
+              value={kpiValue(mails, !stats.isLoading, n)}
+              hint={stats.data ? t('overview.kpi.unread', { count: stats.data.unreadCount ?? 0 }) : undefined}
+            />
+            <KpiCard
+              to="/cleanup"
+              label={t('overview.kpi.recoverable')}
+              value={scan ? recoverable : undefined}
+              hint={scan && t(scan.scannedAt ? 'overview.kpi.recoverableHint' : 'overview.kpi.notScanned', { count: senders.length })}
+            />
+            <KpiCard
+              to="/archives"
+              label={t('overview.kpi.backup')}
+              value={coverage === undefined ? kpiValue(undefined, !!archive, n) : new Intl.NumberFormat(i18n.language, { style: 'percent' }).format(coverage / 100)}
+              hint={archived === undefined ? undefined : backupHint(t, archived, archive.dedup_saved_bytes)}
+              progress={coverage}
+            />
+            <KpiCard
+              to="/rules"
+              label={t('overview.kpi.rules')}
+              value={kpiValue(activeRules, !!rules, n)}
+              hint={rules && t('overview.kpi.rulesHint', { count: rules.processed30d })}
+            />
+          </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Section title={t('overview.top.title')} to="/cleanup">
-          {stats.isError && <LoadError message={t('overview.top.loadError')} onRetry={() => void stats.refetch()} />}
-          {stats.isLoading && <Skeleton className="h-40 w-full" />}
-          {stats.data && <TopSenders senders={stats.data.bySender ?? []} />}
-        </Section>
-        <Section title={t('overview.suggestions.title')} to="/cleanup">
-          <Suggestions accountId={accountId} />
-        </Section>
-      </div>
+          <DailySection archive={archive} />
 
-      <HeaviestSections archive={archive} />
+          <div className="grid gap-4 md:grid-cols-2">
+            <Section title={t('overview.top.title')} to="/cleanup">
+              {stats.isError && <LoadError message={t('overview.top.loadError')} onRetry={() => void stats.refetch()} />}
+              {stats.isLoading && <Skeleton className="h-40 w-full" />}
+              {stats.data && <TopSenders senders={stats.data.bySender ?? []} />}
+            </Section>
+            <Section title={t('overview.suggestions.title')} to="/cleanup">
+              <Suggestions accountId={accountId} />
+            </Section>
+          </div>
+
+          <HeaviestSections archive={archive} />
+
+        </>
+      )}
 
       <Section title={t('overview.jobs.title')} to="/activity">
         <ActiveJobs activeJobs={counters?.activeJobs} />

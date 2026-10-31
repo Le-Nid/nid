@@ -421,6 +421,8 @@ export async function authRoutes(app: FastifyInstance) {
       .selectFrom('mail_accounts')
       .select((eb) => [
         'id', 'email', 'is_active', 'created_at', 'backup_enabled', 'backup_interval', 'provider',
+        // IMAP settings to prefill « Mettre à jour le mot de passe »; the sealed password never leaves the server
+        'imap_host', 'imap_port', 'imap_secure', 'imap_user',
         // « Action requise » (§7.7): Google refused the refresh token
         eb('auth_error_at', 'is not', null).as('needs_reauth'),
         // Last label sync (daily, or « Synchroniser maintenant »)
