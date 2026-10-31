@@ -67,6 +67,11 @@ vi.mock('../archive/import.service', () => ({
   importImap: (...args: any[]) => mockImportImap(...args),
 }))
 
+const mockRestoreToGmail = vi.fn().mockResolvedValue({ imported: 2, skipped: 1, errors: 0 })
+vi.mock('../archive/restore.service', () => ({
+  restoreToGmail: (...args: any[]) => mockRestoreToGmail(...args),
+}))
+
 const mockApplyRetentionPolicies = vi.fn().mockResolvedValue({ policiesRun: 2, totalDeleted: 10 })
 vi.mock('../archive/retention.service', () => ({
   applyRetentionPolicies: (...args: any[]) => mockApplyRetentionPolicies(...args),
@@ -376,6 +381,13 @@ describe('unified worker handlers', () => {
     })
     await expect(processJob(job)).rejects.toThrow('Parse error')
     expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ category: 'job_failed' }))
+  })
+
+  it('handles restore_gmail', async () => {
+    const job = makeJob('restore_gmail', { accountId: 'acc-1', userId: 'user-1', mailIds: ['m1', 'm2', 'm3'] })
+    expect(await processJob(job)).toEqual({ imported: 2, skipped: 1, errors: 0 })
+    expect(mockRestoreToGmail).toHaveBeenCalledWith('acc-1', ['m1', 'm2', 'm3'], expect.any(Function))
+    expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ title: 'Restauration dans Gmail terminée', body: '2 restauré(s), 1 ignoré(s), 0 erreur(s).' }))
   })
 
   it('handles import_imap', async () => {

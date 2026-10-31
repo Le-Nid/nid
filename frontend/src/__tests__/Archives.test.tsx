@@ -11,12 +11,12 @@ import { showUndoToast } from '../components/app/UndoToast'
 import { useAuthStore } from '../store/auth.store'
 import type { JobState } from '../hooks/useJobSSE'
 
-const account = vi.hoisted(() => ({ id: 'acc-1' as string | null }))
-vi.mock('../hooks/useAccount', () => ({ useAccount: () => ({ accountId: account.id }) }))
+const account = vi.hoisted(() => ({ id: 'acc-1' as string | null, provider: 'gmail' }))
+vi.mock('../hooks/useAccount', () => ({ useAccount: () => ({ accountId: account.id, account: { provider: account.provider } }) }))
 vi.mock('../api', () => ({
   archiveApi: {
     listMails: vi.fn(), getMail: vi.fn(), trashMails: vi.fn(), restoreMails: vi.fn(), listTrash: vi.fn(), emptyTrash: vi.fn(),
-    getTrashConfig: vi.fn(), updateTrashConfig: vi.fn(), triggerArchive: vi.fn(), listTags: vi.fn(), tagMails: vi.fn(), deleteTag: vi.fn(), listContacts: vi.fn(),
+    getTrashConfig: vi.fn(), updateTrashConfig: vi.fn(), triggerArchive: vi.fn(), listTags: vi.fn(), tagMails: vi.fn(), deleteTag: vi.fn(), listContacts: vi.fn(), restoreToGmail: vi.fn(),
     downloadAttachment: (acc: string, id: string) => `/api/archive/${acc}/attachments/${id}/download`,
   },
   archiveThreadsApi: { getThread: vi.fn() },
@@ -67,6 +67,7 @@ beforeAll(() => i18n.changeLanguage('fr'))
 beforeEach(() => {
   vi.clearAllMocks()
   account.id = 'acc-1'
+  account.provider = 'gmail'
   mobile = false
   vi.mocked(window.matchMedia).mockImplementation((query: string) => ({
     matches: query.includes('max-width') ? mobile : false,
@@ -79,6 +80,7 @@ beforeEach(() => {
   vi.mocked(archiveApi.trashMails).mockResolvedValue({ trashed: 1 })
   vi.mocked(archiveApi.restoreMails).mockResolvedValue({ restored: 1 })
   vi.mocked(archiveApi.listTags).mockResolvedValue([])
+  vi.mocked(archiveApi.restoreToGmail).mockResolvedValue({ jobId: 'job-restore' })
   vi.mocked(archiveApi.listContacts).mockResolvedValue({
     contacts: [
       { email: 'bob@x.fr', name: 'Martin, Bob', from_count: 1204, to_count: 3, last_at: '2026-08-01T07:00:00Z' },
@@ -290,6 +292,31 @@ describe('Archives — mobile', () => {
     await waitFor(() => expect(archiveApi.deleteTag).toHaveBeenCalledWith('acc-1', 'impôts'))
     await waitFor(() => expect(router.state.location.search).toBe(''))
     expect(toast.success).toHaveBeenCalledWith('Tag « impôts » supprimé')
+  })
+
+  it('« Restaurer dans Gmail »: the selection, then from the reader; a failure is reported', async () => {
+    setup()
+    await user().click(await screen.findByRole('checkbox', { name: 'Sélectionner Facture EDF' }))
+    await user().click(within(screen.getByRole('toolbar', { name: 'Actions sur la sélection' })).getByRole('button', { name: 'Restaurer dans Gmail' }))
+    await waitFor(() => expect(archiveApi.restoreToGmail).toHaveBeenCalledWith('acc-1', [MAIL.id]))
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Restauration de 1 mail dans Gmail lancée', { description: 'Une notification vous préviendra à la fin.' }))
+
+    vi.mocked(archiveApi.restoreToGmail).mockRejectedValueOnce(new Error('409'))
+    await user().click(screen.getByText('Relevé'))
+    const reader = await screen.findByRole('dialog')
+    await user().click(within(within(reader).getByRole('toolbar')).getByRole('button', { name: 'Restaurer dans Gmail' }))
+    await waitFor(() => expect(archiveApi.restoreToGmail).toHaveBeenLastCalledWith('acc-1', [OTHER.id]))
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("La restauration dans Gmail n'a pas pu être lancée."))
+  })
+
+  it('an IMAP account has no « Restaurer dans Gmail »', async () => {
+    account.provider = 'imap'
+    setup()
+    await user().click(await screen.findByRole('checkbox', { name: 'Sélectionner Facture EDF' }))
+    expect(within(screen.getByRole('toolbar', { name: 'Actions sur la sélection' })).queryByRole('button', { name: 'Restaurer dans Gmail' })).toBeNull()
+    await user().click(screen.getByText('Relevé'))
+    const reader = await screen.findByRole('dialog')
+    expect(within(within(reader).getByRole('toolbar')).queryByRole('button', { name: 'Restaurer dans Gmail' })).toBeNull()
   })
 
   it('a failed tag deletion is reported', async () => {

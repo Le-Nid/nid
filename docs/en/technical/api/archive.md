@@ -242,6 +242,22 @@ Returns all emails in a thread, sorted by date ascending (chronological order), 
 
 ---
 
+## Restore to Gmail
+
+### POST /api/archive/:accountId/mails/restore-gmail
+
+Starts a `restore_gmail` job that puts archived emails back in Gmail (`users.messages.insert`, `internalDateSource: dateHeader`, EML sent as `message/rfc822`). Existing OAuth scope (`gmail.modify`), no reconnection needed.
+
+```json
+{ "mailIds": ["uuid-1", "uuid-2"] }
+```
+
+`mailIds`: 1 to 500 UUIDs (emails not in the archive trash). Response **202** `{ "jobId": "…" }`, audit `archive.restore_gmail`. **409** when the account is not a Gmail account, or is deactivated or must be reconnected.
+
+Per email: still in Gmail → skipped; in Gmail's trash → `untrash`; gone → inserted with its labels (system and live user labels as they are, deleted user or `imported:` labels recreated by name, `TRASH`/`SPAM`/`DRAFT`/`CHAT` dropped), then the archive's `gmail_message_id` updated. Encrypted archive: error. The job result (`imported` = restored, `skipped`, `errors`) comes as a notification.
+
+---
+
 ## Contacts
 
 ### GET /api/archive/:accountId/contacts

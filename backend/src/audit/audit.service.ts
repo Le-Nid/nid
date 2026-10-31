@@ -23,6 +23,7 @@ export type AuditAction =
   | 'bulk.archive'
   | 'archive.trigger'
   | 'archive.export_zip'
+  | 'archive.restore_gmail'
   | 'newsletter.delete'
   | 'admin.update_user'
   | 'admin.empty_archive_trash'

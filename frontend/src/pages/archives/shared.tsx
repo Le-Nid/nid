@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import { Paperclip } from 'lucide-react'
 import { dataListFeatures } from '@/components/app/DataList'
 import { showUndoToast } from '@/components/app/UndoToast'
-import { useExportMbox, useTrashArchived, useRestoreArchived } from '@/hooks/queries'
+import { useExportMbox, useRestoreToGmail, useTrashArchived, useRestoreArchived } from '@/hooks/queries'
 import { saveBlob } from '@/utils/download'
 import { formatBytes, formatSender } from '@/utils/format'
 
@@ -81,6 +81,17 @@ export function useArchiveFilters() {
     setParams(out, { replace: true })
   }
   return { filters, apiParams, set, filtered: Object.keys(apiParams).length > 0 }
+}
+
+/** « Restaurer dans Gmail » (job): the mails go back to the mailbox; the bell says when it is done. */
+export function useRestoreToGmailAction(accountId: string) {
+  const { t } = useTranslation()
+  const restore = useRestoreToGmail(accountId)
+  const run = (mailIds: string[]) => restore.mutate(mailIds, {
+    onSuccess: () => toast.success(t('archives.restore.started', { count: mailIds.length }), { description: t('archives.restore.startedHint') }),
+    onError: () => toast.error(t('archives.restore.failed')),
+  })
+  return { run, isPending: restore.isPending }
 }
 
 /** « Exporter (.mbox) »: the given mails, or the whole archive without ids. */

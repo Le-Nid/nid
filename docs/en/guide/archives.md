@@ -27,8 +27,8 @@ Results ("N results") show **Subject**, **Extract**, **Date**, **Sender**, **Siz
 
 ### Actions
 
-- A row's `⋯` menu: **Open**, **Share**, **Delete**.
-- Selecting several rows: **Export .mbox**, **Tags**, **Delete**.
+- A row's `⋯` menu: **Open**, **Share**, **Restore to Gmail**, **Delete**.
+- Selecting several rows: **Export .mbox**, **Tags**, **Restore to Gmail**, **Delete**.
 
 **Tags** adds or removes the typed tags (comma-separated, your existing tags are suggested) on the whole selection. Tags stay in Nid: Gmail never sees them, and they are kept when the mail is archived again.
 
@@ -36,7 +36,17 @@ Results ("N results") show **Subject**, **Extract**, **Date**, **Sender**, **Siz
 
 ### Archive reader
 
-**Open** shows the archived mail: headers, body (remote images blocked, as in [Mail](mails.md#read-a-mail)), downloadable attachments, its **Tags** (remove one with a click, add some with the **Add a tag…** field then Enter) and **Conversation**. Actions: **Share**, **Delete**.
+**Open** shows the archived mail: headers, body (remote images blocked, as in [Mail](mails.md#read-a-mail)), downloadable attachments, its **Tags** (remove one with a click, add some with the **Add a tag…** field then Enter) and **Conversation**. Actions: **Share**, **Restore to Gmail**, **Delete**.
+
+### Restore to Gmail
+
+Puts archived mails back into the account's Gmail mailbox, from their EML: same headers, same date, same labels. The restore runs in the background (shown in [Activity](activity.md)) and a notification gives the result.
+
+- A mail **still in Gmail** is skipped; a mail **in Gmail's trash** is taken out of it.
+- System labels (Inbox, Unread, Important, categories…) are put back as they were. A label deleted since is recreated with the same name. Trash, Spam and Drafts are not put back.
+- After the restore, the archive points to the new Gmail mail: the next backup does not archive it a second time.
+- An **encrypted** archive cannot be restored (the passphrase is not kept): it counts as an error.
+- Not available for an IMAP account, nor for a Gmail account that must be reconnected.
 
 An encrypted archived mail shows "This mail is encrypted: its content cannot be read here." Archive encryption is not configured from the interface.
 

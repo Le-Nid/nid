@@ -14,6 +14,7 @@ import { applyRetentionPolicies } from '../../archive/retention.service'
 import { purgeArchiveTrash } from '../../archive/trash.service'
 import { checkArchiveIntegrity, saveIntegrityResult } from '../../archive/integrity.service'
 import { backfillBodyText, countPendingBodyText } from '../../archive/body-text'
+import { restoreToGmail } from '../../archive/restore.service'
 import { createLogger } from '../../logger'
 import { config } from '../../config'
 import { logAudit, type AuditAction } from '../../audit/audit.service'
@@ -49,6 +50,8 @@ export function startUnifiedWorker() {
           return handleIntegrity(job)
         case 'backfill_body_text':
           return handleBackfillBodyText(job)
+        case 'restore_gmail':
+          return handleRestoreGmail(job)
         default:
           // Fail loudly: a silent no-op left the job row pending forever
           throw new Error(`Unknown job type: ${job.name}`)
@@ -113,7 +116,7 @@ async function handleArchive(job: Job) {
   const db = getDb()
   // An IMAP account's backup (scheduler, « Sauvegarder », setup wizard) is an incremental IMAP sync, not Gmail
   const account = await db.selectFrom('mail_accounts').select('provider').where('id', '=', accountId).executeTakeFirst()
-  if (account?.provider === 'imap') return runImapJob(job, { done: 'Sauvegarde IMAP terminée', failed: 'Sauvegarde IMAP échouée' }, (onProgress) => syncImapAccount(accountId, onProgress))
+  if (account?.provider === 'imap') return runCountedJob(job, { done: 'Sauvegarde IMAP terminée', failed: 'Sauvegarde IMAP échouée' }, (onProgress) => syncImapAccount(accountId, onProgress))
 
   try {
     const byQuery = !messageIds?.length && !!query
@@ -538,13 +541,13 @@ async function handleImportMbox(job: Job) {
 }
 
 // ─── Import IMAP ────────────────────────────────────────────
-type ImapRun = { imported: number; skipped: number; errors: number }
+type CountedRun = { imported: number; skipped: number; errors: number }
 
 /**
  * One IMAP pass (one-shot import, or an IMAP account's backup): progress, job row, one notification each way.
  * A login the server refuses flags the account « à reconnecter » (backups only: an import has no stored account).
  */
-async function runImapJob(job: Job, titles: { done: string; failed: string }, run: (onProgress: (done: number, total?: number) => Promise<void>) => Promise<ImapRun>) {
+async function runCountedJob(job: Job, titles: { done: string; failed: string; verb?: string }, run: (onProgress: (done: number, total?: number) => Promise<void>) => Promise<CountedRun>) {
   const { accountId, userId } = job.data
   const db = getDb()
   const jobRow = () => db.updateTable('jobs').where('bullmq_id', '=', String(job.id))
@@ -565,7 +568,7 @@ async function runImapJob(job: Job, titles: { done: string; failed: string }, ru
         userId,
         category: 'job_completed',
         title: titles.done,
-        body: `${result.imported} importé(s), ${result.skipped} ignoré(s), ${result.errors} erreur(s).`,
+        body: `${result.imported} ${titles.verb ?? 'importé(s)'}, ${result.skipped} ignoré(s), ${result.errors} erreur(s).`,
         data: { jobId: String(job.id), ...result },
       })
     }
@@ -579,7 +582,12 @@ async function runImapJob(job: Job, titles: { done: string; failed: string }, ru
 
 function handleImportImap(job: Job) {
   const { accountId, userId, imapConfig } = job.data
-  return runImapJob(job, { done: 'Import IMAP terminé', failed: 'Import IMAP échoué' }, (onProgress) => importImap(userId, accountId, imapConfig, { onProgress }))
+  return runCountedJob(job, { done: 'Import IMAP terminé', failed: 'Import IMAP échoué' }, (onProgress) => importImap(userId, accountId, imapConfig, { onProgress }))
+}
+
+function handleRestoreGmail(job: Job) {
+  const { accountId, mailIds } = job.data
+  return runCountedJob(job, { done: 'Restauration dans Gmail terminée', failed: 'Restauration dans Gmail échouée', verb: 'restauré(s)' }, (onProgress) => restoreToGmail(accountId, mailIds, onProgress))
 }
 
 // ─── Retention ──────────────────────────────────────────────

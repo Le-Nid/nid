@@ -242,6 +242,22 @@ Retourne tous les mails d'un thread, triés par date croissante (ordre chronolog
 
 ---
 
+## Restaurer dans Gmail
+
+### POST /api/archive/:accountId/mails/restore-gmail
+
+Lance un job `restore_gmail` qui remet les mails archivés dans Gmail (`users.messages.insert`, `internalDateSource: dateHeader`, EML envoyé en `message/rfc822`). Scope OAuth existant (`gmail.modify`), aucune reconnexion nécessaire.
+
+```json
+{ "mailIds": ["uuid-1", "uuid-2"] }
+```
+
+`mailIds` : 1 à 500 UUID (mails hors corbeille d'archive). Réponse **202** `{ "jobId": "…" }`, audit `archive.restore_gmail`. **409** si le compte n'est pas un compte Gmail, ou s'il est désactivé ou à reconnecter.
+
+Pour chaque mail : encore présent dans Gmail → ignoré ; dans la corbeille Gmail → `untrash` ; absent → inséré avec ses libellés (système et utilisateur actifs tels quels, utilisateur supprimé ou `imported:` recréé par nom, `TRASH`/`SPAM`/`DRAFT`/`CHAT` retirés), puis `gmail_message_id` de l'archive mis à jour. Archive chiffrée : erreur. Le résultat du job (`imported` = restaurés, `skipped`, `errors`) arrive par notification.
+
+---
+
 ## Contacts
 
 ### GET /api/archive/:accountId/contacts

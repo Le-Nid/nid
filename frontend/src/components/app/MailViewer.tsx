@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
-import { Archive, Download, HardDriveDownload, ImageOff, Paperclip, Share2, Trash2, X, Zap } from 'lucide-react'
+import { Archive, Download, HardDriveDownload, ImageOff, MailPlus, Paperclip, Share2, Trash2, X, Zap } from 'lucide-react'
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { archiveApi, gmailApi } from '@/api'
@@ -17,7 +17,7 @@ import { ArchiveTagEditor } from './ArchiveTags'
 import { LabelBadge } from './LabelBadge'
 
 export type ViewerAction = 'trash' | 'archive' | 'archive_nas'
-export type ArchiveViewerAction = 'share' | 'trash'
+export type ArchiveViewerAction = 'share' | 'restore' | 'trash'
 
 const ACTIONS = {
   gmail: [
@@ -27,6 +27,7 @@ const ACTIONS = {
   ],
   archive: [
     { action: 'share', icon: Share2 },
+    { action: 'restore', icon: MailPlus },
     { action: 'trash', icon: Trash2 },
   ],
 } as const
@@ -165,7 +166,7 @@ type ViewerProps = {
 } & (
   | { source?: 'gmail'; onAction: (action: ViewerAction) => void; onOpenMail?: never }
   /** Archived EML (§7.5): Partager / Supprimer, and the other messages of its thread. */
-  | { source: 'archive'; onAction: (action: ArchiveViewerAction) => void; onOpenMail: (id: string) => void }
+  | { source: 'archive'; onAction: (action: ArchiveViewerAction) => void; onOpenMail: (id: string) => void; canRestore?: boolean }
 )
 
 /** Mail reader (§5.2), Gmail or archive: right sheet ≥md, full screen <md (artboard 4); actions in a bottom toolbar. */
@@ -261,7 +262,7 @@ export function MailViewer(props: Readonly<ViewerProps>) {
           aria-label={t('mails.viewer.actions')}
           className="flex border-t px-2 pt-1 pb-[max(8px,env(safe-area-inset-bottom))] md:justify-end md:gap-2 md:p-3"
         >
-          {ACTIONS[source].map(({ action, icon: Icon }) => (
+          {ACTIONS[source].filter(({ action }) => action !== 'restore' || (props.source === 'archive' && props.canRestore)).map(({ action, icon: Icon }) => (
             <Button
               key={action}
               variant="ghost"

@@ -170,7 +170,8 @@
     "action": {
       "open": "Ouvrir",
       "share": "Partager",
-      "trash": "Supprimer"
+      "trash": "Supprimer",
+      "restore": "Restaurer dans Gmail"
     },
     "loadError": "Impossible de charger les archives.",
     "noMatch": "Aucune archive ne correspond",
@@ -317,6 +318,12 @@
       "empty": "Aucun contact",
       "noMatch": "Aucun contact ne correspond",
       "loadError": "Impossible de charger les contacts."
+    },
+    "restore": {
+      "started_one": "Restauration de {{count, number}} mail dans Gmail lancée",
+      "started_other": "Restauration de {{count, number}} mails dans Gmail lancée",
+      "startedHint": "Une notification vous préviendra à la fin.",
+      "failed": "La restauration dans Gmail n'a pas pu être lancée."
     }
   },
   "rules": {
@@ -510,7 +517,8 @@
     "importMbox": "Import mbox",
     "importImap": "Import IMAP",
     "applyRetention": "Application de la rétention",
-    "backfillBodyText": "Indexation du texte des archives"
+    "backfillBodyText": "Indexation du texte des archives",
+    "restoreGmail": "Restauration dans Gmail"
   },
   "settings": {
     "title": "Paramètres",

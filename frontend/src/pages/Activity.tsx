@@ -57,6 +57,7 @@ const RESULT_PAGE: Record<string, string> = {
   archive_mails: '/archives',
   import_mbox: '/archives',
   import_imap: '/archives',
+  restore_gmail: '/mails',
   apply_retention: '/archives?tab=retention',
   purge_archive_trash: '/archives?tab=trash',
 }

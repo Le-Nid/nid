@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { useTable, type RowSelectionState } from '@tanstack/react-table'
 import { toast } from 'sonner'
-import { FileArchive, Download, ListFilter, Search, Tag, Trash2 } from 'lucide-react'
+import { FileArchive, Download, ListFilter, MailPlus, Search, Tag, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
@@ -20,16 +20,16 @@ import { MailViewer, type ArchiveViewerAction } from '@/components/app/MailViewe
 import { RowMenu } from '@/components/app/RowMenu'
 import { useArchiveMails, useArchiveTags, useDashboardArchiveStats, useDeleteArchiveTag, useLabels } from '@/hooks/queries'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { useAccount } from '@/hooks/useAccount'
 import type { ApiLabel } from '@/utils/gmail'
 import { ShareDialog } from './ShareDialog'
 import { TagDialog } from './TagDialog'
 import {
-  actionsHeader, col, DateCell, mailColumns, useArchiveFilters, useArchiveTrashWithUndo, useDebounced, useMboxExport,
+  actionsHeader, col, DateCell, mailColumns, useArchiveFilters, useArchiveTrashWithUndo, useDebounced, useMboxExport, useRestoreToGmailAction,
   type ArchivedMail, type Filters,
 } from './shared'
 
 type RowAction = 'open' | ArchiveViewerAction
-const ROW_ACTIONS: RowAction[] = ['open', 'share', 'trash']
 const FIELD = 'h-11 text-base md:h-9 md:text-sm'
 
 /** The label or tag tree as a select, for the filters sheet <md. */
@@ -87,7 +87,7 @@ function Extract({ mail }: Readonly<{ mail: ArchivedMail }>) {
   )
 }
 
-function buildColumns(t: TFunction, onRow: (action: RowAction, mail: ArchivedMail) => void) {
+function buildColumns(t: TFunction, actions: RowAction[], onRow: (action: RowAction, mail: ArchivedMail) => void) {
   const base = mailColumns(t)
   return col.columns([
     base.subject,
@@ -109,7 +109,7 @@ function buildColumns(t: TFunction, onRow: (action: RowAction, mail: ArchivedMai
       cell: ({ row }) => (
         <RowMenu
           label={t('mails.rowActions', { subject: row.original.subject || t('mails.noSubject') })}
-          items={ROW_ACTIONS.map((a) => ({
+          items={actions.map((a) => ({
             key: a, label: t(`archives.action.${a}`), onSelect: () => onRow(a, row.original), destructive: a === 'trash',
           }))}
         />
@@ -144,6 +144,9 @@ export function SearchTab({ accountId }: Readonly<{ accountId: string }>) {
   const search = useArchiveMails(accountId, apiParams)
   const exporter = useMboxExport(accountId)
   const trash = useArchiveTrashWithUndo(accountId)
+  const restore = useRestoreToGmailAction(accountId)
+  // An IMAP account has no Gmail mailbox to restore into
+  const canRestore = useAccount().account?.provider !== 'imap'
   const [q, setQ] = useDebounced(filters.q, (v) => set({ q: v }))
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
   const [viewing, setViewing] = useState<string | null>(null)
@@ -168,13 +171,17 @@ export function SearchTab({ accountId }: Readonly<{ accountId: string }>) {
 
   const act = (action: ArchiveViewerAction, id: string) => {
     if (action === 'share') return setSharing(id)
+    if (action === 'restore') return restore.run([id])
     setViewing(null)
     trash.run([id])
   }
   // Columns stay stable; the row menu reaches the current handlers through this ref
   const onRowRef = useRef<(action: RowAction, mail: ArchivedMail) => void>(() => {})
   onRowRef.current = (action, mail) => (action === 'open' ? setViewing(mail.id) : act(action, mail.id))
-  const columns = useMemo(() => buildColumns(t, (a, m) => onRowRef.current(a, m)), [t])
+  const columns = useMemo(
+    () => buildColumns(t, canRestore ? ['open', 'share', 'restore', 'trash'] : ['open', 'share', 'trash'], (a, m) => onRowRef.current(a, m)),
+    [t, canRestore],
+  )
   const table = useTable({
     features: dataListFeatures,
     columns,
@@ -190,6 +197,14 @@ export function SearchTab({ accountId }: Readonly<{ accountId: string }>) {
   const bulkActions: BulkAction[] = [
     { label: t('archives.export'), icon: <Download aria-hidden="true" />, onSelect: () => exporter.run(selected) },
     { label: t('archives.tags.title'), icon: <Tag aria-hidden="true" />, onSelect: () => setTagging(selected) },
+    ...(canRestore ? [{
+      label: t('archives.action.restore'),
+      icon: <MailPlus aria-hidden="true" />,
+      onSelect: () => {
+        restore.run(selected)
+        setRowSelection({})
+      },
+    }] : []),
     {
       label: t('archives.action.trash'),
       icon: <Trash2 aria-hidden="true" />,
@@ -306,6 +321,7 @@ export function SearchTab({ accountId }: Readonly<{ accountId: string }>) {
         onClose={() => setViewing(null)}
         onOpenMail={setViewing}
         onAction={(action) => viewing && act(action, viewing)}
+        canRestore={canRestore}
       />
       <TagDialog
         accountId={accountId}

@@ -170,7 +170,8 @@
     "action": {
       "open": "Open",
       "share": "Share",
-      "trash": "Delete"
+      "trash": "Delete",
+      "restore": "Restore to Gmail"
     },
     "loadError": "Could not load the archives.",
     "noMatch": "No archive matches",
@@ -317,6 +318,12 @@
       "empty": "No contacts",
       "noMatch": "No contact matches",
       "loadError": "Could not load contacts."
+    },
+    "restore": {
+      "started_one": "Restoring {{count, number}} mail to Gmail",
+      "started_other": "Restoring {{count, number}} mails to Gmail",
+      "startedHint": "A notification will tell you when it is done.",
+      "failed": "The restore to Gmail could not be started."
     }
   },
   "rules": {
@@ -510,7 +517,8 @@
     "importMbox": "Mbox import",
     "importImap": "IMAP import",
     "applyRetention": "Retention run",
-    "backfillBodyText": "Archive full-text indexing"
+    "backfillBodyText": "Archive full-text indexing",
+    "restoreGmail": "Restore to Gmail"
   },
   "settings": {
     "title": "Settings",
