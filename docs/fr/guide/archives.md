@@ -2,7 +2,7 @@
 
 La page **Archives** (`/archives`) donne accès à la copie locale de vos mails, sauvegardée sur le NAS au format EML. Elle reste consultable même si les mails ont été supprimés de Gmail, et même si le compte Gmail a été déconnecté.
 
-Quatre onglets : **Mails**, **Corbeille**, **Rétention**, **Partages**.
+Cinq onglets : **Mails**, **Contacts**, **Corbeille**, **Rétention**, **Partages**.
 
 ---
 
@@ -56,6 +56,18 @@ La personne qui ouvre le lien voit le mail (« Mail partagé via lien temporaire
 ### Onglet Partages
 
 Tous vos liens actifs : **Objet**, **Expéditeur**, **Expire le**, **Accès** (ouvertures / limite), copier, révoquer. Le nombre de liens actifs est aussi rappelé dans [Paramètres › Sécurité](settings.md#securite).
+
+---
+
+## Onglet Contacts
+
+Le carnet d'adresses de l'archive, tiré des en-têtes **De** et **À** des mails archivés (corbeille exclue). Votre propre adresse n'y figure pas.
+
+- Chaque contact affiche son **nom** (un des noms vus dans ses mails), son **adresse**, le nombre de mails archivés où il est **Comme expéditeur** et **Comme destinataire** (champ À, avec d'éventuels autres destinataires) et la date du **Dernier échange**.
+- Les contacts avec qui vous échangez le plus apparaissent en premier ; **Rechercher un contact** filtre par nom ou adresse.
+- Un clic sur un contact ouvre l'onglet **Mails** filtré sur cet expéditeur.
+
+Seul le champ **À** est lu : les destinataires en copie (Cc) n'apparaissent pas.
 
 ---
 

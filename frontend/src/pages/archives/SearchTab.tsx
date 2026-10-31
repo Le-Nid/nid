@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useId, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { useTable, type RowSelectionState } from '@tanstack/react-table'
@@ -24,38 +24,13 @@ import type { ApiLabel } from '@/utils/gmail'
 import { ShareDialog } from './ShareDialog'
 import { TagDialog } from './TagDialog'
 import {
-  actionsHeader, col, DateCell, mailColumns, useArchiveFilters, useArchiveTrashWithUndo, useMboxExport,
+  actionsHeader, col, DateCell, mailColumns, useArchiveFilters, useArchiveTrashWithUndo, useDebounced, useMboxExport,
   type ArchivedMail, type Filters,
 } from './shared'
 
 type RowAction = 'open' | ArchiveViewerAction
 const ROW_ACTIONS: RowAction[] = ['open', 'share', 'trash']
-const DEBOUNCE_MS = 300
 const FIELD = 'h-11 text-base md:h-9 md:text-sm'
-
-/** Text typed in a field reaches the URL once the typing pauses; a change from elsewhere (clear) shows up. */
-function useDebounced(value: string, commit: (next: string) => void) {
-  const [draft, setDraft] = useState(value)
-  const [synced, setSynced] = useState(value)
-  // The latest commit: react-router's functional setSearchParams reads the params of the render it comes from
-  const commitRef = useRef(commit)
-  commitRef.current = commit
-  // Our own commit coming back must not overwrite what was typed since
-  const lastCommit = useRef(value)
-  if (value !== synced) {
-    setSynced(value)
-    if (value !== lastCommit.current) setDraft(value)
-  }
-  useEffect(() => {
-    if (draft === value) return
-    const timer = setTimeout(() => {
-      lastCommit.current = draft
-      commitRef.current(draft)
-    }, DEBOUNCE_MS)
-    return () => clearTimeout(timer)
-  }, [draft]) // eslint-disable-line react-hooks/exhaustive-deps -- restarts on typing only
-  return [draft, setDraft] as const
-}
 
 /** The label or tag tree as a select, for the filters sheet <md. */
 function TreeSelect({ id, label, nodes, value, onChange }: Readonly<{

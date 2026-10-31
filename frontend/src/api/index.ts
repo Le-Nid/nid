@@ -92,6 +92,9 @@ export const archiveApi = {
   restoreMails: (accountId: string, mailIds: string[]) =>
     api.post(`/api/archive/${accountId}/mails/restore`, { mailIds }).then((r) => r.data),
 
+  listContacts: (accountId: string, params: Record<string, any> = {}) =>
+    api.get(`/api/archive/${accountId}/contacts`, { params }).then((r) => r.data),
+
   listTags: (accountId: string): Promise<{ tag: string; count: number }[]> =>
     api.get(`/api/archive/${accountId}/tags`).then((r) => r.data),
 

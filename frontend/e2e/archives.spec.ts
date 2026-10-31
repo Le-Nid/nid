@@ -77,6 +77,13 @@ test.describe('Archives', () => {
     await list
   })
 
+  test('Contacts: a contact opens the mails it sent', async ({ page }) => {
+    await page.goto('/archives?tab=contacts')
+    await expect(page.getByText('1 contact', { exact: true })).toBeVisible()
+    await page.getByText('Bob Martin').click()
+    await expect(page).toHaveURL(/sender=bob%40x\.fr/)
+  })
+
   test('« Supprimer » moves to the archive trash at once, « Annuler » restores', async ({ page }) => {
     await page.goto('/archives')
     await page.getByRole('checkbox', { name: t('dataList.selectRow', { label: MORNING }) }).check()

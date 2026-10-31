@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
@@ -23,6 +23,32 @@ export type ArchivedMail = {
   tags?: string[]
   deleted_at?: string | null
   highlight?: string
+}
+
+const DEBOUNCE_MS = 300
+
+/** Text typed in a field reaches the URL once the typing pauses; a change from elsewhere (clear) shows up. */
+export function useDebounced(value: string, commit: (next: string) => void) {
+  const [draft, setDraft] = useState(value)
+  const [synced, setSynced] = useState(value)
+  // The latest commit: react-router's functional setSearchParams reads the params of the render it comes from
+  const commitRef = useRef(commit)
+  commitRef.current = commit
+  // Our own commit coming back must not overwrite what was typed since
+  const lastCommit = useRef(value)
+  if (value !== synced) {
+    setSynced(value)
+    if (value !== lastCommit.current) setDraft(value)
+  }
+  useEffect(() => {
+    if (draft === value) return
+    const timer = setTimeout(() => {
+      lastCommit.current = draft
+      commitRef.current(draft)
+    }, DEBOUNCE_MS)
+    return () => clearTimeout(timer)
+  }, [draft]) // eslint-disable-line react-hooks/exhaustive-deps -- restarts on typing only
+  return [draft, setDraft] as const
 }
 
 const FILTERS = ['q', 'sender', 'from', 'to', 'att', 'label', 'tag'] as const

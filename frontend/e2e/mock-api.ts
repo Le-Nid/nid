@@ -91,6 +91,10 @@ const ROUTES: [string, RegExp, Handler][] = [
   ['POST', /^\/api\/archive\/[^/]+\/mails\/trash$/, (req: Request) => ({ trashed: req.postDataJSON().mailIds.length })],
   ['POST', /^\/api\/archive\/[^/]+\/mails\/restore$/, (req: Request) => ({ restored: req.postDataJSON().mailIds.length })],
   ['GET', /^\/api\/archive\/[^/]+\/tags$/, [{ tag: 'impôts', count: 2 }]],
+  ['GET', /^\/api\/archive\/[^/]+\/contacts$/, {
+    contacts: [{ email: 'bob@x.fr', name: 'Bob Martin', from_count: 12, to_count: 3, last_at: '2026-08-01T07:00:00Z' }],
+    total: 1, page: 1, limit: 50,
+  }],
   ['POST', /^\/api\/archive\/[^/]+\/mails\/tags$/, (req: Request) => ({ updated: req.postDataJSON().mailIds.length })],
   ['DELETE', /^\/api\/archive\/[^/]+\/tags\/[^/]+$/, { updated: 2 }],
   ['GET', /^\/api\/archive\/[^/]+\/trash$/, { mails: archive.trash, total: archive.trash.length, page: 1, limit: 100, retentionDays: 30 }],

@@ -242,6 +242,28 @@ Retourne tous les mails d'un thread, triés par date croissante (ordre chronolog
 
 ---
 
+## Contacts
+
+### GET /api/archive/:accountId/contacts
+
+Carnet d'adresses de l'archive, calculé à chaque appel depuis les en-têtes `From` et `To` (corbeille exclue, adresse du compte exclue), adresses en minuscules. Tri : nombre d'échanges décroissant, puis dernier échange.
+
+| Param | Description |
+|---|---|
+| `q` | Filtre sur l'adresse ou le nom (ILIKE) |
+| `page`, `limit` | Pagination (défaut 50, max 100) |
+
+```json
+{
+  "contacts": [{ "email": "bob@x.fr", "name": "Martin, Bob", "from_count": 12, "to_count": 3, "last_at": "2026-08-01T07:00:00Z" }],
+  "total": 1, "page": 1, "limit": 50
+}
+```
+
+`from_count` : mails archivés dont il est l'expéditeur ; `to_count` : mails archivés dont il est destinataire (`To`). `name` : un des noms affichés vus pour cette adresse, `null` si aucun. Coût : environ 0,3 s par 100 000 mails archivés.
+
+---
+
 ## Tags
 
 Étiquettes propres à Nid, posées sur les mails archivés (colonne `tags`, renvoyée dans les listes et le détail). Gmail ne les voit jamais, et un nouvel archivage du même mail les conserve. Un tag fait 1 à 50 caractères, sans virgule.

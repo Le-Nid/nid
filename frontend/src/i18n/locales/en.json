@@ -126,7 +126,8 @@
       "mails": "Mails",
       "trash": "Trash",
       "retention": "Retention",
-      "shares": "Shares"
+      "shares": "Shares",
+      "contacts": "Contacts"
     },
     "status": {
       "last": "Last backup {{when}}",
@@ -299,6 +300,23 @@
       "deleteDescription": "The tag is removed from every archive of this account, trash included. The mails are not deleted.",
       "deleteConfirm": "Delete tag",
       "deleted": "Tag \"{{tag}}\" deleted"
+    },
+    "contacts": {
+      "search": "Search contacts",
+      "searchPlaceholder": "Name or address",
+      "count_one": "{{count, number}} contact",
+      "count_other": "{{count, number}} contacts",
+      "col": {
+        "contact": "Contact",
+        "email": "Address",
+        "from": "As sender",
+        "to": "As recipient",
+        "last": "Last exchange"
+      },
+      "open": "Show mails from {{contact}}",
+      "empty": "No contacts",
+      "noMatch": "No contact matches",
+      "loadError": "Could not load contacts."
     }
   },
   "rules": {
