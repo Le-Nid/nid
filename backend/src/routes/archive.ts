@@ -29,6 +29,7 @@ const mailsQuerySchema = z.object({
   to_date: z.coerce.date().optional(),
   has_attachments: z.enum(["true", "false"]).optional(),
   label: z.string().min(1).max(200).optional(),
+  tag: z.string().min(1).max(50).optional(),
   page: positiveInt,
   limit: positiveInt,
 });
@@ -37,7 +38,7 @@ const mailsQuerySchema = z.object({
 const MAIL_LIST_COLUMNS = [
   "id", "account_id", "gmail_message_id", "thread_id", "in_reply_to", "references_header",
   "subject", "sender", "recipient", "date", "size_bytes", "has_attachments", "label_ids",
-  "snippet", "attachment_names", "is_encrypted", "archived_at", "deleted_at",
+  "tags", "snippet", "attachment_names", "is_encrypted", "archived_at", "deleted_at",
 ] as const;
 
 export async function archiveRoutes(app: FastifyInstance) {
@@ -47,7 +48,7 @@ export async function archiveRoutes(app: FastifyInstance) {
   // ─── Liste / recherche mails archivés ────────────────────
   app.get("/:accountId/mails", accountAuth, async (request) => {
     const { accountId } = request.params as { accountId: string };
-    const { q, sender, from_date, to_date, has_attachments, label, ...pagination } =
+    const { q, sender, from_date, to_date, has_attachments, label, tag, ...pagination } =
       mailsQuerySchema.parse(request.query);
     const { page, limit: lim, offset } = extractPagination(pagination);
     const searchTerm = q?.trim().slice(0, 200);
@@ -62,6 +63,7 @@ export async function archiveRoutes(app: FastifyInstance) {
     if (to_date) base = base.where("date", "<=", to_date);
     if (has_attachments) base = base.where("has_attachments", "=", has_attachments === "true");
     if (label) base = base.where(sql<boolean>`label_ids @> ARRAY[${label}]::text[]`);
+    if (tag) base = base.where(sql<boolean>`tags @> ARRAY[${tag}]::text[]`);
     const tsQuery = ftsQuery(searchTerm ?? "");
     if (searchTerm) base = base.where(sql<boolean>`search_vector @@ ${tsQuery}`);
 
@@ -362,6 +364,50 @@ export async function archiveRoutes(app: FastifyInstance) {
       .executeTakeFirst();
 
     return { restored: Number(result.numUpdatedRows) };
+  });
+
+  // ─── Tags (Nid only, never sent to Gmail) ─────────────────
+  // No comma: the list filter takes one tag in the query string
+  const tagName = z.string().trim().min(1).max(50).regex(/^[^,]+$/);
+  const tagsSchema = z.object({
+    mailIds: z.array(z.string().uuid()).min(1).max(500),
+    add: z.array(tagName).max(20).default([]),
+    remove: z.array(tagName).max(20).default([]),
+  });
+
+  app.get("/:accountId/tags", accountAuth, async (request) => {
+    const { accountId } = request.params as { accountId: string };
+    const rows = await db
+      .selectFrom(sql<{ tag: string }>`(SELECT unnest(tags) AS tag FROM archived_mails WHERE account_id = ${accountId} AND deleted_at IS NULL)`.as("t"))
+      .select(["tag", (eb) => eb.fn.countAll<number>().as("count")])
+      .groupBy("tag")
+      .orderBy("tag")
+      .execute();
+    return rows.map((r) => ({ tag: r.tag, count: Number(r.count) }));
+  });
+
+  app.post("/:accountId/mails/tags", accountAuth, async (request) => {
+    const { accountId } = request.params as { accountId: string };
+    const { mailIds, add, remove } = tagsSchema.parse(request.body);
+    const result = await db
+      .updateTable("archived_mails")
+      .set({ tags: sql`ARRAY(SELECT DISTINCT t FROM unnest(tags || ${add}::text[]) t WHERE t <> ALL(${remove}::text[]) ORDER BY t)` })
+      .where("account_id", "=", accountId)
+      .where("id", "in", mailIds)
+      .executeTakeFirst();
+    return { updated: Number(result.numUpdatedRows) };
+  });
+
+  // Drops a tag everywhere, trashed mails included (a typo, a tag no longer used)
+  app.delete("/:accountId/tags/:tag", accountAuth, async (request) => {
+    const { accountId, tag } = request.params as { accountId: string; tag: string };
+    const result = await db
+      .updateTable("archived_mails")
+      .set({ tags: sql`array_remove(tags, ${tag})` })
+      .where("account_id", "=", accountId)
+      .where(sql<boolean>`tags @> ARRAY[${tag}]::text[]`)
+      .executeTakeFirst();
+    return { updated: Number(result.numUpdatedRows) };
   });
 
   // ─── List trash ───────────────────────────────────────────

@@ -16,7 +16,7 @@ Versions vérifiées le 2026-10-20 : `shadcn` 4.22.1 (CLI), `tailwindcss` 4.3.3,
 - Remplacer antd par shadcn/ui + Tailwind v4, page par page, sans big bang.
 
 **Non-objectifs**
-- Pas de nouvelle fonctionnalité métier hors de celles listées en §8 (prérequis backend). Exception décidée après comparaison avec bichon : assistant d'ajout de compte (§7.7) et enrichissement de la Vue d'ensemble (§7.1), sur des données existantes (B16, B17).
+- Pas de nouvelle fonctionnalité métier hors de celles listées en §8 (prérequis backend). Exception décidée après comparaison avec bichon : assistant d'ajout de compte (§7.7) et enrichissement de la Vue d'ensemble (§7.1), sur des données existantes (B16, B17), et tags d'archive (§7.5, B18).
 - Pas de classification automatique par LLM (point ouvert §10).
 - Pas de virtualisation de listes (pagination serveur suffit).
 - Pas de refonte de la page publique `/shared/:token` au-delà du changement de composants.
@@ -98,7 +98,7 @@ Règles de spec ajoutées ici (non négociées, modifiables) : R1 `--input` renf
 | Mails | Sélecteur de compte (dont « Tous les comptes ») · barre de recherche à jetons + chips de recherches enregistrées · liste/table · barre d'actions de sélection · lecteur |
 | Nettoyage | Onglets « Expéditeurs & newsletters » / « Gros mails & pièces jointes » · tri (Nombre de mails, Taille, Jamais ouverts) · filtre « Newsletters uniquement (List-Unsubscribe) » · progression inline par ligne |
 | Règles & libellés (H1) | Onglet Règles (liste, sheet de création/édition avec aperçu) · onglet Libellés (arbre Gmail, catégories, modèles L5) |
-| Archives | Bandeau état de sauvegarde + couverture · arbre de libellés (L3) · recherche plein texte (D4) + filtres · résultats surlignés · lecteur d'archive (Partager, Restaurer, Supprimer définitivement) · onglets secondaires Corbeille, Rétention |
+| Archives | Bandeau état de sauvegarde + couverture · arbre de libellés (L3) puis arbre des tags Nid (B18) · recherche plein texte (D4) + filtres · résultats surlignés · lecteur d'archive (Partager, Restaurer, Supprimer définitivement) · onglets secondaires Corbeille, Rétention |
 | Activité | Filtres compte + statut (En attente, En cours, Échouées, Terminées) · liste des tâches avec action par statut |
 | Paramètres | Compte · Sécurité · Comptes Gmail · Notifications & webhooks · Données |
 | Admin | Onglets Utilisateurs · Système (corbeille de l'instance, intégrité, quota API) · Audit |
@@ -433,7 +433,8 @@ Endpoints : existants (`frontend/src/api/index.ts`) ; **nouveaux** en gras (dét
 
 - **But** : copie locale consultable, même supprimée de Gmail.
 - **Sections** : en-tête (« Exporter (.mbox) », « Sauvegarder sur le NAS maintenant ») ; bandeau état (« Dernière sauvegarde réussie il y a 2 h · 47 108 mails · 5,9 Go sur NAS… », Couverture 98 %, « Voir les 1 104 mails non sauvegardés ») ; `LabelTree` (Tous les mails, Boîte de réception, Envoyés, libellés imbriqués « Factures / EDF », Supprimés de Gmail) ; recherche plein texte (D4) + filtres (Expéditeur, Période, Avec pièce jointe, Taille, Présent dans Gmail) ; résultats : libellé, objet et extrait surlignés (`<mark>`), PJ, date, « Plus dans Gmail » ; « 38 résultats · 0,12 s ».
-- **Lecteur d'archive** : `MailViewer source="archive"` + fil (threads), PJ, actions **Partager** (P7 : durée, lien copiable, révocation), Restaurer, Supprimer définitivement (D2).
+- **Tags (B18)** : étiquettes propres à Nid, jamais envoyées à Gmail. ≥md : second `LabelTree` « Tags » sous les libellés (Tous les tags, puis chaque tag avec son nombre), affiché seulement s'il existe des tags ; <md : select « Tag » dans la sheet de filtres. Filtre `?tag=` dans l'URL, compté dans « Filtres (N) ». Tag sélectionné → bouton « Supprimer le tag « … » » à droite du nombre de résultats (`ConfirmDialog` destructif : retiré de toutes les archives du compte, corbeille comprise, mails conservés). Sélection → action « Tags » (dialog : champ séparé par des virgules avec suggestions `datalist`, « Retirer » / « Ajouter »). Lecteur : ligne de tags sous l'en-tête, chaque tag retirable (bouton « Retirer le tag … »), champ « Ajouter un tag… » validé par Entrée.
+- **Lecteur d'archive** : `MailViewer source="archive"` + fil (threads), tags (B18), PJ, actions **Partager** (P7 : durée, lien copiable, révocation), Restaurer, Supprimer définitivement (D2).
 - **Onglets secondaires** : **Corbeille** (liste, restaurer, vider = D2, réglages rétention/purge) ; **Rétention** (politiques, libellé = Select L6, exécuter).
 - **Mobile** : recherche en tête, filtres en sheet, cartes résultat avec extrait 3 lignes.
 - **Données** : `GET /api/archive/:id/mails[/:mid]`, `GET …/threads[/:tid]`, `POST …/archive`, `POST …/mails/trash|restore`, `GET|DELETE …/trash`, `GET|PUT /api/archive/config/trash`, `POST /api/import/:id/export-mbox`, `GET/POST/PUT/DELETE /api/retention`, `POST /api/retention/run`, `GET/POST/DELETE /api/shares`.
@@ -516,6 +517,7 @@ Hypothèse à valider (H1) : page « Règles & libellés », onglets **Règles**
 | B15 | Corbeille de l'instance | durée max instance + plafond par utilisateur ; `DELETE /api/admin/archive-trash` (tous comptes, audité) | Admin > Système | S |
 | B16 | Statistiques d'archives pour la Vue d'ensemble | `GET /api/dashboard/:id/archive-stats` renvoie en plus `daily` (30 jours UTC, zéros inclus), `biggestMails` et `biggestAttachments` (5 chacun, hors corbeille) et `dedup_saved_bytes` (copies d'une même empreinte au-delà de la première) | Vue d'ensemble | S |
 | B17 | Compte nouvellement ajouté | le callback OAuth Gmail ajoute `new=1` quand l'upsert a inséré la ligne (`xmax = 0`), pas pour une reconnexion | Paramètres > Comptes Gmail (assistant) | S |
+| B18 | Tags d'archive | colonne `archived_mails.tags text[]` (index GIN, conservée au ré-archivage) ; filtre `tag` sur `GET …/mails` ; `GET …/tags` (compteurs hors corbeille), `POST …/mails/tags` (`add`/`remove`, 500 mails max), `DELETE …/tags/:tag` | Archives | S |
 
 Ordre : B1 → B5 → B3 → B4 → B6/B8/B9 → B2 → B7/B10 → B11–B15. Chaque prérequis = PR backend séparée avec tests Vitest, puis `graphify update .`.
 

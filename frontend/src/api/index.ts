@@ -92,6 +92,15 @@ export const archiveApi = {
   restoreMails: (accountId: string, mailIds: string[]) =>
     api.post(`/api/archive/${accountId}/mails/restore`, { mailIds }).then((r) => r.data),
 
+  listTags: (accountId: string): Promise<{ tag: string; count: number }[]> =>
+    api.get(`/api/archive/${accountId}/tags`).then((r) => r.data),
+
+  tagMails: (accountId: string, change: { mailIds: string[]; add?: string[]; remove?: string[] }) =>
+    api.post(`/api/archive/${accountId}/mails/tags`, change).then((r) => r.data),
+
+  deleteTag: (accountId: string, tag: string) =>
+    api.delete(`/api/archive/${accountId}/tags/${encodeURIComponent(tag)}`).then((r) => r.data),
+
   listTrash: (accountId: string, params: Record<string, any> = {}) =>
     api.get(`/api/archive/${accountId}/trash`, { params }).then((r) => r.data),
 

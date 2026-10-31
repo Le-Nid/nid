@@ -154,7 +154,8 @@
       "sender": "Sender",
       "from": "From",
       "to": "To",
-      "attachments": "With attachment"
+      "attachments": "With attachment",
+      "tag": "Tag"
     },
     "results_one": "{{count, number}} result",
     "results_other": "{{count, number}} results",
@@ -276,7 +277,29 @@
       "emptyDescription": "Share a mail from the archive reader.",
       "loadError": "Could not load the shares."
     },
-    "encryptedBody": "This mail is encrypted: its content cannot be read here."
+    "encryptedBody": "This mail is encrypted: its content cannot be read here.",
+    "tags": {
+      "title": "Tags",
+      "all": "All tags",
+      "field": "Tags, separated by commas",
+      "description_one": "Add or remove tags on {{count, number}} archive. Tags stay in Nid, Gmail never sees them.",
+      "description_other": "Add or remove tags on {{count, number}} archives. Tags stay in Nid, Gmail never sees them.",
+      "add": "Add a tag",
+      "addPlaceholder": "Add a tag…",
+      "remove": "Remove tag {{tag}}",
+      "addAction": "Add",
+      "removeAction": "Remove",
+      "added_one": "Tags added to {{count, number}} archive",
+      "added_other": "Tags added to {{count, number}} archives",
+      "removed_one": "Tags removed from {{count, number}} archive",
+      "removed_other": "Tags removed from {{count, number}} archives",
+      "failed": "The tags could not be changed.",
+      "delete": "Delete tag \"{{tag}}\"",
+      "deleteTitle": "Delete tag \"{{tag}}\"?",
+      "deleteDescription": "The tag is removed from every archive of this account, trash included. The mails are not deleted.",
+      "deleteConfirm": "Delete tag",
+      "deleted": "Tag \"{{tag}}\" deleted"
+    }
   },
   "rules": {
     "title": "Rules & labels",

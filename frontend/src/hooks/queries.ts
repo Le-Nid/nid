@@ -28,6 +28,7 @@ export const queryKeys = {
   archiveTrash: (accountId: string, params?: Record<string, any>) =>
     ['archive', accountId, 'trash', params] as const,
   archiveTrashConfig: () => ['archive', 'trash-config'] as const,
+  archiveTags: (accountId: string) => ['archive', accountId, 'tags'] as const,
   savedSearches: () => ['saved-searches'] as const,
   unified: (params?: Record<string, any>) => ['unified', params] as const,
   rules: (accountId: string) => ['rules', accountId] as const,
@@ -179,6 +180,16 @@ export const useTrashArchived = (accountId: string) =>
 
 export const useRestoreArchived = (accountId: string) =>
   useArchiveMutation((mailIds: string[]) => archiveApi.restoreMails(accountId, mailIds))
+
+export function useArchiveTags(accountId: string) {
+  return useQuery({ queryKey: queryKeys.archiveTags(accountId), queryFn: () => archiveApi.listTags(accountId), enabled: !!accountId })
+}
+
+export const useTagArchived = (accountId: string) =>
+  useArchiveMutation((change: { mailIds: string[]; add?: string[]; remove?: string[] }) => archiveApi.tagMails(accountId, change))
+
+export const useDeleteArchiveTag = (accountId: string) =>
+  useArchiveMutation((tag: string) => archiveApi.deleteTag(accountId, tag))
 
 export const useEmptyArchiveTrash = (accountId: string) =>
   useArchiveMutation(() => archiveApi.emptyTrash(accountId))

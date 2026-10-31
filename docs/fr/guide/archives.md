@@ -20,20 +20,23 @@ D'autres façons d'alimenter les archives : **Sauvegarder sur le NAS** dans [Mai
 
 - **Arbre des libellés** (à gauche sur ordinateur) : **Tous les mails** puis les libellés qui contiennent des mails archivés, avec leur nombre.
 - **Recherche plein texte** : objet, expéditeur, contenu et corps, insensible aux accents, avec `"phrase exacte"`, `-exclure` et `OR`. Les termes trouvés sont surlignés dans l'extrait.
-- **Filtres** : **Expéditeur**, période (**Du** / **Au**), **Avec pièce jointe**. Sur mobile, ils sont regroupés dans le panneau **Filtres (N)** avec le **Libellé**, puis **Afficher les résultats**.
+- **Tags** (sous les libellés sur ordinateur) : **Tous les tags** puis vos tags, avec leur nombre. Un tag sélectionné filtre la liste et propose **Supprimer le tag « … »**, qui le retire de toutes les archives du compte sans supprimer les mails.
+- **Filtres** : **Expéditeur**, période (**Du** / **Au**), **Avec pièce jointe**. Sur mobile, ils sont regroupés dans le panneau **Filtres (N)** avec le **Libellé** et le **Tag**, puis **Afficher les résultats**.
 
 Les résultats (« N résultats ») affichent **Objet**, **Extrait**, **Date**, **Expéditeur**, **Taille**. **Effacer la recherche et les filtres** revient à la liste complète.
 
 ### Actions
 
 - Menu `⋯` d'une ligne : **Ouvrir**, **Partager**, **Supprimer**.
-- Sélection de plusieurs lignes : **Exporter .mbox**, **Supprimer**.
+- Sélection de plusieurs lignes : **Exporter .mbox**, **Tags**, **Supprimer**.
+
+**Tags** ajoute ou retire les tags saisis (séparés par des virgules, vos tags existants sont proposés) sur toute la sélection. Les tags restent dans Nid : Gmail ne les voit pas, et ils sont conservés si le mail est archivé à nouveau.
 
 **Supprimer** envoie les archives dans la corbeille des archives, avec un toast « Suppression de N archives dans 10 s » et **Annuler**.
 
 ### Lecteur d'archive
 
-**Ouvrir** affiche le mail archivé : en-têtes, corps (images distantes bloquées, comme dans [Mails](mails.md#lire-un-mail)), pièces jointes téléchargeables et **Conversation**. Actions : **Partager**, **Supprimer**.
+**Ouvrir** affiche le mail archivé : en-têtes, corps (images distantes bloquées, comme dans [Mails](mails.md#lire-un-mail)), pièces jointes téléchargeables, ses **Tags** (retirer un tag d'un clic, en ajouter avec le champ **Ajouter un tag…** puis Entrée) et **Conversation**. Actions : **Partager**, **Supprimer**.
 
 Un mail archivé chiffré affiche « Ce mail est chiffré : son contenu n'est pas lisible ici. » Le chiffrement des archives ne se règle pas depuis l'interface.
 

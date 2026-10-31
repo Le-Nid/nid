@@ -154,7 +154,8 @@
       "sender": "Expéditeur",
       "from": "Du",
       "to": "Au",
-      "attachments": "Avec pièce jointe"
+      "attachments": "Avec pièce jointe",
+      "tag": "Tag"
     },
     "results_one": "{{count, number}} résultat",
     "results_other": "{{count, number}} résultats",
@@ -276,7 +277,29 @@
       "emptyDescription": "Partagez un mail depuis le lecteur d'archive.",
       "loadError": "Impossible de charger les partages."
     },
-    "encryptedBody": "Ce mail est chiffré : son contenu n'est pas lisible ici."
+    "encryptedBody": "Ce mail est chiffré : son contenu n'est pas lisible ici.",
+    "tags": {
+      "title": "Tags",
+      "all": "Tous les tags",
+      "field": "Tags, séparés par des virgules",
+      "description_one": "Ajouter ou retirer des tags sur {{count, number}} archive. Les tags restent dans Nid, Gmail ne les voit pas.",
+      "description_other": "Ajouter ou retirer des tags sur {{count, number}} archives. Les tags restent dans Nid, Gmail ne les voit pas.",
+      "add": "Ajouter un tag",
+      "addPlaceholder": "Ajouter un tag…",
+      "remove": "Retirer le tag {{tag}}",
+      "addAction": "Ajouter",
+      "removeAction": "Retirer",
+      "added_one": "Tags ajoutés à {{count, number}} archive",
+      "added_other": "Tags ajoutés à {{count, number}} archives",
+      "removed_one": "Tags retirés de {{count, number}} archive",
+      "removed_other": "Tags retirés de {{count, number}} archives",
+      "failed": "Les tags n'ont pas pu être modifiés.",
+      "delete": "Supprimer le tag « {{tag}} »",
+      "deleteTitle": "Supprimer le tag « {{tag}} » ?",
+      "deleteDescription": "Le tag est retiré de toutes les archives de ce compte, corbeille comprise. Les mails ne sont pas supprimés.",
+      "deleteConfirm": "Supprimer le tag",
+      "deleted": "Tag « {{tag}} » supprimé"
+    }
   },
   "rules": {
     "title": "Règles & libellés",

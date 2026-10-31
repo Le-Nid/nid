@@ -76,6 +76,7 @@ export interface ArchivedMailsTable {
   size_bytes:       Generated<bigint>
   has_attachments:  Generated<boolean>
   label_ids:        Generated<string[]>
+  tags:             Generated<string[]>
   eml_path:         string
   snippet:          string | null
   attachment_names: string | null

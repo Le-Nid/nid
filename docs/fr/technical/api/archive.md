@@ -18,6 +18,7 @@ Toutes les routes `/:accountId/...` exigent le JWT et la propriété du compte G
 | `to_date` | Date de fin (ISO 8601) |
 | `has_attachments` | Filtrer par présence de pièces jointes (`true` / `false`) |
 | `label` | Id de libellé Gmail que le mail doit porter (ex. `INBOX`, `Label_12`) |
+| `tag` | Tag Nid que le mail doit porter (voir [Tags](#tags)) |
 | `page` | Page (défaut : 1) |
 | `limit` | Résultats par page (défaut : 50, max : 100) |
 
@@ -238,6 +239,34 @@ Retourne tous les mails d'un thread, triés par date croissante (ordre chronolog
   }
 ]
 ```
+
+---
+
+## Tags
+
+Étiquettes propres à Nid, posées sur les mails archivés (colonne `tags`, renvoyée dans les listes et le détail). Gmail ne les voit jamais, et un nouvel archivage du même mail les conserve. Un tag fait 1 à 50 caractères, sans virgule.
+
+### GET /api/archive/:accountId/tags
+
+Tags du compte avec leur nombre de mails (corbeille exclue), par ordre alphabétique.
+
+```json
+[{ "tag": "impôts", "count": 12 }, { "tag": "énergie", "count": 3 }]
+```
+
+### POST /api/archive/:accountId/mails/tags
+
+Ajoute et/ou retire des tags sur des mails archivés.
+
+```json
+{ "mailIds": ["uuid-1", "uuid-2"], "add": ["impôts"], "remove": ["à trier"] }
+```
+
+`mailIds` : 1 à 500 UUID ; `add` et `remove` : 20 tags au plus chacun. Réponse : `{ "updated": 2 }`.
+
+### DELETE /api/archive/:accountId/tags/:tag
+
+Retire le tag de tous les mails du compte, corbeille comprise ; les mails restent. Réponse : `{ "updated": 12 }`.
 
 ---
 
