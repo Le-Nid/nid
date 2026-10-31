@@ -13,7 +13,7 @@ export async function configRoutes(app: FastifyInstance) {
 
     // Get all user's gmail accounts
     const accounts = await db
-      .selectFrom('gmail_accounts')
+      .selectFrom('mail_accounts')
       .select(['id', 'email'])
       .where('user_id', '=', userId)
       .execute()
@@ -25,7 +25,7 @@ export async function configRoutes(app: FastifyInstance) {
       ? await db
           .selectFrom('rules')
           .selectAll()
-          .where('gmail_account_id', 'in', accountIds)
+          .where('account_id', 'in', accountIds)
           .execute()
       : []
 
@@ -42,7 +42,7 @@ export async function configRoutes(app: FastifyInstance) {
       accounts: accounts.map((a) => ({
         email: a.email,
         rules: rules
-          .filter((r) => r.gmail_account_id === a.id)
+          .filter((r) => r.account_id === a.id)
           .map((r) => ({
             name: r.name,
             description: r.description,
@@ -95,7 +95,7 @@ export async function configRoutes(app: FastifyInstance) {
     if (body.accounts) {
       for (const acct of body.accounts) {
         const dbAccount = await db
-          .selectFrom('gmail_accounts')
+          .selectFrom('mail_accounts')
           .select('id')
           .where('email', '=', acct.email)
           .where('user_id', '=', userId)
@@ -107,7 +107,7 @@ export async function configRoutes(app: FastifyInstance) {
           await db
             .insertInto('rules')
             .values({
-              gmail_account_id: dbAccount.id,
+              account_id: dbAccount.id,
               name: rule.name,
               description: rule.description ?? null,
               conditions: JSON.stringify(rule.conditions),

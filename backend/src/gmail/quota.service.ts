@@ -37,7 +37,7 @@ export async function trackApiCall(accountId: string, endpoint: string): Promise
   await db
     .insertInto('gmail_api_usage')
     .values({
-      gmail_account_id: accountId,
+      account_id: accountId,
       endpoint,
       quota_units: units,
     })
@@ -56,7 +56,7 @@ export async function getQuotaStats(accountId: string) {
     .selectFrom('gmail_api_usage')
     .select((eb) => eb.fn.sum<number>('quota_units').as('total'))
     .select((eb) => eb.fn.count<number>('id').as('calls'))
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .where('recorded_at', '>=', lastMinute)
     .executeTakeFirst()
 
@@ -66,7 +66,7 @@ export async function getQuotaStats(accountId: string) {
     .selectFrom('gmail_api_usage')
     .select((eb) => eb.fn.sum<number>('quota_units').as('total'))
     .select((eb) => eb.fn.count<number>('id').as('calls'))
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .where('recorded_at', '>=', lastHour)
     .executeTakeFirst()
 
@@ -76,7 +76,7 @@ export async function getQuotaStats(accountId: string) {
     .selectFrom('gmail_api_usage')
     .select((eb) => eb.fn.sum<number>('quota_units').as('total'))
     .select((eb) => eb.fn.count<number>('id').as('calls'))
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .where('recorded_at', '>=', last24h)
     .executeTakeFirst()
 
@@ -86,7 +86,7 @@ export async function getQuotaStats(accountId: string) {
     .select('endpoint')
     .select((eb) => eb.fn.sum<number>('quota_units').as('total_units'))
     .select((eb) => eb.fn.count<number>('id').as('calls'))
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .where('recorded_at', '>=', last24h)
     .groupBy('endpoint')
     .orderBy('total_units', 'desc')
@@ -100,7 +100,7 @@ export async function getQuotaStats(accountId: string) {
       COALESCE(SUM(quota_units), 0)::int AS units,
       COUNT(*)::int AS calls
     FROM gmail_api_usage
-    WHERE gmail_account_id = ${accountId}
+    WHERE account_id = ${accountId}
       AND recorded_at >= ${last24h}
     GROUP BY date_trunc('hour', recorded_at)
     ORDER BY hour
@@ -159,12 +159,12 @@ export async function getInstanceQuotaStats() {
   const peak = await sql<{ email: string; units: number }>`
     SELECT ga.email, s.units
     FROM (
-      SELECT gmail_account_id, SUM(quota_units)::int AS units
+      SELECT account_id, SUM(quota_units)::int AS units
       FROM gmail_api_usage
       WHERE recorded_at >= date_trunc('day', now())
-      GROUP BY gmail_account_id, date_trunc('second', recorded_at)
+      GROUP BY account_id, date_trunc('second', recorded_at)
     ) s
-    JOIN gmail_accounts ga ON ga.id = s.gmail_account_id
+    JOIN mail_accounts ga ON ga.id = s.account_id
     ORDER BY s.units DESC
     LIMIT 1
   `.execute(db)

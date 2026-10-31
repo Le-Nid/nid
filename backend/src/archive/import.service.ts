@@ -103,13 +103,14 @@ export async function importMbox(
 }
 
 /**
- * Import a single EML string into the archive.
+ * Import a single EML string into the archive; `folderLabels` (IMAP folder) join the Takeout labels.
  */
-async function importSingleEml(
+export async function importSingleEml(
   db: ReturnType<typeof getDb>,
   storage: StorageBackend,
   accountId: string,
   rawEml: Buffer,
+  folderLabels: string[] = [],
 ): Promise<'imported' | 'skipped'> {
   const parsed = await simpleParser(rawEml)
 
@@ -119,7 +120,7 @@ async function importSingleEml(
   const existing = await db
     .selectFrom('archived_mails')
     .select('id')
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .where('gmail_message_id', '=', messageId)
     .executeTakeFirst()
 
@@ -156,14 +157,15 @@ async function importSingleEml(
   const attachmentNames = attachments.map((a) => a.filename).join(' ')
   // Takeout mbox: `X-Gmail-Labels: Inbox,Category Promotions,Factures`
   const labelHeader = parsed.headers.get('x-gmail-labels')
-  const labelNames = typeof labelHeader === 'string'
-    ? [...new Set(decodeMimeWords(labelHeader).split(',').map((n) => n.trim()).filter(Boolean))]
-    : []
+  const labelNames = [...new Set([
+    ...(typeof labelHeader === 'string' ? decodeMimeWords(labelHeader).split(',').map((n) => n.trim()).filter(Boolean) : []),
+    ...folderLabels,
+  ])]
 
   const archived = await db
     .insertInto('archived_mails')
     .values({
-      gmail_account_id: accountId,
+      account_id: accountId,
       gmail_message_id: messageId,
       thread_id: null,
       in_reply_to: parsed.inReplyTo ?? null,
@@ -296,7 +298,7 @@ export async function exportMbox(
   let query = db
     .selectFrom('archived_mails')
     .select(['id', 'eml_path', 'sender', 'date'])
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .orderBy('date', 'asc')
 
   if (mailIds?.length) {

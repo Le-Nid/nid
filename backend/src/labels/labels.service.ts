@@ -21,7 +21,7 @@ export async function upsertLabels(accountId: string, labels: gmail_v1.Schema$La
   await getDb()
     .insertInto('gmail_labels')
     .values(rows.map((l) => ({
-      gmail_account_id: accountId,
+      account_id: accountId,
       id: l.id!,
       name: l.name!,
       color_bg: l.color?.backgroundColor ?? null,
@@ -31,7 +31,7 @@ export async function upsertLabels(accountId: string, labels: gmail_v1.Schema$La
       deleted_at: null,
       updated_at: now,
     })))
-    .onConflict((oc) => oc.columns(['gmail_account_id', 'id']).doUpdateSet((eb) => ({
+    .onConflict((oc) => oc.columns(['account_id', 'id']).doUpdateSet((eb) => ({
       name: eb.ref('excluded.name'),
       color_bg: eb.ref('excluded.color_bg'),
       color_text: eb.ref('excluded.color_text'),
@@ -48,7 +48,7 @@ export async function findOrCreateLabel(accountId: string, name: string): Promis
   const find = () => getDb()
     .selectFrom('gmail_labels')
     .select('id')
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .where('name', '=', name)
     .where('deleted_at', 'is', null)
     .executeTakeFirst()
@@ -74,7 +74,7 @@ export async function markLabelsDeleted(accountId: string, ids: { only: string }
   const query = getDb()
     .updateTable('gmail_labels')
     .set({ deleted_at: now, updated_at: now })
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .where('deleted_at', 'is', null)
     .where('type', '!=', 'imported')
   await ('only' in ids ? query.where('id', '=', ids.only) : query.where('id', 'not in', ids.except)).execute()
@@ -91,7 +91,7 @@ export async function syncLabels(accountId: string): Promise<{ synced: number }>
 
 /** Daily scheduler pass; one failing account does not stop the others. */
 export async function syncAllLabels() {
-  const accounts = await getDb().selectFrom('gmail_accounts').select('id').where('is_active', '=', true).execute()
+  const accounts = await getDb().selectFrom('mail_accounts').select('id').where('is_active', '=', true).where('provider', '=', 'gmail').execute()
   for (const account of accounts) {
     try {
       await syncLabels(account.id)
@@ -105,11 +105,11 @@ export async function syncAllLabels() {
 export async function getLabelsWithCounts(accountId: string) {
   const db = getDb()
   const [labels, counts] = await Promise.all([
-    db.selectFrom('gmail_labels').selectAll().where('gmail_account_id', '=', accountId).orderBy('name').execute(),
+    db.selectFrom('gmail_labels').selectAll().where('account_id', '=', accountId).orderBy('name').execute(),
     sql<{ label_id: string; count: string }>`
       SELECT unnest(label_ids) AS label_id, COUNT(*) AS count
       FROM archived_mails
-      WHERE gmail_account_id = ${accountId} AND deleted_at IS NULL
+      WHERE account_id = ${accountId} AND deleted_at IS NULL
       GROUP BY 1`.execute(db),
   ])
   const countById = new Map(counts.rows.map((r) => [r.label_id, Number(r.count)]))
@@ -123,7 +123,7 @@ export async function resolveImportedLabelIds(accountId: string, names: string[]
   const known = await db
     .selectFrom('gmail_labels')
     .select(['id', 'name', 'type'])
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .execute()
   const idByName = new Map<string, string>()
   for (const l of known) {
@@ -136,7 +136,7 @@ export async function resolveImportedLabelIds(accountId: string, names: string[]
     await db
       .insertInto('gmail_labels')
       .values(missing.map((name) => ({
-        gmail_account_id: accountId, id: `imported:${name}`, name, color_bg: null, color_text: null,
+        account_id: accountId, id: `imported:${name}`, name, color_bg: null, color_text: null,
         type: 'imported' as const, messages_total: null, deleted_at: null,
       })))
       .onConflict((oc) => oc.doNothing())

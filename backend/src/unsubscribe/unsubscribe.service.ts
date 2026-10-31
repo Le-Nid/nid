@@ -129,8 +129,8 @@ export async function saveNewsletterScan(accountId: string, senders: NewsletterS
   const values = { senders: JSON.stringify(senders), scanned_at: new Date() }
   await getDb()
     .insertInto('newsletter_scans')
-    .values({ gmail_account_id: accountId, ...values })
-    .onConflict((oc) => oc.column('gmail_account_id').doUpdateSet(values))
+    .values({ account_id: accountId, ...values })
+    .onConflict((oc) => oc.column('account_id').doUpdateSet(values))
     .execute()
 }
 
@@ -138,7 +138,7 @@ export async function getNewsletterScan(accountId: string): Promise<{ senders: N
   const row = await getDb()
     .selectFrom('newsletter_scans')
     .select(['senders', 'scanned_at'])
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .executeTakeFirst()
   return { senders: row?.senders ?? [], scannedAt: row?.scanned_at ?? null }
 }
@@ -151,7 +151,7 @@ export async function forgetNewsletterSender(accountId: string, email: string) {
     .set({
       senders: sql<string>`COALESCE((SELECT jsonb_agg(s) FROM jsonb_array_elements(senders) s WHERE s->>'email' <> ${email.toLowerCase()}), '[]'::jsonb)`,
     })
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .execute()
 }
 

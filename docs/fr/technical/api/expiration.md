@@ -17,7 +17,7 @@ Expirations en attente (non traitées), triées par date d'expiration croissante
 [
   {
     "id": "uuid",
-    "gmail_account_id": "uuid",
+    "account_id": "uuid",
     "gmail_message_id": "18c2f...",
     "subject": "Votre code de vérification",
     "sender": "no-reply@service.com",

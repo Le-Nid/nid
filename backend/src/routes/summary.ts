@@ -12,20 +12,20 @@ export function summaryRoutes(app: FastifyInstance, _opts: unknown, done: () => 
     const userId = request.user.sub
     const [user, accounts, jobs, unread] = await Promise.all([
       db.selectFrom('users').select('storage_quota_bytes').where('id', '=', userId).executeTakeFirstOrThrow(),
-      db.selectFrom('gmail_accounts')
+      db.selectFrom('mail_accounts')
         .leftJoin('archived_mails', (join) => join
-          .onRef('archived_mails.gmail_account_id', '=', 'gmail_accounts.id')
+          .onRef('archived_mails.account_id', '=', 'mail_accounts.id')
           .on('archived_mails.deleted_at', 'is', null))
         .select((eb) => [
-          'gmail_accounts.id', 'gmail_accounts.email', 'gmail_accounts.is_active', 'gmail_accounts.last_backup_at',
-          eb('gmail_accounts.auth_error_at', 'is not', null).as('needs_reauth'),
+          'mail_accounts.id', 'mail_accounts.email', 'mail_accounts.is_active', 'mail_accounts.last_backup_at',
+          eb('mail_accounts.auth_error_at', 'is not', null).as('needs_reauth'),
           eb.fn.count<string>('archived_mails.id').as('archived_mails'),
           eb.fn.coalesce(eb.fn.sum<string>('archived_mails.size_bytes'), sql<string>`0`).as('archived_bytes'),
           eb.fn.max('archived_mails.archived_at').as('last_archived_at'),
         ])
-        .where('gmail_accounts.user_id', '=', userId)
-        .groupBy('gmail_accounts.id')
-        .orderBy('gmail_accounts.email')
+        .where('mail_accounts.user_id', '=', userId)
+        .groupBy('mail_accounts.id')
+        .orderBy('mail_accounts.email')
         .execute(),
       db.selectFrom('jobs')
         .select((eb) => [

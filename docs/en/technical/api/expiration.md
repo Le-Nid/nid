@@ -17,7 +17,7 @@ Pending (unprocessed) expirations, sorted by expiration date ascending.
 [
   {
     "id": "uuid",
-    "gmail_account_id": "uuid",
+    "account_id": "uuid",
     "gmail_message_id": "18c2f...",
     "subject": "Your verification code",
     "sender": "no-reply@service.com",

@@ -22,6 +22,6 @@
     }
   ],
   "retention": [
-    { "id": "pol-1", "name": "Vieilles promos", "gmail_account_id": "acc-1", "label": "Label_1", "max_age_days": 365, "last_run_at": null, "deleted_count": 0 }
+    { "id": "pol-1", "name": "Vieilles promos", "account_id": "acc-1", "label": "Label_1", "max_age_days": 365, "last_run_at": null, "deleted_count": 0 }
   ]
 }

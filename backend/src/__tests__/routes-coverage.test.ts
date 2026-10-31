@@ -618,7 +618,7 @@ describe('attachmentsRoutes', () => {
     await app.register(attachmentsRoutes)
     await app.ready()
     await app.inject({ method: 'GET', url: '/acc-1/archived/att-of-another-user/download' })
-    expect(mockWhere).toHaveBeenCalledWith('archived_mails.gmail_account_id', '=', 'acc-1')
+    expect(mockWhere).toHaveBeenCalledWith('archived_mails.account_id', '=', 'acc-1')
     await app.close()
   })
 

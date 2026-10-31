@@ -138,7 +138,7 @@ End-of-job toasts come from `useGlobalJobNotifier` (polls active jobs every 5 s)
 |---|---|---|
 | `integrity_check` | Daily (3 AM tick) | Job |
 | `purge_archive_trash` | Daily (4 AM tick) | Job |
-| Automatic NAS backup (differential `archive_mails`) | Per `gmail_accounts.backup_interval` (1h / 6h / 24h), active accounts with `backup_enabled` and no `auth_error_at` | Job, `dedupId: backup-<accountId>` |
+| Automatic NAS backup (differential `archive_mails`) | Per `mail_accounts.backup_interval` (1h / 6h / 24h), active accounts with `backup_enabled` and no `auth_error_at` | Job, `dedupId: backup-<accountId>` |
 | Scheduled rules (`run_rule`) | `hourly`, `daily`, `weekly`, `monthly` based on `rules.last_run_at` | Job, `dedupId: run_rule-<ruleId>` |
 | `backfill_body_text` | Once at startup, if archives remain to fill | Job |
 | Inbox Zero snapshots | Every 6 h | In-process |

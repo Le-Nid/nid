@@ -16,7 +16,7 @@ All routes require JWT authentication and only cover the user's own policies.
   {
     "id": "uuid",
     "user_id": "uuid",
-    "gmail_account_id": null,
+    "account_id": null,
     "name": "Archives > 2 years",
     "label": null,
     "max_age_days": 730,

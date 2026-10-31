@@ -81,7 +81,7 @@ export async function dashboardRoutes(app: FastifyInstance) {
         eb.fn.sum<number>('size_bytes').as('total_size'),
         eb.fn.max('archived_at').as('last_archived_at'),
       ])
-      .where('gmail_account_id', '=', accountId)
+      .where('account_id', '=', accountId)
       .executeTakeFirstOrThrow()
 
     const bySender = await db
@@ -91,7 +91,7 @@ export async function dashboardRoutes(app: FastifyInstance) {
         eb.fn.countAll<number>().as('count'),
         eb.fn.sum<number>('size_bytes').as('total_size'),
       ])
-      .where('gmail_account_id', '=', accountId)
+      .where('account_id', '=', accountId)
       .groupBy('sender')
       .orderBy('count', 'desc')
       .limit(20)
@@ -101,23 +101,23 @@ export async function dashboardRoutes(app: FastifyInstance) {
     const days = Array.from({ length: 30 }, (_, k) => new Date(Date.now() - (29 - k) * 86_400_000).toISOString().slice(0, 10))
     const hashed = () => db.selectFrom('archived_attachments')
       .innerJoin('archived_mails', 'archived_mails.id', 'archived_attachments.archived_mail_id')
-      .where('archived_mails.gmail_account_id', '=', accountId)
+      .where('archived_mails.account_id', '=', accountId)
       .where('archived_attachments.content_hash', 'is not', null)
     const [perDay, biggestMails, biggestAttachments, allHashed, uniqueHashed] = await Promise.all([
       db.selectFrom('archived_mails')
         .select((eb) => [sql<string>`to_char(date AT TIME ZONE 'UTC', 'YYYY-MM-DD')`.as('day'), eb.fn.countAll<string>().as('count')])
-        .where('gmail_account_id', '=', accountId).where('deleted_at', 'is', null)
+        .where('account_id', '=', accountId).where('deleted_at', 'is', null)
         .where('date', '>=', new Date(`${days[0]}T00:00:00Z`))
         .groupBy(sql`1`)
         .execute(),
       db.selectFrom('archived_mails')
         .select(['id', 'subject', 'sender', 'size_bytes', 'date'])
-        .where('gmail_account_id', '=', accountId).where('deleted_at', 'is', null)
+        .where('account_id', '=', accountId).where('deleted_at', 'is', null)
         .orderBy('size_bytes', 'desc').limit(5).execute(),
       db.selectFrom('archived_attachments')
         .innerJoin('archived_mails', 'archived_mails.id', 'archived_attachments.archived_mail_id')
         .select(['archived_attachments.id', 'archived_attachments.filename', 'archived_attachments.size_bytes', 'archived_mails.subject'])
-        .where('archived_mails.gmail_account_id', '=', accountId).where('archived_mails.deleted_at', 'is', null)
+        .where('archived_mails.account_id', '=', accountId).where('archived_mails.deleted_at', 'is', null)
         .orderBy('archived_attachments.size_bytes', 'desc').limit(5).execute(),
       hashed().select((eb) => eb.fn.sum<string>('archived_attachments.size_bytes').as('total')).executeTakeFirst(),
       // One copy per content hash is what is really stored; the other copies are what deduplication saves

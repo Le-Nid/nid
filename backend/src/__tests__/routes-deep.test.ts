@@ -598,7 +598,7 @@ describe('configRoutes deep', () => {
     // config export calls 3 execute() in sequence: accounts, rules, webhooks
     mockExecute
       .mockResolvedValueOnce([{ id: 'acc-1', email: 'test@gmail.com' }]) // accounts
-      .mockResolvedValueOnce([{ id: 'rule-1', gmail_account_id: 'acc-1', name: 'R1', description: null, conditions: '{}', action: '{}', schedule: null, is_active: true }]) // rules
+      .mockResolvedValueOnce([{ id: 'rule-1', account_id: 'acc-1', name: 'R1', description: null, conditions: '{}', action: '{}', schedule: null, is_active: true }]) // rules
       .mockResolvedValueOnce([{ id: 'wh-1', name: 'WH', url: 'https://x.com/hook', type: 'generic', events: ['job.completed'], is_active: true }]) // webhooks
     const res = await app.inject({ method: 'GET', url: '/export' })
     expect(res.statusCode).toBe(200)

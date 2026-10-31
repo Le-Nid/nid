@@ -21,7 +21,7 @@ export async function createShareLink(userId: string, dto: ShareCreateDTO) {
   // Verify the user owns this archived mail
   const mail = await db
     .selectFrom('archived_mails')
-    .innerJoin('gmail_accounts', 'archived_mails.gmail_account_id', 'gmail_accounts.id')
+    .innerJoin('mail_accounts', 'archived_mails.account_id', 'mail_accounts.id')
     .select([
       'archived_mails.id',
       'archived_mails.subject',
@@ -30,7 +30,7 @@ export async function createShareLink(userId: string, dto: ShareCreateDTO) {
       'archived_mails.eml_path',
     ])
     .where('archived_mails.id', '=', dto.archivedMailId)
-    .where('gmail_accounts.user_id', '=', userId)
+    .where('mail_accounts.user_id', '=', userId)
     .executeTakeFirst()
 
   if (!mail) {

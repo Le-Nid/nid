@@ -32,7 +32,7 @@ export async function deleteUser(userId: string): Promise<{ email: string }> {
     if (Number(admins?.n ?? 0) === 0) throw httpError(409, 'Cannot delete the last admin')
   }
 
-  const accounts = await db.selectFrom('gmail_accounts').select('id').where('user_id', '=', userId).execute()
+  const accounts = await db.selectFrom('mail_accounts').select('id').where('user_id', '=', userId).execute()
   await db.deleteFrom('users').where('id', '=', userId).execute()
 
   const storage = getLocalStorage()
@@ -58,18 +58,18 @@ export async function exportUserData(userId: string) {
   if (!user) throw httpError(404, 'User not found')
 
   const gmailAccounts = await db
-    .selectFrom('gmail_accounts')
+    .selectFrom('mail_accounts')
     .select(['id', 'email', 'is_active', 'backup_enabled', 'backup_interval', 'created_at', 'updated_at'])
     .where('user_id', '=', userId)
     .execute()
   const ids = gmailAccounts.map((a) => a.id)
-  // Every table passed here has a gmail_account_id column; the cast only picks one for Kysely's typing
+  // Every table passed here has a account_id column; the cast only picks one for Kysely's typing
   const byAccount = async (table: 'rules' | 'gmail_labels' | 'email_expirations' | 'newsletter_scans'
     | 'sender_scores' | 'cleanup_suggestions' | 'inbox_zero_snapshots'): Promise<unknown[]> =>
-    ids.length ? db.selectFrom(table as 'rules').selectAll().where('gmail_account_id', 'in', ids).execute() : []
+    ids.length ? db.selectFrom(table as 'rules').selectAll().where('account_id', 'in', ids).execute() : []
 
   const archivedMails = ids.length
-    ? await db.selectFrom('archived_mails').selectAll().where('gmail_account_id', 'in', ids).execute()
+    ? await db.selectFrom('archived_mails').selectAll().where('account_id', 'in', ids).execute()
     : []
 
   return {
@@ -109,7 +109,7 @@ export async function exportUserData(userId: string) {
         .select(['archived_attachments.id', 'archived_attachments.archived_mail_id', 'archived_attachments.filename',
           'archived_attachments.mime_type', 'archived_attachments.size_bytes', 'archived_attachments.content_hash',
           'archived_attachments.created_at'])
-        .where('archived_mails.gmail_account_id', 'in', ids).execute()
+        .where('archived_mails.account_id', 'in', ids).execute()
       : [],
   }
 }

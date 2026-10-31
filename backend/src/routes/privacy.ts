@@ -116,7 +116,7 @@ export async function privacyRoutes(app: FastifyInstance) {
       .selectFrom('archived_mails')
       .select(['eml_path', 'is_encrypted'])
       .where('id', '=', mailId)
-      .where('gmail_account_id', '=', accountId)
+      .where('account_id', '=', accountId)
       .executeTakeFirst()
 
     if (!mail) {

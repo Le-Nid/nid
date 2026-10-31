@@ -8,6 +8,8 @@ import { getRule, runRule } from '../../rules/rules.service'
 import { scanNewsletters, saveNewsletterScan, forgetNewsletterSender } from '../../unsubscribe/unsubscribe.service'
 import { encryptArchives } from '../../privacy/encryption.service'
 import { importMbox, importImap } from '../../archive/import.service'
+import { isImapAuthError, syncImapAccount } from '../../imap/imap.service'
+import { flagReauthRequired } from '../../auth/oauth.service'
 import { applyRetentionPolicies } from '../../archive/retention.service'
 import { purgeArchiveTrash } from '../../archive/trash.service'
 import { checkArchiveIntegrity, saveIntegrityResult } from '../../archive/integrity.service'
@@ -109,6 +111,9 @@ async function listAllMessageIds(accountId: string, query?: string): Promise<str
 async function handleArchive(job: Job) {
   const { accountId, messageIds, query, differential = true, userId, chain = 0 } = job.data
   const db = getDb()
+  // An IMAP account's backup (scheduler, « Sauvegarder », setup wizard) is an incremental IMAP sync, not Gmail
+  const account = await db.selectFrom('mail_accounts').select('provider').where('id', '=', accountId).executeTakeFirst()
+  if (account?.provider === 'imap') return runImapJob(job, { done: 'Sauvegarde IMAP terminée', failed: 'Sauvegarde IMAP échouée' }, (onProgress) => syncImapAccount(accountId, onProgress))
 
   try {
     const byQuery = !messageIds?.length && !!query
@@ -533,56 +538,48 @@ async function handleImportMbox(job: Job) {
 }
 
 // ─── Import IMAP ────────────────────────────────────────────
-async function handleImportImap(job: Job) {
-  const { accountId, userId, imapConfig } = job.data
-  const db = getDb()
+type ImapRun = { imported: number; skipped: number; errors: number }
 
-  await db
-    .updateTable('jobs')
-    .set({ status: 'active' })
-    .where('bullmq_id', '=', String(job.id))
-    .execute()
+/**
+ * One IMAP pass (one-shot import, or an IMAP account's backup): progress, job row, one notification each way.
+ * A login the server refuses flags the account « à reconnecter » (backups only: an import has no stored account).
+ */
+async function runImapJob(job: Job, titles: { done: string; failed: string }, run: (onProgress: (done: number, total?: number) => Promise<void>) => Promise<ImapRun>) {
+  const { accountId, userId } = job.data
+  const db = getDb()
+  const jobRow = () => db.updateTable('jobs').where('bullmq_id', '=', String(job.id))
+  await jobRow().set({ status: 'active' }).execute()
 
   try {
-    const result = await importImap(userId, accountId, imapConfig, {
-      onProgress: async (done: number, total: number) => {
-        const progress = total > 0 ? Math.round((done / total) * 100) : 0
-        await job.updateProgress(progress)
-        if (done % 20 === 0) {
-          await db.updateTable('jobs')
-            .set({ progress, processed: done, total })
-            .where('bullmq_id', '=', String(job.id))
-            .execute()
-        }
-      },
+    const result = await run(async (done, total) => {
+      const progress = total ? Math.round((done / total) * 100) : 0
+      await job.updateProgress(progress)
+      await jobRow().set({ progress, processed: done, ...(total ? { total } : {}) }).execute()
     })
-
-    await db.updateTable('jobs')
-      .set({
-        status: 'completed',
-        progress: 100,
-        processed: result.imported + result.skipped,
-        total: result.imported + result.skipped + result.errors,
-        completed_at: new Date(),
-      })
-      .where('bullmq_id', '=', String(job.id))
-      .execute()
-
+    await jobRow().set({
+      status: 'completed', progress: 100, completed_at: new Date(),
+      processed: result.imported + result.skipped, total: result.imported + result.skipped + result.errors,
+    }).execute()
     if (userId) {
       await notify({
         userId,
         category: 'job_completed',
-        title: 'Import IMAP terminé',
+        title: titles.done,
         body: `${result.imported} importé(s), ${result.skipped} ignoré(s), ${result.errors} erreur(s).`,
         data: { jobId: String(job.id), ...result },
       })
     }
-
     return result
   } catch (err) {
-    await recordJobFailure(job, userId, 'Import IMAP échoué', err)
+    if (job.name === 'archive_mails' && isImapAuthError(err)) await flagReauthRequired(accountId, 'Le serveur IMAP')
+    await recordJobFailure(job, userId, titles.failed, err)
     throw err
   }
+}
+
+function handleImportImap(job: Job) {
+  const { accountId, userId, imapConfig } = job.data
+  return runImapJob(job, { done: 'Import IMAP terminé', failed: 'Import IMAP échoué' }, (onProgress) => importImap(userId, accountId, imapConfig, { onProgress }))
 }
 
 // ─── Retention ──────────────────────────────────────────────

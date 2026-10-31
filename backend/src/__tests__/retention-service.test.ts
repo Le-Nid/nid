@@ -53,7 +53,7 @@ describe('createRetentionPolicy', () => {
       id: 'p2',
       name: 'Test',
       max_age_days: 90,
-      gmail_account_id: 'acc-1',
+      account_id: 'acc-1',
       label: 'INBOX',
     })
     const result = await createRetentionPolicy({
@@ -72,7 +72,7 @@ describe('createRetentionPolicy', () => {
       id: 'p3',
       name: 'Simple',
       max_age_days: 30,
-      gmail_account_id: null,
+      account_id: null,
       label: null,
     })
     const result = await createRetentionPolicy({
@@ -80,7 +80,7 @@ describe('createRetentionPolicy', () => {
       name: 'Simple',
       maxAgeDays: 30,
     })
-    expect(result.gmail_account_id).toBeNull()
+    expect(result.account_id).toBeNull()
     expect(result.label).toBeNull()
   })
 })
@@ -131,7 +131,7 @@ describe('applyRetentionPolicies', () => {
       id: 'p1',
       user_id: 'user-1',
       name: 'Clean old',
-      gmail_account_id: null,
+      account_id: null,
       label: null,
       max_age_days: 90,
       is_active: true,
@@ -141,8 +141,8 @@ describe('applyRetentionPolicies', () => {
     mockExecute
       .mockResolvedValueOnce([policy]) // policies
       .mockResolvedValueOnce([
-        { id: 'mail-1', eml_path: '/tmp/1.eml', gmail_account_id: 'acc-1' },
-        { id: 'mail-2', eml_path: '/tmp/2.eml', gmail_account_id: 'acc-1' },
+        { id: 'mail-1', eml_path: '/tmp/1.eml', account_id: 'acc-1' },
+        { id: 'mail-2', eml_path: '/tmp/2.eml', account_id: 'acc-1' },
       ]) // matching mails
       .mockResolvedValueOnce([{ id: 'att-1', file_path: '/tmp/att1.pdf' }]) // attachments
       .mockResolvedValueOnce([]) // delete attachments
@@ -155,12 +155,12 @@ describe('applyRetentionPolicies', () => {
     expect(mockStorage.deleteFile).toHaveBeenCalledTimes(3) // 1 attachment + 2 eml files
   })
 
-  it('handles policy with gmail_account_id filter', async () => {
+  it('handles policy with account_id filter', async () => {
     const policy = {
       id: 'p2',
       user_id: 'user-1',
       name: 'Account specific',
-      gmail_account_id: 'acc-1',
+      account_id: 'acc-1',
       label: null,
       max_age_days: 30,
       is_active: true,
@@ -181,7 +181,7 @@ describe('applyRetentionPolicies', () => {
       id: 'p3',
       user_id: 'user-1',
       name: 'Label cleanup',
-      gmail_account_id: null,
+      account_id: null,
       label: 'PROMOTIONS',
       max_age_days: 14,
       is_active: true,
@@ -189,7 +189,7 @@ describe('applyRetentionPolicies', () => {
     }
     mockExecute
       .mockResolvedValueOnce([policy])
-      .mockResolvedValueOnce([{ id: 'mail-3', eml_path: '/tmp/3.eml', gmail_account_id: 'acc-1' }])
+      .mockResolvedValueOnce([{ id: 'mail-3', eml_path: '/tmp/3.eml', account_id: 'acc-1' }])
       .mockResolvedValueOnce([]) // attachments
       .mockResolvedValueOnce([]) // delete attachments
       .mockResolvedValueOnce([]) // delete mails
@@ -201,8 +201,8 @@ describe('applyRetentionPolicies', () => {
 
   it('continues on policy error', async () => {
     const policies = [
-      { id: 'p1', user_id: 'user-1', name: 'Fail', gmail_account_id: null, label: null, max_age_days: 1, is_active: true, deleted_count: 0 },
-      { id: 'p2', user_id: 'user-1', name: 'OK', gmail_account_id: null, label: null, max_age_days: 1, is_active: true, deleted_count: 0 },
+      { id: 'p1', user_id: 'user-1', name: 'Fail', account_id: null, label: null, max_age_days: 1, is_active: true, deleted_count: 0 },
+      { id: 'p2', user_id: 'user-1', name: 'OK', account_id: null, label: null, max_age_days: 1, is_active: true, deleted_count: 0 },
     ]
     mockExecute
       .mockResolvedValueOnce(policies) // policies
@@ -221,7 +221,7 @@ describe('applyRetentionPolicies', () => {
       id: 'p1',
       user_id: 'user-1',
       name: 'Test',
-      gmail_account_id: null,
+      account_id: null,
       label: null,
       max_age_days: 30,
       is_active: true,
@@ -229,7 +229,7 @@ describe('applyRetentionPolicies', () => {
     }
     mockExecute
       .mockResolvedValueOnce([policy])
-      .mockResolvedValueOnce([{ id: 'mail-1', eml_path: '/tmp/1.eml', gmail_account_id: 'acc-1' }])
+      .mockResolvedValueOnce([{ id: 'mail-1', eml_path: '/tmp/1.eml', account_id: 'acc-1' }])
       .mockResolvedValueOnce([{ id: 'att-1', file_path: '/tmp/att.pdf' }])
       .mockResolvedValueOnce([]) // delete attachments from DB
       .mockResolvedValueOnce([]) // delete mails from DB

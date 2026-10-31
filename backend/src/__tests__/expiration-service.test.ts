@@ -181,8 +181,8 @@ describe('processExpiredEmails', () => {
   it('processes expired emails grouped by account', async () => {
     const { trashMessages } = await import('../gmail/gmail.service')
     const expired = [
-      { id: 'e1', gmail_account_id: 'acc-1', gmail_message_id: 'msg-1', subject: 'OTP' },
-      { id: 'e2', gmail_account_id: 'acc-1', gmail_message_id: 'msg-2', subject: 'Promo' },
+      { id: 'e1', account_id: 'acc-1', gmail_message_id: 'msg-1', subject: 'OTP' },
+      { id: 'e2', account_id: 'acc-1', gmail_message_id: 'msg-2', subject: 'Promo' },
     ]
     mockExecute
       .mockResolvedValueOnce(expired) // find expired
@@ -198,7 +198,7 @@ describe('processExpiredEmails', () => {
   it('handles trash failure gracefully', async () => {
     const { trashMessages } = await import('../gmail/gmail.service')
     const expired = [
-      { id: 'e1', gmail_account_id: 'acc-1', gmail_message_id: 'msg-1', subject: 'OTP' },
+      { id: 'e1', account_id: 'acc-1', gmail_message_id: 'msg-1', subject: 'OTP' },
     ]
     mockExecute.mockResolvedValueOnce(expired)
     ;(trashMessages as any).mockRejectedValue(new Error('Gmail error'))

@@ -37,19 +37,34 @@ export interface GmailAccountsTable {
   email:         string
   access_token:  string | null   // null once disconnected (soft disconnect keeps the row and its archives)
   refresh_token: string | null
-  token_expiry:  Timestamp
+  token_expiry:  Timestamp | null   // null for IMAP accounts
   is_active:     Generated<boolean>   // false = disconnected: no Gmail call, archives still readable
   backup_enabled:  Generated<boolean>
   backup_interval: Generated<BackupInterval>
   last_backup_at:  Date | null
-  auth_error_at:   Date | null   // Google refused the refresh token: reconnect needed
+  auth_error_at:   Date | null   // Google refused the refresh token (or the IMAP server the login): reconnect needed
+  provider:      Generated<MailProvider>
+  imap_host:     string | null
+  imap_port:     number | null
+  imap_secure:   boolean | null
+  imap_user:     string | null
+  imap_password: string | null   // sealed (utils/secret.ts), never sent to the client
   created_at:    Generated<Date>
   updated_at:    Generated<Date>
 }
 
+export type MailProvider = 'gmail' | 'imap'
+
+export interface ImapFolderStateTable {
+  account_id:   string
+  folder:       string
+  uid_validity: ColumnType<string, number, number>   // bigint: pg returns it as a string
+  last_uid:     ColumnType<string, number | undefined, number>
+}
+
 export interface ArchivedMailsTable {
   id:               Generated<string>
-  gmail_account_id: string
+  account_id: string
   gmail_message_id: string
   thread_id:        string | null
   in_reply_to:      string | null
@@ -86,7 +101,7 @@ export interface ArchivedAttachmentsTable {
 
 export interface RulesTable {
   id:               Generated<string>
-  gmail_account_id: string
+  account_id: string
   name:             string
   description:      string | null
   // JSONB — on stocke en JSON stringifié, on lit comme unknown
@@ -108,7 +123,7 @@ export interface JobsTable {
   progress:         Generated<number>
   total:            Generated<number>
   processed:        Generated<number>
-  gmail_account_id: string | null
+  account_id: string | null
   user_id:          string | null
   payload:          ColumnType<unknown, string, string>
   error:            string | null
@@ -118,7 +133,7 @@ export interface JobsTable {
 
 // One cached scan per account (L6): the Nettoyage page reads it, scan_unsubscribe writes it
 export interface NewsletterScansTable {
-  gmail_account_id: string
+  account_id: string
   senders:          ColumnType<NewsletterSender[], string, string>
   scanned_at:       Generated<Date>
 }
@@ -186,7 +201,7 @@ export interface NotificationPreferencesTable {
 
 export interface EmailActivityHeatmapTable {
   id:               Generated<string>
-  gmail_account_id: string
+  account_id: string
   day_of_week:      number      // 0=lundi … 6=dimanche
   hour_of_day:      number      // 0-23
   email_count:      Generated<number>
@@ -195,7 +210,7 @@ export interface EmailActivityHeatmapTable {
 
 export interface SenderScoresTable {
   id:               Generated<string>
-  gmail_account_id: string
+  account_id: string
   sender:           string
   email_count:      Generated<number>
   total_size_bytes: Generated<bigint>
@@ -208,7 +223,7 @@ export interface SenderScoresTable {
 
 export interface CleanupSuggestionsTable {
   id:               Generated<string>
-  gmail_account_id: string
+  account_id: string
   type:             string      // 'bulk_unread' | 'large_sender' | 'old_newsletters' | 'duplicate_pattern'
   title:            string
   description:      string | null
@@ -222,7 +237,7 @@ export interface CleanupSuggestionsTable {
 
 export interface InboxZeroSnapshotsTable {
   id:               Generated<string>
-  gmail_account_id: string
+  account_id: string
   inbox_count:      number
   unread_count:     number
   recorded_at:      Generated<Date>
@@ -262,7 +277,7 @@ export interface SystemConfigTable {
 export type GmailLabelType = 'system' | 'user' | 'category' | 'imported'
 
 export interface GmailLabelsTable {
-  gmail_account_id: string
+  account_id: string
   id:               string   // Gmail label id, or `imported:<name>` for labels only seen in an mbox import
   name:             string
   color_bg:         string | null
@@ -276,7 +291,7 @@ export interface GmailLabelsTable {
 export interface RetentionPoliciesTable {
   id:               Generated<string>
   user_id:          string
-  gmail_account_id: string | null
+  account_id: string | null
   name:             string
   label:            string | null
   max_age_days:     number
@@ -289,7 +304,7 @@ export interface RetentionPoliciesTable {
 
 export interface GmailApiUsageTable {
   id:               Generated<string>
-  gmail_account_id: string
+  account_id: string
   endpoint:         string
   quota_units:      Generated<number>
   recorded_at:      Generated<Date>
@@ -299,7 +314,7 @@ export interface GmailApiUsageTable {
 
 export interface EmailExpirationsTable {
   id:               Generated<string>
-  gmail_account_id: string
+  account_id: string
   gmail_message_id: string
   subject:          string | null
   sender:           string | null
@@ -350,7 +365,8 @@ export interface ApiTokensTable {
 
 export interface Database {
   users:                UsersTable
-  gmail_accounts:       GmailAccountsTable
+  mail_accounts:       GmailAccountsTable
+  imap_folder_state:   ImapFolderStateTable
   archived_mails:       ArchivedMailsTable
   archived_attachments: ArchivedAttachmentsTable
   rules:                RulesTable

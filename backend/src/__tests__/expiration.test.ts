@@ -133,7 +133,7 @@ describe('Expiration Service', () => {
     it('creates with expiresInDays', async () => {
       const mockResult = {
         id: 'exp-1',
-        gmail_account_id: 'acc-1',
+        account_id: 'acc-1',
         gmail_message_id: 'msg-1',
         category: 'otp',
         expires_at: new Date(),
@@ -152,7 +152,7 @@ describe('Expiration Service', () => {
     it('creates with explicit expiresAt', async () => {
       const mockResult = {
         id: 'exp-2',
-        gmail_account_id: 'acc-1',
+        account_id: 'acc-1',
         gmail_message_id: 'msg-2',
       }
       mockExecuteTakeFirstOrThrow.mockResolvedValue(mockResult)
@@ -177,7 +177,7 @@ describe('Expiration Service', () => {
       mockExecute.mockResolvedValueOnce([
         {
           id: 'exp-1',
-          gmail_account_id: 'acc-1',
+          account_id: 'acc-1',
           gmail_message_id: 'msg-1',
           subject: 'OTP code',
         },

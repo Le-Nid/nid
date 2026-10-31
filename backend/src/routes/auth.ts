@@ -418,15 +418,15 @@ export async function authRoutes(app: FastifyInstance) {
       .executeTakeFirst()
 
     const accounts = await db
-      .selectFrom('gmail_accounts')
+      .selectFrom('mail_accounts')
       .select((eb) => [
-        'id', 'email', 'is_active', 'created_at', 'backup_enabled', 'backup_interval',
+        'id', 'email', 'is_active', 'created_at', 'backup_enabled', 'backup_interval', 'provider',
         // « Action requise » (§7.7): Google refused the refresh token
         eb('auth_error_at', 'is not', null).as('needs_reauth'),
         // Last label sync (daily, or « Synchroniser maintenant »)
         eb.selectFrom('gmail_labels')
           .select((l) => l.fn.max('gmail_labels.updated_at').as('at'))
-          .whereRef('gmail_labels.gmail_account_id', '=', 'gmail_accounts.id')
+          .whereRef('gmail_labels.account_id', '=', 'mail_accounts.id')
           .as('last_sync_at'),
       ])
       .where('user_id', '=', userId)
@@ -435,9 +435,9 @@ export async function authRoutes(app: FastifyInstance) {
     // Calculer l'espace utilisé par les archives
     const storageUsed = await db
       .selectFrom('archived_mails')
-      .innerJoin('gmail_accounts', 'archived_mails.gmail_account_id', 'gmail_accounts.id')
+      .innerJoin('mail_accounts', 'archived_mails.account_id', 'mail_accounts.id')
       .select((eb) => eb.fn.sum<string>('archived_mails.size_bytes').as('total'))
-      .where('gmail_accounts.user_id', '=', userId)
+      .where('mail_accounts.user_id', '=', userId)
       .executeTakeFirst()
 
     return { user, gmailAccounts: accounts, storageUsedBytes: Number(storageUsed?.total ?? 0) }
@@ -455,7 +455,7 @@ export async function authRoutes(app: FastifyInstance) {
       .executeTakeFirst()
 
     const { count } = await db
-      .selectFrom('gmail_accounts')
+      .selectFrom('mail_accounts')
       .select((eb) => eb.fn.countAll<number>().as('count'))
       .where('user_id', '=', userId)
       .executeTakeFirstOrThrow()
@@ -493,7 +493,7 @@ export async function authRoutes(app: FastifyInstance) {
     // Soft disconnect: Gmail access stops (tokens dropped, no sync, no backup) but the row stays, so its archives
     // remain in Nid; reconnecting the same address reactivates this row (exchangeGmailCode upsert)
     await db
-      .updateTable('gmail_accounts')
+      .updateTable('mail_accounts')
       .set({ is_active: false, access_token: null, refresh_token: null, updated_at: new Date() })
       .where('id', '=', accountId)
       .where('user_id', '=', userId)
@@ -508,7 +508,7 @@ export async function authRoutes(app: FastifyInstance) {
     const { accountId } = request.params as { accountId: string }
 
     const account = await db
-      .selectFrom('gmail_accounts')
+      .selectFrom('mail_accounts')
       .select(['id', 'is_active', 'refresh_token'])
       .where('id', '=', accountId)
       .where('user_id', '=', userId)
@@ -521,7 +521,7 @@ export async function authRoutes(app: FastifyInstance) {
     const newStatus = !account.is_active
 
     await db
-      .updateTable('gmail_accounts')
+      .updateTable('mail_accounts')
       .set({ is_active: newStatus })
       .where('id', '=', accountId)
       .where('user_id', '=', userId)
@@ -538,7 +538,7 @@ export async function authRoutes(app: FastifyInstance) {
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? 'Invalid body' })
 
     const account = await db
-      .updateTable('gmail_accounts')
+      .updateTable('mail_accounts')
       .set({ ...parsed.data, updated_at: new Date() })
       .where('id', '=', accountId.data)
       .where('user_id', '=', request.user.sub)

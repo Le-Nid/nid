@@ -122,11 +122,11 @@ export async function rulesRoutes(app: FastifyInstance) {
     const db = getDb();
     const [rules, runs] = await Promise.all([
       db.selectFrom("rules").select(sql<string>`count(*)`.as("n"))
-        .where("gmail_account_id", "=", accountId).where("is_active", "=", true)
+        .where("account_id", "=", accountId).where("is_active", "=", true)
         .executeTakeFirst(),
       db.selectFrom("jobs")
         .select(sql<string>`coalesce(sum((payload->'result'->>'processed')::int), 0)`.as("n"))
-        .where("gmail_account_id", "=", accountId).where("type", "=", "run_rule").where("status", "=", "completed")
+        .where("account_id", "=", accountId).where("type", "=", "run_rule").where("status", "=", "completed")
         .where("completed_at", ">=", new Date(Date.now() - 30 * 86_400_000))
         .executeTakeFirst(),
     ]);

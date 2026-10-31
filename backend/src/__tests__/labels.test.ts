@@ -68,10 +68,10 @@ describe('labels.service — sync', () => {
     expect(rows.map((r: any) => [r.id, r.type])).toEqual([
       ['INBOX', 'system'], ['CATEGORY_PROMOTIONS', 'category'], ['Label_1', 'user'],
     ])
-    expect(rows[2]).toMatchObject({ gmail_account_id: ACC, color_bg: '#fb4c2f', color_text: '#ffffff', deleted_at: null })
+    expect(rows[2]).toMatchObject({ account_id: ACC, color_bg: '#fb4c2f', color_text: '#ffffff', deleted_at: null })
     expect(rows[0]).toMatchObject({ color_bg: null, color_text: null, messages_total: null })
     // conflict on the composite key re-activates the label
-    expect(calls.find((c) => c[0] === 'columns')?.[1]).toEqual(['gmail_account_id', 'id'])
+    expect(calls.find((c) => c[0] === 'columns')?.[1]).toEqual(['account_id', 'id'])
     // soft delete: an UPDATE, never a DELETE, sparing imported rows and labels still in Gmail
     expect(calls.some((c) => c[0] === 'deleteFrom')).toBe(false)
     expect(calls).toContainEqual(['updateTable', 'gmail_labels'])
@@ -211,7 +211,7 @@ describe('retention label validation (B9)', () => {
     const res = await app.inject({ method: 'POST', url: '/', payload: { name: 'n', maxAgeDays: 30, label: 'free text', gmailAccountId: ACC } })
     expect(res.statusCode).toBe(400)
     expect(calls.some((c) => c[0] === 'insertInto')).toBe(false)
-    expect(calls).toContainEqual(['where', 'gmail_labels.gmail_account_id', '=', ACC])
+    expect(calls).toContainEqual(['where', 'gmail_labels.account_id', '=', ACC])
     await app.close()
   })
 
@@ -226,10 +226,10 @@ describe('retention label validation (B9)', () => {
 
   it('PUT checks the label against the policy account; clearing the label skips the check', async () => {
     const app = await buildApp(retentionRoutes)
-    results.executeTakeFirst = [{ gmail_account_id: ACC }, undefined]
+    results.executeTakeFirst = [{ account_id: ACC }, undefined]
     const bad = await app.inject({ method: 'PUT', url: '/p-1', payload: { label: 'nope' } })
     expect(bad.statusCode).toBe(400)
-    expect(calls).toContainEqual(['where', 'gmail_labels.gmail_account_id', '=', ACC])
+    expect(calls).toContainEqual(['where', 'gmail_labels.account_id', '=', ACC])
 
     calls.length = 0
     await app.inject({ method: 'PUT', url: '/p-1', payload: { label: '' } })
@@ -238,9 +238,9 @@ describe('retention label validation (B9)', () => {
   })
 
   it('isKnownPolicyLabel searches every account of the user when the policy has none', async () => {
-    results.executeTakeFirst = [{ gmail_account_id: null }, { id: 'Label_1' }]
+    results.executeTakeFirst = [{ account_id: null }, { id: 'Label_1' }]
     expect(await isKnownPolicyLabel('user-1', 'Label_1', { policyId: 'p-1' })).toBe(true)
-    expect(calls).toContainEqual(['where', 'gmail_accounts.user_id', '=', 'user-1'])
-    expect(calls.some((c) => c[1] === 'gmail_labels.gmail_account_id')).toBe(false)
+    expect(calls).toContainEqual(['where', 'mail_accounts.user_id', '=', 'user-1'])
+    expect(calls.some((c) => c[1] === 'gmail_labels.account_id')).toBe(false)
   })
 })

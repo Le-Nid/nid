@@ -47,7 +47,7 @@ Providers supportés : Google, Microsoft, Discord, Facebook, LinkedIn, Keycloak 
 
 ### Tokens Gmail
 
-Les tokens OAuth2 Gmail (`access_token`, `refresh_token`) sont stockés **en clair** dans `gmail_accounts` : la protection repose sur l'accès à la base. À la déconnexion d'un compte, ils sont mis à `NULL`.
+Les tokens OAuth2 Gmail (`access_token`, `refresh_token`) sont stockés **en clair** dans `mail_accounts` : la protection repose sur l'accès à la base. À la déconnexion d'un compte, ils sont mis à `NULL`.
 
 ---
 

@@ -44,7 +44,7 @@ export async function applyRetentionPolicies(userId?: string): Promise<{
 async function applyPolicy(policy: {
   id: string
   user_id: string
-  gmail_account_id: string | null
+  account_id: string | null
   label: string | null
   max_age_days: number
 }): Promise<number> {
@@ -55,13 +55,13 @@ async function applyPolicy(policy: {
   // Find archived mails matching the policy
   let query = db
     .selectFrom('archived_mails')
-    .innerJoin('gmail_accounts', 'gmail_accounts.id', 'archived_mails.gmail_account_id')
-    .select(['archived_mails.id', 'archived_mails.eml_path', 'archived_mails.gmail_account_id'])
-    .where('gmail_accounts.user_id', '=', policy.user_id)
+    .innerJoin('mail_accounts', 'mail_accounts.id', 'archived_mails.account_id')
+    .select(['archived_mails.id', 'archived_mails.eml_path', 'archived_mails.account_id'])
+    .where('mail_accounts.user_id', '=', policy.user_id)
     .where('archived_mails.date', '<', cutoffDate)
 
-  if (policy.gmail_account_id) {
-    query = query.where('archived_mails.gmail_account_id', '=', policy.gmail_account_id)
+  if (policy.account_id) {
+    query = query.where('archived_mails.account_id', '=', policy.account_id)
   }
 
   if (policy.label) {
@@ -100,7 +100,7 @@ export async function createRetentionPolicy(data: {
     .insertInto('retention_policies')
     .values({
       user_id: data.userId,
-      gmail_account_id: data.gmailAccountId ?? null,
+      account_id: data.gmailAccountId ?? null,
       name: data.name,
       label: data.label ?? null,
       max_age_days: data.maxAgeDays,
@@ -144,19 +144,19 @@ export async function isKnownPolicyLabel(
   if (scope.policyId) {
     const policy = await db
       .selectFrom('retention_policies')
-      .select('gmail_account_id')
+      .select('account_id')
       .where('id', '=', scope.policyId)
       .where('user_id', '=', userId)
       .executeTakeFirst()
-    accountId = policy?.gmail_account_id ?? undefined
+    accountId = policy?.account_id ?? undefined
   }
   let query = db
     .selectFrom('gmail_labels')
-    .innerJoin('gmail_accounts', 'gmail_accounts.id', 'gmail_labels.gmail_account_id')
+    .innerJoin('mail_accounts', 'mail_accounts.id', 'gmail_labels.account_id')
     .select('gmail_labels.id')
-    .where('gmail_accounts.user_id', '=', userId)
+    .where('mail_accounts.user_id', '=', userId)
     .where('gmail_labels.id', '=', label)
-  if (accountId) query = query.where('gmail_labels.gmail_account_id', '=', accountId)
+  if (accountId) query = query.where('gmail_labels.account_id', '=', accountId)
   return (await query.executeTakeFirst()) !== undefined
 }
 

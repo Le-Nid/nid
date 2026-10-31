@@ -15,7 +15,7 @@ export async function getDeduplicationStats(userId: string) {
 
   // Récupérer les comptes Gmail de l'utilisateur
   const accounts = await db
-    .selectFrom('gmail_accounts')
+    .selectFrom('mail_accounts')
     .select('id')
     .where('user_id', '=', userId)
     .execute()
@@ -41,7 +41,7 @@ export async function getDeduplicationStats(userId: string) {
       eb.fn.countAll().as('count'),
       eb.fn.sum('archived_attachments.size_bytes').as('total_size'),
     ])
-    .where('archived_mails.gmail_account_id', 'in', accountIds)
+    .where('archived_mails.account_id', 'in', accountIds)
     .executeTakeFirstOrThrow() as any
 
   const totalAttachments = Number(totalRow.count)
@@ -52,7 +52,7 @@ export async function getDeduplicationStats(userId: string) {
     .selectFrom('archived_attachments')
     .innerJoin('archived_mails', 'archived_mails.id', 'archived_attachments.archived_mail_id')
     .select((eb) => eb.fn.countAll().as('count'))
-    .where('archived_mails.gmail_account_id', 'in', accountIds)
+    .where('archived_mails.account_id', 'in', accountIds)
     .where('archived_attachments.content_hash', 'is not', null)
     .executeTakeFirstOrThrow() as any
 
@@ -61,7 +61,7 @@ export async function getDeduplicationStats(userId: string) {
     .selectFrom('archived_attachments')
     .innerJoin('archived_mails', 'archived_mails.id', 'archived_attachments.archived_mail_id')
     .select((eb) => eb.fn.count('archived_attachments.content_hash').distinct().as('unique_count'))
-    .where('archived_mails.gmail_account_id', 'in', accountIds)
+    .where('archived_mails.account_id', 'in', accountIds)
     .where('archived_attachments.content_hash', 'is not', null)
     .executeTakeFirstOrThrow() as any
 
@@ -72,7 +72,7 @@ export async function getDeduplicationStats(userId: string) {
       SELECT DISTINCT ON (aa.content_hash) aa.size_bytes
       FROM archived_attachments aa
       INNER JOIN archived_mails am ON am.id = aa.archived_mail_id
-      WHERE am.gmail_account_id = ANY(${accountIds}::uuid[])
+      WHERE am.account_id = ANY(${accountIds}::uuid[])
       AND aa.content_hash IS NOT NULL
       ORDER BY aa.content_hash, aa.created_at ASC
     ) sub
@@ -104,7 +104,7 @@ export async function backfillAttachmentHashes(userId: string) {
 
   // Récupérer les comptes Gmail de l'utilisateur
   const accounts = await db
-    .selectFrom('gmail_accounts')
+    .selectFrom('mail_accounts')
     .select('id')
     .where('user_id', '=', userId)
     .execute()
@@ -120,7 +120,7 @@ export async function backfillAttachmentHashes(userId: string) {
       'archived_attachments.id',
       'archived_attachments.file_path',
     ])
-    .where('archived_mails.gmail_account_id', 'in', accountIds)
+    .where('archived_mails.account_id', 'in', accountIds)
     .where('archived_attachments.content_hash', 'is', null)
     .execute()
 
@@ -164,7 +164,7 @@ async function cleanupDuplicateFiles(userId: string) {
   const db = getDb()
 
   const accounts = await db
-    .selectFrom('gmail_accounts')
+    .selectFrom('mail_accounts')
     .select('id')
     .where('user_id', '=', userId)
     .execute()
@@ -173,13 +173,13 @@ async function cleanupDuplicateFiles(userId: string) {
   if (accountIds.length === 0) return 0
 
   // Trouver les hash avec plusieurs fichiers différents
-  const duplicates = await sql<{ gmail_account_id: string; content_hash: string; file_paths: string[] }>`
-    SELECT am.gmail_account_id, aa.content_hash, array_agg(DISTINCT aa.file_path) AS file_paths
+  const duplicates = await sql<{ account_id: string; content_hash: string; file_paths: string[] }>`
+    SELECT am.account_id, aa.content_hash, array_agg(DISTINCT aa.file_path) AS file_paths
     FROM archived_attachments aa
     INNER JOIN archived_mails am ON am.id = aa.archived_mail_id
-    WHERE am.gmail_account_id = ANY(${accountIds}::uuid[])
+    WHERE am.account_id = ANY(${accountIds}::uuid[])
     AND aa.content_hash IS NOT NULL
-    GROUP BY am.gmail_account_id, aa.content_hash
+    GROUP BY am.account_id, aa.content_hash
     HAVING COUNT(DISTINCT aa.file_path) > 1
   `.execute(db)
 
@@ -193,7 +193,7 @@ async function cleanupDuplicateFiles(userId: string) {
       .updateTable('archived_attachments')
       .set({ file_path: canonicalPath })
       .where('content_hash', '=', dup.content_hash)
-      .where('archived_mail_id', 'in', db.selectFrom('archived_mails').select('id').where('gmail_account_id', '=', dup.gmail_account_id))
+      .where('archived_mail_id', 'in', db.selectFrom('archived_mails').select('id').where('account_id', '=', dup.account_id))
       .execute()
 
     // Supprimer les doublons que plus personne n'utilise
