@@ -46,6 +46,41 @@ Toutes les routes requièrent un JWT dans le cookie httpOnly `token` (ou un head
 
 ---
 
+## Résumé (Home Assistant)
+
+`GET /api/summary` 🔒 — une seule lecture légère avec tout ce qu'il faut à un tableau de bord ou à un capteur REST Home Assistant, en nombres simples. Prévu pour un [jeton d'API](auth.md#jetons-d-api) (`read` suffit).
+
+```json
+{
+  "accounts": [{ "id", "email", "is_active", "needs_reauth", "last_backup_at", "archived_mails", "archived_bytes", "last_archived_at" }],
+  "needs_reauth": 1,
+  "archived_mails": 24106, "archived_bytes": 1830000000, "storage_quota_bytes": 5368709120,
+  "jobs": { "active": 0, "failed_24h": 1 },
+  "unread_notifications": 3
+}
+```
+
+Home Assistant:
+
+```yaml
+rest:
+  - resource: https://nid.example.com/api/summary
+    headers:
+      Authorization: !secret nid_token   # "Bearer nid_…"
+    scan_interval: 300
+    sensor:
+      - name: Nid comptes à reconnecter
+        value_template: "{{ value_json.needs_reauth }}"
+      - name: Nid mails archivés
+        value_template: "{{ value_json.archived_mails }}"
+      - name: Nid jobs en échec 24h
+        value_template: "{{ value_json.jobs.failed_24h }}"
+```
+
+Pour être prévenu sans interroger, un [webhook](webhooks.md) générique sur `account.reauth_required` peut viser un déclencheur `webhook` de Home Assistant (mettre `WEBHOOK_ALLOW_PRIVATE_NETWORKS=true` si Home Assistant est sur le réseau local).
+
+---
+
 ## Health check
 
 ```

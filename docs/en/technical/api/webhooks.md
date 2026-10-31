@@ -13,6 +13,7 @@ Allows receiving notifications on external services (Discord, Slack, Ntfy, or ge
 | `rule.executed` | An automatic rule executes |
 | `quota.warning` | Quota alert (storage) |
 | `integrity.failed` | Integrity check detects an issue |
+| `account.reauth_required` | Google refused a Gmail account's access: it must be reconnected (sent once per incident) |
 
 ---
 

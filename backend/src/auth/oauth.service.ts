@@ -2,6 +2,7 @@ import { google } from 'googleapis'
 import { config } from '../config'
 import { getDb } from '../db'
 import { createLogger } from '../logger'
+import { notify } from '../notifications/notify'
 
 const logger = createLogger('oauth')
 
@@ -118,7 +119,19 @@ export async function getAuthenticatedClient(accountId: string) {
       // No refresh token stored (pre-fix SSO logins wrote ''): same outcome as a revoked grant
       if (isInvalidGrant(err) || !account.refresh_token) {
         logger.warn({ accountId }, 'Google refused the refresh token: reconnection required')
-        await db.updateTable('gmail_accounts').set({ auth_error_at: new Date() }).where('id', '=', accountId).execute()
+        // Only the first failure flags and notifies: every later Gmail call hits this again until reconnection
+        const flagged = await db.updateTable('gmail_accounts').set({ auth_error_at: new Date() })
+          .where('id', '=', accountId).where('auth_error_at', 'is', null)
+          .returning(['user_id', 'email']).executeTakeFirst()
+        if (flagged) {
+          await notify({
+            userId: flagged.user_id,
+            category: 'account_reauth',
+            title: 'Compte Gmail à reconnecter',
+            body: `Google a refusé l'accès à ${flagged.email} : reconnectez-le dans Paramètres › Comptes Gmail.`,
+            data: { accountId },
+          })
+        }
       }
       throw err
     }

@@ -117,12 +117,14 @@ Returns the user's notification preferences. If no preferences are set, default 
   "rule_executed": false,
   "quota_warning": true,
   "integrity_alert": true,
+  "account_reauth": true,
   "weekly_report_toast": false,
   "job_completed_toast": true,
   "job_failed_toast": true,
   "rule_executed_toast": false,
   "quota_warning_toast": false,
   "integrity_alert_toast": false,
+  "account_reauth_toast": false,
   "remote_images": "block"
 }
 ```
@@ -143,6 +145,8 @@ Each notification type has two independent channels:
 | `quota_warning_toast` | `false` | 💬 Toast | |
 | `integrity_alert` | `true` | 🔔 In-app | Integrity issue |
 | `integrity_alert_toast` | `false` | 💬 Toast | |
+| `account_reauth` | `true` | 🔔 In-app | Google refused a Gmail account: reconnect it (sent once per incident) |
+| `account_reauth_toast` | `false` | 💬 Toast | |
 
 `remote_images` (`block` by default, or `allow`) is not a notification preference: it controls loading remote images in the email reader, stored with the other user preferences.
 
@@ -189,4 +193,5 @@ The three channels (in-app, toast, webhook) are independent. The toast is handle
 | `rule_executed` | `rule.executed` |
 | `quota_warning` | `quota.warning` |
 | `integrity_alert` | `integrity.failed` |
+| `account_reauth` | `account.reauth_required` |
 | `weekly_report` | *(no dedicated webhook)* |

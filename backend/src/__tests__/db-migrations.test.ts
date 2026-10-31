@@ -14,16 +14,16 @@ vi.mock('kysely/migration', () => ({
 const { runMigrations } = await import('../db')
 
 describe('runMigrations', () => {
-  it('hands Kysely every in-code migration, 013 last', async () => {
-    migrator.results = [{ status: 'Success', migrationName: '013_api_tokens' }]
+  it('hands Kysely every in-code migration, 014 last', async () => {
+    migrator.results = [{ status: 'Success', migrationName: '014_account_reauth_notification' }]
     await runMigrations()
     const names = Object.keys(await migrator.provider.getMigrations())
     expect(names).toEqual([...names].sort())
-    expect(names.at(-1)).toBe('013_api_tokens')
+    expect(names.at(-1)).toBe('014_account_reauth_notification')
   })
 
   it('throws the migrator error', async () => {
-    migrator.results = [{ status: 'Error', migrationName: '013_api_tokens' }]
+    migrator.results = [{ status: 'Error', migrationName: '014_account_reauth_notification' }]
     migrator.error = new Error('boom')
     await expect(runMigrations()).rejects.toThrow('boom')
   })

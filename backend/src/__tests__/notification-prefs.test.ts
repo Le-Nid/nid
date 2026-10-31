@@ -62,7 +62,7 @@ describe('NOTIFICATION_DEFAULTS', () => {
     expect(NOTIFICATION_DEFAULTS.integrity_alert_toast).toBe(false)
   })
 
-  it('has 12 categories', () => {
-    expect(Object.keys(NOTIFICATION_DEFAULTS)).toHaveLength(12)
+  it('has 14 categories', () => {
+    expect(Object.keys(NOTIFICATION_DEFAULTS)).toHaveLength(14)
   })
 })

@@ -51,6 +51,7 @@ In **Settings › Notifications & webhooks**, each event has two switches: **In-
 | `rule.executed` | Rule run |
 | `quota.warning` | Storage alert |
 | `integrity.failed` | Integrity alert |
+| `account.reauth_required` | Gmail account to reconnect |
 
 The weekly report is not sent by webhook.
 

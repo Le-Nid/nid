@@ -31,6 +31,8 @@ vi.mock('../labels/labels.service', () => ({ syncAllLabels: vi.fn(), syncLabels:
 vi.mock('../archive/body-text', () => ({ countPendingBodyText: vi.fn() }))
 vi.mock('../auth/social.service', () => ({ getEnabledProviders: vi.fn(() => []), isProviderEnabled: vi.fn(), createAuthorizationUrl: vi.fn(), exchangeSocialCode: vi.fn() }))
 vi.mock('../audit/audit.service', () => ({ logAudit: vi.fn() }))
+const mockNotify = vi.hoisted(() => vi.fn())
+vi.mock('../notifications/notify', () => ({ notify: mockNotify }))
 vi.mock('../plugins', () => ({ setAuthCookie: vi.fn(), clearAuthCookie: vi.fn() }))
 vi.mock('../plugins/redis', () => ({ getRedis: vi.fn(() => ({})) }))
 
@@ -188,6 +190,26 @@ describe('« Action requise » — expired Google grant', () => {
     mockGetAccessToken.mockRejectedValueOnce(new Error('No refresh token or refresh handler callback is set.'))
     await expect(getAuthenticatedClient(ACCOUNT)).rejects.toThrow('No refresh token')
     expect(calls.find((c) => c.method === 'set')?.args[0]).toEqual({ auth_error_at: expect.any(Date) })
+  })
+
+  it('notifies once (bell + account.reauth_required webhook), not again while the account stays flagged', async () => {
+    const refused = () => mockGetAccessToken.mockRejectedValueOnce(Object.assign(new Error('invalid_grant'), { response: { data: { error: 'invalid_grant' } } }))
+    mockTakeFirst
+      .mockResolvedValueOnce({ access_token: 'a', refresh_token: 'r', token_expiry: hoursAgo(1) })
+      .mockResolvedValueOnce({ user_id: 'u1', email: 'ana@gmail.com' }) // the flag was null: row updated
+    refused()
+    await expect(getAuthenticatedClient(ACCOUNT)).rejects.toThrow('invalid_grant')
+    expect(calls.filter((c) => c.method === 'where').map((c) => c.args)).toContainEqual(['auth_error_at', 'is', null])
+    expect(mockNotify).toHaveBeenCalledTimes(1)
+    expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ userId: 'u1', category: 'account_reauth', data: { accountId: ACCOUNT } }))
+    expect(mockNotify.mock.calls[0][0].body).toContain('ana@gmail.com')
+
+    mockTakeFirst
+      .mockResolvedValueOnce({ access_token: 'a', refresh_token: 'r', token_expiry: hoursAgo(1) })
+      .mockResolvedValueOnce(undefined) // already flagged: nothing updated
+    refused()
+    await expect(getAuthenticatedClient(ACCOUNT)).rejects.toThrow('invalid_grant')
+    expect(mockNotify).toHaveBeenCalledTimes(1)
   })
 
   it('leaves the account alone on other failures and does not refresh a valid token', async () => {

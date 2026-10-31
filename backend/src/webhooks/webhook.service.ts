@@ -14,6 +14,7 @@ export type WebhookEvent =
   | 'rule.executed'
   | 'quota.warning'
   | 'integrity.failed'
+  | 'account.reauth_required'
 
 // Loopback, private, link-local (cloud metadata), CGNAT and unspecified ranges
 const privateNetworks = new BlockList()
