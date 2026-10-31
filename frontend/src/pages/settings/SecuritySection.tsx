@@ -268,8 +268,8 @@ function ApiTokensCard() {
   return (
     <SettingsCard title={t('settings.apiTokens.title')} description={t('settings.apiTokens.hint')}>
       {created && (
-        <div role="status" className="flex flex-col gap-2 rounded-lg border border-primary/40 bg-primary/5 p-3">
-          <p className="text-sm font-medium">{t('settings.apiTokens.createdOnce')}</p>
+        <div className="flex flex-col gap-2 rounded-lg border border-primary/40 bg-primary/5 p-3">
+          <output className="text-sm font-medium">{t('settings.apiTokens.createdOnce')}</output>
           <div className="flex items-center gap-2">
             <code className="min-w-0 flex-1 break-all rounded bg-muted px-2 py-1 text-sm">{created}</code>
             <Button variant="ghost" size="icon" className="size-11 shrink-0 md:size-8" aria-label={t('settings.apiTokens.copy')} onClick={() => void copy(created)}>

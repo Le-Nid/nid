@@ -15,7 +15,7 @@ const createSchema = z.object({
 })
 
 // Mounted under /api/auth: an API token can never reach these routes (see authenticate), only the session cookie
-export async function apiTokenRoutes(app: FastifyInstance) {
+export function apiTokenRoutes(app: FastifyInstance, _opts: unknown, done: () => void) {
   const db = getDb()
   const { auth } = authPresets(app)
 
@@ -48,4 +48,5 @@ export async function apiTokenRoutes(app: FastifyInstance) {
     await logAudit(request.user.sub, 'user.api_token_revoke', { targetType: 'api_token', targetId: id, ipAddress: request.ip })
     return reply.code(204).send()
   })
+  done()
 }
