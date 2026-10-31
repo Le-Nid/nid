@@ -433,6 +433,26 @@ The user's tokens, without the token nor its hash: `[{ "id", "name", "scope", "e
 
 **Response 204**, `404` if the token is not the user's. Logged as `user.api_token_revoke`.
 
+## Account sharing (read-only)
+
+An account's owner gives other Nid users **read** access to its archives (`account_shares` table). Session only (under `/api/auth`). A user the account is shared with passes `requireAccountOwnership` only with `GET` on: `/api/archive/:accountId/mails[/:mailId]`, `…/attachments/:attachmentId/download`, `…/threads[/:threadId]`, `…/contacts`, `…/tags`, `/api/labels/:accountId`, `/api/dashboard/:accountId/archive-stats`. Anything else (Gmail, trash, rules, writes) answers `403`.
+
+### GET /api/auth/accounts/:accountId/shares 🔒
+
+Owner only (`404` otherwise): `[{ "user_id", "email", "display_name", "created_at" }]`.
+
+### POST /api/auth/accounts/:accountId/shares 🔒
+
+`{ "email": "friend@example.com" }` (active Nid account, case ignored). **201** the share; `404` unknown address (or someone else's account), `400` oneself, `409` already shared. Audited `account.share`. Rate limit: 10/min.
+
+### DELETE /api/auth/accounts/:accountId/shares/:userId 🔒
+
+The owner removes an access, or the user concerned leaves the share (`userId` = their own). **204**, otherwise `404`. Audited `account.unshare`.
+
+`GET /api/auth/me` also returns `sharedAccounts: [{ "id", "email", "provider", "shared_by" }]` (the owner's address).
+
+---
+
 ## IMAP accounts (archive only)
 
 An IMAP account (any provider: OVH, Infomaniak, Fastmail, Outlook with an app password…) is **archived only**: its folders are backed up to the NAS and searched in Archives; Mails, Cleanup and Rules stay Gmail-only (`409 Not a Gmail account` on the Gmail endpoints). Session only: an API token never reaches these routes.

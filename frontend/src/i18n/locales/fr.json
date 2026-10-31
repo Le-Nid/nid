@@ -852,6 +852,26 @@
       "gmailOnlyPageHint": "Cette page agit sur Gmail. Un compte IMAP est archivé uniquement : ses mails sont dans Archives.",
       "openArchives": "Ouvrir les archives",
       "overviewHint": "Compte IMAP : sauvegarde et archives uniquement."
+    },
+    "share": {
+      "option": "{{email}} (partagé par {{owner}})",
+      "archiveOnlyPage": "{{email}} est partagé par {{owner}} en lecture seule",
+      "archiveOnlyPageHint": "Seules ses archives sont accessibles : recherche, lecture, pièces jointes et contacts.",
+      "title": "Partage",
+      "hint": "Les personnes ajoutées (comptes Nid de cette instance) peuvent rechercher et lire les archives de ce compte, sans rien modifier ni accéder à Gmail.",
+      "list": "Personnes ayant accès",
+      "email": "Adresse e-mail du compte Nid",
+      "add": "Partager",
+      "added": "Archives partagées avec {{email}}",
+      "revoke": "Retirer l'accès de {{email}}",
+      "revoked": "Accès retiré à {{email}}",
+      "unknownUser": "Aucun compte Nid actif n'utilise cette adresse.",
+      "self": "Ce compte est déjà le vôtre.",
+      "already": "Déjà partagé avec cette personne.",
+      "withMe": "Partagés avec moi",
+      "withMeHint": "Comptes dont vous pouvez lire les archives, sans rien modifier.",
+      "leave": "Ne plus voir",
+      "left": "{{email}} retiré de vos comptes"
     }
   },
   "admin": {

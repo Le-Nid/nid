@@ -63,6 +63,17 @@ export const gmailAccountsApi = {
   disconnect: (accountId: string) => api.delete(`/api/auth/gmail/${accountId}`).then((r) => r.data),
 }
 
+// ─── Account shares (read-only access to an account's archive) ──
+export type AccountShare = { user_id: string; email: string; display_name: string | null; created_at: string }
+
+export const accountSharesApi = {
+  list: (accountId: string): Promise<AccountShare[]> => api.get(`/api/auth/accounts/${accountId}/shares`).then((r) => r.data),
+  add: (accountId: string, email: string): Promise<AccountShare> =>
+    api.post(`/api/auth/accounts/${accountId}/shares`, { email }).then((r) => r.data),
+  /** The owner revokes; the user it is shared with leaves (their own id). */
+  remove: (accountId: string, userId: string) => api.delete(`/api/auth/accounts/${accountId}/shares/${userId}`).then((r) => r.data),
+}
+
 export interface ImapSettings { host: string; port: number; secure: boolean; user: string; password: string }
 
 // ─── IMAP accounts (archive only) ─────────────────────────

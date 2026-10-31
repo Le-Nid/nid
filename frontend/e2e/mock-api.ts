@@ -153,6 +153,7 @@ const ROUTES: [string, RegExp, Handler][] = [
   ['GET', /^\/api\/audit$/, settings.audit],
   ['GET', /^\/api\/webhooks$/, settings.webhooks],
   ['GET', /^\/api\/saved-searches$/, []],
+  ['GET', /^\/api\/auth\/accounts\/[^/]+\/shares$/, []],
 ]
 
 export type ApiMock = { requests: Request[] }

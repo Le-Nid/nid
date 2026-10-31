@@ -110,6 +110,22 @@ describe('useAuthStore', () => {
   })
 
   describe('fetchMe', () => {
+    it('keeps the accounts shared with the user apart, and picks one only without an own account', async () => {
+      const user = { id: 'u1', email: 'test@test.com', role: 'user' }
+      const shared = [{ id: 'sh1', email: 'box@gmail.com', provider: 'gmail', shared_by: 'ana@example.com' }]
+      vi.mocked(api.get).mockResolvedValueOnce({ data: { user, gmailAccounts: [], sharedAccounts: shared, storageUsedBytes: 0 } })
+      await useAuthStore.getState().fetchMe()
+      expect(useAuthStore.getState().sharedAccounts).toEqual([{ ...shared[0], is_active: true }])
+      expect(useAuthStore.getState().activeAccountId).toBe('sh1')
+
+      // A stored shared account stays active next to one's own
+      vi.mocked(api.get).mockResolvedValueOnce({
+        data: { user, gmailAccounts: [{ id: 'acc1', email: 'a@b.com', is_active: true }], sharedAccounts: shared, storageUsedBytes: 0 },
+      })
+      await useAuthStore.getState().fetchMe()
+      expect(useAuthStore.getState().activeAccountId).toBe('sh1')
+    })
+
     it('fetches user and gmail accounts', async () => {
       const user = { id: 'u1', email: 'test@test.com', role: 'user' }
       const accounts = [{ id: 'acc1', email: 'gmail@test.com', is_active: true }]

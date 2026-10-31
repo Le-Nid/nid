@@ -81,6 +81,13 @@ Chaque étape peut être passée ; **Plus tard** ferme l'assistant sans rien enr
 
 Un compte IMAP porte le badge **IMAP · archivage**. Ses dossiers sont sauvegardés sur le NAS et deviennent des libellés dans [Archives](archives.md) ; la Vue d'ensemble n'affiche que ses chiffres d'archives, et Mails, Nettoyage et Règles renvoient vers Archives. Si le serveur refuse la connexion (mot de passe changé), le compte passe en **Action requise** : **Mettre à jour le serveur ou le mot de passe**.
 
+### Partager un compte en lecture seule
+
+Le bloc **Partage** de chaque compte donne accès à ses archives à d'autres utilisateurs de **cette instance Nid** : saisissez l'adresse de leur compte Nid puis **Partager**. Ils peuvent rechercher et lire les archives (pièces jointes, conversations, contacts, libellés et tags), **sans rien modifier** ni accéder à Gmail : pas de suppression, de tags, de restauration, d'export, de lien de partage, ni de sauvegarde. Le bouton ✕ d'une personne lui retire l'accès.
+
+Pour celui qui reçoit le partage, le compte apparaît dans le sélecteur de compte avec « (partagé par …) » : [Archives](archives.md) s'ouvre en lecture seule (onglets Mails et Contacts) et les autres pages indiquent que seules ses archives sont accessibles. La carte **Partagés avec moi** liste ces comptes ; **Ne plus voir** retire le partage de son côté.
+
+
 ---
 
 ## Notifications & webhooks

@@ -11,8 +11,8 @@ import { showUndoToast } from '../components/app/UndoToast'
 import { useAuthStore } from '../store/auth.store'
 import type { JobState } from '../hooks/useJobSSE'
 
-const account = vi.hoisted(() => ({ id: 'acc-1' as string | null, provider: 'gmail' }))
-vi.mock('../hooks/useAccount', () => ({ useAccount: () => ({ accountId: account.id, account: { provider: account.provider } }) }))
+const account = vi.hoisted(() => ({ id: 'acc-1' as string | null, provider: 'gmail', shared_by: undefined as string | undefined }))
+vi.mock('../hooks/useAccount', () => ({ useAccount: () => ({ accountId: account.id, account: { provider: account.provider, shared_by: account.shared_by } }) }))
 vi.mock('../api', () => ({
   archiveApi: {
     listMails: vi.fn(), getMail: vi.fn(), trashMails: vi.fn(), restoreMails: vi.fn(), listTrash: vi.fn(), emptyTrash: vi.fn(),
@@ -68,6 +68,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   account.id = 'acc-1'
   account.provider = 'gmail'
+  account.shared_by = undefined
   mobile = false
   vi.mocked(window.matchMedia).mockImplementation((query: string) => ({
     matches: query.includes('max-width') ? mobile : false,
@@ -307,6 +308,23 @@ describe('Archives — mobile', () => {
     await user().click(within(within(reader).getByRole('toolbar')).getByRole('button', { name: 'Restaurer dans Gmail' }))
     await waitFor(() => expect(archiveApi.restoreToGmail).toHaveBeenLastCalledWith('acc-1', [OTHER.id]))
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("La restauration dans Gmail n'a pas pu être lancée."))
+  })
+
+  it('an account shared read-only: search and read only (no header actions, selection, row or reader actions, owner tabs)', async () => {
+    account.shared_by = 'ana@example.com'
+    vi.mocked(archiveApi.getMail).mockResolvedValue({ ...MAIL, recipient: 'a@b.c', label_ids: [], tags: ['impôts'], html: '', text: 'corps', thread_id: null, attachments: [] })
+    setup('/archives?tab=trash')
+    expect(await screen.findByText('Facture EDF')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Sauvegarder sur le NAS maintenant' })).toBeNull()
+    expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Mails', 'Contacts'])
+    expect(screen.queryByRole('checkbox', { name: 'Sélectionner Facture EDF' })).toBeNull()
+    await user().click(screen.getByText('Facture EDF'))
+    const reader = await screen.findByRole('dialog')
+    expect(within(within(reader).getByRole('toolbar')).queryAllByRole('button')).toHaveLength(0)
+    const tags = await within(reader).findByRole('region', { name: 'Tags' })
+    expect(within(tags).getByText('impôts')).toBeInTheDocument()
+    expect(within(tags).queryByRole('button')).toBeNull()
+    expect(within(tags).queryByRole('combobox')).toBeNull()
   })
 
   it('an IMAP account has no « Restaurer dans Gmail »', async () => {

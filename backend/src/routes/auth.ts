@@ -442,7 +442,17 @@ export async function authRoutes(app: FastifyInstance) {
       .where('mail_accounts.user_id', '=', userId)
       .executeTakeFirst()
 
-    return { user, gmailAccounts: accounts, storageUsedBytes: Number(storageUsed?.total ?? 0) }
+    // Accounts other users share with this one, read-only: their archive only
+    const sharedAccounts = await db
+      .selectFrom('account_shares')
+      .innerJoin('mail_accounts', 'mail_accounts.id', 'account_shares.account_id')
+      .innerJoin('users as owner', 'owner.id', 'mail_accounts.user_id')
+      .select(['mail_accounts.id', 'mail_accounts.email', 'mail_accounts.provider', 'owner.email as shared_by'])
+      .where('account_shares.user_id', '=', userId)
+      .orderBy('mail_accounts.email')
+      .execute()
+
+    return { user, gmailAccounts: accounts, sharedAccounts, storageUsedBytes: Number(storageUsed?.total ?? 0) }
   })
 
   // ─── Gmail OAuth2 (Point 9: signed state) ──────────────────

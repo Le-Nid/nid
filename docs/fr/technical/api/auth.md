@@ -433,6 +433,26 @@ Les jetons de l'utilisateur, sans le jeton ni son hash : `[{ "id", "name", "scop
 
 **Réponse 204**, `404` si le jeton n'est pas à l'utilisateur. Tracé `user.api_token_revoke`.
 
+## Partage d'un compte (lecture seule)
+
+Le propriétaire d'un compte donne à d'autres utilisateurs Nid un accès **en lecture** à ses archives (table `account_shares`). Session uniquement (sous `/api/auth`). Un utilisateur avec qui le compte est partagé ne passe `requireAccountOwnership` qu'en `GET` sur : `/api/archive/:accountId/mails[/:mailId]`, `…/attachments/:attachmentId/download`, `…/threads[/:threadId]`, `…/contacts`, `…/tags`, `/api/labels/:accountId`, `/api/dashboard/:accountId/archive-stats`. Tout le reste (Gmail, corbeille, règles, écriture) répond `403`.
+
+### GET /api/auth/accounts/:accountId/shares 🔒
+
+Propriétaire seulement (`404` sinon) : `[{ "user_id", "email", "display_name", "created_at" }]`.
+
+### POST /api/auth/accounts/:accountId/shares 🔒
+
+`{ "email": "ami@example.com" }` (compte Nid actif, casse ignorée). **201** le partage ; `404` adresse inconnue (ou compte d'un autre), `400` soi-même, `409` déjà partagé. Tracé `account.share`. Rate limit : 10/min.
+
+### DELETE /api/auth/accounts/:accountId/shares/:userId 🔒
+
+Le propriétaire retire un accès, ou l'utilisateur concerné quitte le partage (`userId` = le sien). **204**, sinon `404`. Tracé `account.unshare`.
+
+`GET /api/auth/me` renvoie aussi `sharedAccounts: [{ "id", "email", "provider", "shared_by" }]` (adresse du propriétaire).
+
+---
+
 ## Comptes IMAP (archivage seul)
 
 Un compte IMAP (tout fournisseur : OVH, Infomaniak, Fastmail, Outlook avec un mot de passe d'application…) est **archivé uniquement** : ses dossiers sont sauvegardés sur le NAS et consultables dans Archives ; Mails, Nettoyage et Règles restent réservés à Gmail (`409 Not a Gmail account` sur les routes Gmail). Session uniquement : un jeton d'API n'atteint jamais ces routes.

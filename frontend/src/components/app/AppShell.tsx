@@ -14,6 +14,7 @@ import { useIsMobile } from '@/hooks/use-mobile'
 import { useGlobalJobNotifier } from '@/hooks/useGlobalJobNotifier'
 import { useLiveCounters } from '@/hooks/useLiveCounters'
 import { useAuthStore } from '@/store/auth.store'
+import { accountLabel } from '@/hooks/useAccount'
 import { useThemeStore } from '@/store/theme.store'
 import AppSidebar from './AppSidebar'
 import BottomNav from './BottomNav'
@@ -23,7 +24,8 @@ import NotificationBell from './NotificationBell'
 function UserMenu({ withAccounts }: Readonly<{ withAccounts: boolean }>) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
-  const { user, gmailAccounts, activeAccountId, setActiveAccount, logout } = useAuthStore()
+  const { user, gmailAccounts, sharedAccounts, activeAccountId, setActiveAccount, logout } = useAuthStore()
+  const accounts = [...gmailAccounts, ...sharedAccounts]
   const { mode, toggle } = useThemeStore()
 
   return (
@@ -42,12 +44,12 @@ function UserMenu({ withAccounts }: Readonly<{ withAccounts: boolean }>) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
         <DropdownMenuLabel className="truncate font-normal text-muted-foreground">{user?.email}</DropdownMenuLabel>
-        {withAccounts && gmailAccounts.length > 0 && (
+        {withAccounts && accounts.length > 0 && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuLabel>{t('layout.gmailAccount')}</DropdownMenuLabel>
             <DropdownMenuRadioGroup value={activeAccountId ?? ''} onValueChange={setActiveAccount}>
-              {gmailAccounts.map((a) => <DropdownMenuRadioItem key={a.id} value={a.id}>{a.is_active ? a.email : t('settings.gmail.disconnectedOption', { email: a.email })}</DropdownMenuRadioItem>)}
+              {accounts.map((a) => <DropdownMenuRadioItem key={a.id} value={a.id}>{accountLabel(a, t)}</DropdownMenuRadioItem>)}
             </DropdownMenuRadioGroup>
           </>
         )}

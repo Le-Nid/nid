@@ -32,6 +32,11 @@ import {
 type RowAction = 'open' | ArchiveViewerAction
 const FIELD = 'h-11 text-base md:h-9 md:text-sm'
 
+const rowActions = (readOnly: boolean, canRestore: boolean): RowAction[] => {
+  if (readOnly) return ['open']
+  return canRestore ? ['open', 'share', 'restore', 'trash'] : ['open', 'share', 'trash']
+}
+
 /** The label or tag tree as a select, for the filters sheet <md. */
 function TreeSelect({ id, label, nodes, value, onChange }: Readonly<{
   id: string; label: string; nodes: LabelNode[]; value: string; onChange: (value: string) => void
@@ -145,8 +150,11 @@ export function SearchTab({ accountId }: Readonly<{ accountId: string }>) {
   const exporter = useMboxExport(accountId)
   const trash = useArchiveTrashWithUndo(accountId)
   const restore = useRestoreToGmailAction(accountId)
+  const { account } = useAccount()
+  // Shared by another user: read only (no selection, no action but « Ouvrir »)
+  const readOnly = !!account?.shared_by
   // An IMAP account has no Gmail mailbox to restore into
-  const canRestore = useAccount().account?.provider !== 'imap'
+  const canRestore = account?.provider !== 'imap' && !readOnly
   const [q, setQ] = useDebounced(filters.q, (v) => set({ q: v }))
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
   const [viewing, setViewing] = useState<string | null>(null)
@@ -179,15 +187,15 @@ export function SearchTab({ accountId }: Readonly<{ accountId: string }>) {
   const onRowRef = useRef<(action: RowAction, mail: ArchivedMail) => void>(() => {})
   onRowRef.current = (action, mail) => (action === 'open' ? setViewing(mail.id) : act(action, mail.id))
   const columns = useMemo(
-    () => buildColumns(t, canRestore ? ['open', 'share', 'restore', 'trash'] : ['open', 'share', 'trash'], (a, m) => onRowRef.current(a, m)),
-    [t, canRestore],
+    () => buildColumns(t, rowActions(readOnly, canRestore), (a, m) => onRowRef.current(a, m)),
+    [t, readOnly, canRestore],
   )
   const table = useTable({
     features: dataListFeatures,
     columns,
     data: mails,
     getRowId: (m) => m.id,
-    enableRowSelection: true,
+    enableRowSelection: !readOnly,
     enableSorting: false, // relevance with `q`, else date
     state: { rowSelection },
     onRowSelectionChange: setRowSelection,
@@ -259,7 +267,7 @@ export function SearchTab({ accountId }: Readonly<{ accountId: string }>) {
 
         <div className="flex flex-wrap items-center justify-between gap-2">
           {first && <ResultCount total={first.total} tookMs={first.tookMs} />}
-          {filters.tag && (
+          {filters.tag && !readOnly && (
             <ConfirmDialog
               trigger={<Button variant="ghost" size="sm" className="h-11 text-destructive md:h-8">{t('archives.tags.delete', { tag: filters.tag })}</Button>}
               title={t('archives.tags.deleteTitle', { tag: filters.tag })}
@@ -322,6 +330,7 @@ export function SearchTab({ accountId }: Readonly<{ accountId: string }>) {
         onOpenMail={setViewing}
         onAction={(action) => viewing && act(action, viewing)}
         canRestore={canRestore}
+        readOnly={readOnly}
       />
       <TagDialog
         accountId={accountId}
