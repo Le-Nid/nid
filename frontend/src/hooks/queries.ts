@@ -29,6 +29,7 @@ export const queryKeys = {
     ['archive', accountId, 'trash', params] as const,
   archiveTrashConfig: () => ['archive', 'trash-config'] as const,
   archiveTags: (accountId: string) => ['archive', accountId, 'tags'] as const,
+  archiveContacts: (accountId: string, q: string) => ['archive', accountId, 'contacts', q] as const,
   savedSearches: () => ['saved-searches'] as const,
   unified: (params?: Record<string, any>) => ['unified', params] as const,
   rules: (accountId: string) => ['rules', accountId] as const,
@@ -180,6 +181,17 @@ export const useTrashArchived = (accountId: string) =>
 
 export const useRestoreArchived = (accountId: string) =>
   useArchiveMutation((mailIds: string[]) => archiveApi.restoreMails(accountId, mailIds))
+
+/** The archive's address book (From / To), most exchanged first, « Afficher plus » pages. */
+export function useArchiveContacts(accountId: string, q: string) {
+  return useInfiniteQuery({
+    queryKey: queryKeys.archiveContacts(accountId, q),
+    queryFn: ({ pageParam }) => archiveApi.listContacts(accountId, { ...(q ? { q } : {}), page: pageParam, limit: ARCHIVE_PAGE_SIZE }),
+    initialPageParam: 1,
+    getNextPageParam: (last, pages) => (pages.length * ARCHIVE_PAGE_SIZE < last.total ? pages.length + 1 : undefined),
+    enabled: !!accountId,
+  })
+}
 
 export function useArchiveTags(accountId: string) {
   return useQuery({ queryKey: queryKeys.archiveTags(accountId), queryFn: () => archiveApi.listTags(accountId), enabled: !!accountId })

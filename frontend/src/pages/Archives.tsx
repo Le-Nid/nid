@@ -12,12 +12,13 @@ import { useAccount } from '@/hooks/useAccount'
 import { useArchiveMails, useArchiveNow, useDashboardArchiveStats } from '@/hooks/queries'
 import { formatBytes, formatRelative } from '@/utils/format'
 import { SearchTab } from './archives/SearchTab'
+import { ContactsTab } from './archives/ContactsTab'
 import { TrashTab } from './archives/TrashTab'
 import { RetentionTab } from './archives/RetentionTab'
 import { SharesTab } from './archives/SharesTab'
 import { useArchiveFilters, useMboxExport, type ArchivedMail } from './archives/shared'
 
-const TABS = ['mails', 'trash', 'retention', 'shares']
+const TABS = ['mails', 'contacts', 'trash', 'retention', 'shares']
 
 /** « Dernière sauvegarde il y a 2 h · 47 108 mails · 5,9 Go » from archive-stats. */
 function StatusBanner({ accountId }: Readonly<{ accountId: string }>) {
@@ -93,6 +94,7 @@ export default function ArchivesPage() {
             label={t('archives.tabsLabel')}
             tabs={[
               { key: 'mails', label: t('archives.tab.mails'), content: <SearchTab accountId={accountId} /> },
+              { key: 'contacts', label: t('archives.tab.contacts'), content: <ContactsTab accountId={accountId} /> },
               { key: 'trash', label: t('archives.tab.trash'), content: <TrashTab accountId={accountId} /> },
               { key: 'retention', label: t('archives.tab.retention'), content: <RetentionTab accountId={accountId} /> },
               { key: 'shares', label: t('archives.tab.shares'), content: <SharesTab /> },

@@ -6,6 +6,7 @@ import { enqueueJob } from "../jobs/queue";
 import { streamArchiveZip } from "../archive/export.service";
 import { invalidateDashboardCache } from "../dashboard/cache.service";
 import { deleteArchivedMails } from "../archive/trash.service";
+import { listArchiveContacts } from "../archive/contacts.service";
 import fs from "node:fs";
 import { escapeIlike, FTS_CONFIG, ftsQuery, notFound } from "../utils/db";
 import { extractPagination } from "../utils/pagination";
@@ -364,6 +365,17 @@ export async function archiveRoutes(app: FastifyInstance) {
       .executeTakeFirst();
 
     return { restored: Number(result.numUpdatedRows) };
+  });
+
+  // ─── Contacts (From / To of the archive) ─────────────────
+  const contactsQuerySchema = z.object({ q: z.string().max(200).optional(), page: positiveInt, limit: positiveInt });
+
+  app.get("/:accountId/contacts", accountAuth, async (request) => {
+    const { accountId } = request.params as { accountId: string };
+    const { q, ...pagination } = contactsQuerySchema.parse(request.query);
+    const { page, limit, offset } = extractPagination(pagination);
+    const { contacts, total } = await listArchiveContacts(db, accountId, { q, limit, offset });
+    return { contacts, total, page, limit };
   });
 
   // ─── Tags (Nid only, never sent to Gmail) ─────────────────

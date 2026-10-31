@@ -126,7 +126,8 @@
       "mails": "Mails",
       "trash": "Corbeille",
       "retention": "Rétention",
-      "shares": "Partages"
+      "shares": "Partages",
+      "contacts": "Contacts"
     },
     "status": {
       "last": "Dernière sauvegarde {{when}}",
@@ -299,6 +300,23 @@
       "deleteDescription": "Le tag est retiré de toutes les archives de ce compte, corbeille comprise. Les mails ne sont pas supprimés.",
       "deleteConfirm": "Supprimer le tag",
       "deleted": "Tag « {{tag}} » supprimé"
+    },
+    "contacts": {
+      "search": "Rechercher un contact",
+      "searchPlaceholder": "Nom ou adresse",
+      "count_one": "{{count, number}} contact",
+      "count_other": "{{count, number}} contacts",
+      "col": {
+        "contact": "Contact",
+        "email": "Adresse",
+        "from": "Comme expéditeur",
+        "to": "Comme destinataire",
+        "last": "Dernier échange"
+      },
+      "open": "Voir les mails de {{contact}}",
+      "empty": "Aucun contact",
+      "noMatch": "Aucun contact ne correspond",
+      "loadError": "Impossible de charger les contacts."
     }
   },
   "rules": {

@@ -16,7 +16,7 @@ vi.mock('../hooks/useAccount', () => ({ useAccount: () => ({ accountId: account.
 vi.mock('../api', () => ({
   archiveApi: {
     listMails: vi.fn(), getMail: vi.fn(), trashMails: vi.fn(), restoreMails: vi.fn(), listTrash: vi.fn(), emptyTrash: vi.fn(),
-    getTrashConfig: vi.fn(), updateTrashConfig: vi.fn(), triggerArchive: vi.fn(), listTags: vi.fn(), tagMails: vi.fn(), deleteTag: vi.fn(),
+    getTrashConfig: vi.fn(), updateTrashConfig: vi.fn(), triggerArchive: vi.fn(), listTags: vi.fn(), tagMails: vi.fn(), deleteTag: vi.fn(), listContacts: vi.fn(),
     downloadAttachment: (acc: string, id: string) => `/api/archive/${acc}/attachments/${id}/download`,
   },
   archiveThreadsApi: { getThread: vi.fn() },
@@ -79,6 +79,13 @@ beforeEach(() => {
   vi.mocked(archiveApi.trashMails).mockResolvedValue({ trashed: 1 })
   vi.mocked(archiveApi.restoreMails).mockResolvedValue({ restored: 1 })
   vi.mocked(archiveApi.listTags).mockResolvedValue([])
+  vi.mocked(archiveApi.listContacts).mockResolvedValue({
+    contacts: [
+      { email: 'bob@x.fr', name: 'Martin, Bob', from_count: 1204, to_count: 3, last_at: '2026-08-01T07:00:00Z' },
+      { email: 'carl@z.fr', name: null, from_count: 0, to_count: 1, last_at: null },
+    ],
+    total: 51, page: 1, limit: 50,
+  })
   vi.mocked(archiveApi.tagMails).mockResolvedValue({ updated: 1 })
   vi.mocked(archiveApi.deleteTag).mockResolvedValue({ updated: 2 })
   vi.mocked(archiveApi.listTrash).mockResolvedValue({ mails: [{ ...OTHER, deleted_at: '2026-10-01T00:00:00Z' }], total: 1, retentionDays: 30 })
@@ -386,6 +393,36 @@ describe('Archives — tabs', () => {
     expect(screen.getAllByRole('button', { name: /^Révoquer le lien/ })).toHaveLength(1)
     await user().click(screen.getByRole('button', { name: 'Révoquer le lien Facture EDF' }))
     await waitFor(() => expect(sharingApi.revoke).toHaveBeenCalledWith('s1'))
+  })
+
+  it('Contacts: count, search in ?q=, more pages, a contact opens its mails', async () => {
+    const { router } = setup('/archives?tab=contacts')
+    expect(await screen.findByText('51 contacts')).toBeInTheDocument()
+    expect(screen.getByText('Martin, Bob')).toBeInTheDocument()
+    expect(screen.getAllByText('Martin, Bob')[0].closest('tr, li')).toHaveTextContent(/1\s204/)
+    expect(screen.getAllByText('carl@z.fr')).toHaveLength(2) // no name: the address is the title
+    await user().click(screen.getByRole('button', { name: 'Afficher plus' }))
+    await waitFor(() => expect(archiveApi.listContacts).toHaveBeenCalledWith('acc-1', { page: 2, limit: 50 }))
+
+    await user().type(screen.getByRole('searchbox', { name: 'Rechercher un contact' }), 'bob')
+    await waitFor(() => expect(router.state.location.search).toBe('?tab=contacts&q=bob'))
+    await waitFor(() => expect(archiveApi.listContacts).toHaveBeenCalledWith('acc-1', { q: 'bob', page: 1, limit: 50 }))
+    await user().clear(screen.getByRole('searchbox', { name: 'Rechercher un contact' }))
+    await waitFor(() => expect(router.state.location.search).toBe('?tab=contacts'))
+
+    await user().click(screen.getAllByText('Martin, Bob')[0])
+    await waitFor(() => expect(router.state.location.search).toBe('?sender=bob%40x.fr'))
+  })
+
+  it('Contacts: empty, no match, load error', async () => {
+    vi.mocked(archiveApi.listContacts).mockResolvedValue({ contacts: [], total: 0, page: 1, limit: 50 })
+    const { router } = setup('/archives?tab=contacts')
+    expect(await screen.findByText('Aucun contact')).toBeInTheDocument()
+    await act(() => router.navigate('/archives?tab=contacts&q=zz'))
+    expect(await screen.findByText('Aucun contact ne correspond')).toBeInTheDocument()
+    vi.mocked(archiveApi.listContacts).mockRejectedValue(new Error('x'))
+    await act(() => router.navigate('/archives?tab=contacts&q=yy'))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Impossible de charger les contacts.')
   })
 
   it('switching tabs drops the other tab\'s params; no account shows an empty state', async () => {

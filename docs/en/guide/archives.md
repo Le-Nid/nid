@@ -2,7 +2,7 @@
 
 The **Archives** page (`/archives`) gives access to the local copy of your mails, saved on the NAS in EML format. It stays available even when the mails were deleted from Gmail, and even when the Gmail account was disconnected.
 
-Four tabs: **Mails**, **Trash**, **Retention**, **Shares**.
+Five tabs: **Mails**, **Contacts**, **Trash**, **Retention**, **Shares**.
 
 ---
 
@@ -56,6 +56,18 @@ Whoever opens the link sees the mail ("Email shared via temporary link"), remote
 ### Shares tab
 
 All your active links: **Subject**, **Sender**, **Expires on**, **Accesses** (opens / limit), copy, revoke. The number of active links is also shown in [Settings › Security](settings.md#security).
+
+---
+
+## Contacts tab
+
+The archive's address book, taken from the **From** and **To** headers of archived mails (trash excluded). Your own address is left out.
+
+- Each contact shows its **name** (one of the names seen in its mails), its **address**, how many archived mails have it **As sender** and **As recipient** (To field, possibly with other recipients) and the **Last exchange** date.
+- The contacts you exchange with most come first; **Search contacts** filters by name or address.
+- Clicking a contact opens the **Mails** tab filtered on that sender.
+
+Only the **To** field is read: Cc recipients do not appear.
 
 ---
 
