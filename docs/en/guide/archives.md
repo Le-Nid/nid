@@ -20,20 +20,23 @@ Other ways to fill the archives: **Save to the NAS** in [Mail](mails.md), an acc
 
 - **Label tree** (on the left on desktop): **All mails** then the labels that hold archived mails, with their count.
 - **Full-text search**: subject, sender, content and body, accent-insensitive, with `"exact phrase"`, `-excluded` and `OR`. Matching terms are highlighted in the extract.
-- **Filters**: **Sender**, period (**From** / **To**), **With attachment**. On mobile they sit in the **Filters (N)** panel with the **Label**, then **Show results**.
+- **Tags** (below the labels on desktop): **All tags** then your tags, with their count. A selected tag filters the list and offers **Delete tag "…"**, which removes it from every archive of the account without deleting the mails.
+- **Filters**: **Sender**, period (**From** / **To**), **With attachment**. On mobile they sit in the **Filters (N)** panel with the **Label** and the **Tag**, then **Show results**.
 
 Results ("N results") show **Subject**, **Extract**, **Date**, **Sender**, **Size**. **Clear search and filters** goes back to the full list.
 
 ### Actions
 
 - A row's `⋯` menu: **Open**, **Share**, **Delete**.
-- Selecting several rows: **Export .mbox**, **Delete**.
+- Selecting several rows: **Export .mbox**, **Tags**, **Delete**.
+
+**Tags** adds or removes the typed tags (comma-separated, your existing tags are suggested) on the whole selection. Tags stay in Nid: Gmail never sees them, and they are kept when the mail is archived again.
 
 **Delete** moves the archives to the archive trash, with a toast "Deleting N archives in 10 s" and **Undo**.
 
 ### Archive reader
 
-**Open** shows the archived mail: headers, body (remote images blocked, as in [Mail](mails.md#read-a-mail)), downloadable attachments and **Conversation**. Actions: **Share**, **Delete**.
+**Open** shows the archived mail: headers, body (remote images blocked, as in [Mail](mails.md#read-a-mail)), downloadable attachments, its **Tags** (remove one with a click, add some with the **Add a tag…** field then Enter) and **Conversation**. Actions: **Share**, **Delete**.
 
 An encrypted archived mail shows "This mail is encrypted: its content cannot be read here." Archive encryption is not configured from the interface.
 

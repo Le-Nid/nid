@@ -57,6 +57,26 @@ test.describe('Archives', () => {
     await revoke
   })
 
+  test('tags: add to the selection, filter by tag', async ({ page, isMobile }) => {
+    await page.goto('/archives')
+    await page.getByRole('checkbox', { name: t('dataList.selectRow', { label: MORNING }) }).check()
+    await page.getByRole('toolbar', { name: t('bulkBar.label') }).getByRole('button', { name: t('archives.tags.title') }).click()
+    const dialog = page.getByRole('dialog', { name: t('archives.tags.title') })
+    await dialog.getByLabel(t('archives.tags.field')).fill('énergie, 2026')
+    const tag = page.waitForRequest(is('POST', `/api/archive/${ACCOUNT}/mails/tags`))
+    await dialog.getByRole('button', { name: t('archives.tags.addAction') }).click()
+    expect((await tag).postDataJSON()).toMatchObject({ add: ['énergie', '2026'] })
+
+    const list = page.waitForRequest((req) => req.url().includes('/mails?') && new URL(req.url()).searchParams.get('tag') === 'impôts')
+    if (isMobile) {
+      await page.getByRole('button', { name: t('archives.filters') }).click()
+      await page.getByRole('dialog', { name: t('archives.filters') }).getByLabel(t('archives.filter.tag')).selectOption('impôts')
+    } else {
+      await page.getByRole('tree', { name: t('archives.tags.title') }).getByRole('treeitem', { name: /impôts/ }).click()
+    }
+    await list
+  })
+
   test('« Supprimer » moves to the archive trash at once, « Annuler » restores', async ({ page }) => {
     await page.goto('/archives')
     await page.getByRole('checkbox', { name: t('dataList.selectRow', { label: MORNING }) }).check()

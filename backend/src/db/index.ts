@@ -19,6 +19,7 @@ import * as migration013 from './migrations/013_api_tokens'
 import * as migration014 from './migrations/014_account_reauth_notification'
 import * as migration015 from './migrations/015_mail_accounts'
 import * as migration016 from './migrations/016_imap_accounts'
+import * as migration017 from './migrations/017_archive_tags'
 import { createLogger } from '../logger'
 
 const logger = createLogger('db')
@@ -59,6 +60,7 @@ const migrations: Record<string, Migration> = {
   '014_account_reauth_notification': migration014,
   '015_mail_accounts': migration015,
   '016_imap_accounts': migration016,
+  '017_archive_tags': migration017,
 }
 
 class InCodeMigrationProvider implements MigrationProvider {

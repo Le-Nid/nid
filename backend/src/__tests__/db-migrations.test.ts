@@ -14,16 +14,16 @@ vi.mock('kysely/migration', () => ({
 const { runMigrations } = await import('../db')
 
 describe('runMigrations', () => {
-  it('hands Kysely every in-code migration, 016 last', async () => {
-    migrator.results = [{ status: 'Success', migrationName: '016_imap_accounts' }]
+  it('hands Kysely every in-code migration, 017 last', async () => {
+    migrator.results = [{ status: 'Success', migrationName: '017_archive_tags' }]
     await runMigrations()
     const names = Object.keys(await migrator.provider.getMigrations())
     expect(names).toEqual([...names].sort())
-    expect(names.at(-1)).toBe('016_imap_accounts')
+    expect(names.at(-1)).toBe('017_archive_tags')
   })
 
   it('throws the migrator error', async () => {
-    migrator.results = [{ status: 'Error', migrationName: '016_imap_accounts' }]
+    migrator.results = [{ status: 'Error', migrationName: '017_archive_tags' }]
     migrator.error = new Error('boom')
     await expect(runMigrations()).rejects.toThrow('boom')
   })

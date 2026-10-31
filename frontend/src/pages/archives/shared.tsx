@@ -20,11 +20,12 @@ export type ArchivedMail = {
   size_bytes: number | string
   has_attachments: boolean
   snippet: string | null
+  tags?: string[]
   deleted_at?: string | null
   highlight?: string
 }
 
-const FILTERS = ['q', 'sender', 'from', 'to', 'att', 'label'] as const
+const FILTERS = ['q', 'sender', 'from', 'to', 'att', 'label', 'tag'] as const
 export type Filters = Record<(typeof FILTERS)[number], string>
 
 /** Search and filters of the archive list, in the URL (§3.3) so a search can be shared and survives back. */
@@ -39,6 +40,7 @@ export function useArchiveFilters() {
   if (filters.to) apiParams.to_date = `${filters.to}T23:59:59.999Z` // the whole last day
   if (filters.att) apiParams.has_attachments = 'true'
   if (filters.label) apiParams.label = filters.label
+  if (filters.tag) apiParams.tag = filters.tag
   // Quick successive changes (typing, then a checkbox) must not drop each other: navigation is async, so
   // each write starts from the previous write rather than from the params of the render it comes from
   const latest = useRef(params)
