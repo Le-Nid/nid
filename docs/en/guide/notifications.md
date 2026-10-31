@@ -90,3 +90,5 @@ ntfy access myuser my-topic write
 ::: warning Security
 ntfy credentials are stored in plain text in the database. Use a dedicated account with minimal permissions (write-only on the relevant topic).
 :::
+
+For Home Assistant, see the dedicated guide: [Home Assistant](home-assistant.md).

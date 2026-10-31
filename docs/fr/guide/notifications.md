@@ -90,3 +90,5 @@ ntfy access monuser mon-topic write
 ::: warning Sécurité
 Les identifiants ntfy sont stockés en clair dans la base de données. Utilisez un compte dédié avec des permissions minimales (écriture seule sur le topic concerné).
 :::
+
+Pour Home Assistant, voir le guide dédié : [Home Assistant](home-assistant.md).
