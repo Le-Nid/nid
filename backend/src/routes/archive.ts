@@ -7,6 +7,7 @@ import { streamArchiveZip } from "../archive/export.service";
 import { invalidateDashboardCache } from "../dashboard/cache.service";
 import { deleteArchivedMails } from "../archive/trash.service";
 import { listArchiveContacts } from "../archive/contacts.service";
+import { logAudit } from "../audit/audit.service";
 import fs from "node:fs";
 import { escapeIlike, FTS_CONFIG, ftsQuery, notFound } from "../utils/db";
 import { extractPagination } from "../utils/pagination";
@@ -420,6 +421,22 @@ export async function archiveRoutes(app: FastifyInstance) {
       .where(sql<boolean>`tags @> ARRAY[${tag}]::text[]`)
       .executeTakeFirst();
     return { updated: Number(result.numUpdatedRows) };
+  });
+
+  // ─── Restore to Gmail (archive → mailbox) ─────────────────
+  app.post("/:accountId/mails/restore-gmail", accountAuth, async (request, reply) => {
+    const { accountId } = request.params as { accountId: string };
+    const { mailIds } = trashSchema.parse(request.body);
+    const account = await db.selectFrom("mail_accounts").select(["provider", "is_active", "auth_error_at"])
+      .where("id", "=", accountId).executeTakeFirst();
+    if (account?.provider !== "gmail") return reply.code(409).send({ error: "Not a Gmail account" });
+    if (!account.is_active || account.auth_error_at) return reply.code(409).send({ error: "Gmail account must be reconnected first" });
+
+    const job = await enqueueJob("restore_gmail", { accountId, userId: request.user.sub, mailIds });
+    await logAudit(request.user.sub, "archive.restore_gmail", {
+      targetType: "mail_account", targetId: accountId, details: { count: mailIds.length }, ipAddress: request.ip,
+    });
+    return reply.code(202).send({ jobId: job.id });
   });
 
   // ─── List trash ───────────────────────────────────────────

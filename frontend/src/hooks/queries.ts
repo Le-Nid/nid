@@ -193,6 +193,10 @@ export function useArchiveContacts(accountId: string, q: string) {
   })
 }
 
+export function useRestoreToGmail(accountId: string) {
+  return useMutation({ mutationFn: (mailIds: string[]) => archiveApi.restoreToGmail(accountId, mailIds) })
+}
+
 export function useArchiveTags(accountId: string) {
   return useQuery({ queryKey: queryKeys.archiveTags(accountId), queryFn: () => archiveApi.listTags(accountId), enabled: !!accountId })
 }

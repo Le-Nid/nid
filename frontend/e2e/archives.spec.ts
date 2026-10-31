@@ -77,6 +77,15 @@ test.describe('Archives', () => {
     await list
   })
 
+  test('« Restaurer dans Gmail » on the selection', async ({ page }) => {
+    await page.goto('/archives')
+    await page.getByRole('checkbox', { name: t('dataList.selectRow', { label: MORNING }) }).check()
+    const restore = page.waitForRequest(is('POST', `/api/archive/${ACCOUNT}/mails/restore-gmail`))
+    await page.getByRole('toolbar', { name: t('bulkBar.label') }).getByRole('button', { name: t('archives.action.restore') }).click()
+    expect((await restore).postDataJSON().mailIds).toHaveLength(1)
+    await expect(page.getByText('Restauration de 1 mail dans Gmail lancée')).toBeVisible()
+  })
+
   test('Contacts: a contact opens the mails it sent', async ({ page }) => {
     await page.goto('/archives?tab=contacts')
     await expect(page.getByText('1 contact', { exact: true })).toBeVisible()
