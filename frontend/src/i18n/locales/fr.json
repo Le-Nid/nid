@@ -625,7 +625,35 @@
       "disconnectedPage": "{{email}} est déconnecté",
       "disconnectedPageHint": "Cette page a besoin de l'accès Gmail. Les archives du compte restent consultables dans Archives.",
       "reconnectInSettings": "Reconnecter dans Paramètres",
-      "disconnectedOption": "{{email}} (déconnecté)"
+      "disconnectedOption": "{{email}} (déconnecté)",
+      "wizard": {
+        "title": "Configurer le compte",
+        "description": "{{email}} est connecté. Réglez sa sauvegarde et ses premières règles ; chaque étape peut être passée.",
+        "steps": "Étapes",
+        "step": {
+          "google": "Connexion Google",
+          "backup": "Sauvegarde",
+          "rules": "Règles",
+          "summary": "Récapitulatif"
+        },
+        "firstBackup": "Première sauvegarde",
+        "first": {
+          "year": "Les 12 derniers mois",
+          "all": "Toute la boîte",
+          "none": "Plus tard"
+        },
+        "rulesHint": "Cochez les règles à créer. Elles s'exécuteront automatiquement à la fréquence indiquée ; vous pourrez les modifier ou les désactiver dans Règles & libellés. « Supprimer » place les mails dans la corbeille Gmail (30 jours).",
+        "matches_one": "≈ {{count, number}} mail",
+        "matches_other": "≈ {{count, number}} mails",
+        "off": "Désactivée",
+        "noRules": "Aucune",
+        "back": "Retour",
+        "later": "Plus tard",
+        "next": "Suivant",
+        "finish": "Terminer",
+        "done": "Compte configuré",
+        "failed": "La configuration n'a pas abouti : vérifiez le compte dans les paramètres."
+      }
     },
     "notifications": {
       "title": "Préférences de notification",
@@ -1215,7 +1243,8 @@
       "backup": "Sauvegarde NAS",
       "rules": "Règles actives",
       "rulesHint_one": "{{count, number}} mail traité ces 30 derniers jours",
-      "rulesHint_other": "{{count, number}} mails traités ces 30 derniers jours"
+      "rulesHint_other": "{{count, number}} mails traités ces 30 derniers jours",
+      "dedupSaved": "{{size}} économisés par la déduplication"
     },
     "top": {
       "title": "Top encombreurs",
@@ -1241,6 +1270,19 @@
       "title": "Jobs en cours",
       "empty": "Aucun job en cours",
       "loadError": "Impossible de charger les jobs en cours."
+    },
+    "daily": {
+      "title": "Mails reçus — 30 derniers jours",
+      "empty": "Aucun mail archivé ces 30 derniers jours : activez la sauvegarde automatique",
+      "bar": "{{day}} : {{count, number}} mail(s)",
+      "day": "Jour",
+      "mails": "Mails"
+    },
+    "heaviest": {
+      "mails": "Plus gros mails archivés",
+      "attachments": "Plus grosses pièces jointes",
+      "empty": "Rien d'archivé pour l'instant",
+      "noSubject": "(sans objet)"
     }
   },
   "activity": {

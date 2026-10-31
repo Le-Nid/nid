@@ -18,8 +18,14 @@ Four clickable cards (2×2 on mobile):
 |---|---|---|
 | **Mails in Gmail** | number of mails in the account, "N unread" | [Mail](mails.md) |
 | **Recoverable** | total size of the scanned senders, "N senders to clean up" (or "Sender scan not run yet") | [Cleanup](cleanup.md) |
-| **NAS backup** | share of Gmail mails already archived (%), number of archived mails | [Archives](archives.md) |
+| **NAS backup** | share of Gmail mails already archived (%), number of archived mails, and the space saved by attachment deduplication | [Archives](archives.md) |
 | **Active rules** | number of active rules, "N mails processed in the last 30 days" | [Rules & labels](rules.md) |
+
+---
+
+## Mails received — last 30 days
+
+One bar per day, from the archives (receipt date of the backed-up mails): the chart is accurate when automatic backup is on. Screen readers get the same figures as a table. **See all** opens [Archives](archives.md).
 
 ---
 
@@ -42,6 +48,12 @@ Each suggestion offers:
 - **Unsubscribe and clean up** — same action as in [Cleanup](cleanup.md#unsubscribe-and-clean-up) (disabled if the sender offers no automatic unsubscribe); progress shows on the suggestion, which goes away once the action is done;
 - **Always do this** — opens the [rule](rules.md#create-a-rule) form prefilled with the sender;
 - **Ignore** — hides the suggestion.
+
+---
+
+## Heaviest mails and attachments
+
+The 5 heaviest archived mails (subject, sender, size) and the 5 heaviest attachments (name, mail subject, size). **See all** opens [Archives](archives.md) or [Attachments](attachments.md), sorted by size.
 
 ---
 

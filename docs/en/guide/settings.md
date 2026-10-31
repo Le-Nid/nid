@@ -68,6 +68,15 @@ Each connected account shows:
 
 **Add a Gmail account** connects a new account, within the limit shown ("N / max accounts"). Requested access: `gmail.modify`, `gmail.labels`.
 
+Back from Google, a **Set up the account** wizard opens for that new account (not on a reconnection):
+
+1. **Google sign-in** — already done;
+2. **Backup** — automatic backup and frequency, then the **first backup**: the last 12 months (default), the whole mailbox, or later;
+3. **Rules** — starter rules to tick (clean up promotions and old newsletters, archive invoices…), each with its action, frequency and the approximate number of mails it matches today;
+4. **Summary** — **Finish** applies everything. "Delete" moves mails to the Gmail trash (30 days).
+
+Every step can be skipped; **Later** closes the wizard without saving anything. Created rules are then edited in [Rules & labels](rules.md).
+
 ---
 
 ## Notifications & webhooks

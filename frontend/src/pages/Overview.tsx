@@ -1,7 +1,7 @@
 import { useEffect, useId, type ReactNode } from 'react'
 import { Link, useOutletContext } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { Activity, Users } from 'lucide-react'
+import { Activity, BarChart3, Paperclip, Users } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PageHeader } from '@/components/app/PageHeader'
 import { EmptyState } from '@/components/app/EmptyState'
@@ -15,6 +15,8 @@ import { formatBytes, formatRelative, formatSender, jobTypeKey } from '@/utils/f
 import { Suggestions } from './overview/Suggestions'
 
 type Sender = { sender: string; count: number; sizeBytes: number }
+type Day = { day: string; count: number }
+type Heavy = { id: string; name: string; detail?: string | null; size: number }
 type Job = { id: string; bullmq_id: string | null; type: string }
 
 const TOP = 5
@@ -85,6 +87,54 @@ function TopSenders({ senders }: Readonly<{ senders: Sender[] }>) {
           <span aria-hidden="true" className="h-1.5 overflow-hidden rounded-full bg-muted">
             <span className="block h-full rounded-full bg-primary" style={{ width: `${(s.count / max) * 100}%` }} />
           </span>
+        </li>
+      ))}
+    </ol>
+  )
+}
+
+/** Mails received per day over 30 days (from the archives): CSS bars, the same figures as a table for screen readers. */
+function DailyVolume({ days }: Readonly<{ days: Day[] }>) {
+  const { t, i18n } = useTranslation()
+  if (!days.some((d) => d.count)) return <EmptyState icon={<BarChart3 />} title={t('overview.daily.empty')} />
+  const max = Math.max(...days.map((d) => d.count))
+  const label = (day: string) => new Date(`${day}T00:00:00Z`).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', timeZone: 'UTC' })
+  return (
+    <figure className="flex flex-col gap-2">
+      <div aria-hidden="true" className="flex h-32 items-end gap-0.5">
+        {days.map((d) => (
+          <span
+            key={d.day}
+            title={t('overview.daily.bar', { day: label(d.day), count: d.count })}
+            className="flex-1 rounded-t-sm bg-primary"
+            style={{ height: `${(d.count / max) * 100}%`, minHeight: d.count ? 2 : 0 }}
+          />
+        ))}
+      </div>
+      <div aria-hidden="true" className="flex justify-between text-xs text-muted-foreground">
+        <span>{label(days[0].day)}</span><span>{label(days.at(-1)!.day)}</span>
+      </div>
+      <table className="sr-only">
+        <caption>{t('overview.daily.title')}</caption>
+        <thead><tr><th scope="col">{t('overview.daily.day')}</th><th scope="col">{t('overview.daily.mails')}</th></tr></thead>
+        <tbody>{days.map((d) => <tr key={d.day}><td>{label(d.day)}</td><td>{d.count}</td></tr>)}</tbody>
+      </table>
+    </figure>
+  )
+}
+
+/** The heaviest archived mails or attachments, largest first. */
+function Heaviest({ items, empty }: Readonly<{ items: Heavy[]; empty: string }>) {
+  if (!items.length) return <EmptyState icon={<Paperclip />} title={empty} />
+  return (
+    <ol className="flex flex-col gap-2 text-sm">
+      {items.map((it) => (
+        <li key={it.id} className="flex justify-between gap-3">
+          <span className="flex min-w-0 flex-col">
+            <span className="truncate font-medium">{it.name}</span>
+            {it.detail && <span className="truncate text-muted-foreground">{it.detail}</span>}
+          </span>
+          <span className="shrink-0 text-muted-foreground tabular-nums">{formatBytes(it.size)}</span>
         </li>
       ))}
     </ol>
@@ -178,7 +228,10 @@ export default function OverviewPage() {
           to="/archives"
           label={t('overview.kpi.backup')}
           value={coverage === undefined ? kpiValue(undefined, !!archive, n) : new Intl.NumberFormat(i18n.language, { style: 'percent' }).format(coverage / 100)}
-          hint={archived === undefined ? undefined : t('archives.status.count', { count: archived })}
+          hint={archived === undefined ? undefined : [
+            t('archives.status.count', { count: archived }),
+            archive?.dedup_saved_bytes > 0 && t('overview.kpi.dedupSaved', { size: formatBytes(archive.dedup_saved_bytes) }),
+          ].filter(Boolean).join(' · ')}
           progress={coverage}
         />
         <KpiCard
@@ -189,6 +242,11 @@ export default function OverviewPage() {
         />
       </div>
 
+      <Section title={t('overview.daily.title')} to="/archives">
+        {/* daily is missing from a pre-upgrade cached answer (5 min): keep the skeleton rather than a false « no mail » */}
+        {archive?.daily ? <DailyVolume days={archive.daily} /> : <Skeleton className="h-36 w-full" />}
+      </Section>
+
       <div className="grid gap-4 md:grid-cols-2">
         <Section title={t('overview.top.title')} to="/cleanup">
           {stats.isError && <LoadError message={t('overview.top.loadError')} onRetry={() => void stats.refetch()} />}
@@ -197,6 +255,19 @@ export default function OverviewPage() {
         </Section>
         <Section title={t('overview.suggestions.title')} to="/cleanup">
           <Suggestions accountId={accountId} />
+        </Section>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <Section title={t('overview.heaviest.mails')} to="/archives">
+          {archive
+            ? <Heaviest empty={t('overview.heaviest.empty')} items={(archive.biggestMails ?? []).map((m: { id: string; subject: string | null; sender: string | null; size_bytes: number }) => ({ id: m.id, name: m.subject || t('overview.heaviest.noSubject'), detail: m.sender && formatSender(m.sender), size: Number(m.size_bytes) }))} />
+            : <Skeleton className="h-32 w-full" />}
+        </Section>
+        <Section title={t('overview.heaviest.attachments')} to="/attachments">
+          {archive
+            ? <Heaviest empty={t('overview.heaviest.empty')} items={(archive.biggestAttachments ?? []).map((a: { id: string; filename: string; subject: string | null; size_bytes: number }) => ({ id: a.id, name: a.filename, detail: a.subject, size: Number(a.size_bytes) }))} />
+            : <Skeleton className="h-32 w-full" />}
         </Section>
       </div>
 

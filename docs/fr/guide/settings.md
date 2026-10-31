@@ -68,6 +68,15 @@ Chaque compte connecté affiche :
 
 **Ajouter un compte Gmail** connecte un nouveau compte, dans la limite affichée (« N / max comptes »). Accès demandés : `gmail.modify`, `gmail.labels`.
 
+Au retour de Google, un assistant **Configurer le compte** s'ouvre pour ce nouveau compte (pas lors d'une reconnexion) :
+
+1. **Connexion Google** — déjà faite ;
+2. **Sauvegarde** — sauvegarde automatique et fréquence, puis la **première sauvegarde** : les 12 derniers mois (par défaut), toute la boîte, ou plus tard ;
+3. **Règles** — des règles de départ à cocher (nettoyage des promotions, des vieilles newsletters, archivage des factures…), chacune avec son action, sa fréquence et le nombre approximatif de mails concernés aujourd'hui ;
+4. **Récapitulatif** — **Terminer** applique tout. « Supprimer » place les mails dans la corbeille Gmail (30 jours).
+
+Chaque étape peut être passée ; **Plus tard** ferme l'assistant sans rien enregistrer. Les règles créées se modifient ensuite dans [Règles & libellés](rules.md).
+
 ---
 
 ## Notifications & webhooks
