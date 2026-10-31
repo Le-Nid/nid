@@ -255,6 +255,18 @@ describe('unified worker handlers', () => {
     expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ category: 'job_failed' }))
   })
 
+  it('notifies a bulk_operation failure once, on the last of its attempts', async () => {
+    mockTrashMessages.mockRejectedValue(new Error('Gmail error'))
+    const job: any = { ...makeJob('bulk_operation', { accountId: 'acc-1', userId: 'user-1', action: 'trash', messageIds: ['msg-1'] }), opts: { attempts: 3 } }
+    mockNotify.mockClear()
+    for (const attemptsMade of [0, 1]) await expect(processJob({ ...job, attemptsMade })).rejects.toThrow('Gmail error')
+    expect(mockNotify).not.toHaveBeenCalledWith(expect.objectContaining({ category: 'job_failed' }))
+    await expect(processJob({ ...job, attemptsMade: 2 })).rejects.toThrow('Gmail error')
+    expect(mockNotify).toHaveBeenCalledTimes(1)
+    expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ category: 'job_failed' }))
+    mockTrashMessages.mockResolvedValue(undefined)
+  })
+
   it('handles run_rule success', async () => {
     mockGetRule.mockResolvedValue({ id: 'rule-1', name: 'Test Rule', is_active: true })
     mockRunRule.mockResolvedValue({ processed: 5 })
