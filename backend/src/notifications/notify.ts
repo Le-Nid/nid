@@ -15,12 +15,13 @@ const CATEGORY_TO_WEBHOOK: Record<string, WebhookEvent> = {
   rule_executed: 'rule.executed',
   quota_warning: 'quota.warning',
   integrity_alert: 'integrity.failed',
+  account_reauth: 'account.reauth_required',
 }
 
 interface NotifyOptions {
   userId: string
   /** Notification category (matches DB columns in notification_preferences) */
-  category: 'weekly_report' | 'job_completed' | 'job_failed' | 'rule_executed' | 'quota_warning' | 'integrity_alert'
+  category: 'weekly_report' | 'job_completed' | 'job_failed' | 'rule_executed' | 'quota_warning' | 'integrity_alert' | 'account_reauth'
   title: string
   body?: string
   data?: Record<string, unknown>

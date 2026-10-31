@@ -644,7 +644,9 @@
         "quota_warning": "Alerte de stockage",
         "quota_warningHint": "Le stockage des archives approche sa limite",
         "integrity_alert": "Alerte d'intégrité",
-        "integrity_alertHint": "Un problème est détecté dans les archives"
+        "integrity_alertHint": "Un problème est détecté dans les archives",
+        "account_reauth": "Compte Gmail à reconnecter",
+        "account_reauthHint": "Google a refusé l'accès à un compte : reconnectez-le"
       }
     },
     "webhooks": {

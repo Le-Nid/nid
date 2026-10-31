@@ -117,12 +117,14 @@ export async function notificationsRoutes(app: FastifyInstance) {
       rule_executed: row.rule_executed,
       quota_warning: row.quota_warning,
       integrity_alert: row.integrity_alert,
+      account_reauth: row.account_reauth,
       weekly_report_toast: row.weekly_report_toast,
       job_completed_toast: row.job_completed_toast,
       job_failed_toast: row.job_failed_toast,
       rule_executed_toast: row.rule_executed_toast,
       quota_warning_toast: row.quota_warning_toast,
       integrity_alert_toast: row.integrity_alert_toast,
+      account_reauth_toast: row.account_reauth_toast,
       remote_images: row.remote_images,
     }
   })
@@ -134,8 +136,8 @@ export async function notificationsRoutes(app: FastifyInstance) {
 
     // Filter only valid keys
     const allowed = [
-      'weekly_report', 'job_completed', 'job_failed', 'rule_executed', 'quota_warning', 'integrity_alert',
-      'weekly_report_toast', 'job_completed_toast', 'job_failed_toast', 'rule_executed_toast', 'quota_warning_toast', 'integrity_alert_toast',
+      'weekly_report', 'job_completed', 'job_failed', 'rule_executed', 'quota_warning', 'integrity_alert', 'account_reauth',
+      'weekly_report_toast', 'job_completed_toast', 'job_failed_toast', 'rule_executed_toast', 'quota_warning_toast', 'integrity_alert_toast', 'account_reauth_toast',
     ]
     const updates: Record<string, any> = {}
     for (const key of allowed) {

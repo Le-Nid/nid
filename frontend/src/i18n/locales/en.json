@@ -644,7 +644,9 @@
         "quota_warning": "Storage alert",
         "quota_warningHint": "Archive storage nears its limit",
         "integrity_alert": "Integrity alert",
-        "integrity_alertHint": "A problem is found in the archives"
+        "integrity_alertHint": "A problem is found in the archives",
+        "account_reauth": "Gmail account to reconnect",
+        "account_reauthHint": "Google refused access to an account: reconnect it"
       }
     },
     "webhooks": {

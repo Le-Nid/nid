@@ -15,6 +15,7 @@ import { auditRoutes } from './audit'
 import { twoFactorRoutes } from './2fa'
 import { passkeyRoutes } from './passkeys'
 import { apiTokenRoutes } from './api-tokens'
+import { summaryRoutes } from './summary'
 import { integrityRoutes } from './integrity'
 import { webhookRoutes } from './webhooks'
 import { configRoutes } from './config'
@@ -75,6 +76,7 @@ export async function registerRoutes(app: FastifyInstance) {
   await app.register(eventsRoutes,        { prefix: '/api/events' })
   await app.register(labelsRoutes,        { prefix: '/api/labels' })
   await app.register(aboutRoutes,         { prefix: '/api/about' })
+  await app.register(summaryRoutes,       { prefix: '/api/summary' })
 
   // Démarrer le broadcaster SSE ← QueueEvents BullMQ
   startQueueEventBroadcaster()

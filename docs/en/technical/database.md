@@ -227,12 +227,14 @@ erDiagram
         boolean rule_executed "default false"
         boolean quota_warning "default true"
         boolean integrity_alert "default true"
+        boolean account_reauth "default true"
         boolean weekly_report_toast "default false"
         boolean job_completed_toast "default true"
         boolean job_failed_toast "default true"
         boolean rule_executed_toast "default false"
         boolean quota_warning_toast "default false"
         boolean integrity_alert_toast "default false"
+        boolean account_reauth_toast "default false"
         text remote_images "block | allow, default block"
         timestamptz updated_at
     }

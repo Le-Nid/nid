@@ -10,7 +10,7 @@ const webhookSchema = z.object({
   url: z.string().url(),
   type: z.enum(['generic', 'discord', 'slack', 'ntfy']).default('generic'),
   events: z.array(z.enum([
-    'job.completed', 'job.failed', 'rule.executed', 'quota.warning', 'integrity.failed',
+    'job.completed', 'job.failed', 'rule.executed', 'quota.warning', 'integrity.failed', 'account.reauth_required',
   ])).min(1),
   auth_user: z.string().max(255).nullish(),
   auth_password: z.string().max(255).nullish(),

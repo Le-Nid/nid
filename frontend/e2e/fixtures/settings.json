@@ -32,12 +32,14 @@
     "rule_executed": false,
     "quota_warning": true,
     "integrity_alert": true,
+    "account_reauth": true,
     "weekly_report_toast": false,
     "job_completed_toast": true,
     "job_failed_toast": true,
     "rule_executed_toast": false,
     "quota_warning_toast": false,
     "integrity_alert_toast": false,
+    "account_reauth_toast": false,
     "remote_images": "block"
   },
   "twoFactorSetup": {

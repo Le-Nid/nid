@@ -46,6 +46,41 @@ All routes require a JWT in the httpOnly `token` cookie (or an `Authorization: B
 
 ---
 
+## Summary (Home Assistant)
+
+`GET /api/summary` 🔒 — one small read with everything a dashboard or a Home Assistant REST sensor needs, as plain numbers. Meant for an [API token](auth.md#api-tokens) (`read` is enough).
+
+```json
+{
+  "accounts": [{ "id", "email", "is_active", "needs_reauth", "last_backup_at", "archived_mails", "archived_bytes", "last_archived_at" }],
+  "needs_reauth": 1,
+  "archived_mails": 24106, "archived_bytes": 1830000000, "storage_quota_bytes": 5368709120,
+  "jobs": { "active": 0, "failed_24h": 1 },
+  "unread_notifications": 3
+}
+```
+
+Home Assistant:
+
+```yaml
+rest:
+  - resource: https://nid.example.com/api/summary
+    headers:
+      Authorization: !secret nid_token   # "Bearer nid_…"
+    scan_interval: 300
+    sensor:
+      - name: Nid accounts to reconnect
+        value_template: "{{ value_json.needs_reauth }}"
+      - name: Nid archived mails
+        value_template: "{{ value_json.archived_mails }}"
+      - name: Nid failed jobs 24h
+        value_template: "{{ value_json.jobs.failed_24h }}"
+```
+
+For a push instead of polling, a generic [webhook](webhooks.md) on `account.reauth_required` can target a Home Assistant `webhook` trigger (set `WEBHOOK_ALLOW_PRIVATE_NETWORKS=true` when Home Assistant is on the local network).
+
+---
+
 ## Health check
 
 ```

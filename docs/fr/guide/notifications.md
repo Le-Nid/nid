@@ -51,6 +51,7 @@ Dans **Paramètres › Notifications & webhooks**, chaque événement a deux int
 | `rule.executed` | Règle exécutée |
 | `quota.warning` | Alerte de stockage |
 | `integrity.failed` | Alerte d'intégrité |
+| `account.reauth_required` | Compte Gmail à reconnecter |
 
 Le rapport hebdomadaire n'est pas envoyé par webhook.
 

@@ -13,6 +13,7 @@ Permet de recevoir des notifications sur des services externes (Discord, Slack, 
 | `rule.executed` | Une règle automatique s'exécute |
 | `quota.warning` | Alerte de quota (stockage) |
 | `integrity.failed` | La vérification d'intégrité détecte un problème |
+| `account.reauth_required` | Google a refusé l'accès à un compte Gmail : il faut le reconnecter (envoyé une fois par incident) |
 
 ---
 

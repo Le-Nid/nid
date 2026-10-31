@@ -28,6 +28,7 @@ const EVENTS: [pref: string, event: string | null][] = [
   ['rule_executed', 'rule.executed'],
   ['quota_warning', 'quota.warning'],
   ['integrity_alert', 'integrity.failed'],
+  ['account_reauth', 'account.reauth_required'],
 ]
 const WEBHOOK_EVENTS = EVENTS.filter(([, event]) => event) as [string, string][]
 const TYPES = ['generic', 'discord', 'slack', 'ntfy']

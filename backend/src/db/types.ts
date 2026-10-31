@@ -170,12 +170,14 @@ export interface NotificationPreferencesTable {
   rule_executed:   Generated<boolean>
   quota_warning:   Generated<boolean>
   integrity_alert: Generated<boolean>
+  account_reauth: Generated<boolean>
   weekly_report_toast:   Generated<boolean>
   job_completed_toast:   Generated<boolean>
   job_failed_toast:      Generated<boolean>
   rule_executed_toast:   Generated<boolean>
   quota_warning_toast:   Generated<boolean>
   integrity_alert_toast: Generated<boolean>
+  account_reauth_toast: Generated<boolean>
   remote_images:   Generated<'block' | 'allow'>
   updated_at:      Generated<Date>
 }
