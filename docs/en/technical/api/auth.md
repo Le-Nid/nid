@@ -408,3 +408,27 @@ Public. Rate limit: 10/min.
 ```
 
 **Response 200**: `{ "user": { "id", "email", "role" } }`, session cookie set, passkey counter updated. Logged as `user.login_passkey`. The same `401` for an expired challenge, an unknown passkey, a disabled account or a bad signature.
+
+## API tokens
+
+Long-lived tokens for Home Assistant or a script, sent as `Authorization: Bearer nid_…`. Only the SHA-256 of a token is stored: it is shown once, at creation. A token signs its owner in **never as admin**, and is refused (`403`) on `/api/auth/*` (account security, tokens themselves), `/api/admin/*`, `/api/privacy/*`, `/api/webhooks/*` and `/api/shares/*`. A `read` token only passes `GET`/`HEAD`. An expired token, or one whose user is deactivated, gets `401`. These routes need the session cookie.
+
+```bash
+curl -H "Authorization: Bearer nid_…" https://nid.example.com/api/dashboard/<accountId>/stats
+```
+
+### GET /api/auth/api-tokens 🔒
+
+The user's tokens, without the token nor its hash: `[{ "id", "name", "scope", "expires_at", "last_used_at", "created_at" }]`. `last_used_at` is updated at most once a minute.
+
+### POST /api/auth/api-tokens 🔒
+
+```json
+{ "name": "Home Assistant", "scope": "read", "expires_in_days": 365 }
+```
+
+`scope`: `read` (default) or `write`. `expires_in_days`: 1–3650, or `null` (default) for no expiry. **Response 201**: the token row plus `"token": "nid_…"`, the only time it is returned. `409` past 20 tokens. Logged as `user.api_token_create`. Rate limit: 10/min.
+
+### DELETE /api/auth/api-tokens/:id 🔒
+
+**Response 204**, `404` if the token is not the user's. Logged as `user.api_token_revoke`.

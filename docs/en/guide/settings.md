@@ -45,6 +45,10 @@ The card only shows when the browser supports passkeys. A passkey is bound to th
 
 Once on, a code is asked at each sign-in, including with Google or another provider (SSO). To turn it off, enter a code then **Turn off 2FA**.
 
+### API tokens
+
+For Home Assistant or a script. Give the token a **Name**, choose its **Permissions** (*Read only*, or *Read and actions* to start jobs or rules) and an **Expiration**, then **Create token**. Copy it right away: it is shown only once. Send it in the `Authorization: Bearer nid_…` header. A token never reaches account security, administration, encryption, webhooks or share links. The list shows when each token was last used; the bin icon revokes it. See the [API reference](../technical/api/auth.md#api-tokens).
+
 ### Share links
 
 Number of active share links to your archived mails, with the **Manage share links in Archives** link ([Shares](archives.md#shares-tab) tab).

@@ -536,6 +536,35 @@
       "removeConfirm": "Elle ne permettra plus de se connecter à Nid. Pensez à la supprimer aussi du gestionnaire de mots de passe de l'appareil.",
       "removeLabel": "Supprimer la passkey"
     },
+    "apiTokens": {
+      "title": "Jetons d'API",
+      "hint": "Pour Home Assistant ou un script : envoyez le jeton dans l'en-tête « Authorization: Bearer … ». Un jeton n'a jamais accès à la sécurité du compte, à l'administration, au chiffrement, aux webhooks ni aux liens de partage.",
+      "name": "Nom du jeton",
+      "namePlaceholder": "Ex. Home Assistant",
+      "scopeLabel": "Droits",
+      "scope": {
+        "read": "Lecture seule",
+        "write": "Lecture et actions"
+      },
+      "expiryLabel": "Expiration",
+      "never": "Jamais",
+      "days_one": "{{count}} jour",
+      "days_other": "{{count}} jours",
+      "create": "Créer le jeton",
+      "createdOnce": "Copiez ce jeton maintenant : il ne sera plus jamais affiché.",
+      "copy": "Copier le jeton",
+      "copied": "Jeton copié",
+      "copyFailed": "Copie impossible : sélectionnez le jeton à la main.",
+      "done": "J'ai copié le jeton",
+      "lastUsed": "Utilisé {{when}}",
+      "neverUsed": "Jamais utilisé",
+      "expires": "Expire le {{date}}",
+      "expired": "Expiré",
+      "revoke": "Révoquer le jeton {{name}}",
+      "revokeTitle": "Révoquer le jeton « {{name}} » ?",
+      "revokeConfirm": "Les intégrations qui l'utilisent n'auront plus accès à Nid.",
+      "revokeLabel": "Révoquer"
+    },
     "twoFactor": {
       "title": "Authentification à deux facteurs (2FA)",
       "hint": "Protégez votre compte avec un code généré par une application d'authentification.",

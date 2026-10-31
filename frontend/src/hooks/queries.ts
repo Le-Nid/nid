@@ -5,7 +5,7 @@ import {
   analyticsApi, notificationsApi,
   auditApi, webhooksApi, savedSearchesApi, unifiedApi, archiveThreadsApi,
   retentionApi, importApi,
-  sharingApi, labelsApi, gmailAccountsApi, twoFactorApi, configApi, integrityApi, authApi, aboutApi, passkeysApi,
+  sharingApi, labelsApi, gmailAccountsApi, twoFactorApi, configApi, integrityApi, authApi, aboutApi, passkeysApi, apiTokensApi,
 } from '../api'
 import { startRegistration } from '@simplewebauthn/browser'
 import { useAuthStore } from '../store/auth.store'
@@ -62,6 +62,7 @@ export const queryKeys = {
   shares: () => ['shares'] as const,
   about: () => ['about'] as const,
   passkeys: () => ['passkeys'] as const,
+  apiTokens: () => ['api-tokens'] as const,
 }
 
 // ─── Dashboard ────────────────────────────────────────────
@@ -534,6 +535,28 @@ export function useRemovePasskey() {
   return useMutation({
     mutationFn: passkeysApi.remove,
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.passkeys() }),
+  })
+}
+
+// ─── API tokens ───────────────────────────────────────────
+
+export function useApiTokens() {
+  return useQuery({ queryKey: queryKeys.apiTokens(), queryFn: apiTokensApi.list })
+}
+
+export function useCreateApiToken() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: apiTokensApi.create,
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.apiTokens() }),
+  })
+}
+
+export function useRevokeApiToken() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: apiTokensApi.revoke,
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.apiTokens() }),
   })
 }
 

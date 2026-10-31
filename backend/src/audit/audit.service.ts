@@ -31,6 +31,8 @@ export type AuditAction =
   | 'user.login_passkey'
   | 'user.passkey_add'
   | 'user.passkey_remove'
+  | 'user.api_token_create'
+  | 'user.api_token_revoke'
   | 'user.export_data'
   | 'admin.reset_password'
   | 'admin.delete_user'

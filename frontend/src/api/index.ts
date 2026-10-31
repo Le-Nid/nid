@@ -201,6 +201,18 @@ export const passkeysApi = {
     api.post('/api/auth/passkeys/login/verify', { challengeId, response }).then((r) => r.data),
 }
 
+// ─── API tokens (Home Assistant, scripts) ─────────────────
+export const apiTokensApi = {
+  list: () =>
+    api.get('/api/auth/api-tokens').then((r) => r.data),
+
+  create: (body: { name: string; scope: 'read' | 'write'; expires_in_days: number | null }) =>
+    api.post('/api/auth/api-tokens', body).then((r) => r.data),
+
+  revoke: (id: string) =>
+    api.delete(`/api/auth/api-tokens/${id}`).then((r) => r.data),
+}
+
 // ─── Admin ────────────────────────────────────────────────
 export const adminApi = {
   getStats: () =>

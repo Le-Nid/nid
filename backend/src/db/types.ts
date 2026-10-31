@@ -331,6 +331,19 @@ export interface PasskeysTable {
   last_used_at:  Date | null
 }
 
+export type ApiTokenScope = 'read' | 'write'
+
+export interface ApiTokensTable {
+  id:           Generated<string>
+  user_id:      string
+  name:         string
+  token_hash:   string     // sha256 hex of the token, the token itself is shown once
+  scope:        ColumnType<ApiTokenScope, ApiTokenScope | undefined, ApiTokenScope>
+  expires_at:   Date | null
+  last_used_at: Date | null
+  created_at:   Generated<Date>
+}
+
 // ─── Database interface ───────────────────────────────────
 
 export interface Database {
@@ -358,6 +371,7 @@ export interface Database {
   archive_shares:       ArchiveSharesTable
   newsletter_scans:     NewsletterScansTable
   passkeys:             PasskeysTable
+  api_tokens:           ApiTokensTable
 }
 
 // ─── Row types (Selectable = what you get back from SELECT) ─
