@@ -18,6 +18,7 @@ All `/:accountId/...` routes require the JWT and ownership of the Gmail account 
 | `to_date` | End date (ISO 8601) |
 | `has_attachments` | Filter by attachment presence (`true` / `false`) |
 | `label` | Gmail label id the email must carry (e.g. `INBOX`, `Label_12`) |
+| `tag` | Nid tag the email must carry (see [Tags](#tags)) |
 | `page` | Page (default: 1) |
 | `limit` | Results per page (default: 50, max: 100) |
 
@@ -238,6 +239,34 @@ Returns all emails in a thread, sorted by date ascending (chronological order), 
   }
 ]
 ```
+
+---
+
+## Tags
+
+Nid's own tags on archived emails (`tags` column, returned in lists and details). Gmail never sees them, and archiving the same email again keeps them. A tag is 1 to 50 characters, without a comma.
+
+### GET /api/archive/:accountId/tags
+
+The account's tags with their email count (trash excluded), in alphabetical order.
+
+```json
+[{ "tag": "taxes", "count": 12 }, { "tag": "energy", "count": 3 }]
+```
+
+### POST /api/archive/:accountId/mails/tags
+
+Adds and/or removes tags on archived emails.
+
+```json
+{ "mailIds": ["uuid-1", "uuid-2"], "add": ["taxes"], "remove": ["to sort"] }
+```
+
+`mailIds`: 1 to 500 UUIDs; `add` and `remove`: at most 20 tags each. Response: `{ "updated": 2 }`.
+
+### DELETE /api/archive/:accountId/tags/:tag
+
+Removes the tag from every email of the account, trash included; the emails stay. Response: `{ "updated": 12 }`.
 
 ---
 

@@ -2,13 +2,15 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { useTable, type RowSelectionState } from '@tanstack/react-table'
-import { FileArchive, Download, ListFilter, Search, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { FileArchive, Download, ListFilter, Search, Tag, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { DataList, dataListFeatures } from '@/components/app/DataList'
 import { BulkActionBar, type BulkAction } from '@/components/app/BulkActionBar'
+import { ConfirmDialog } from '@/components/app/ConfirmDialog'
 import { EmptyState } from '@/components/app/EmptyState'
 import { FormField } from '@/components/app/FormField'
 import { Highlight } from '@/components/app/Highlight'
@@ -16,10 +18,11 @@ import { LabelTree, labelTreeNodes, type LabelNode } from '@/components/app/Labe
 import { LoadError } from '@/components/app/LoadError'
 import { MailViewer, type ArchiveViewerAction } from '@/components/app/MailViewer'
 import { RowMenu } from '@/components/app/RowMenu'
-import { useArchiveMails, useDashboardArchiveStats, useLabels } from '@/hooks/queries'
+import { useArchiveMails, useArchiveTags, useDashboardArchiveStats, useDeleteArchiveTag, useLabels } from '@/hooks/queries'
 import { useIsMobile } from '@/hooks/use-mobile'
 import type { ApiLabel } from '@/utils/gmail'
 import { ShareDialog } from './ShareDialog'
+import { TagDialog } from './TagDialog'
 import {
   actionsHeader, col, DateCell, mailColumns, useArchiveFilters, useArchiveTrashWithUndo, useMboxExport,
   type ArchivedMail, type Filters,
@@ -54,28 +57,35 @@ function useDebounced(value: string, commit: (next: string) => void) {
   return [draft, setDraft] as const
 }
 
-/** Expéditeur, Période, Avec pièce jointe (§7.5); inline ≥md, in the filters sheet <md with the label select. */
-function FilterFields({ filters, set, nodes }: Readonly<{ filters: Filters; set: (patch: Partial<Filters>) => void; nodes?: LabelNode[] }>) {
+/** The label or tag tree as a select, for the filters sheet <md. */
+function TreeSelect({ id, label, nodes, value, onChange }: Readonly<{
+  id: string; label: string; nodes: LabelNode[]; value: string; onChange: (value: string) => void
+}>) {
+  return (
+    <FormField id={id} label={label}>
+      <select id={id} value={value} onChange={(e) => onChange(e.target.value)} className="h-11 rounded-md border border-input bg-transparent px-3 text-base">
+        {nodes.map((n) => (
+          <option key={n.id ?? ''} value={n.id ?? ''}>
+            {' '.repeat((n.level - 1) * 2)}{n.name}{n.count === undefined ? '' : ` (${n.count})`}
+          </option>
+        ))}
+      </select>
+    </FormField>
+  )
+}
+
+/** Expéditeur, Période, Avec pièce jointe (§7.5); inline ≥md, in the filters sheet <md with the label and tag selects. */
+function FilterFields({ filters, set, nodes, tagNodes }: Readonly<{
+  filters: Filters; set: (patch: Partial<Filters>) => void; nodes?: LabelNode[]; tagNodes?: LabelNode[]
+}>) {
   const { t } = useTranslation()
   const id = useId()
   const [sender, setSender] = useDebounced(filters.sender, (v) => set({ sender: v }))
   return (
     <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-end">
-      {nodes && (
-        <FormField id={`${id}-label`} label={t('archives.filter.label')}>
-          <select
-            id={`${id}-label`}
-            value={filters.label}
-            onChange={(e) => set({ label: e.target.value })}
-            className="h-11 rounded-md border border-input bg-transparent px-3 text-base"
-          >
-            {nodes.map((n) => (
-              <option key={n.id ?? ''} value={n.id ?? ''}>
-                {' '.repeat((n.level - 1) * 2)}{n.name}{n.count === undefined ? '' : ` (${n.count})`}
-              </option>
-            ))}
-          </select>
-        </FormField>
+      {nodes && <TreeSelect id={`${id}-label`} label={t('archives.filter.label')} nodes={nodes} value={filters.label} onChange={(label) => set({ label })} />}
+      {tagNodes && tagNodes.length > 1 && (
+        <TreeSelect id={`${id}-tag`} label={t('archives.filter.tag')} nodes={tagNodes} value={filters.tag} onChange={(tag) => set({ tag })} />
       )}
       <FormField id={`${id}-sender`} label={t('archives.filter.sender')}>
         <Input id={`${id}-sender`} type="text" inputMode="email" autoComplete="off" value={sender} onChange={(e) => setSender(e.target.value)} className={FIELD} />
@@ -150,6 +160,12 @@ export function SearchTab({ accountId }: Readonly<{ accountId: string }>) {
   const labels: ApiLabel[] = useLabels(accountId).data ?? []
   const stats = useDashboardArchiveStats(accountId).data
   const nodes = labelTreeNodes(labels, t, stats ? Number(stats.total_mails) : undefined)
+  const tags = useArchiveTags(accountId).data ?? []
+  const tagNodes: LabelNode[] = [
+    { id: null, name: t('archives.tags.all'), level: 1 },
+    ...tags.map(({ tag, count }) => ({ id: tag, name: tag, level: 1, count })),
+  ]
+  const deleteTag = useDeleteArchiveTag(accountId)
   const search = useArchiveMails(accountId, apiParams)
   const exporter = useMboxExport(accountId)
   const trash = useArchiveTrashWithUndo(accountId)
@@ -157,6 +173,7 @@ export function SearchTab({ accountId }: Readonly<{ accountId: string }>) {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
   const [viewing, setViewing] = useState<string | null>(null)
   const [sharing, setSharing] = useState<string | null>(null)
+  const [tagging, setTagging] = useState<string[] | null>(null)
   const [filtersOpen, setFiltersOpen] = useState(false)
 
   // The selection belongs to one result list (§6.4)
@@ -197,6 +214,7 @@ export function SearchTab({ accountId }: Readonly<{ accountId: string }>) {
   const selected = Object.keys(rowSelection).filter((id) => rowSelection[id])
   const bulkActions: BulkAction[] = [
     { label: t('archives.export'), icon: <Download aria-hidden="true" />, onSelect: () => exporter.run(selected) },
+    { label: t('archives.tags.title'), icon: <Tag aria-hidden="true" />, onSelect: () => setTagging(selected) },
     {
       label: t('archives.action.trash'),
       icon: <Trash2 aria-hidden="true" />,
@@ -207,12 +225,26 @@ export function SearchTab({ accountId }: Readonly<{ accountId: string }>) {
       },
     },
   ]
-  const activeFilters = [filters.sender, filters.from, filters.to, filters.att, filters.label].filter(Boolean).length
-  const clearAll = () => set({ q: '', sender: '', from: '', to: '', att: '', label: '' })
+  const activeFilters = [filters.sender, filters.from, filters.to, filters.att, filters.label, filters.tag].filter(Boolean).length
+  const clearAll = () => set({ q: '', sender: '', from: '', to: '', att: '', label: '', tag: '' })
+  const removeTag = (tag: string) => deleteTag.mutate(tag, {
+    onSuccess: () => {
+      set({ tag: '' })
+      toast.success(t('archives.tags.deleted', { tag }))
+    },
+    onError: () => toast.error(t('archives.tags.failed')),
+  })
 
   return (
     <div className="flex flex-col gap-4 md:grid md:grid-cols-[13rem_minmax(0,1fr)] md:items-start md:gap-6">
-      {!isMobile && <LabelTree nodes={nodes} value={filters.label || null} onChange={(id) => set({ label: id ?? '' })} label={t('archives.labelTree')} />}
+      {!isMobile && (
+        <div className="flex flex-col gap-4">
+          <LabelTree nodes={nodes} value={filters.label || null} onChange={(id) => set({ label: id ?? '' })} label={t('archives.labelTree')} />
+          {tagNodes.length > 1 && (
+            <LabelTree nodes={tagNodes} value={filters.tag || null} onChange={(id) => set({ tag: id ?? '' })} label={t('archives.tags.title')} />
+          )}
+        </div>
+      )}
       <div className="flex min-w-0 flex-col gap-3">
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
@@ -235,7 +267,19 @@ export function SearchTab({ accountId }: Readonly<{ accountId: string }>) {
         </div>
         {!isMobile && <FilterFields filters={filters} set={set} />}
 
-        {first && <ResultCount total={first.total} tookMs={first.tookMs} />}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          {first && <ResultCount total={first.total} tookMs={first.tookMs} />}
+          {filters.tag && (
+            <ConfirmDialog
+              trigger={<Button variant="ghost" size="sm" className="h-11 text-destructive md:h-8">{t('archives.tags.delete', { tag: filters.tag })}</Button>}
+              title={t('archives.tags.deleteTitle', { tag: filters.tag })}
+              description={t('archives.tags.deleteDescription')}
+              confirmLabel={t('archives.tags.deleteConfirm')}
+              onConfirm={() => removeTag(filters.tag)}
+              destructive
+            />
+          )}
+        </div>
 
         <BulkActionBar count={selected.length} mode="ids" actions={bulkActions} onClear={() => setRowSelection({})} />
 
@@ -272,7 +316,7 @@ export function SearchTab({ accountId }: Readonly<{ accountId: string }>) {
             <SheetTitle>{t('archives.filters')}</SheetTitle>
             <SheetDescription>{t('archives.filtersDescription')}</SheetDescription>
           </SheetHeader>
-          <div className="overflow-y-auto px-4"><FilterFields filters={filters} set={set} nodes={nodes} /></div>
+          <div className="overflow-y-auto px-4"><FilterFields filters={filters} set={set} nodes={nodes} tagNodes={tagNodes} /></div>
           <SheetFooter className="pb-[max(16px,env(safe-area-inset-bottom))]">
             <Button className="h-11" onClick={() => setFiltersOpen(false)}>{t('archives.showResults')}</Button>
           </SheetFooter>
@@ -287,6 +331,12 @@ export function SearchTab({ accountId }: Readonly<{ accountId: string }>) {
         onClose={() => setViewing(null)}
         onOpenMail={setViewing}
         onAction={(action) => viewing && act(action, viewing)}
+      />
+      <TagDialog
+        accountId={accountId}
+        mailIds={tagging}
+        onClose={() => setTagging(null)}
+        onDone={() => { setTagging(null); setRowSelection({}) }}
       />
       <ShareDialog mailId={sharing} subject={subjectOf(sharing)} onClose={() => setSharing(null)} />
     </div>

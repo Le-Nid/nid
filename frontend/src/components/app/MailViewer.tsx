@@ -13,6 +13,7 @@ import {
   base64UrlToBytes, extractAttachments, extractBody, hasRemoteContent, mailSrcDoc, toBadge,
   type ApiLabel,
 } from '@/utils/gmail'
+import { ArchiveTagEditor } from './ArchiveTags'
 import { LabelBadge } from './LabelBadge'
 
 export type ViewerAction = 'trash' | 'archive' | 'archive_nas'
@@ -35,11 +36,11 @@ type ViewerAttachment = { id: string; filename: string; size: number; save: () =
 /** What the reader shows, from a Gmail message or an archived EML. */
 type ViewerMail = {
   subject: string; from: string; to: string; date: string; size: number; labelIds: string[]
-  html: string; text: string; attachments: ViewerAttachment[]; threadId: string | null
+  html: string; text: string; attachments: ViewerAttachment[]; threadId: string | null; tags?: string[]
 }
 type ArchivedDetail = {
   subject: string | null; sender: string | null; recipient: string | null; date: string | null; size_bytes: number | string
-  label_ids: string[] | null; html: string; text: string; is_encrypted?: boolean; thread_id: string | null
+  label_ids: string[] | null; tags?: string[]; html: string; text: string; is_encrypted?: boolean; thread_id: string | null
   attachments?: { id: string; filename: string; size_bytes: number | string }[]
 }
 type ThreadMail = { id: string; sender: string | null; date: string | null }
@@ -66,7 +67,7 @@ function fromGmail(accountId: string, messageId: string, mail: any): ViewerMail 
 function fromArchive(accountId: string, mail: ArchivedDetail, encryptedText: string): ViewerMail {
   return {
     subject: mail.subject ?? '', from: mail.sender ?? '', to: mail.recipient ?? '', date: mail.date ?? '', size: Number(mail.size_bytes),
-    labelIds: mail.label_ids ?? [], html: mail.html, text: mail.is_encrypted ? encryptedText : mail.text, threadId: mail.thread_id,
+    labelIds: mail.label_ids ?? [], html: mail.html, text: mail.is_encrypted ? encryptedText : mail.text, threadId: mail.thread_id, tags: mail.tags ?? [],
     attachments: (mail.attachments ?? []).map((att) => ({
       id: att.id, filename: att.filename, size: Number(att.size_bytes),
       save: () => Promise.resolve(saveFile(archiveApi.downloadAttachment(accountId, att.id), att.filename)),
@@ -215,6 +216,10 @@ export function MailViewer(props: Readonly<ViewerProps>) {
             <span className="flex-1">{t('mails.viewer.loadError')}</span>
             <Button variant="outline" size="sm" onClick={() => void refetch()}>{t('mails.retry')}</Button>
           </div>
+        )}
+
+        {props.source === 'archive' && mail && messageId && (
+          <ArchiveTagEditor accountId={accountId} mailId={messageId} tags={mail.tags ?? []} />
         )}
 
         {props.source === 'archive' && mail && messageId && (

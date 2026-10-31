@@ -16,7 +16,7 @@ vi.mock('../hooks/useAccount', () => ({ useAccount: () => ({ accountId: account.
 vi.mock('../api', () => ({
   archiveApi: {
     listMails: vi.fn(), getMail: vi.fn(), trashMails: vi.fn(), restoreMails: vi.fn(), listTrash: vi.fn(), emptyTrash: vi.fn(),
-    getTrashConfig: vi.fn(), updateTrashConfig: vi.fn(), triggerArchive: vi.fn(),
+    getTrashConfig: vi.fn(), updateTrashConfig: vi.fn(), triggerArchive: vi.fn(), listTags: vi.fn(), tagMails: vi.fn(), deleteTag: vi.fn(),
     downloadAttachment: (acc: string, id: string) => `/api/archive/${acc}/attachments/${id}/download`,
   },
   archiveThreadsApi: { getThread: vi.fn() },
@@ -78,6 +78,9 @@ beforeEach(() => {
   vi.mocked(archiveApi.getMail).mockResolvedValue({ ...MAIL, recipient: 'a@b.c', label_ids: [], html: '', text: 'corps', thread_id: null, attachments: [] })
   vi.mocked(archiveApi.trashMails).mockResolvedValue({ trashed: 1 })
   vi.mocked(archiveApi.restoreMails).mockResolvedValue({ restored: 1 })
+  vi.mocked(archiveApi.listTags).mockResolvedValue([])
+  vi.mocked(archiveApi.tagMails).mockResolvedValue({ updated: 1 })
+  vi.mocked(archiveApi.deleteTag).mockResolvedValue({ updated: 2 })
   vi.mocked(archiveApi.listTrash).mockResolvedValue({ mails: [{ ...OTHER, deleted_at: '2026-10-01T00:00:00Z' }], total: 1, retentionDays: 30 })
   vi.mocked(archiveApi.emptyTrash).mockResolvedValue({ deleted: 1 })
   vi.mocked(archiveApi.getTrashConfig).mockResolvedValue({ retentionDays: 30, purgeEnabled: true })
@@ -247,8 +250,53 @@ describe('Archives — reader and sharing', () => {
 })
 
 describe('Archives — mobile', () => {
+  it('tags: tree filter, add and remove on the selection, delete a tag everywhere', async () => {
+    vi.mocked(archiveApi.listTags).mockResolvedValue([{ tag: 'impôts', count: 2 }])
+    const { router } = setup()
+    const tags = await screen.findByRole('tree', { name: 'Tags' })
+    await user().click(await within(tags).findByRole('treeitem', { name: /impôts/ }))
+    await waitFor(() => expect(router.state.location.search).toBe('?tag=imp%C3%B4ts'))
+    await waitFor(() => expect(archiveApi.listMails).toHaveBeenCalledWith('acc-1', { tag: 'impôts', page: 1, limit: 50 }))
+
+    await user().click(await screen.findByRole('checkbox', { name: 'Sélectionner Facture EDF' }))
+    await user().click(within(screen.getByRole('toolbar', { name: 'Actions sur la sélection' })).getByRole('button', { name: 'Tags' }))
+    let dialog = await screen.findByRole('dialog', { name: 'Tags' })
+    expect(within(dialog).getByRole('button', { name: 'Ajouter' })).toBeDisabled()
+    await user().type(within(dialog).getByLabelText('Tags, séparés par des virgules'), 'énergie, 2026')
+    await user().click(within(dialog).getByRole('button', { name: 'Ajouter' }))
+    await waitFor(() => expect(archiveApi.tagMails).toHaveBeenCalledWith('acc-1', { mailIds: [MAIL.id], add: ['énergie', '2026'] }))
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Tags ajoutés à 1 archive'))
+    expect(screen.queryByRole('toolbar', { name: 'Actions sur la sélection' })).toBeNull()
+
+    vi.mocked(archiveApi.tagMails).mockRejectedValueOnce(new Error('x'))
+    await user().click(screen.getByRole('checkbox', { name: 'Sélectionner Facture EDF' }))
+    await user().click(within(screen.getByRole('toolbar', { name: 'Actions sur la sélection' })).getByRole('button', { name: 'Tags' }))
+    dialog = await screen.findByRole('dialog', { name: 'Tags' })
+    await user().type(within(dialog).getByLabelText('Tags, séparés par des virgules'), 'impôts')
+    await user().click(within(dialog).getByRole('button', { name: 'Retirer' }))
+    await waitFor(() => expect(archiveApi.tagMails).toHaveBeenLastCalledWith('acc-1', { mailIds: [MAIL.id], remove: ['impôts'] }))
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Les tags n'ont pas pu être modifiés."))
+    await user().keyboard('{Escape}')
+
+    await user().click(screen.getByRole('button', { name: 'Supprimer le tag « impôts »' }))
+    await user().click(await screen.findByRole('button', { name: 'Supprimer le tag' }))
+    await waitFor(() => expect(archiveApi.deleteTag).toHaveBeenCalledWith('acc-1', 'impôts'))
+    await waitFor(() => expect(router.state.location.search).toBe(''))
+    expect(toast.success).toHaveBeenCalledWith('Tag « impôts » supprimé')
+  })
+
+  it('a failed tag deletion is reported', async () => {
+    vi.mocked(archiveApi.listTags).mockResolvedValue([{ tag: 'impôts', count: 2 }])
+    vi.mocked(archiveApi.deleteTag).mockRejectedValueOnce(new Error('x'))
+    setup('/archives?tag=imp%C3%B4ts')
+    await user().click(await screen.findByRole('button', { name: 'Supprimer le tag « impôts »' }))
+    await user().click(await screen.findByRole('button', { name: 'Supprimer le tag' }))
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Les tags n'ont pas pu être modifiés."))
+  })
+
   it('cards with the extract; filters and label in a sheet', async () => {
     mobile = true
+    vi.mocked(archiveApi.listTags).mockResolvedValue([{ tag: 'impôts', count: 2 }])
     const { router } = setup()
     expect(await screen.findByText('Relevé mensuel')).toBeInTheDocument()
     expect(screen.queryByRole('tree')).toBeNull()
@@ -256,8 +304,10 @@ describe('Archives — mobile', () => {
     const sheet = await screen.findByRole('dialog', { name: 'Filtres' })
     await user().selectOptions(within(sheet).getByLabelText('Libellé'), 'L2')
     await waitFor(() => expect(router.state.location.search).toBe('?label=L2'))
+    await user().selectOptions(within(sheet).getByLabelText('Tag'), 'impôts')
+    await waitFor(() => expect(router.state.location.search).toBe('?label=L2&tag=imp%C3%B4ts'))
     await user().click(within(sheet).getByRole('button', { name: 'Afficher les résultats' }))
-    expect(await screen.findByRole('button', { name: 'Filtres (1)' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Filtres (2)' })).toBeInTheDocument()
   })
 })
 

@@ -3,10 +3,11 @@ import userEvent from '@testing-library/user-event'
 import { toast } from 'sonner'
 import i18n from '../i18n'
 import { MailViewer } from '../components/app/MailViewer'
-import { useArchiveMail, useArchiveThread, useGmailMessage, useNotificationPreferences } from '../hooks/queries'
+import { useArchiveMail, useArchiveThread, useGmailMessage, useNotificationPreferences, useTagArchived } from '../hooks/queries'
 import { gmailApi } from '../api'
 
-vi.mock('../hooks/queries', () => ({ useGmailMessage: vi.fn(), useArchiveMail: vi.fn(), useArchiveThread: vi.fn(), useNotificationPreferences: vi.fn(() => ({ data: undefined })) }))
+vi.mock('../hooks/queries', () => ({ useGmailMessage: vi.fn(), useArchiveMail: vi.fn(), useArchiveThread: vi.fn(), useNotificationPreferences: vi.fn(() => ({ data: undefined })),
+  useArchiveTags: vi.fn(() => ({ data: [{ tag: 'impôts', count: 2 }] })), useTagArchived: vi.fn() }))
 vi.mock('../api', () => ({
   gmailApi: { getAttachment: vi.fn() },
   archiveApi: { downloadAttachment: (acc: string, id: string) => `/api/archive/${acc}/attachments/${id}/download` },
@@ -139,12 +140,14 @@ describe('MailViewer', () => {
     vi.mocked(useArchiveMail).mockReturnValue({
       data: {
         subject: 'Facture EDF', sender: 'EDF <edf@edf.test>', recipient: 'ana@gmail.com', date: '2026-08-01T07:00:00Z',
-        size_bytes: '4096', label_ids: ['Label_1'], html: '<p>été</p>', text: 'texte', thread_id: 't1',
+        size_bytes: '4096', label_ids: ['Label_1'], tags: ['énergie'], html: '<p>été</p>', text: 'texte', thread_id: 't1',
         attachments: [{ id: 'att1', filename: 'facture.pdf', size_bytes: '52000' }],
       },
       isLoading: false, isError: false, refetch: vi.fn(),
     } as never)
     vi.mocked(useArchiveThread).mockReturnValue({ data: [{ id: 'a1', sender: 'EDF <edf@edf.test>', date: '2026-08-01T07:00:00Z' }, { id: 'a2', sender: 'Ana <ana@gmail.com>', date: null }] } as never)
+    const mutate = vi.fn()
+    vi.mocked(useTagArchived).mockReturnValue({ mutate, isPending: false } as never)
     const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
     const onAction = vi.fn()
     const onOpenMail = vi.fn()
@@ -156,6 +159,17 @@ describe('MailViewer', () => {
     const dialog = screen.getByRole('dialog', { name: 'Facture EDF' })
     expect(within(dialog).getByText('Factures')).toBeInTheDocument()
     expect(within(dialog).getByTitle('Contenu du mail').getAttribute('srcdoc')).toContain('<p>été</p>')
+
+    const tags = within(dialog).getByRole('region', { name: 'Tags' })
+    await userEvent.click(within(tags).getByRole('button', { name: 'Retirer le tag énergie' }))
+    expect(mutate).toHaveBeenLastCalledWith({ mailIds: ['a1'], remove: ['énergie'] }, expect.anything())
+    await userEvent.type(within(tags).getByRole('combobox', { name: 'Ajouter un tag' }), ' impôts , ,impôts{Enter}')
+    expect(mutate).toHaveBeenLastCalledWith({ mailIds: ['a1'], add: ['impôts'] }, expect.anything())
+    mutate.mock.calls[1][1].onError()
+    expect(toast.error).toHaveBeenCalledWith("Les tags n'ont pas pu être modifiés.")
+    mutate.mockClear()
+    await userEvent.type(within(tags).getByRole('combobox', { name: 'Ajouter un tag' }), ' , {Enter}')
+    expect(mutate).not.toHaveBeenCalled()
 
     const thread = within(dialog).getByRole('region', { name: 'Conversation (2 messages)' })
     expect(within(thread).getByRole('button', { name: /EDF/ })).toHaveAttribute('aria-current', 'true')
