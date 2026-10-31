@@ -9,6 +9,8 @@ export type AuditAction =
   | 'user.login_sso'
   | 'user.login_social'
   | 'gmail.connect'
+  | 'imap.connect'
+  | 'imap.update'
   | 'gmail.disconnect'
   | 'rule.create'
   | 'rule.update'

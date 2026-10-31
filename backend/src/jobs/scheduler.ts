@@ -44,6 +44,7 @@ export function startRuleScheduler() {
           .selectFrom('mail_accounts')
           .select('id')
           .where('is_active', '=', true)
+          .where('provider', '=', 'gmail') // Gmail API figures
           .execute();
 
         for (const account of accounts) {
@@ -123,6 +124,7 @@ export function startRuleScheduler() {
         ])
         .where("rules.is_active", "=", true)
         .where("mail_accounts.is_active", "=", true) // disconnected accounts have no Gmail access
+        .where("mail_accounts.provider", "=", "gmail") // rules act through the Gmail API
         .where("mail_accounts.auth_error_at", "is", null) // pending reconnection: every run would fail and notify
         .where("rules.schedule", "is not", null)
         .execute();

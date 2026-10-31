@@ -432,3 +432,25 @@ Les jetons de l'utilisateur, sans le jeton ni son hash : `[{ "id", "name", "scop
 ### DELETE /api/auth/api-tokens/:id 🔒
 
 **Réponse 204**, `404` si le jeton n'est pas à l'utilisateur. Tracé `user.api_token_revoke`.
+
+## Comptes IMAP (archivage seul)
+
+Un compte IMAP (tout fournisseur : OVH, Infomaniak, Fastmail, Outlook avec un mot de passe d'application…) est **archivé uniquement** : ses dossiers sont sauvegardés sur le NAS et consultables dans Archives ; Mails, Nettoyage et Règles restent réservés à Gmail (`409 Not a Gmail account` sur les routes Gmail). Session uniquement : un jeton d'API n'atteint jamais ces routes.
+
+Le mot de passe est stocké scellé (AES-256-GCM, clé dérivée de `JWT_SECRET`) : **changer `JWT_SECRET` rend illisibles les mots de passe IMAP enregistrés**, à ressaisir avec `PUT`.
+
+### POST /api/auth/imap 🔒
+
+```json
+{ "email": "ana@mail.fr", "host": "imap.mail.fr", "port": 993, "secure": true, "user": "ana@mail.fr", "password": "mot-de-passe-application" }
+```
+
+`port` vaut 993 par défaut, `secure` (TLS) `true`. La connexion est d'abord testée : **400** avec la raison donnée par le serveur s'il refuse, rien n'est enregistré. **201** `{ "id", "email" }`. `403` au-delà du quota de comptes, `409` si l'adresse est déjà connectée. Tracé `imap.connect`. Rate limit : 5/min.
+
+### PUT /api/auth/imap/:accountId 🔒
+
+Même corps sans `email` : nouveau serveur ou mot de passe, testé d'abord ; efface « Action requise » (`auth_error_at`) et une déconnexion. Tracé `imap.update`.
+
+### Sauvegarde
+
+La sauvegarde du compte (automatique, « Sauvegarder », assistant) est une synchronisation IMAP incrémentale : tous les dossiers sauf `\Noselect`, indésirables, corbeille et « Tous les messages » ; par dossier, seuls les UID au-delà du dernier archivé (`imap_folder_state`) ; un `UIDVALIDITY` changé relance le dossier ; les mails déjà archivés sont ignorés par `Message-ID` ; le dossier devient un libellé d'archive. Un login refusé par le serveur passe le compte en « Action requise » et envoie `account.reauth_required` une fois.

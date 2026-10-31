@@ -37,14 +37,29 @@ export interface GmailAccountsTable {
   email:         string
   access_token:  string | null   // null once disconnected (soft disconnect keeps the row and its archives)
   refresh_token: string | null
-  token_expiry:  Timestamp
+  token_expiry:  Timestamp | null   // null for IMAP accounts
   is_active:     Generated<boolean>   // false = disconnected: no Gmail call, archives still readable
   backup_enabled:  Generated<boolean>
   backup_interval: Generated<BackupInterval>
   last_backup_at:  Date | null
-  auth_error_at:   Date | null   // Google refused the refresh token: reconnect needed
+  auth_error_at:   Date | null   // Google refused the refresh token (or the IMAP server the login): reconnect needed
+  provider:      Generated<MailProvider>
+  imap_host:     string | null
+  imap_port:     number | null
+  imap_secure:   boolean | null
+  imap_user:     string | null
+  imap_password: string | null   // sealed (utils/secret.ts), never sent to the client
   created_at:    Generated<Date>
   updated_at:    Generated<Date>
+}
+
+export type MailProvider = 'gmail' | 'imap'
+
+export interface ImapFolderStateTable {
+  account_id:   string
+  folder:       string
+  uid_validity: ColumnType<string, number, number>   // bigint: pg returns it as a string
+  last_uid:     ColumnType<string, number | undefined, number>
 }
 
 export interface ArchivedMailsTable {
@@ -351,6 +366,7 @@ export interface ApiTokensTable {
 export interface Database {
   users:                UsersTable
   mail_accounts:       GmailAccountsTable
+  imap_folder_state:   ImapFolderStateTable
   archived_mails:       ArchivedMailsTable
   archived_attachments: ArchivedAttachmentsTable
   rules:                RulesTable

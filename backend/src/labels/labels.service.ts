@@ -91,7 +91,7 @@ export async function syncLabels(accountId: string): Promise<{ synced: number }>
 
 /** Daily scheduler pass; one failing account does not stop the others. */
 export async function syncAllLabels() {
-  const accounts = await getDb().selectFrom('mail_accounts').select('id').where('is_active', '=', true).execute()
+  const accounts = await getDb().selectFrom('mail_accounts').select('id').where('is_active', '=', true).where('provider', '=', 'gmail').execute()
   for (const account of accounts) {
     try {
       await syncLabels(account.id)

@@ -432,3 +432,25 @@ The user's tokens, without the token nor its hash: `[{ "id", "name", "scope", "e
 ### DELETE /api/auth/api-tokens/:id 🔒
 
 **Response 204**, `404` if the token is not the user's. Logged as `user.api_token_revoke`.
+
+## IMAP accounts (archive only)
+
+An IMAP account (any provider: OVH, Infomaniak, Fastmail, Outlook with an app password…) is **archived only**: its folders are backed up to the NAS and searched in Archives; Mails, Cleanup and Rules stay Gmail-only (`409 Not a Gmail account` on the Gmail endpoints). Session only: an API token never reaches these routes.
+
+The password is stored sealed (AES-256-GCM, key derived from `JWT_SECRET`): **rotating `JWT_SECRET` makes stored IMAP passwords unreadable**, re-enter them with `PUT`.
+
+### POST /api/auth/imap 🔒
+
+```json
+{ "email": "ana@mail.fr", "host": "imap.mail.fr", "port": 993, "secure": true, "user": "ana@mail.fr", "password": "app-password" }
+```
+
+`port` defaults to 993, `secure` (TLS) to `true`. The login is tested first: **400** with the server's reason when it refuses, nothing stored. **201** `{ "id", "email" }`. `403` past the account quota, `409` if the address is already connected. Logged as `imap.connect`. Rate limit: 5/min.
+
+### PUT /api/auth/imap/:accountId 🔒
+
+Same body without `email`: new server or password, tested first; clears « Action requise » (`auth_error_at`) and a disconnection. Logged as `imap.update`.
+
+### Backup
+
+The account's backup (automatic, « Sauvegarder », setup wizard) is an incremental IMAP sync: every folder except `\Noselect`, junk, trash and All Mail; per folder, only the UIDs above the last one archived (`imap_folder_state`); a changed `UIDVALIDITY` restarts the folder; mails already archived are skipped by `Message-ID`; the folder becomes an archive label. A login the server refuses flags the account « Action requise » and sends `account.reauth_required` once.

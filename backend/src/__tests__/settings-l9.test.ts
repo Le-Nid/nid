@@ -212,6 +212,12 @@ describe('« Action requise » — expired Google grant', () => {
     expect(mockNotify).toHaveBeenCalledTimes(1)
   })
 
+  it('an IMAP account gets a clear 409 before any Gmail token use', async () => {
+    mockTakeFirst.mockResolvedValueOnce({ access_token: null, refresh_token: null, token_expiry: null, is_active: true, provider: 'imap' })
+    await expect(getAuthenticatedClient(ACCOUNT)).rejects.toMatchObject({ statusCode: 409, message: expect.stringContaining('Not a Gmail account') })
+    expect(mockGetAccessToken).not.toHaveBeenCalled()
+  })
+
   it('leaves the account alone on other failures and does not refresh a valid token', async () => {
     mockTakeFirst.mockResolvedValueOnce({ access_token: 'a', refresh_token: 'r', token_expiry: hoursAgo(1) })
     mockGetAccessToken.mockRejectedValueOnce(new Error('ETIMEDOUT'))

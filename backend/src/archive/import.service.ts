@@ -103,13 +103,14 @@ export async function importMbox(
 }
 
 /**
- * Import a single EML string into the archive.
+ * Import a single EML string into the archive; `folderLabels` (IMAP folder) join the Takeout labels.
  */
-async function importSingleEml(
+export async function importSingleEml(
   db: ReturnType<typeof getDb>,
   storage: StorageBackend,
   accountId: string,
   rawEml: Buffer,
+  folderLabels: string[] = [],
 ): Promise<'imported' | 'skipped'> {
   const parsed = await simpleParser(rawEml)
 
@@ -156,9 +157,10 @@ async function importSingleEml(
   const attachmentNames = attachments.map((a) => a.filename).join(' ')
   // Takeout mbox: `X-Gmail-Labels: Inbox,Category Promotions,Factures`
   const labelHeader = parsed.headers.get('x-gmail-labels')
-  const labelNames = typeof labelHeader === 'string'
-    ? [...new Set(decodeMimeWords(labelHeader).split(',').map((n) => n.trim()).filter(Boolean))]
-    : []
+  const labelNames = [...new Set([
+    ...(typeof labelHeader === 'string' ? decodeMimeWords(labelHeader).split(',').map((n) => n.trim()).filter(Boolean) : []),
+    ...folderLabels,
+  ])]
 
   const archived = await db
     .insertInto('archived_mails')

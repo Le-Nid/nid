@@ -420,7 +420,7 @@ export async function authRoutes(app: FastifyInstance) {
     const accounts = await db
       .selectFrom('mail_accounts')
       .select((eb) => [
-        'id', 'email', 'is_active', 'created_at', 'backup_enabled', 'backup_interval',
+        'id', 'email', 'is_active', 'created_at', 'backup_enabled', 'backup_interval', 'provider',
         // « Action requise » (§7.7): Google refused the refresh token
         eb('auth_error_at', 'is not', null).as('needs_reauth'),
         // Last label sync (daily, or « Synchroniser maintenant »)
