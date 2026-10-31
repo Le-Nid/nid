@@ -5,7 +5,7 @@ import {
   analyticsApi, notificationsApi,
   auditApi, webhooksApi, savedSearchesApi, unifiedApi, archiveThreadsApi,
   retentionApi, importApi,
-  sharingApi, labelsApi, gmailAccountsApi, twoFactorApi, configApi, integrityApi, authApi, aboutApi, passkeysApi, apiTokensApi,
+  sharingApi, labelsApi, gmailAccountsApi, twoFactorApi, configApi, integrityApi, authApi, aboutApi, passkeysApi, apiTokensApi, imapAccountsApi,
 } from '../api'
 import { startRegistration } from '@simplewebauthn/browser'
 import { useAuthStore } from '../store/auth.store'
@@ -500,6 +500,9 @@ function useMeMutation<T>(fn: (input: T) => Promise<unknown>) {
 export const useUpdateGmailAccount = () =>
   useMeMutation(({ id, ...body }: { id: string } & Parameters<typeof gmailAccountsApi.update>[1]) => gmailAccountsApi.update(id, body))
 export const useDisconnectGmailAccount = () => useMeMutation(gmailAccountsApi.disconnect)
+export const useCreateImapAccount = () => useMeMutation(imapAccountsApi.create)
+export const useUpdateImapAccount = () =>
+  useMeMutation(({ id, ...body }: { id: string } & Parameters<typeof imapAccountsApi.update>[1]) => imapAccountsApi.update(id, body))
 /** « Synchroniser maintenant »: labels read again from Gmail; last_sync_at comes back with /me. */
 export const useSyncGmailAccount = () => useMeMutation(labelsApi.sync)
 

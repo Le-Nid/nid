@@ -5,7 +5,7 @@ import { createMemoryRouter, Outlet, RouterProvider } from 'react-router'
 import { toast } from 'sonner'
 import i18n from '../i18n'
 import {
-  aboutApi, authApi, configApi, dashboardApi, gmailAccountsApi, importApi, labelsApi, notificationsApi, sharingApi, twoFactorApi, webhooksApi, passkeysApi, apiTokensApi, rulesApi, archiveApi,
+  aboutApi, authApi, configApi, dashboardApi, gmailAccountsApi, importApi, labelsApi, notificationsApi, sharingApi, twoFactorApi, webhooksApi, passkeysApi, apiTokensApi, rulesApi, archiveApi, imapAccountsApi,
 } from '../api'
 import { useAuthStore } from '../store/auth.store'
 import { useThemeStore } from '../store/theme.store'
@@ -27,6 +27,7 @@ vi.mock('../api', () => ({
   gmailAccountsApi: { connectUrl: vi.fn(), update: vi.fn(), disconnect: vi.fn() },
   rulesApi: { getTemplates: vi.fn(), preview: vi.fn(), createFromTemplate: vi.fn() },
   archiveApi: { triggerArchive: vi.fn() },
+  imapAccountsApi: { create: vi.fn(), update: vi.fn() },
 }))
 vi.mock('../utils/download', () => ({ saveBlob: vi.fn() }))
 const webauthn = vi.hoisted(() => ({ supported: false, startRegistration: vi.fn() }))
@@ -381,6 +382,63 @@ describe('Comptes Gmail', () => {
     expect(rulesApi.createFromTemplate).toHaveBeenCalledWith('acc-1', 'cleanup-promotions')
     expect(archiveApi.triggerArchive).toHaveBeenCalledWith('acc-1', { differential: true, query: 'newer_than:1y' })
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  })
+
+  it('adds an IMAP account: login tested by the server, then the setup wizard without Gmail rules', async () => {
+    const IMAP = { id: 'acc-2', email: 'ana@mail.fr', is_active: true, provider: 'imap' as const, backup_enabled: false, backup_interval: '24h' as const }
+    vi.mocked(imapAccountsApi.create).mockResolvedValue({ id: 'acc-2', email: 'ana@mail.fr' })
+    fetchMe.mockImplementation(async () => { useAuthStore.setState({ gmailAccounts: [ACCOUNT, IMAP] }) })
+    vi.mocked(gmailAccountsApi.update).mockResolvedValue({})
+    vi.mocked(archiveApi.triggerArchive).mockResolvedValue({ jobId: 'j1' })
+    setup('/settings/gmail')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Ajouter un compte IMAP' }))
+    const form = await screen.findByRole('dialog', { name: 'Ajouter un compte IMAP' })
+    await userEvent.type(within(form).getByLabelText('Adresse e-mail'), 'ana@mail.fr')
+    await userEvent.type(within(form).getByLabelText('Serveur IMAP'), 'imap.mail.fr')
+    await userEvent.type(within(form).getByLabelText('Mot de passe'), 'app-pw')
+    await userEvent.click(within(form).getByRole('button', { name: 'Tester et ajouter' }))
+    await waitFor(() => expect(imapAccountsApi.create).toHaveBeenCalledWith(
+      { email: 'ana@mail.fr', host: 'imap.mail.fr', port: 993, secure: true, user: 'ana@mail.fr', password: 'app-pw' }, expect.anything(),
+    ))
+
+    const wizard = await screen.findByRole('dialog', { name: 'Configurer le compte' })
+    expect(within(wizard).getByText('Serveur IMAP')).toBeInTheDocument()
+    expect(within(wizard).queryByText('Règles')).not.toBeInTheDocument()
+    expect(within(wizard).getByRole('radio', { name: 'Toute la boîte' })).toBeChecked()
+    expect(within(wizard).queryByRole('radio', { name: 'Les 12 derniers mois' })).not.toBeInTheDocument()
+    await userEvent.click(within(wizard).getByRole('button', { name: 'Suivant' }))
+    await userEvent.click(within(wizard).getByRole('button', { name: 'Terminer' }))
+    await waitFor(() => expect(archiveApi.triggerArchive).toHaveBeenCalledWith('acc-2', { differential: true }))
+    fetchMe.mockImplementation(() => Promise.resolve())
+  })
+
+  it('shows the IMAP server reason when it refuses the login, and keeps the form open', async () => {
+    vi.mocked(imapAccountsApi.create).mockRejectedValue({ response: { data: { error: 'Invalid credentials (Failure)' } } })
+    setup('/settings/gmail')
+    await userEvent.click(screen.getByRole('button', { name: 'Ajouter un compte IMAP' }))
+    const form = await screen.findByRole('dialog', { name: 'Ajouter un compte IMAP' })
+    await userEvent.type(within(form).getByLabelText('Adresse e-mail'), 'ana@mail.fr')
+    await userEvent.type(within(form).getByLabelText('Serveur IMAP'), 'imap.mail.fr')
+    await userEvent.type(within(form).getByLabelText('Mot de passe'), 'wrong')
+    await userEvent.click(within(form).getByRole('button', { name: 'Tester et ajouter' }))
+    expect(await within(form).findByRole('alert')).toHaveTextContent('Invalid credentials (Failure)')
+  })
+
+  it('an IMAP account: badge, no Gmail sync, password update prefilled with its server', async () => {
+    useAuthStore.setState({ gmailAccounts: [{ id: 'acc-2', email: 'ana@mail.fr', is_active: true, provider: 'imap', needs_reauth: true, imap_host: 'imap.mail.fr', imap_port: 993, imap_secure: true, imap_user: 'ana' }] })
+    vi.mocked(imapAccountsApi.update).mockResolvedValue({ ok: true })
+    setup('/settings/gmail')
+    expect(screen.getByText('IMAP · archivage')).toBeInTheDocument()
+    expect(screen.getByText('Le serveur IMAP a refusé la connexion : mettez à jour le mot de passe pour reprendre les sauvegardes.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Synchroniser maintenant' })).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Mettre à jour le serveur ou le mot de passe' }))
+    const form = await screen.findByRole('dialog', { name: 'Mettre à jour le serveur ou le mot de passe' })
+    expect(within(form).getByLabelText('Serveur IMAP')).toHaveValue('imap.mail.fr')
+    expect(within(form).queryByLabelText('Adresse e-mail')).not.toBeInTheDocument()
+    await userEvent.type(within(form).getByLabelText('Mot de passe'), 'new-pw')
+    await userEvent.click(within(form).getByRole('button', { name: 'Enregistrer' }))
+    await waitFor(() => expect(imapAccountsApi.update).toHaveBeenCalledWith('acc-2', { host: 'imap.mail.fr', port: 993, secure: true, user: 'ana', password: 'new-pw' }))
   })
 
   it('offers to add one when there is none', () => {
