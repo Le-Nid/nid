@@ -10,7 +10,7 @@ async function rename(db: Kysely<any>, from: { table: string; column: string; un
   await sql`ALTER TABLE ${sql.table(from.table)} RENAME TO ${sql.table(to.table)}`.execute(db)
   await sql`ALTER TABLE ${sql.table(to.table)} RENAME CONSTRAINT ${sql.id(from.unique)} TO ${sql.id(to.unique)}`.execute(db)
   for (const table of TABLES) {
-    await sql`ALTER TABLE ${sql.table(table)} RENAME COLUMN ${sql.id(from.column)} TO ${sql.id(to.column)}`.execute(db)
+    await sql`ALTER TABLE ${sql.table(table)} RENAME COLUMN ${sql.id(from.column)} TO ${sql.id(to.column)}`.execute(db) // NOSONAR: DDL in a migration, one statement after the other
   }
 }
 

@@ -170,13 +170,13 @@ export async function enqueueDueBackups(now: Date) {
     .where('auth_error_at', 'is', null)
     .execute();
 
-  for (const account of accounts) {
-    const last = account.last_backup_at ? new Date(account.last_backup_at).getTime() : 0;
-    if (now.getTime() - last < BACKUP_INTERVAL_MS[account.backup_interval]) continue;
+  const due = accounts.filter((a) => now.getTime() - (a.last_backup_at ? new Date(a.last_backup_at).getTime() : 0) >= BACKUP_INTERVAL_MS[a.backup_interval]);
+  // Accounts are independent: enqueued side by side, each stamped once its job is queued
+  await Promise.all(due.map(async (account) => {
     await enqueueJob('archive_mails', { accountId: account.id, userId: account.user_id, differential: true }, { dedupId: `backup-${account.id}` });
     await db.updateTable('mail_accounts').set({ last_backup_at: now }).where('id', '=', account.id).execute();
     logger.info(`Enqueued automatic backup (${account.id}, every ${account.backup_interval})`);
-  }
+  }));
 }
 
 /** B2: once at startup, fill body_text of mails archived before migration 007 (fixed dedupId: one backfill at a time). */

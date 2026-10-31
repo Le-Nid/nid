@@ -1,6 +1,7 @@
 import { useId, useState } from 'react'
 import { useOutletContext, useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { toast } from 'sonner'
 import { Plus, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -51,32 +52,91 @@ function AccountState({ account }: Readonly<{ account: GmailAccount }>) {
   return <span className="rounded-full bg-success-soft px-2 text-xs leading-[22px] font-medium text-success">{t('settings.gmail.synced')}</span>
 }
 
-function AccountCard({ account, mails, onReconnect: reconnectGmail }: Readonly<{ account: GmailAccount; mails: number | null | undefined; onReconnect: () => void }>) {
-  const { t, i18n } = useTranslation()
-  const imap = account.provider === 'imap'
-  // An IMAP account is « reconnected » by giving its server and password again
-  const [editing, setEditing] = useState(false)
-  const onReconnect = imap ? () => setEditing(true) : reconnectGmail
+type ArchiveStats = { total_mails?: string | number | null; last_archived_at?: string | null } | undefined
+
+/** « Synchronisée il y a 2 h · 12 345 mails » and « Dernière sauvegarde … · N mails · 98 % ». */
+function statusLines(t: TFunction, lang: string, account: GmailAccount, mails: number | null | undefined, archive: ArchiveStats) {
+  const archived = archive ? Number(archive.total_mails ?? 0) : null
+  const known = typeof mails === 'number'
+  const sync = [
+    account.last_sync_at ? t('settings.gmail.lastSync', { when: formatRelative(account.last_sync_at, lang) }) : t('settings.gmail.neverSynced'),
+    known ? t('settings.gmail.mails', { count: mails }) : null,
+  ]
+  const backup = [
+    archive?.last_archived_at ? t('archives.status.last', { when: formatRelative(archive.last_archived_at, lang) }) : t('archives.status.never'),
+    archived === null ? null : t('archives.status.count', { count: archived }),
+    archived !== null && known && mails > 0 ? new Intl.NumberFormat(lang, { style: 'percent' }).format(Math.min(1, archived / mails)) : null,
+  ]
+  return { sync: sync.filter(Boolean).join(' · '), backup: backup.filter(Boolean).join(' · ') }
+}
+
+/** An active account: automatic backup and its frequency, sync now (Gmail), reconnect, disconnect. */
+function ActiveAccountControls({ account, onReconnect }: Readonly<{ account: GmailAccount; onReconnect: () => void }>) {
+  const { t } = useTranslation()
   const id = useId()
-  const archive = useDashboardArchiveStats(account.id).data
+  const imap = account.provider === 'imap'
   const update = useUpdateGmailAccount()
   const sync = useSyncGmailAccount()
   const disconnect = useDisconnectGmailAccount()
   const failed = () => toast.error(t('settings.saveFailed'))
   const save = (body: { backup_enabled?: boolean; backup_interval?: BackupInterval }) => update.mutate({ id: account.id, ...body }, { onError: failed })
 
-  const archived = archive ? Number(archive.total_mails ?? 0) : null
-  const syncLine = [
-    account.last_sync_at ? t('settings.gmail.lastSync', { when: formatRelative(account.last_sync_at, i18n.language) }) : t('settings.gmail.neverSynced'),
-    typeof mails === 'number' ? t('settings.gmail.mails', { count: mails }) : null,
-  ]
-  const backupLine = [
-    archive?.last_archived_at ? t('archives.status.last', { when: formatRelative(archive.last_archived_at, i18n.language) }) : t('archives.status.never'),
-    archived === null ? null : t('archives.status.count', { count: archived }),
-    archived !== null && typeof mails === 'number' && mails > 0
-      ? new Intl.NumberFormat(i18n.language, { style: 'percent' }).format(Math.min(1, archived / mails))
-      : null,
-  ]
+  return (
+    <>
+      <SwitchRow
+        label={t('settings.gmail.autoBackup')}
+        description={t('settings.gmail.autoBackupHint')}
+        checked={!!account.backup_enabled}
+        onChange={(on) => save({ backup_enabled: on })}
+        disabled={update.isPending}
+      />
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <label htmlFor={`${id}-every`} className="text-sm font-medium">{t('settings.gmail.frequency')}</label>
+        <select
+          id={`${id}-every`}
+          value={account.backup_interval ?? '24h'}
+          disabled={!account.backup_enabled || update.isPending}
+          onChange={(e) => save({ backup_interval: e.target.value as BackupInterval })}
+          className={selectClass}
+        >
+          {INTERVALS.map((every) => <option key={every} value={every}>{t(`settings.gmail.every.${every}`)}</option>)}
+        </select>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {!imap && <Button
+          variant="outline"
+          className="h-11 md:h-9"
+          disabled={sync.isPending || account.needs_reauth}
+          onClick={() => sync.mutate(account.id, { onSuccess: () => toast.success(t('settings.gmail.syncDone')), onError: () => toast.error(t('settings.gmail.syncFailed')) })}
+        >
+          <RefreshCw aria-hidden="true" />{t('settings.gmail.syncNow')}
+        </Button>}
+        <Button variant={account.needs_reauth ? 'default' : 'outline'} className="h-11 md:h-9" onClick={onReconnect}>
+          {t(imap ? 'settings.imap.updateTitle' : 'settings.gmail.reconnect')}
+        </Button>
+        <ConfirmDialog
+          trigger={<Button variant="destructive" className="h-11 md:h-9">{t('settings.gmail.disconnect')}</Button>}
+          title={t('settings.gmail.disconnectTitle', { email: account.email })}
+          description={t('settings.gmail.disconnectDescription')}
+          confirmLabel={t('settings.gmail.disconnect')}
+          destructive
+          onConfirm={() => disconnect.mutate(account.id, {
+            onSuccess: () => toast.success(t('settings.gmail.disconnected', { email: account.email })),
+            onError: failed,
+          })}
+        />
+      </div>
+    </>
+  )
+}
+
+function AccountCard({ account, mails, onReconnect: reconnectGmail }: Readonly<{ account: GmailAccount; mails: number | null | undefined; onReconnect: () => void }>) {
+  const { t, i18n } = useTranslation()
+  const imap = account.provider === 'imap'
+  // An IMAP account is « reconnected » by giving its server and password again
+  const [editing, setEditing] = useState(false)
+  const onReconnect = imap ? () => setEditing(true) : reconnectGmail
+  const lines = statusLines(t, i18n.language, account, mails, useDashboardArchiveStats(account.id).data)
 
   return (
     <SettingsCard title={account.email} description={<Status account={account} />}>
@@ -85,56 +145,12 @@ function AccountCard({ account, mails, onReconnect: reconnectGmail }: Readonly<{
       {!account.is_active && <p className="text-sm text-muted-foreground">{t('settings.gmail.disconnectedHint')}</p>}
       <dl className="grid gap-2 text-sm md:grid-cols-[max-content_1fr] md:gap-x-6">
         {!imap && <dt className="text-muted-foreground">{t('settings.gmail.sync')}</dt>}
-        {!imap && <dd>{syncLine.filter(Boolean).join(' · ')}</dd>}
+        {!imap && <dd>{lines.sync}</dd>}
         <dt className="text-muted-foreground">{t('settings.gmail.backup')}</dt>
-        <dd>{backupLine.filter(Boolean).join(' · ')}</dd>
+        <dd>{lines.backup}</dd>
       </dl>
       {account.is_active ? (
-        <>
-          <SwitchRow
-            label={t('settings.gmail.autoBackup')}
-            description={t('settings.gmail.autoBackupHint')}
-            checked={!!account.backup_enabled}
-            onChange={(on) => save({ backup_enabled: on })}
-            disabled={update.isPending}
-          />
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <label htmlFor={`${id}-every`} className="text-sm font-medium">{t('settings.gmail.frequency')}</label>
-            <select
-              id={`${id}-every`}
-              value={account.backup_interval ?? '24h'}
-              disabled={!account.backup_enabled || update.isPending}
-              onChange={(e) => save({ backup_interval: e.target.value as BackupInterval })}
-              className={selectClass}
-            >
-              {INTERVALS.map((every) => <option key={every} value={every}>{t(`settings.gmail.every.${every}`)}</option>)}
-            </select>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {!imap && <Button
-              variant="outline"
-              className="h-11 md:h-9"
-              disabled={sync.isPending || account.needs_reauth}
-              onClick={() => sync.mutate(account.id, { onSuccess: () => toast.success(t('settings.gmail.syncDone')), onError: () => toast.error(t('settings.gmail.syncFailed')) })}
-            >
-              <RefreshCw aria-hidden="true" />{t('settings.gmail.syncNow')}
-            </Button>}
-            <Button variant={account.needs_reauth ? 'default' : 'outline'} className="h-11 md:h-9" onClick={onReconnect}>
-              {t(imap ? 'settings.imap.updateTitle' : 'settings.gmail.reconnect')}
-            </Button>
-            <ConfirmDialog
-              trigger={<Button variant="destructive" className="h-11 md:h-9">{t('settings.gmail.disconnect')}</Button>}
-              title={t('settings.gmail.disconnectTitle', { email: account.email })}
-              description={t('settings.gmail.disconnectDescription')}
-              confirmLabel={t('settings.gmail.disconnect')}
-              destructive
-              onConfirm={() => disconnect.mutate(account.id, {
-                onSuccess: () => toast.success(t('settings.gmail.disconnected', { email: account.email })),
-                onError: failed,
-              })}
-            />
-          </div>
-        </>
+        <ActiveAccountControls account={account} onReconnect={onReconnect} />
       ) : (
         // Reconnecting the same address brings this account back, archives included (same row server-side)
         <Button className="h-11 w-fit md:h-9" onClick={onReconnect}>{t(imap ? 'settings.imap.updateTitle' : 'settings.gmail.reconnect')}</Button>
