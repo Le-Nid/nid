@@ -625,7 +625,35 @@
       "disconnectedPage": "{{email}} is disconnected",
       "disconnectedPageHint": "This page needs Gmail access. The account's archives stay available in Archives.",
       "reconnectInSettings": "Reconnect in Settings",
-      "disconnectedOption": "{{email}} (disconnected)"
+      "disconnectedOption": "{{email}} (disconnected)",
+      "wizard": {
+        "title": "Set up the account",
+        "description": "{{email}} is connected. Set its backup and first rules; every step can be skipped.",
+        "steps": "Steps",
+        "step": {
+          "google": "Google sign-in",
+          "backup": "Backup",
+          "rules": "Rules",
+          "summary": "Summary"
+        },
+        "firstBackup": "First backup",
+        "first": {
+          "year": "The last 12 months",
+          "all": "The whole mailbox",
+          "none": "Later"
+        },
+        "rulesHint": "Tick the rules to create. They run automatically at the frequency shown; edit or turn them off in Rules & labels. \"Delete\" moves mails to the Gmail trash (30 days).",
+        "matches_one": "≈ {{count, number}} mail",
+        "matches_other": "≈ {{count, number}} mails",
+        "off": "Off",
+        "noRules": "None",
+        "back": "Back",
+        "later": "Later",
+        "next": "Next",
+        "finish": "Finish",
+        "done": "Account set up",
+        "failed": "Setup did not complete: check the account in the settings."
+      }
     },
     "notifications": {
       "title": "Notification preferences",
@@ -1215,7 +1243,8 @@
       "backup": "NAS backup",
       "rules": "Active rules",
       "rulesHint_one": "{{count, number}} mail processed in the last 30 days",
-      "rulesHint_other": "{{count, number}} mails processed in the last 30 days"
+      "rulesHint_other": "{{count, number}} mails processed in the last 30 days",
+      "dedupSaved": "{{size}} saved by deduplication"
     },
     "top": {
       "title": "Top senders",
@@ -1241,6 +1270,19 @@
       "title": "Running jobs",
       "empty": "No running job",
       "loadError": "Could not load the running jobs."
+    },
+    "daily": {
+      "title": "Mails received — last 30 days",
+      "empty": "No mail archived in the last 30 days: turn on automatic backup",
+      "bar": "{{day}}: {{count, number}} mail(s)",
+      "day": "Day",
+      "mails": "Mails"
+    },
+    "heaviest": {
+      "mails": "Heaviest archived mails",
+      "attachments": "Heaviest attachments",
+      "empty": "Nothing archived yet",
+      "noSubject": "(no subject)"
     }
   },
   "activity": {

@@ -18,8 +18,14 @@ Quatre cartes cliquables (2×2 sur mobile) :
 |---|---|---|
 | **Mails dans Gmail** | nombre de mails du compte, « N non lus » | [Mails](mails.md) |
 | **Récupérable** | volume total des expéditeurs analysés, « N expéditeurs à nettoyer » (ou « Analyse des expéditeurs à lancer ») | [Nettoyage](cleanup.md) |
-| **Sauvegarde NAS** | part des mails Gmail déjà archivés (en %), nombre de mails archivés | [Archives](archives.md) |
+| **Sauvegarde NAS** | part des mails Gmail déjà archivés (en %), nombre de mails archivés, et le volume économisé par la déduplication des pièces jointes | [Archives](archives.md) |
 | **Règles actives** | nombre de règles actives, « N mails traités ces 30 derniers jours » | [Règles & libellés](rules.md) |
+
+---
+
+## Mails reçus — 30 derniers jours
+
+Une barre par jour, d'après les archives (date de réception des mails sauvegardés) : le graphique est fidèle quand la sauvegarde automatique est active. Les mêmes chiffres sont lus par les lecteurs d'écran sous forme de tableau. **Tout voir** ouvre [Archives](archives.md).
 
 ---
 
@@ -42,6 +48,12 @@ Chaque suggestion propose :
 - **Se désabonner et nettoyer** — même action que dans [Nettoyage](cleanup.md#se-desabonner-et-nettoyer) (désactivé si l'expéditeur ne propose pas de désabonnement automatique) ; la progression s'affiche sur la suggestion, qui disparaît une fois l'action terminée ;
 - **Toujours faire ça** — ouvre le formulaire de [règle](rules.md#creer-une-regle) pré-rempli avec l'expéditeur ;
 - **Ignorer** — masque la suggestion.
+
+---
+
+## Plus gros mails et plus grosses pièces jointes
+
+Les 5 mails archivés les plus lourds (objet, expéditeur, taille) et les 5 pièces jointes les plus lourdes (nom, objet du mail, taille). **Tout voir** ouvre [Archives](archives.md) ou [Pièces jointes](attachments.md), triées par taille.
 
 ---
 

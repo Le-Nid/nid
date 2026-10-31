@@ -14,6 +14,7 @@ import type { LiveCounters } from '@/hooks/useLiveCounters'
 import { useAuthStore, type GmailAccount } from '@/store/auth.store'
 import { formatRelative } from '@/utils/format'
 import { SettingsCard, SwitchRow, selectClass } from './shared'
+import { AccountSetupWizard } from './AccountSetupWizard'
 
 const INTERVALS: BackupInterval[] = ['1h', '6h', '24h']
 
@@ -134,10 +135,13 @@ export function GmailSection() {
   const { t } = useTranslation()
   const { user, gmailAccounts } = useAuthStore()
   const counters = useOutletContext<LiveCounters | null>()
-  const [params] = useSearchParams()
+  const [params, setParams] = useSearchParams()
   const { connect, pending } = useConnectGmail()
   const max = user?.max_gmail_accounts ?? 3
   const status = params.get('gmail')
+  // new=1: Google just added this account (not a reconnection) → setup wizard, once
+  const added = params.get('new') === '1' ? gmailAccounts.find((a) => a.email === params.get('account')) : undefined
+  const closeWizard = () => setParams((p) => { p.delete('new'); return p }, { replace: true })
 
   const add = (
     <Button className="h-11 w-fit md:h-9" disabled={pending || gmailAccounts.length >= max} onClick={connect}>
@@ -149,6 +153,7 @@ export function GmailSection() {
     <div className="flex flex-col gap-4">
       {/* Back from Google's consent page (OAuth callback) */}
       {status === 'connected' && <output className="block rounded-lg bg-success-soft px-4 py-3 text-success">{t('settings.gmail.connected', { email: params.get('account') ?? '' })}</output>}
+      {added && <AccountSetupWizard account={added} onClose={closeWizard} />}
       {status === 'error' && <p role="alert" className="rounded-lg bg-destructive-soft px-4 py-3 text-destructive">{t('settings.gmail.connectFailed')}</p>}
       {gmailAccounts.length === 0 ? (
         <EmptyState title={t('settings.gmail.none')} description={t('settings.gmail.scopeHint')} action={add} />

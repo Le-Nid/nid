@@ -5,7 +5,7 @@ import { createMemoryRouter, Outlet, RouterProvider } from 'react-router'
 import { toast } from 'sonner'
 import i18n from '../i18n'
 import {
-  aboutApi, authApi, configApi, dashboardApi, gmailAccountsApi, importApi, labelsApi, notificationsApi, sharingApi, twoFactorApi, webhooksApi, passkeysApi, apiTokensApi,
+  aboutApi, authApi, configApi, dashboardApi, gmailAccountsApi, importApi, labelsApi, notificationsApi, sharingApi, twoFactorApi, webhooksApi, passkeysApi, apiTokensApi, rulesApi, archiveApi,
 } from '../api'
 import { useAuthStore } from '../store/auth.store'
 import { useThemeStore } from '../store/theme.store'
@@ -25,6 +25,8 @@ vi.mock('../api', () => ({
   importApi: { importMbox: vi.fn(), importImap: vi.fn(), exportMbox: vi.fn() },
   labelsApi: { sync: vi.fn() },
   gmailAccountsApi: { connectUrl: vi.fn(), update: vi.fn(), disconnect: vi.fn() },
+  rulesApi: { getTemplates: vi.fn(), preview: vi.fn(), createFromTemplate: vi.fn() },
+  archiveApi: { triggerArchive: vi.fn() },
 }))
 vi.mock('../utils/download', () => ({ saveBlob: vi.fn() }))
 const webauthn = vi.hoisted(() => ({ supported: false, startRegistration: vi.fn() }))
@@ -336,8 +338,49 @@ describe('Comptes Gmail', () => {
     vi.mocked(gmailAccountsApi.connectUrl).mockRejectedValue({ response: { status: 403 } })
     setup('/settings/gmail?gmail=connected&account=ana%40gmail.com')
     expect(screen.getByRole('status')).toHaveTextContent('Compte Gmail connecté : ana@gmail.com')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument() // a reconnection: no setup wizard
     await userEvent.click(screen.getByRole('button', { name: 'Ajouter un compte Gmail' }))
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Nombre maximal de comptes Gmail atteint'))
+  })
+
+  it('opens the setup wizard only for a newly added account, and « Plus tard » closes it without saving', async () => {
+    vi.mocked(rulesApi.getTemplates).mockResolvedValue([])
+    const router = setup('/settings/gmail?gmail=connected&account=ana%40gmail.com&new=1')
+    expect(await screen.findByRole('dialog', { name: 'Configurer le compte' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Plus tard' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    expect(router.state.location.search).not.toContain('new=1')
+    expect(gmailAccountsApi.update).not.toHaveBeenCalled()
+  })
+
+  it('setup wizard: backup, starter rules with their current reach, summary, then everything is applied', async () => {
+    vi.mocked(rulesApi.getTemplates).mockResolvedValue([
+      { id: 'cleanup-promotions', name: 'Nettoyer les promotions', description: 'Promos de plus de 30 jours', category: 'cleanup',
+        dto: { conditions: [{ field: 'category', operator: 'is', value: 'promotions' }], action: { type: 'trash' }, schedule: 'weekly' } },
+      { id: 'label-invoices', name: 'Libellé Factures', description: '', category: 'label', dto: { conditions: [], action: { type: 'label' }, schedule: 'daily' } },
+    ])
+    vi.mocked(rulesApi.preview).mockResolvedValue({ estimatedCount: 42 })
+    vi.mocked(rulesApi.createFromTemplate).mockResolvedValue({ id: 'r1' })
+    vi.mocked(gmailAccountsApi.update).mockResolvedValue({})
+    vi.mocked(archiveApi.triggerArchive).mockResolvedValue({ jobId: 'j1' })
+    setup('/settings/gmail?gmail=connected&account=ana%40gmail.com&new=1')
+    const dialog = await screen.findByRole('dialog', { name: 'Configurer le compte' })
+
+    expect(within(dialog).getByRole('radio', { name: 'Les 12 derniers mois' })).toBeChecked()
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Suivant' }))
+    const rule = await within(dialog).findByRole('checkbox', { name: 'Nettoyer les promotions' })
+    expect(within(dialog).queryByText('Libellé Factures')).not.toBeInTheDocument() // label templates stay in Libellés
+    expect(await within(dialog).findByText('≈ 42 mails')).toBeInTheDocument()
+    await userEvent.click(rule)
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Suivant' }))
+    expect(within(dialog).getByText('Nettoyer les promotions (Supprimer, Hebdomadaire)')).toBeInTheDocument()
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Terminer' }))
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Compte configuré'))
+    expect(gmailAccountsApi.update).toHaveBeenCalledWith('acc-1', { backup_enabled: true, backup_interval: '24h' })
+    expect(rulesApi.createFromTemplate).toHaveBeenCalledWith('acc-1', 'cleanup-promotions')
+    expect(archiveApi.triggerArchive).toHaveBeenCalledWith('acc-1', { differential: true, query: 'newer_than:1y' })
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
   })
 
   it('offers to add one when there is none', () => {

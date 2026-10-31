@@ -478,7 +478,8 @@ export async function authRoutes(app: FastifyInstance) {
       const account = await exchangeGmailCode(code, (decoded as any).userId)
       // Not awaited: the redirect must not wait on Gmail; the daily scheduler retries on failure
       syncLabels(account.id).catch((err) => app.log.warn({ err, accountId: account.id }, 'initial label sync failed'))
-      return reply.redirect(`${config.FRONTEND_URL}/settings/gmail?gmail=connected&account=${encodeURIComponent(account.email)}`)
+      const added = account.inserted ? '&new=1' : '' // opens the setup wizard (§7.7)
+      return reply.redirect(`${config.FRONTEND_URL}/settings/gmail?gmail=connected&account=${encodeURIComponent(account.email)}${added}`)
     } catch (err) {
       app.log.error(err)
       return reply.redirect(`${config.FRONTEND_URL}/settings/gmail?gmail=error`)

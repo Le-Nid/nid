@@ -166,6 +166,30 @@ describe('OverviewPage', () => {
     expect(within(item).getByRole('button', { name: 'Se désabonner et nettoyer' })).toHaveAttribute('aria-disabled', 'true')
   })
 
+  it('30-day volume as bars and a screen-reader table, heaviest mails and attachments, dedup savings on the backup card', async () => {
+    const daily = Array.from({ length: 30 }, (_, i) => ({ day: `2026-10-${String(i + 1).padStart(2, '0')}`, count: i === 29 ? 12 : 0 }))
+    vi.mocked(dashboardApi.getArchiveStats).mockResolvedValue({
+      total_mails: 617, total_size: 1024, last_archived_at: null, daily, dedup_saved_bytes: 2048,
+      biggestMails: [{ id: 'm1', subject: 'Photos vacances', sender: 'Léa <lea@x.fr>', size_bytes: 9_000_000 }],
+      biggestAttachments: [{ id: 'a1', filename: 'devis.pdf', subject: 'Devis', size_bytes: 3_000_000 }],
+    })
+    setup()
+    const table = await screen.findByRole('table', { name: 'Mails reçus — 30 derniers jours' })
+    expect(within(table).getAllByRole('row')).toHaveLength(31)
+    expect(within(table).getByText('12')).toBeInTheDocument()
+    expect(screen.getByText('Photos vacances')).toBeInTheDocument()
+    expect(screen.getByText('devis.pdf')).toBeInTheDocument()
+    expect(await kpi(/Sauvegarde NAS/)).toHaveTextContent('2 Ko économisés par la déduplication')
+    expect(screen.getByRole('link', { name: 'Tout voir : Plus grosses pièces jointes' })).toHaveAttribute('href', '/attachments')
+  })
+
+  it('no mail archived over 30 days, nothing archived yet: empty states', async () => {
+    vi.mocked(dashboardApi.getArchiveStats).mockResolvedValue({ total_mails: 0, daily: [{ day: '2026-10-30', count: 0 }], biggestMails: [], biggestAttachments: [] })
+    setup()
+    expect(await screen.findByText('Aucun mail archivé ces 30 derniers jours : activez la sauvegarde automatique')).toBeInTheDocument()
+    expect(screen.getAllByText("Rien d'archivé pour l'instant")).toHaveLength(2)
+  })
+
   it('empty suggestions, top senders and jobs show their empty states', async () => {
     vi.mocked(analyticsApi.getCleanupSuggestions).mockResolvedValue([])
     vi.mocked(dashboardApi.getStats).mockResolvedValue({ ...STATS, bySender: [] })

@@ -1,4 +1,5 @@
 import { google } from 'googleapis'
+import { sql } from 'kysely'
 import { config } from '../config'
 import { getDb } from '../db'
 import { createLogger } from '../logger'
@@ -65,7 +66,8 @@ export async function exchangeGmailCode(code: string, userId: string) {
         updated_at:    new Date(),
       })
     )
-    .returning(['id', 'email'])
+    // xmax = 0 only on a freshly inserted row: a new account (setup wizard) vs a reconnection
+    .returning(['id', 'email', sql<boolean>`xmax = 0`.as('inserted')])
     .executeTakeFirstOrThrow()
 
   return account

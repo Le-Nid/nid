@@ -195,6 +195,17 @@ describe('authRoutes - coverage gaps', () => {
     await app.close()
   })
 
+  it('GET /gmail/callback flags a newly added account (setup wizard), not a reconnection', async () => {
+    const app = await buildAuthApp()
+    const state = app.jwt.sign({ userId: 'user-1', purpose: 'gmail_oauth' }, { expiresIn: '5m' })
+    const url = `/gmail/callback?code=auth_code&state=${encodeURIComponent(state)}`
+    mockExchangeGmailCode.mockResolvedValueOnce({ id: 'acc-1', email: 'new@gmail.com', inserted: true })
+    expect((await app.inject({ method: 'GET', url })).headers.location).toMatch(/account=new%40gmail\.com&new=1$/)
+    mockExchangeGmailCode.mockResolvedValueOnce({ id: 'acc-1', email: 'new@gmail.com', inserted: false })
+    expect((await app.inject({ method: 'GET', url })).headers.location).not.toContain('new=1')
+    await app.close()
+  })
+
   // ─── GET /gmail/callback - error ──────────────────────
   it('GET /gmail/callback error redirects to settings error', async () => {
     const app = await buildAuthApp()

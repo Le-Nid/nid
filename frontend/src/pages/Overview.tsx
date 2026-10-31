@@ -1,7 +1,8 @@
 import { useEffect, useId, type ReactNode } from 'react'
 import { Link, useOutletContext } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { Activity, Users } from 'lucide-react'
+import type { TFunction } from 'i18next'
+import { Activity, BarChart3, Paperclip, Users } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PageHeader } from '@/components/app/PageHeader'
 import { EmptyState } from '@/components/app/EmptyState'
@@ -15,6 +16,8 @@ import { formatBytes, formatRelative, formatSender, jobTypeKey } from '@/utils/f
 import { Suggestions } from './overview/Suggestions'
 
 type Sender = { sender: string; count: number; sizeBytes: number }
+type Day = { day: string; count: number }
+type Heavy = { id: string; name: string; detail?: string | null; size: number }
 type Job = { id: string; bullmq_id: string | null; type: string }
 
 const TOP = 5
@@ -88,6 +91,95 @@ function TopSenders({ senders }: Readonly<{ senders: Sender[] }>) {
         </li>
       ))}
     </ol>
+  )
+}
+
+/** Mails received per day over 30 days (from the archives): CSS bars, the same figures as a table for screen readers. */
+function DailyVolume({ days }: Readonly<{ days: Day[] }>) {
+  const { t, i18n } = useTranslation()
+  if (!days.some((d) => d.count)) return <EmptyState icon={<BarChart3 />} title={t('overview.daily.empty')} />
+  const max = Math.max(...days.map((d) => d.count))
+  const label = (day: string) => new Date(`${day}T00:00:00Z`).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', timeZone: 'UTC' })
+  return (
+    <figure className="flex flex-col gap-2">
+      <div aria-hidden="true" className="flex h-32 items-end gap-0.5">
+        {days.map((d) => (
+          <span
+            key={d.day}
+            title={t('overview.daily.bar', { day: label(d.day), count: d.count })}
+            className="flex-1 rounded-t-sm bg-primary"
+            style={{ height: `${(d.count / max) * 100}%`, minHeight: d.count ? 2 : 0 }}
+          />
+        ))}
+      </div>
+      <div aria-hidden="true" className="flex justify-between text-xs text-muted-foreground">
+        <span>{label(days[0].day)}</span><span>{label(days.at(-1)!.day)}</span>
+      </div>
+      <table className="sr-only">
+        <caption>{t('overview.daily.title')}</caption>
+        <thead><tr><th scope="col">{t('overview.daily.day')}</th><th scope="col">{t('overview.daily.mails')}</th></tr></thead>
+        <tbody>{days.map((d) => <tr key={d.day}><td>{label(d.day)}</td><td>{d.count}</td></tr>)}</tbody>
+      </table>
+    </figure>
+  )
+}
+
+/** The heaviest archived mails or attachments, largest first. */
+function Heaviest({ items, empty }: Readonly<{ items: Heavy[]; empty: string }>) {
+  if (!items.length) return <EmptyState icon={<Paperclip />} title={empty} />
+  return (
+    <ol className="flex flex-col gap-2 text-sm">
+      {items.map((it) => (
+        <li key={it.id} className="flex justify-between gap-3">
+          <span className="flex min-w-0 flex-col">
+            <span className="truncate font-medium">{it.name}</span>
+            {it.detail && <span className="truncate text-muted-foreground">{it.detail}</span>}
+          </span>
+          <span className="shrink-0 text-muted-foreground tabular-nums">{formatBytes(it.size)}</span>
+        </li>
+      ))}
+    </ol>
+  )
+}
+
+/** Archived count, plus what attachment deduplication saved when there is anything. */
+function backupHint(t: TFunction, archived: number, savedBytes: number | undefined) {
+  const count = t('archives.status.count', { count: archived })
+  return savedBytes ? `${count} · ${t('overview.kpi.dedupSaved', { size: formatBytes(savedBytes) })}` : count
+}
+
+type ArchiveStats = {
+  daily?: Day[]
+  biggestMails?: { id: string; subject: string | null; sender: string | null; size_bytes: number }[]
+  biggestAttachments?: { id: string; filename: string; subject: string | null; size_bytes: number }[]
+} | undefined
+
+function DailySection({ archive }: Readonly<{ archive: ArchiveStats }>) {
+  const { t } = useTranslation()
+  return (
+    <Section title={t('overview.daily.title')} to="/archives">
+      {/* daily is missing from a pre-upgrade cached answer (5 min): keep the skeleton rather than a false « no mail » */}
+      {archive?.daily ? <DailyVolume days={archive.daily} /> : <Skeleton className="h-36 w-full" />}
+    </Section>
+  )
+}
+
+function HeaviestSections({ archive }: Readonly<{ archive: ArchiveStats }>) {
+  const { t } = useTranslation()
+  const empty = t('overview.heaviest.empty')
+  const mails = (archive?.biggestMails ?? []).map((m) => ({
+    id: m.id, name: m.subject || t('overview.heaviest.noSubject'), detail: m.sender && formatSender(m.sender), size: Number(m.size_bytes),
+  }))
+  const attachments = (archive?.biggestAttachments ?? []).map((a) => ({ id: a.id, name: a.filename, detail: a.subject, size: Number(a.size_bytes) }))
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      <Section title={t('overview.heaviest.mails')} to="/archives">
+        {archive ? <Heaviest empty={empty} items={mails} /> : <Skeleton className="h-32 w-full" />}
+      </Section>
+      <Section title={t('overview.heaviest.attachments')} to="/attachments">
+        {archive ? <Heaviest empty={empty} items={attachments} /> : <Skeleton className="h-32 w-full" />}
+      </Section>
+    </div>
   )
 }
 
@@ -178,7 +270,7 @@ export default function OverviewPage() {
           to="/archives"
           label={t('overview.kpi.backup')}
           value={coverage === undefined ? kpiValue(undefined, !!archive, n) : new Intl.NumberFormat(i18n.language, { style: 'percent' }).format(coverage / 100)}
-          hint={archived === undefined ? undefined : t('archives.status.count', { count: archived })}
+          hint={archived === undefined ? undefined : backupHint(t, archived, archive.dedup_saved_bytes)}
           progress={coverage}
         />
         <KpiCard
@@ -188,6 +280,8 @@ export default function OverviewPage() {
           hint={rules && t('overview.kpi.rulesHint', { count: rules.processed30d })}
         />
       </div>
+
+      <DailySection archive={archive} />
 
       <div className="grid gap-4 md:grid-cols-2">
         <Section title={t('overview.top.title')} to="/cleanup">
@@ -199,6 +293,8 @@ export default function OverviewPage() {
           <Suggestions accountId={accountId} />
         </Section>
       </div>
+
+      <HeaviestSections archive={archive} />
 
       <Section title={t('overview.jobs.title')} to="/activity">
         <ActiveJobs activeJobs={counters?.activeJobs} />

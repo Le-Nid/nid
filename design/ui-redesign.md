@@ -16,7 +16,7 @@ Versions vérifiées le 2026-10-20 : `shadcn` 4.22.1 (CLI), `tailwindcss` 4.3.3,
 - Remplacer antd par shadcn/ui + Tailwind v4, page par page, sans big bang.
 
 **Non-objectifs**
-- Pas de nouvelle fonctionnalité métier hors de celles listées en §8 (prérequis backend).
+- Pas de nouvelle fonctionnalité métier hors de celles listées en §8 (prérequis backend). Exception décidée après comparaison avec bichon : assistant d'ajout de compte (§7.7) et enrichissement de la Vue d'ensemble (§7.1), sur des données existantes (B16, B17).
 - Pas de classification automatique par LLM (point ouvert §10).
 - Pas de virtualisation de listes (pagination serveur suffit).
 - Pas de refonte de la page publique `/shared/:token` au-delà du changement de composants.
@@ -397,6 +397,11 @@ Endpoints : existants (`frontend/src/api/index.ts`) ; **nouveaux** en gras (dét
 - **Desktop** : grille 4 KPI + 2 colonnes (Top encombreurs | Suggestions). **Mobile** : KPI 2×2, sections empilées, « Tout voir ».
 - **Données** : `GET /api/dashboard/:id/stats`, `/archive-stats`, `GET /api/quota/:id` (usage stockage) ou stats existantes, `GET /api/analytics/:id/cleanup-suggestions`, `PATCH /api/analytics/suggestions/:id/dismiss`, `GET /api/analytics/:id/sender-scores`, `GET /api/jobs?status=active`.
 - **Nouveau** : **stats de règles sur 30 j** (agrégat jobs `run_rule`, S) ; heatmap et inbox-zero non repris (§10).
+- **Ajouts (B16)**, sous les KPI puis après Top encombreurs | Suggestions, sans perdre l'orientation « prochaine action » :
+  - **Mails reçus — 30 derniers jours** (pleine largeur, → Archives) : barres CSS (pas de bibliothèque de graphiques), une barre par jour UTC, jours vides inclus ; mêmes chiffres dans un tableau `sr-only` (caption = titre) ; état vide « Aucun mail archivé ces 30 derniers jours : activez la sauvegarde automatique ». Source : les archives (date du mail), donc fidèle quand la sauvegarde automatique est active.
+  - **Plus gros mails archivés** (→ Archives) | **Plus grosses pièces jointes** (→ Pièces jointes, triées par taille) : 5 lignes chacun, nom + détail (expéditeur / objet) + taille.
+  - KPI **Sauvegarde NAS** : l'indication ajoute « X économisés par la déduplication » quand le gain est positif.
+- Non repris de bichon : top 10 des comptes (la Vue d'ensemble est par compte actif), palettes de couleurs supplémentaires (chaque palette exigerait la vérification de contraste du §4.2).
 
 ### 7.2 Mails (`/mails`) — artboards 1–4, 13
 
@@ -457,6 +462,7 @@ Endpoints : existants (`frontend/src/api/index.ts`) ; **nouveaux** en gras (dét
 - **Mobile** (17) : l'écran « Plus » sert de racine : groupe **Outils** (Règles & libellés, Activité + « 2 en cours »), groupe **Paramètres** (5 sections, avec résumé : « 2FA activée », « 1 action requise », « Import, export »), groupe **Administration** (« Admin de l'instance », admins seulement), pied « Connectée en tant que … · Se déconnecter de Nid ». Chaque section ouvre une page.
 - **Données** : `/api/auth/2fa/*`, `/api/notifications/preferences`, `/api/webhooks*`, `/api/config/export|import`, `/api/import/:id/mbox|imap|export-mbox`, `/api/shares`, endpoints comptes existants (connexion, synchro, déconnexion).
 - **Nouveau** : **fréquence de sauvegarde par compte** (B12) ; **état « Action requise »** (jeton Google expiré/révoqué exposé par compte, S).
+- **Assistant d'ajout de compte (B17)** : dialog ouvert au retour de Google seulement pour un compte **nouvellement ajouté** (`?gmail=connected&account=…&new=1` ; une reconnexion ne l'ouvre pas), une fois (`new` retiré de l'URL à la fermeture). Étapes : ① Connexion Google (faite) ② **Sauvegarde** : sauvegarde automatique + fréquence, première sauvegarde (12 derniers mois par défaut / toute la boîte / plus tard) ③ **Règles de départ** : modèles des catégories nettoyage, archivage et organisation (les modèles libellé/expiration restent dans Libellés), décochés par défaut, chacun avec son action, sa fréquence et « ≈ N mails » (aperçu B6) ④ **Récapitulatif**. Rien n'est enregistré avant « Terminer » (préférences de sauvegarde, règles `from-template`, archivage différentiel `newer_than:1y` ou complet) ; « Plus tard » ferme sans rien enregistrer. Sert aussi au premier compte (premier lancement).
 - Chiffrement : masqué (P5, O1). Tracking/PII : supprimés de l'UI.
 
 ### 7.8 Admin (`/admin`, D7) — artboard 18
@@ -508,6 +514,8 @@ Hypothèse à valider (H1) : page « Règles & libellés », onglets **Règles**
 | B13 | Quota de l'instance | agrégat unités/jour, pic par utilisateur, nombre de 429 relancés sur 24 h (le throttle les compte déjà ou à instrumenter) | Admin > Système | M |
 | B14 | Audit de l'instance | `GET /api/admin/audit` (filtre utilisateur/action), `adminAuth` | Admin > Audit | S |
 | B15 | Corbeille de l'instance | durée max instance + plafond par utilisateur ; `DELETE /api/admin/archive-trash` (tous comptes, audité) | Admin > Système | S |
+| B16 | Statistiques d'archives pour la Vue d'ensemble | `GET /api/dashboard/:id/archive-stats` renvoie en plus `daily` (30 jours UTC, zéros inclus), `biggestMails` et `biggestAttachments` (5 chacun, hors corbeille) et `dedup_saved_bytes` (copies d'une même empreinte au-delà de la première) | Vue d'ensemble | S |
+| B17 | Compte nouvellement ajouté | le callback OAuth Gmail ajoute `new=1` quand l'upsert a inséré la ligne (`xmax = 0`), pas pour une reconnexion | Paramètres > Comptes Gmail (assistant) | S |
 
 Ordre : B1 → B5 → B3 → B4 → B6/B8/B9 → B2 → B7/B10 → B11–B15. Chaque prérequis = PR backend séparée avec tests Vitest, puis `graphify update .`.
 
@@ -553,7 +561,7 @@ Chaque lot : CI verte (`typecheck`, `test --coverage`, `build`, e2e), captures m
 | O3 | i18n des notifications backend | Textes générés côté serveur aujourd'hui ; passer des clés + paramètres traduits par le frontend, ou langue utilisateur en DB. |
 | O4 | Rapport hebdo par email (P1) | Le backend n'a pas d'envoi SMTP : ajouter un canal email (dépendance + config) ou se limiter à in-app/ntfy/webhook. |
 | O5 | Données Expiration existantes (P4) | Convertir les expirations en règles/libellés ou les laisser expirer puis supprimer la table. |
-| O6 | Heatmap et inbox-zero (ex-Analytics) | Non repris en Vue d'ensemble : confirmer l'abandon (et l'endpoint `snapshot`). |
+| O6 | Heatmap et inbox-zero (ex-Analytics) | **Tranché** : non repris ; la Vue d'ensemble montre à la place le volume reçu sur 30 jours (B16). L'endpoint `snapshot` reste à retirer. |
 | O7 | Données PII / tracking existantes | Purge des tables et endpoints (L11). |
 | O8 | Labels de la barre mobile en 11 px | Proposé 12 px (lisibilité, pas d'exigence RGAA stricte). |
 | O9 | Tokens sombres success/warning/danger-soft/badge/progress/catégories | Définis §4.1 (AA vérifié), absents du prototype : à valider visuellement. |
