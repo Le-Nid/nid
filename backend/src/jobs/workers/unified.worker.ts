@@ -76,7 +76,13 @@ function publishJobEvent(job: Job, phase: 'started' | 'finished') {
   }).catch((err) => logger.warn({ err, jobId: job.id }, 'publish job event failed'))
 }
 
+/** BullMQ retries a failed job (attempts: 3): notify the failure once, when the last attempt fails. */
+export function isLastAttempt(job: Job): boolean {
+  return (job.attemptsMade ?? 0) + 1 >= (job.opts?.attempts ?? 1)
+}
+
 // ─── Archive ────────────────────────────────────────────────
+
 async function listAllMessageIds(accountId: string, query?: string): Promise<string[]> {
   const ids: string[] = []
   let pageToken: string | null = null
@@ -189,6 +195,12 @@ async function handleArchive(job: Job) {
       .set({ status: 'failed', error: String(err) })
       .where('bullmq_id', '=', String(job.id))
       .execute()
+    
+    await db
+      .updateTable('jobs')
+      .set({ status: 'failed', error: String(err) })
+      .where('bullmq_id', '=', String(job.id))
+      .execute()
     throw err
   }
 }
@@ -296,7 +308,7 @@ async function handleBulk(job: Job) {
   } catch (err) {
     await jobRow().set({ status: 'failed', error: String(err) }).execute()
 
-    if (userId) {
+    if (userId && isLastAttempt(job)) {
       await notify({
         userId,
         category: 'job_failed',
@@ -367,8 +379,7 @@ async function handleRule(job: Job) {
     // A failed run counts as a run: otherwise the scheduler re-enqueues the rule every minute until it succeeds
     await db.updateTable('rules').set({ last_run_at: new Date() }).where('id', '=', ruleId).execute()
 
-    // BullMQ retries the job: notify once, when the last attempt fails
-    if (job.data.userId && (job.attemptsMade ?? 0) + 1 >= (job.opts?.attempts ?? 1)) {
+    if (job.data.userId && isLastAttempt(job)) {
       await notify({
         userId: job.data.userId,
         category: 'job_failed',
@@ -478,7 +489,7 @@ async function handlePrivacy(job: Job) {
       .where('bullmq_id', '=', String(job.id))
       .execute()
 
-    if (userId) {
+    if (userId && isLastAttempt(job)) {
       await notify({
         userId,
         category: 'job_failed',
@@ -550,7 +561,7 @@ async function handleImportMbox(job: Job) {
       .where('bullmq_id', '=', String(job.id))
       .execute()
 
-    if (userId) {
+    if (userId && isLastAttempt(job)) {
       await notify({
         userId,
         category: 'job_failed',
@@ -616,7 +627,7 @@ async function handleImportImap(job: Job) {
       .where('bullmq_id', '=', String(job.id))
       .execute()
 
-    if (userId) {
+    if (userId && isLastAttempt(job)) {
       await notify({
         userId,
         category: 'job_failed',
@@ -671,7 +682,7 @@ async function handleRetention(job: Job) {
       .where('bullmq_id', '=', String(job.id))
       .execute()
 
-    if (userId) {
+    if (userId && isLastAttempt(job)) {
       await notify({
         userId,
         category: 'job_failed',
