@@ -26,7 +26,7 @@ import { actionsHeader } from './shared'
 type Policy = {
   id: string
   name: string
-  gmail_account_id: string | null
+  account_id: string | null
   label: string | null
   max_age_days: number
   last_run_at: string | null
@@ -157,7 +157,7 @@ export function RetentionTab({ accountId }: Readonly<{ accountId: string }>) {
   const [editing, setEditing] = useState<Policy | 'new' | null>(null)
   const [deleting, setDeleting] = useState<Policy | null>(null)
 
-  const policies = ((query.data ?? []) as Policy[]).filter((p) => !p.gmail_account_id || p.gmail_account_id === accountId)
+  const policies = ((query.data ?? []) as Policy[]).filter((p) => !p.account_id || p.account_id === accountId)
   const on: Handlers = { edit: setEditing, remove: setDeleting }
   // Columns stay stable; cells read the current handlers and labels through this ref
   const cells = useRef({ on, labels })

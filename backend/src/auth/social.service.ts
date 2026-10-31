@@ -234,7 +234,7 @@ async function autoRegisterGmailAccount(userId: string, email: string, tokens: a
     const refreshToken = tokens.hasRefreshToken() ? tokens.refreshToken() : null
 
     await db
-      .insertInto('gmail_accounts')
+      .insertInto('mail_accounts')
       .values({
         user_id:       userId,
         email,
@@ -244,18 +244,18 @@ async function autoRegisterGmailAccount(userId: string, email: string, tokens: a
         token_expiry:  expiresAt,
       })
       .onConflict((oc) =>
-        oc.constraint('gmail_accounts_user_email_unique').doUpdateSet({
+        oc.constraint('mail_accounts_user_email_unique').doUpdateSet({
           access_token:  (eb) => eb.ref('excluded.access_token'),
           refresh_token: (eb) =>
             eb.fn('COALESCE', [
               eb.ref('excluded.refresh_token'),
-              eb.ref('gmail_accounts.refresh_token'),
+              eb.ref('mail_accounts.refresh_token'),
             ]) as any,
           token_expiry:  (eb) => eb.ref('excluded.token_expiry'),
           updated_at:    new Date(),
         })
         // A disconnected account keeps its tokens erased: only « Reconnecter » brings it back
-        .where('gmail_accounts.is_active', '=', true)
+        .where('mail_accounts.is_active', '=', true)
       )
       .execute()
   } catch (err) {

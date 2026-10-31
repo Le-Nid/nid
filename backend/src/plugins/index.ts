@@ -124,7 +124,7 @@ export async function registerPlugins(app: FastifyInstance) {
 
     const { db: database } = app
     const account = await database
-      .selectFrom('gmail_accounts')
+      .selectFrom('mail_accounts')
       .select('id')
       .where('id', '=', accountId)
       .where('user_id', '=', userId)

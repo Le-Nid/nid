@@ -16,7 +16,7 @@ export interface RuleAction {
 
 export interface Rule {
   id: string
-  gmail_account_id: string
+  account_id: string
   name: string
   description?: string
   conditions: RuleCondition[]

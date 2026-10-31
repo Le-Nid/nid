@@ -97,7 +97,7 @@ describe('exportUserData', () => {
     mockExecuteTakeFirst.mockResolvedValue({ id: 'user-1', email: 'me@test.com' })
     mockExecute.mockImplementation(async () => {
       const last = tables.at(-1)
-      if (last === 'selectFrom:gmail_accounts') return [{ id: 'acc-1', email: 'me@gmail.com' }]
+      if (last === 'selectFrom:mail_accounts') return [{ id: 'acc-1', email: 'me@gmail.com' }]
       if (last === 'selectFrom:archived_mails') return [{ id: 'm-1', subject: 'Hi', body_text: 'secret body', eml_path: '/x.eml' }]
       return []
     })

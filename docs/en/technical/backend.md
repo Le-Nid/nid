@@ -56,7 +56,7 @@ Business logic goes into a service (`src/{module}/{module}.service.ts`) as soon 
 `plugins/index.ts` defines three decorators:
 
 - **`app.authenticate`** — verifies the JWT (cookie or header), rejects a token found in the Redis blacklist and a disabled user.
-- **`app.requireAccountOwnership`** — checks that the `:accountId` route parameter belongs to the authenticated user (lookup in `gmail_accounts`).
+- **`app.requireAccountOwnership`** — checks that the `:accountId` route parameter belongs to the authenticated user (lookup in `mail_accounts`).
 - **`app.requireAdmin`** — checks that `role === 'admin'`.
 
 Routes combine them through `authPresets(app)` (`utils/auth.ts`):
@@ -81,7 +81,7 @@ The global error handler answers `400 { error, details }` for a `ZodError`.
 
 Two OAuth2 flows coexist:
 
-1. **Gmail OAuth2** (`auth/oauth.service.ts`, `googleapis`) — connects a Gmail account (scopes `gmail.modify`, `gmail.labels`, `userinfo.email`, `prompt: 'consent'`). Tokens are stored in `gmail_accounts` (`access_token`, `refresh_token`, `token_expiry`), in plain text.
+1. **Gmail OAuth2** (`auth/oauth.service.ts`, `googleapis`) — connects a Gmail account (scopes `gmail.modify`, `gmail.labels`, `userinfo.email`, `prompt: 'consent'`). Tokens are stored in `mail_accounts` (`access_token`, `refresh_token`, `token_expiry`), in plain text.
 2. **Social login** (`auth/social.service.ts`, `arctic`) — authenticates the user (Google and optional providers). The state and the PKCE code verifier are kept 5 min in Redis.
 
 Gmail refresh is automatic through the Google client's `tokens` event:
@@ -92,7 +92,7 @@ oauth2Client.on('tokens', async (tokens) => {
 })
 ```
 
-An expired token is refreshed before the first call; when Google refuses the refresh token (`invalid_grant`), `gmail_accounts.auth_error_at` is set and the UI shows "Action required" (reconnect). Disconnecting an account is soft: `is_active = false`, tokens set to `NULL`, archives kept.
+An expired token is refreshed before the first call; when Google refuses the refresh token (`invalid_grant`), `mail_accounts.auth_error_at` is set and the UI shows "Action required" (reconnect). Disconnecting an account is soft: `is_active = false`, tokens set to `NULL`, archives kept.
 
 ::: warning Refresh token
 Google only returns the `refresh_token` on the **first** consent. When a user reconnects the same account, the old refresh_token is kept via `COALESCE` in SQL. Never overwrite an existing refresh_token with `null` on reconnection.

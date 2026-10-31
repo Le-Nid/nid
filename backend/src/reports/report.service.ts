@@ -47,7 +47,7 @@ export async function generateWeeklyReport(userId: string): Promise<WeeklyReport
 
   // Get user's gmail accounts
   const accounts = await db
-    .selectFrom('gmail_accounts')
+    .selectFrom('mail_accounts')
     .select('id')
     .where('user_id', '=', userId)
     .execute()
@@ -66,7 +66,7 @@ export async function generateWeeklyReport(userId: string): Promise<WeeklyReport
         eb.fn.countAll<number>().as('count'),
         eb.fn.sum<number>('size_bytes').as('total_size'),
       ])
-      .where('gmail_account_id', 'in', accountIds)
+      .where('account_id', 'in', accountIds)
       .where('archived_at', '>=', weekAgo)
       .executeTakeFirstOrThrow()
 
@@ -80,7 +80,7 @@ export async function generateWeeklyReport(userId: string): Promise<WeeklyReport
         'sender',
         eb.fn.countAll<number>().as('count'),
       ])
-      .where('gmail_account_id', 'in', accountIds)
+      .where('account_id', 'in', accountIds)
       .where('archived_at', '>=', weekAgo)
       .where('sender', 'is not', null)
       .groupBy('sender')

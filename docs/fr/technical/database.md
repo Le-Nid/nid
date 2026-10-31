@@ -13,9 +13,9 @@ Migrations in-code dans `backend/src/db/migrations/`, enregistrées dans `backen
 | `003_archive_trash` | `archived_mails.deleted_at` (corbeille), table `system_config` + valeurs par défaut |
 | `004_gmail_labels` | Table `gmail_labels` (miroir des libellés Gmail par compte) |
 | `005_newsletter_scans` | Table `newsletter_scans` (résultat du job `scan_unsubscribe`) |
-| `006_rule_templates` | `rules.template_id` + index unique `(gmail_account_id, template_id)` |
+| `006_rule_templates` | `rules.template_id` + index unique `(account_id, template_id)` |
 | `007_archive_body_text` | `archived_mails.body_text`, ajouté au `search_vector` (poids D) |
-| `008_account_backup_prefs` | `gmail_accounts.backup_enabled`, `backup_interval`, `last_backup_at`, `auth_error_at` ; tokens nullables ; `notification_preferences.remote_images` |
+| `008_account_backup_prefs` | `mail_accounts.backup_enabled`, `backup_interval`, `last_backup_at`, `auth_error_at` ; tokens nullables ; `notification_preferences.remote_images` |
 | `009_drop_pii_tracking` | Suppression des tables `pii_findings` et `tracking_pixels` |
 | `010_password_changed_at` | `users.password_changed_at` : les JWT émis avant sont refusés (changement / reset du mot de passe) |
 | `011_passkeys` | Table `passkeys` (WebAuthn) : `credential_id` unique, clé publique, compteur, transports, nom ; supprimée avec l'utilisateur |
@@ -57,7 +57,7 @@ erDiagram
         timestamptz created_at
     }
 
-    gmail_accounts {
+    mail_accounts {
         uuid id PK
         uuid user_id FK
         varchar email
@@ -75,7 +75,7 @@ erDiagram
 
     archived_mails {
         uuid id PK
-        uuid gmail_account_id FK
+        uuid account_id FK
         varchar gmail_message_id
         varchar thread_id
         text in_reply_to
@@ -121,7 +121,7 @@ erDiagram
 
     rules {
         uuid id PK
-        uuid gmail_account_id FK
+        uuid account_id FK
         varchar name
         text description
         jsonb conditions
@@ -142,7 +142,7 @@ erDiagram
         integer progress
         integer total
         integer processed
-        uuid gmail_account_id FK "nullable"
+        uuid account_id FK "nullable"
         uuid user_id FK "nullable"
         jsonb payload "sans identifiants"
         text error
@@ -151,7 +151,7 @@ erDiagram
     }
 
     gmail_labels {
-        uuid gmail_account_id PK,FK
+        uuid account_id PK,FK
         varchar id PK "Gmail id ou imported:<name>"
         text name
         varchar color_bg "nullable"
@@ -163,14 +163,14 @@ erDiagram
     }
 
     newsletter_scans {
-        uuid gmail_account_id PK,FK
+        uuid account_id PK,FK
         jsonb senders
         timestamptz scanned_at
     }
 
     email_expirations {
         uuid id PK
-        uuid gmail_account_id FK
+        uuid account_id FK
         varchar gmail_message_id
         text subject
         text sender
@@ -196,7 +196,7 @@ erDiagram
     retention_policies {
         uuid id PK
         uuid user_id FK
-        uuid gmail_account_id FK "nullable"
+        uuid account_id FK "nullable"
         varchar name
         varchar label "nullable"
         integer max_age_days
@@ -268,7 +268,7 @@ erDiagram
 
     email_activity_heatmap {
         uuid id PK
-        uuid gmail_account_id FK
+        uuid account_id FK
         integer day_of_week "0 = lundi"
         integer hour_of_day
         integer email_count
@@ -277,7 +277,7 @@ erDiagram
 
     sender_scores {
         uuid id PK
-        uuid gmail_account_id FK
+        uuid account_id FK
         varchar sender
         integer email_count
         bigint total_size_bytes
@@ -290,7 +290,7 @@ erDiagram
 
     cleanup_suggestions {
         uuid id PK
-        uuid gmail_account_id FK
+        uuid account_id FK
         varchar type
         varchar title
         text description
@@ -304,7 +304,7 @@ erDiagram
 
     inbox_zero_snapshots {
         uuid id PK
-        uuid gmail_account_id FK
+        uuid account_id FK
         integer inbox_count
         integer unread_count
         timestamptz recorded_at
@@ -312,7 +312,7 @@ erDiagram
 
     gmail_api_usage {
         uuid id PK
-        uuid gmail_account_id FK
+        uuid account_id FK
         varchar endpoint
         integer quota_units "default 5"
         timestamptz recorded_at
@@ -325,16 +325,16 @@ erDiagram
     }
 
     users ||--o{ user_social_accounts : "se connecte via"
-    users ||--o{ gmail_accounts : "possède"
-    gmail_accounts ||--o{ archived_mails : "archive"
+    users ||--o{ mail_accounts : "possède"
+    mail_accounts ||--o{ archived_mails : "archive"
     archived_mails ||--o{ archived_attachments : "contient"
     archived_mails ||--o{ archive_shares : "partagé par"
     users ||--o{ archive_shares : "crée"
-    gmail_accounts ||--o{ gmail_labels : "libellés synchronisés"
-    gmail_accounts ||--o| newsletter_scans : "dernier scan"
-    gmail_accounts ||--o{ email_expirations : "expire"
-    gmail_accounts ||--o{ rules : "définit"
-    gmail_accounts ||--o{ jobs : "génère"
+    mail_accounts ||--o{ gmail_labels : "libellés synchronisés"
+    mail_accounts ||--o| newsletter_scans : "dernier scan"
+    mail_accounts ||--o{ email_expirations : "expire"
+    mail_accounts ||--o{ rules : "définit"
+    mail_accounts ||--o{ jobs : "génère"
     users ||--o{ jobs : "possède"
     users ||--o{ saved_searches : "enregistre"
     users ||--o{ retention_policies : "configure"
@@ -342,11 +342,11 @@ erDiagram
     users ||--o| notification_preferences : "paramètre"
     users ||--o{ webhooks : "configure"
     users ||--o{ audit_logs : "trace"
-    gmail_accounts ||--o{ email_activity_heatmap : "analyse"
-    gmail_accounts ||--o{ sender_scores : "analyse"
-    gmail_accounts ||--o{ cleanup_suggestions : "analyse"
-    gmail_accounts ||--o{ inbox_zero_snapshots : "suit"
-    gmail_accounts ||--o{ gmail_api_usage : "suit"
+    mail_accounts ||--o{ email_activity_heatmap : "analyse"
+    mail_accounts ||--o{ sender_scores : "analyse"
+    mail_accounts ||--o{ cleanup_suggestions : "analyse"
+    mail_accounts ||--o{ inbox_zero_snapshots : "suit"
+    mail_accounts ||--o{ gmail_api_usage : "suit"
 ```
 
 ::: info Table `storage_configs`
@@ -364,25 +364,25 @@ La migration 001 crée aussi `storage_configs` (une configuration de stockage `l
 | `user_social_accounts` | `(provider, provider_id)` | Unique | Lookup SSO |
 | `user_social_accounts` | `user_id` | BTree | Comptes liés d'un utilisateur |
 | `archived_mails` | `search_vector` | GIN | Recherche full-text |
-| `archived_mails` | `gmail_account_id` | BTree | Filtrage par compte |
+| `archived_mails` | `account_id` | BTree | Filtrage par compte |
 | `archived_mails` | `sender` | BTree | Filtrage par expéditeur |
 | `archived_mails` | `date DESC` | BTree | Tri par date |
 | `archived_mails` | `size_bytes DESC` | BTree | Tri par taille |
-| `archived_mails` | `(gmail_account_id, thread_id)` (partiel) | BTree | Fils de discussion |
-| `archived_mails` | `(gmail_account_id, deleted_at)` (partiel, `deleted_at IS NOT NULL`) | BTree | Listing corbeille |
+| `archived_mails` | `(account_id, thread_id)` (partiel) | BTree | Fils de discussion |
+| `archived_mails` | `(account_id, deleted_at)` (partiel, `deleted_at IS NOT NULL`) | BTree | Listing corbeille |
 | `archived_attachments` | `archived_mail_id` | BTree | Join mails ↔ PJ |
 | `archived_attachments` | `content_hash` | BTree | Déduplication |
 | `archive_shares` | `token` | Unique | Accès au lien partagé |
 | `archive_shares` | `archived_mail_id`, `expires_at` | BTree | Partages d'un mail, nettoyage |
-| `rules` | `(gmail_account_id, template_id)` (partiel) | Unique | Création idempotente depuis un template |
-| `jobs` | `gmail_account_id` | BTree | Filtrage jobs par compte |
+| `rules` | `(account_id, template_id)` (partiel) | Unique | Création idempotente depuis un template |
+| `jobs` | `account_id` | BTree | Filtrage jobs par compte |
 | `jobs` | `status` | BTree | Filtrage par statut |
 | `jobs` | `created_at DESC` | BTree | Tri par date |
 | `jobs` | `user_id` | BTree | Filtrage jobs par utilisateur |
-| `gmail_labels` | `(gmail_account_id, id)` | PK | Libellés d'un compte |
-| `newsletter_scans` | `gmail_account_id` | PK | Un scan par compte |
-| `email_expirations` | `gmail_account_id`, `expires_at` | BTree | Traitement des expirations |
-| `email_expirations` | `(gmail_account_id, gmail_message_id)` (partiel, `is_deleted = false`) | Unique | Une expiration active par mail |
+| `gmail_labels` | `(account_id, id)` | PK | Libellés d'un compte |
+| `newsletter_scans` | `account_id` | PK | Un scan par compte |
+| `email_expirations` | `account_id`, `expires_at` | BTree | Traitement des expirations |
+| `email_expirations` | `(account_id, gmail_message_id)` (partiel, `is_deleted = false`) | Unique | Une expiration active par mail |
 | `saved_searches` | `user_id` | BTree | Filtrage par utilisateur |
 | `retention_policies` | `user_id` | BTree | Filtrage par utilisateur |
 | `notifications` | `(user_id, created_at)` | BTree | Notifications par utilisateur |
@@ -390,10 +390,10 @@ La migration 001 crée aussi `storage_configs` (une configuration de stockage `l
 | `audit_logs` | `(user_id, created_at)` | BTree | Logs par utilisateur |
 | `audit_logs` | `(action, created_at)` | BTree | Filtrage par action |
 | `webhooks` | `user_id` | BTree | Filtrage par utilisateur |
-| `email_activity_heatmap` | `(gmail_account_id, day_of_week, hour_of_day)` | Unique | Une case par créneau |
-| `sender_scores` | `(gmail_account_id, sender)` | Unique | Un score par expéditeur |
-| `inbox_zero_snapshots` | `(gmail_account_id, recorded_at DESC)` | BTree | Historique |
-| `gmail_api_usage` | `(gmail_account_id, recorded_at)` | BTree | Stats quota par compte |
+| `email_activity_heatmap` | `(account_id, day_of_week, hour_of_day)` | Unique | Une case par créneau |
+| `sender_scores` | `(account_id, sender)` | Unique | Un score par expéditeur |
+| `inbox_zero_snapshots` | `(account_id, recorded_at DESC)` | BTree | Historique |
+| `gmail_api_usage` | `(account_id, recorded_at)` | BTree | Stats quota par compte |
 | `gmail_api_usage` | `recorded_at` | BTree | Nettoyage données anciennes |
 
 ---
@@ -425,7 +425,7 @@ Les requêtes utilisent `websearch_to_tsquery` — syntaxe à la Google (`"phras
 ```sql
 SELECT *, ts_rank(search_vector, query) AS rank
 FROM archived_mails, websearch_to_tsquery('nid_french', 'facture 2024') query
-WHERE gmail_account_id = $1
+WHERE account_id = $1
   AND deleted_at IS NULL
   AND search_vector @@ query
 ORDER BY rank DESC, date DESC;

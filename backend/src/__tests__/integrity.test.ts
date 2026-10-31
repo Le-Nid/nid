@@ -52,7 +52,7 @@ describe('checkArchiveIntegrity', () => {
 
   it('detects missing files', async () => {
     mockExecute.mockResolvedValue([
-      { id: 'm1', eml_path: '/nonexistent/path/mail.eml', gmail_account_id: 'acc1', size_bytes: 1000 },
+      { id: 'm1', eml_path: '/nonexistent/path/mail.eml', account_id: 'acc1', size_bytes: 1000 },
     ])
 
     const result = await checkArchiveIntegrity()
@@ -65,7 +65,7 @@ describe('checkArchiveIntegrity', () => {
     writeFileSync(emlPath, '')
 
     mockExecute.mockResolvedValue([
-      { id: 'm1', eml_path: emlPath, gmail_account_id: 'acc1', size_bytes: 1000 },
+      { id: 'm1', eml_path: emlPath, account_id: 'acc1', size_bytes: 1000 },
     ])
 
     const result = await checkArchiveIntegrity()
@@ -79,7 +79,7 @@ describe('checkArchiveIntegrity', () => {
     writeFileSync(emlPath, 'Subject: Test\r\n\r\nBody')
 
     mockExecute.mockResolvedValue([
-      { id: 'm1', eml_path: emlPath, gmail_account_id: 'acc1', size_bytes: 100 },
+      { id: 'm1', eml_path: emlPath, account_id: 'acc1', size_bytes: 100 },
     ])
 
     const result = await checkArchiveIntegrity()
@@ -98,7 +98,7 @@ describe('checkArchiveIntegrity', () => {
     writeFileSync(knownEml, 'known content')
 
     mockExecute.mockResolvedValue([
-      { id: 'm1', eml_path: knownEml, gmail_account_id: 'acc1', size_bytes: 100 },
+      { id: 'm1', eml_path: knownEml, account_id: 'acc1', size_bytes: 100 },
     ])
 
     const result = await checkArchiveIntegrity('acc1')
@@ -110,7 +110,7 @@ describe('checkArchiveIntegrity', () => {
     writeFileSync(emlPath, 'content')
 
     mockExecute.mockResolvedValue([
-      { id: 'm1', eml_path: emlPath, gmail_account_id: 'acc1', size_bytes: 100 },
+      { id: 'm1', eml_path: emlPath, account_id: 'acc1', size_bytes: 100 },
     ])
 
     const result = await checkArchiveIntegrity('acc1')
@@ -129,7 +129,7 @@ describe('checkArchiveIntegrity for one account', () => {
     writeFileSync(path.join(theirs, 'b.eml'), 'x')
     // eml_path is stored absolute, as archiveMail writes it
     mockExecute.mockResolvedValue([
-      { id: 'm1', eml_path: path.join(mine, 'a.eml'), gmail_account_id: 'acc1', size_bytes: 1 },
+      { id: 'm1', eml_path: path.join(mine, 'a.eml'), account_id: 'acc1', size_bytes: 1 },
     ])
 
     const result = await checkArchiveIntegrity('acc1')

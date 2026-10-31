@@ -141,7 +141,7 @@ async function detachSharedFile(filePath: string, accountId: string): Promise<st
     .innerJoin('archived_mails', 'archived_mails.id', 'archived_attachments.archived_mail_id')
     .select('archived_attachments.id')
     .where('archived_attachments.file_path', '=', filePath)
-    .where('archived_mails.gmail_account_id', '!=', accountId)
+    .where('archived_mails.account_id', '!=', accountId)
     .executeTakeFirst()
   if (!shared) return filePath
 
@@ -151,7 +151,7 @@ async function detachSharedFile(filePath: string, accountId: string): Promise<st
     .updateTable('archived_attachments')
     .set({ file_path: copyPath })
     .where('file_path', '=', filePath)
-    .where('archived_mail_id', 'in', db.selectFrom('archived_mails').select('id').where('gmail_account_id', '=', accountId))
+    .where('archived_mail_id', 'in', db.selectFrom('archived_mails').select('id').where('account_id', '=', accountId))
     .execute()
   return copyPath
 }
@@ -170,7 +170,7 @@ export async function encryptArchives(
   const mails = await db
     .selectFrom('archived_mails')
     .select(['id', 'eml_path'])
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .where('is_encrypted', '=', false)
     .execute()
 
@@ -222,11 +222,11 @@ export async function getEncryptionStatus(accountId: string) {
 
   const [totalResult, encryptedResult] = await Promise.all([
     db.selectFrom('archived_mails')
-      .where('gmail_account_id', '=', accountId)
+      .where('account_id', '=', accountId)
       .select((eb) => eb.fn.countAll<number>().as('count'))
       .executeTakeFirstOrThrow(),
     db.selectFrom('archived_mails')
-      .where('gmail_account_id', '=', accountId)
+      .where('account_id', '=', accountId)
       .where('is_encrypted', '=', true)
       .select((eb) => eb.fn.countAll<number>().as('count'))
       .executeTakeFirstOrThrow(),

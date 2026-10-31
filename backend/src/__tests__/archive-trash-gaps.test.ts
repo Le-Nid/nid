@@ -116,7 +116,7 @@ describe('archiveRoutes — trash coverage gaps', () => {
 
     // Mails in trash
     mockExecute.mockResolvedValueOnce([
-      { id: 'mail-1', eml_path: '/tmp/mail-1.eml', gmail_account_id: 'acc-1' },
+      { id: 'mail-1', eml_path: '/tmp/mail-1.eml', account_id: 'acc-1' },
     ])
     // Attachments
     mockExecute.mockResolvedValueOnce([

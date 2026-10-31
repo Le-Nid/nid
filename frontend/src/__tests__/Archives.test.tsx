@@ -52,7 +52,7 @@ const SHARE = {
   id: 's1', archived_mail_id: MAIL.id, token: 'tok', expires_at: '2099-01-01T00:00:00Z', access_count: 1, max_access: null,
   subject: 'Facture EDF', sender: 'EDF <edf@edf.test>',
 }
-const POLICY = { id: 'p1', name: 'Vieilles factures', gmail_account_id: 'acc-1', label: 'L1', max_age_days: 365, last_run_at: null, deleted_count: 0 }
+const POLICY = { id: 'p1', name: 'Vieilles factures', account_id: 'acc-1', label: 'L1', max_age_days: 365, last_run_at: null, deleted_count: 0 }
 
 let mobile = false
 function setup(url = '/archives') {
@@ -86,7 +86,7 @@ beforeEach(() => {
   vi.mocked(archiveThreadsApi.getThread).mockResolvedValue([])
   vi.mocked(labelsApi.list).mockResolvedValue(LABELS)
   vi.mocked(dashboardApi.getArchiveStats).mockResolvedValue({ total_mails: '1204', total_size: String(5 * 1024 ** 3), last_archived_at: new Date(Date.now() - 2 * 3600_000).toISOString() })
-  vi.mocked(retentionApi.list).mockResolvedValue([POLICY, { ...POLICY, id: 'p2', gmail_account_id: 'other' }])
+  vi.mocked(retentionApi.list).mockResolvedValue([POLICY, { ...POLICY, id: 'p2', account_id: 'other' }])
   vi.mocked(retentionApi.create).mockResolvedValue({})
   vi.mocked(retentionApi.update).mockResolvedValue({})
   vi.mocked(retentionApi.remove).mockResolvedValue({})

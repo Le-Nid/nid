@@ -32,7 +32,7 @@ export async function jobRoutes(app: FastifyInstance) {
       .selectFrom('jobs')
       .where('user_id', '=', userId)
       .where('created_at', '>', new Date(Date.now() - HISTORY_DAYS * 86_400_000))
-    if (accountId) base = base.where('gmail_account_id', '=', accountId)
+    if (accountId) base = base.where('account_id', '=', accountId)
 
     let list = base.selectAll().orderBy('created_at', 'desc').limit(limit)
     if (status) list = list.where('status', 'in', status)

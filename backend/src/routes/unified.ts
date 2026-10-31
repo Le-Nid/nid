@@ -16,7 +16,7 @@ export async function unifiedRoutes(app: FastifyInstance) {
     }
 
     const accounts = await db
-      .selectFrom('gmail_accounts')
+      .selectFrom('mail_accounts')
       .select(['id', 'email'])
       .where('user_id', '=', userId)
       .where('is_active', '=', true)

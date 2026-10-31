@@ -18,11 +18,11 @@ export const sseFrame = (event: string, data: unknown) => `event: ${event}\ndata
 export async function getCounters(userId: string) {
   const db = getDb()
   const [accounts, rules, jobs] = await Promise.all([
-    db.selectFrom('gmail_accounts').select('id').where('user_id', '=', userId).where('is_active', '=', true).execute(),
+    db.selectFrom('mail_accounts').select('id').where('user_id', '=', userId).where('is_active', '=', true).execute(),
     db.selectFrom('rules')
-      .innerJoin('gmail_accounts', 'gmail_accounts.id', 'rules.gmail_account_id')
+      .innerJoin('mail_accounts', 'mail_accounts.id', 'rules.account_id')
       .select((eb) => eb.fn.countAll().as('n'))
-      .where('gmail_accounts.user_id', '=', userId)
+      .where('mail_accounts.user_id', '=', userId)
       .where('rules.is_active', '=', true)
       .executeTakeFirst(),
     db.selectFrom('jobs').select((eb) => eb.fn.countAll().as('n'))

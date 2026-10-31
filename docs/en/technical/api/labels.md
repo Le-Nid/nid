@@ -25,7 +25,7 @@ Returns every label of the account, deleted ones included, sorted by name, with 
 ```json
 [
   {
-    "gmail_account_id": "uuid",
+    "account_id": "uuid",
     "id": "Label_12",
     "name": "Factures",
     "color_bg": "#16a765",

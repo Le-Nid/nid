@@ -82,8 +82,8 @@ export async function purgeArchiveTrash(): Promise<{ deleted: number }> {
   // Find expired trash mails
   const mails = await db
     .selectFrom('archived_mails')
-    .innerJoin('gmail_accounts', 'gmail_accounts.id', 'archived_mails.gmail_account_id')
-    .select(['archived_mails.id', 'archived_mails.eml_path', 'gmail_accounts.user_id'])
+    .innerJoin('mail_accounts', 'mail_accounts.id', 'archived_mails.account_id')
+    .select(['archived_mails.id', 'archived_mails.eml_path', 'mail_accounts.user_id'])
     .where('archived_mails.deleted_at', 'is not', null)
     .where('archived_mails.deleted_at', '<', cutoff)
     .execute()

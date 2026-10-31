@@ -22,10 +22,10 @@ export async function checkArchiveIntegrity(accountId?: string): Promise<Integri
   // 1. Get all archived mails from DB
   let query = db
     .selectFrom('archived_mails')
-    .select(['id', 'eml_path', 'gmail_account_id', 'size_bytes'])
+    .select(['id', 'eml_path', 'account_id', 'size_bytes'])
 
   if (accountId) {
-    query = query.where('gmail_account_id', '=', accountId)
+    query = query.where('account_id', '=', accountId)
   }
 
   const records = await query.execute()

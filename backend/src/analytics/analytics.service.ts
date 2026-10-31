@@ -60,13 +60,13 @@ export async function computeHeatmap(accountId: string): Promise<HeatmapCell[]> 
     await db
       .insertInto('email_activity_heatmap')
       .values({
-        gmail_account_id: accountId,
+        account_id: accountId,
         day_of_week: day,
         hour_of_day: hour,
         email_count: count,
       })
       .onConflict((oc) =>
-        oc.columns(['gmail_account_id', 'day_of_week', 'hour_of_day']).doUpdateSet({
+        oc.columns(['account_id', 'day_of_week', 'hour_of_day']).doUpdateSet({
           email_count: count,
           computed_at: sql`NOW()`,
         })
@@ -92,7 +92,7 @@ export async function getHeatmap(accountId: string, refresh = false): Promise<He
   const rows = await db
     .selectFrom('email_activity_heatmap')
     .select(['day_of_week', 'hour_of_day', 'email_count'])
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .execute()
 
   if (rows.length > 0 && !refresh) {
@@ -170,7 +170,7 @@ export async function computeSenderScores(accountId: string): Promise<SenderScor
   const unsubSenders = await (db
     .selectFrom('archived_mails')
     .select('sender')
-    .where('gmail_account_id', '=', accountId) as any)
+    .where('account_id', '=', accountId) as any)
     .where(sql`label_ids @> ARRAY['CATEGORY_PROMOTIONS']`)
     .groupBy('sender')
     .execute()
@@ -204,7 +204,7 @@ export async function computeSenderScores(accountId: string): Promise<SenderScor
     await db
       .insertInto('sender_scores')
       .values({
-        gmail_account_id: accountId,
+        account_id: accountId,
         sender,
         email_count: data.count,
         total_size_bytes: BigInt(data.size),
@@ -214,7 +214,7 @@ export async function computeSenderScores(accountId: string): Promise<SenderScor
         clutter_score: clutterScore,
       })
       .onConflict((oc) =>
-        oc.columns(['gmail_account_id', 'sender']).doUpdateSet({
+        oc.columns(['account_id', 'sender']).doUpdateSet({
           email_count: data.count,
           total_size_bytes: BigInt(data.size),
           unread_count: data.unread,
@@ -241,7 +241,7 @@ export async function getSenderScores(accountId: string, refresh = false): Promi
   const rows = await db
     .selectFrom('sender_scores')
     .selectAll()
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .orderBy('clutter_score', 'desc')
     .execute()
 
@@ -287,7 +287,7 @@ export async function computeCleanupSuggestions(accountId: string): Promise<Clea
   // Nettoie les anciennes suggestions non-dismissed
   await db
     .deleteFrom('cleanup_suggestions')
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .where('is_dismissed', '=', false)
     .execute()
 
@@ -297,7 +297,7 @@ export async function computeCleanupSuggestions(accountId: string): Promise<Clea
       const row = await db
         .insertInto('cleanup_suggestions')
         .values({
-          gmail_account_id: accountId,
+          account_id: accountId,
           type: 'bulk_unread',
           title: `${s.unreadCount} emails non lus de ${s.sender}`,
           description: `Vous avez ${s.unreadCount} emails non lus de cet expéditeur. Volume total : ${formatBytesServer(s.totalSizeBytes)}.`,
@@ -319,7 +319,7 @@ export async function computeCleanupSuggestions(accountId: string): Promise<Clea
       const row = await db
         .insertInto('cleanup_suggestions')
         .values({
-          gmail_account_id: accountId,
+          account_id: accountId,
           type: 'large_sender',
           title: `${s.sender} occupe ${formatBytesServer(s.totalSizeBytes)}`,
           description: `${s.emailCount} emails pour un total de ${formatBytesServer(s.totalSizeBytes)}. Score d'encombrement : ${s.clutterScore}/100.`,
@@ -341,7 +341,7 @@ export async function computeCleanupSuggestions(accountId: string): Promise<Clea
       const row = await db
         .insertInto('cleanup_suggestions')
         .values({
-          gmail_account_id: accountId,
+          account_id: accountId,
           type: 'old_newsletters',
           title: `Newsletter peu lue : ${s.sender}`,
           description: `Seulement ${Math.round(s.readRate * 100)}% de taux de lecture sur ${s.emailCount} emails. Envisagez le désabonnement.`,
@@ -373,7 +373,7 @@ export async function getCleanupSuggestions(accountId: string, refresh = false):
     const existing = await db
       .selectFrom('cleanup_suggestions')
       .selectAll()
-      .where('gmail_account_id', '=', accountId)
+      .where('account_id', '=', accountId)
       .where('is_dismissed', '=', false)
       .orderBy('email_count', 'desc')
       .execute()
@@ -397,11 +397,11 @@ export async function dismissSuggestion(suggestionId: string, userId: string): P
     .updateTable('cleanup_suggestions')
     .set({ is_dismissed: true })
     .where('id', '=', suggestionId)
-    .where('gmail_account_id', 'in', db.selectFrom('gmail_accounts').select('id').where('user_id', '=', userId))
-    .returning('gmail_account_id')
+    .where('account_id', 'in', db.selectFrom('mail_accounts').select('id').where('user_id', '=', userId))
+    .returning('account_id')
     .executeTakeFirst()
   if (!row) return false
-  await getRedis().del(`analytics:cleanup:${row.gmail_account_id}`)
+  await getRedis().del(`analytics:cleanup:${row.account_id}`)
   return true
 }
 
@@ -426,7 +426,7 @@ export async function recordInboxSnapshot(accountId: string): Promise<{ inboxCou
   await db
     .insertInto('inbox_zero_snapshots')
     .values({
-      gmail_account_id: accountId,
+      account_id: accountId,
       inbox_count: inboxCount,
       unread_count: unreadCount,
     })
@@ -475,7 +475,7 @@ export async function getInboxZeroData(accountId: string, refresh = false): Prom
   const latest = await db
     .selectFrom('inbox_zero_snapshots')
     .select(['inbox_count', 'unread_count', 'recorded_at'])
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .orderBy('recorded_at', 'desc')
     .limit(1)
     .executeTakeFirst()
@@ -495,7 +495,7 @@ export async function getInboxZeroData(accountId: string, refresh = false): Prom
       sql<number>`MIN(inbox_count)`.as('inbox_count'),
       sql<number>`MIN(unread_count)`.as('unread_count'),
     ])
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .where('recorded_at', '>=', thirtyDaysAgo)
     .groupBy(sql`DATE(recorded_at)`)
     .orderBy('date', 'asc')

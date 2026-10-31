@@ -60,7 +60,7 @@ export async function getExpirations(accountId: string) {
   return getDb()
     .selectFrom('email_expirations')
     .selectAll()
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .where('is_deleted', '=', false)
     .orderBy('expires_at', 'asc')
     .execute()
@@ -71,7 +71,7 @@ export async function getExpiration(id: string, accountId: string) {
     .selectFrom('email_expirations')
     .selectAll()
     .where('id', '=', id)
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .executeTakeFirst() ?? null
 }
 
@@ -83,7 +83,7 @@ export async function createExpiration(accountId: string, dto: ExpirationCreateD
   return getDb()
     .insertInto('email_expirations')
     .values({
-      gmail_account_id: accountId,
+      account_id: accountId,
       gmail_message_id: dto.gmailMessageId,
       subject: dto.subject ?? null,
       sender: dto.sender ?? null,
@@ -99,7 +99,7 @@ export async function createExpirationsBatch(accountId: string, items: Expiratio
   if (items.length === 0) return []
 
   const values = items.map((dto) => ({
-    gmail_account_id: accountId,
+    account_id: accountId,
     gmail_message_id: dto.gmailMessageId,
     subject: dto.subject ?? null,
     sender: dto.sender ?? null,
@@ -121,7 +121,7 @@ export async function deleteExpiration(id: string, accountId: string) {
   await getDb()
     .deleteFrom('email_expirations')
     .where('id', '=', id)
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .execute()
 }
 
@@ -130,7 +130,7 @@ export async function updateExpirationDate(id: string, accountId: string, expire
     .updateTable('email_expirations')
     .set({ expires_at: new Date(expiresAt).toISOString() })
     .where('id', '=', id)
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .returningAll()
     .executeTakeFirstOrThrow()
 }
@@ -162,16 +162,16 @@ export async function processExpiredEmails(): Promise<{ processed: number; error
   // Find all non-deleted expirations that have passed
   const expired = await db
     .selectFrom('email_expirations')
-    .innerJoin('gmail_accounts', 'email_expirations.gmail_account_id', 'gmail_accounts.id')
+    .innerJoin('mail_accounts', 'email_expirations.account_id', 'mail_accounts.id')
     .select([
       'email_expirations.id',
-      'email_expirations.gmail_account_id',
+      'email_expirations.account_id',
       'email_expirations.gmail_message_id',
       'email_expirations.subject',
     ])
     .where('email_expirations.is_deleted', '=', false)
     .where('email_expirations.expires_at', '<=', now)
-    .where('gmail_accounts.is_active', '=', true)
+    .where('mail_accounts.is_active', '=', true)
     .execute()
 
   if (expired.length === 0) return { processed: 0, errors: 0 }
@@ -181,9 +181,9 @@ export async function processExpiredEmails(): Promise<{ processed: number; error
   // Group by account
   const byAccount = new Map<string, typeof expired>()
   for (const item of expired) {
-    const list = byAccount.get(item.gmail_account_id) ?? []
+    const list = byAccount.get(item.account_id) ?? []
     list.push(item)
-    byAccount.set(item.gmail_account_id, list)
+    byAccount.set(item.account_id, list)
   }
 
   let processed = 0
@@ -223,24 +223,24 @@ export async function getExpirationStats(accountId: string) {
   const [total, pending, deleted, expiringSoon] = await Promise.all([
     db.selectFrom('email_expirations')
       .select((eb) => eb.fn.countAll().as('count'))
-      .where('gmail_account_id', '=', accountId)
+      .where('account_id', '=', accountId)
       .executeTakeFirstOrThrow(),
 
     db.selectFrom('email_expirations')
       .select((eb) => eb.fn.countAll().as('count'))
-      .where('gmail_account_id', '=', accountId)
+      .where('account_id', '=', accountId)
       .where('is_deleted', '=', false)
       .executeTakeFirstOrThrow(),
 
     db.selectFrom('email_expirations')
       .select((eb) => eb.fn.countAll().as('count'))
-      .where('gmail_account_id', '=', accountId)
+      .where('account_id', '=', accountId)
       .where('is_deleted', '=', true)
       .executeTakeFirstOrThrow(),
 
     db.selectFrom('email_expirations')
       .select((eb) => eb.fn.countAll().as('count'))
-      .where('gmail_account_id', '=', accountId)
+      .where('account_id', '=', accountId)
       .where('is_deleted', '=', false)
       .where('expires_at', '<=', new Date(now.getTime() + 24 * 3600 * 1000))
       .executeTakeFirstOrThrow(),

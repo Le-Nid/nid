@@ -14,7 +14,7 @@ export async function getRules(accountId: string) {
   return getDb()
     .selectFrom('rules')
     .selectAll()
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .orderBy('created_at', 'desc')
     .execute()
 }
@@ -24,7 +24,7 @@ export async function getRule(id: string, accountId: string) {
     .selectFrom('rules')
     .selectAll()
     .where('id', '=', id)
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .executeTakeFirst() ?? null
 }
 
@@ -32,7 +32,7 @@ export async function getRuleByTemplate(accountId: string, templateId: string) {
   const rule = await getDb()
     .selectFrom('rules')
     .selectAll()
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .where('template_id', '=', templateId)
     .executeTakeFirst()
   return rule ?? null
@@ -43,7 +43,7 @@ export function createRule(accountId: string, dto: RuleCreateDTO, templateId?: s
   return getDb()
     .insertInto('rules')
     .values({
-      gmail_account_id: accountId,
+      account_id: accountId,
       name:             dto.name,
       description:      dto.description ?? null,
       conditions:       JSON.stringify(dto.conditions),
@@ -69,7 +69,7 @@ export async function updateRule(id: string, accountId: string, dto: Partial<Rul
     .updateTable('rules')
     .set(updates)
     .where('id', '=', id)
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .returningAll()
     .executeTakeFirstOrThrow()
 }
@@ -79,7 +79,7 @@ export async function deleteRule(id: string, accountId: string) {
   await getDb()
     .deleteFrom('rules')
     .where('id', '=', id)
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .execute()
 }
 

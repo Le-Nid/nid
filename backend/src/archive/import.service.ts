@@ -119,7 +119,7 @@ async function importSingleEml(
   const existing = await db
     .selectFrom('archived_mails')
     .select('id')
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .where('gmail_message_id', '=', messageId)
     .executeTakeFirst()
 
@@ -163,7 +163,7 @@ async function importSingleEml(
   const archived = await db
     .insertInto('archived_mails')
     .values({
-      gmail_account_id: accountId,
+      account_id: accountId,
       gmail_message_id: messageId,
       thread_id: null,
       in_reply_to: parsed.inReplyTo ?? null,
@@ -296,7 +296,7 @@ export async function exportMbox(
   let query = db
     .selectFrom('archived_mails')
     .select(['id', 'eml_path', 'sender', 'date'])
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .orderBy('date', 'asc')
 
   if (mailIds?.length) {

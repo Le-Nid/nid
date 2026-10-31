@@ -28,7 +28,7 @@ Only jobs from the last 30 days are returned.
     "progress": 45,
     "total": 200,
     "processed": 90,
-    "gmail_account_id": "uuid",
+    "account_id": "uuid",
     "payload": { "action": "trash", "messageIds": [...] },
     "error": null,
     "created_at": "2024-03-15T12:00:00Z",

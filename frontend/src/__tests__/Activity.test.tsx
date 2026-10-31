@@ -21,14 +21,14 @@ vi.mock('../components/app/JobProgressInline', () => ({
 import ActivityPage from '../pages/Activity'
 
 const job = (over: Record<string, unknown>) => ({
-  bullmq_id: null, processed: 0, gmail_account_id: 'acc-1', payload: null, error: null,
+  bullmq_id: null, processed: 0, account_id: 'acc-1', payload: null, error: null,
   created_at: '2026-10-21T08:00:00Z', completed_at: null, ...over,
 })
 const JOBS = [
   job({ id: 'j1', type: 'archive_mails', status: 'completed', processed: 10, completed_at: '2026-10-21T08:01:05Z' }),
   job({ id: 'j2', type: 'bulk_operation', status: 'scheduled', payload: { senderEmail: 'digest@news.test' } }),
   job({ id: 'j3', type: 'archive_mails', status: 'failed', error: 'NAS injoignable', payload: { retryOf: 'j0' } }),
-  job({ id: 'j4', type: 'backfill_body_text', status: 'completed', gmail_account_id: null, completed_at: '2026-10-21T08:00:12Z' }),
+  job({ id: 'j4', type: 'backfill_body_text', status: 'completed', account_id: null, completed_at: '2026-10-21T08:00:12Z' }),
   job({ id: 'j5', type: 'run_rule', status: 'active', bullmq_id: 'run_rule-5', payload: { ruleId: 'r1' } }),
   job({ id: 'j6', type: 'scan_pii', status: 'cancelled', payload: { query: 'from:x' } }),
 ]

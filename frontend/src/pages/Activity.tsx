@@ -30,7 +30,7 @@ type Job = {
   type: string
   status: Status
   processed: number
-  gmail_account_id: string | null
+  account_id: string | null
   payload: { ruleId?: string; senderEmail?: string; query?: string; retryOf?: string } | null
   error: string | null
   created_at: string
@@ -220,7 +220,7 @@ export default function ActivityPage() {
     ...job,
     label: t(jobTypeKey(job.type), { defaultValue: job.type }),
     context: [
-      job.gmail_account_id ? emails.get(job.gmail_account_id) : t('activity.system'),
+      job.account_id ? emails.get(job.account_id) : t('activity.system'),
       origin(job, t),
       formatRelative(job.created_at, i18n.language),
     ].filter(Boolean).join(' · '),

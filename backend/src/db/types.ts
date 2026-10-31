@@ -49,7 +49,7 @@ export interface GmailAccountsTable {
 
 export interface ArchivedMailsTable {
   id:               Generated<string>
-  gmail_account_id: string
+  account_id: string
   gmail_message_id: string
   thread_id:        string | null
   in_reply_to:      string | null
@@ -86,7 +86,7 @@ export interface ArchivedAttachmentsTable {
 
 export interface RulesTable {
   id:               Generated<string>
-  gmail_account_id: string
+  account_id: string
   name:             string
   description:      string | null
   // JSONB — on stocke en JSON stringifié, on lit comme unknown
@@ -108,7 +108,7 @@ export interface JobsTable {
   progress:         Generated<number>
   total:            Generated<number>
   processed:        Generated<number>
-  gmail_account_id: string | null
+  account_id: string | null
   user_id:          string | null
   payload:          ColumnType<unknown, string, string>
   error:            string | null
@@ -118,7 +118,7 @@ export interface JobsTable {
 
 // One cached scan per account (L6): the Nettoyage page reads it, scan_unsubscribe writes it
 export interface NewsletterScansTable {
-  gmail_account_id: string
+  account_id: string
   senders:          ColumnType<NewsletterSender[], string, string>
   scanned_at:       Generated<Date>
 }
@@ -186,7 +186,7 @@ export interface NotificationPreferencesTable {
 
 export interface EmailActivityHeatmapTable {
   id:               Generated<string>
-  gmail_account_id: string
+  account_id: string
   day_of_week:      number      // 0=lundi … 6=dimanche
   hour_of_day:      number      // 0-23
   email_count:      Generated<number>
@@ -195,7 +195,7 @@ export interface EmailActivityHeatmapTable {
 
 export interface SenderScoresTable {
   id:               Generated<string>
-  gmail_account_id: string
+  account_id: string
   sender:           string
   email_count:      Generated<number>
   total_size_bytes: Generated<bigint>
@@ -208,7 +208,7 @@ export interface SenderScoresTable {
 
 export interface CleanupSuggestionsTable {
   id:               Generated<string>
-  gmail_account_id: string
+  account_id: string
   type:             string      // 'bulk_unread' | 'large_sender' | 'old_newsletters' | 'duplicate_pattern'
   title:            string
   description:      string | null
@@ -222,7 +222,7 @@ export interface CleanupSuggestionsTable {
 
 export interface InboxZeroSnapshotsTable {
   id:               Generated<string>
-  gmail_account_id: string
+  account_id: string
   inbox_count:      number
   unread_count:     number
   recorded_at:      Generated<Date>
@@ -262,7 +262,7 @@ export interface SystemConfigTable {
 export type GmailLabelType = 'system' | 'user' | 'category' | 'imported'
 
 export interface GmailLabelsTable {
-  gmail_account_id: string
+  account_id: string
   id:               string   // Gmail label id, or `imported:<name>` for labels only seen in an mbox import
   name:             string
   color_bg:         string | null
@@ -276,7 +276,7 @@ export interface GmailLabelsTable {
 export interface RetentionPoliciesTable {
   id:               Generated<string>
   user_id:          string
-  gmail_account_id: string | null
+  account_id: string | null
   name:             string
   label:            string | null
   max_age_days:     number
@@ -289,7 +289,7 @@ export interface RetentionPoliciesTable {
 
 export interface GmailApiUsageTable {
   id:               Generated<string>
-  gmail_account_id: string
+  account_id: string
   endpoint:         string
   quota_units:      Generated<number>
   recorded_at:      Generated<Date>
@@ -299,7 +299,7 @@ export interface GmailApiUsageTable {
 
 export interface EmailExpirationsTable {
   id:               Generated<string>
-  gmail_account_id: string
+  account_id: string
   gmail_message_id: string
   subject:          string | null
   sender:           string | null
@@ -350,7 +350,7 @@ export interface ApiTokensTable {
 
 export interface Database {
   users:                UsersTable
-  gmail_accounts:       GmailAccountsTable
+  mail_accounts:       GmailAccountsTable
   archived_mails:       ArchivedMailsTable
   archived_attachments: ArchivedAttachmentsTable
   rules:                RulesTable

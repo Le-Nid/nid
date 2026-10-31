@@ -35,7 +35,7 @@ const mailsQuerySchema = z.object({
 
 /** List rows: everything but body_text (heavy, derived), search_vector and eml_path (server path). */
 const MAIL_LIST_COLUMNS = [
-  "id", "gmail_account_id", "gmail_message_id", "thread_id", "in_reply_to", "references_header",
+  "id", "account_id", "gmail_message_id", "thread_id", "in_reply_to", "references_header",
   "subject", "sender", "recipient", "date", "size_bytes", "has_attachments", "label_ids",
   "snippet", "attachment_names", "is_encrypted", "archived_at", "deleted_at",
 ] as const;
@@ -55,7 +55,7 @@ export async function archiveRoutes(app: FastifyInstance) {
 
     let base = db
       .selectFrom("archived_mails")
-      .where("gmail_account_id", "=", accountId)
+      .where("account_id", "=", accountId)
       .where("deleted_at", "is", null);
     if (sender) base = base.where("sender", "ilike", `%${escapeIlike(sender)}%`);
     if (from_date) base = base.where("date", ">=", from_date);
@@ -97,7 +97,7 @@ export async function archiveRoutes(app: FastifyInstance) {
       .selectFrom("archived_mails")
       .selectAll()
       .where("id", "=", mailId)
-      .where("gmail_account_id", "=", accountId)
+      .where("account_id", "=", accountId)
       .executeTakeFirst();
 
     if (!mail) return notFound(reply);
@@ -129,7 +129,7 @@ export async function archiveRoutes(app: FastifyInstance) {
         .innerJoin("archived_mails", "archived_mails.id", "archived_attachments.archived_mail_id")
         .selectAll("archived_attachments")
         .where("archived_attachments.id", "=", attachmentId)
-        .where("archived_mails.gmail_account_id", "=", accountId)
+        .where("archived_mails.account_id", "=", accountId)
         .executeTakeFirst();
 
       if (!att) return notFound(reply);
@@ -208,7 +208,7 @@ export async function archiveRoutes(app: FastifyInstance) {
     // Get threads: group by thread_id, return latest mail per thread
     let baseQuery = db
       .selectFrom("archived_mails")
-      .where("gmail_account_id", "=", accountId)
+      .where("account_id", "=", accountId)
       .where("thread_id", "is not", null)
       .where("deleted_at", "is", null);
 
@@ -248,7 +248,7 @@ export async function archiveRoutes(app: FastifyInstance) {
           SUM(size_bytes)::bigint AS total_size,
           BOOL_OR(has_attachments) AS has_attachments
         FROM archived_mails
-        WHERE gmail_account_id = ${accountId}
+        WHERE account_id = ${accountId}
           AND thread_id IS NOT NULL
           AND deleted_at IS NULL
           ${sender ? sql`AND sender ILIKE ${'%' + escapeIlike(sender) + '%'}` : sql``}
@@ -275,7 +275,7 @@ export async function archiveRoutes(app: FastifyInstance) {
         am.archived_at
       FROM thread_data td
       JOIN archived_mails am ON am.thread_id = td.thread_id
-        AND am.gmail_account_id = ${accountId}
+        AND am.account_id = ${accountId}
         AND am.date = td.latest_date
       ORDER BY td.latest_date DESC
     `.execute(db);
@@ -298,7 +298,7 @@ export async function archiveRoutes(app: FastifyInstance) {
     const mails = await db
       .selectFrom("archived_mails")
       .selectAll()
-      .where("gmail_account_id", "=", accountId)
+      .where("account_id", "=", accountId)
       .where("thread_id", "=", threadId)
       .where("deleted_at", "is", null)
       .orderBy("date", "asc")
@@ -340,7 +340,7 @@ export async function archiveRoutes(app: FastifyInstance) {
     const result = await db
       .updateTable("archived_mails")
       .set({ deleted_at: new Date() })
-      .where("gmail_account_id", "=", accountId)
+      .where("account_id", "=", accountId)
       .where("id", "in", mailIds)
       .where("deleted_at", "is", null)
       .executeTakeFirst();
@@ -356,7 +356,7 @@ export async function archiveRoutes(app: FastifyInstance) {
     const result = await db
       .updateTable("archived_mails")
       .set({ deleted_at: null })
-      .where("gmail_account_id", "=", accountId)
+      .where("account_id", "=", accountId)
       .where("id", "in", mailIds)
       .where("deleted_at", "is not", null)
       .executeTakeFirst();
@@ -378,7 +378,7 @@ export async function archiveRoutes(app: FastifyInstance) {
     let query = db
       .selectFrom("archived_mails")
       .select(MAIL_LIST_COLUMNS)
-      .where("gmail_account_id", "=", accountId)
+      .where("account_id", "=", accountId)
       .where("deleted_at", "is not", null);
 
     if (q) {
@@ -397,7 +397,7 @@ export async function archiveRoutes(app: FastifyInstance) {
     const { count } = await db
       .selectFrom("archived_mails")
       .select((eb) => eb.fn.countAll<number>().as("count"))
-      .where("gmail_account_id", "=", accountId)
+      .where("account_id", "=", accountId)
       .where("deleted_at", "is not", null)
       .executeTakeFirstOrThrow();
 
@@ -418,8 +418,8 @@ export async function archiveRoutes(app: FastifyInstance) {
 
     const mails = await db
       .selectFrom("archived_mails")
-      .select(["id", "eml_path", "gmail_account_id"])
-      .where("gmail_account_id", "=", accountId)
+      .select(["id", "eml_path", "account_id"])
+      .where("account_id", "=", accountId)
       .where("deleted_at", "is not", null)
       .execute();
 

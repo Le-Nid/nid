@@ -64,7 +64,7 @@ export async function adminRoutes(app: FastifyInstance) {
 
     // Compter les comptes Gmail par user
     const accounts = await sql<{ user_id: string; count: number }>`
-      SELECT user_id, count(*)::int as count FROM gmail_accounts GROUP BY user_id
+      SELECT user_id, count(*)::int as count FROM mail_accounts GROUP BY user_id
     `.execute(db)
 
     const accountMap = new Map(accounts.rows.map((a) => [a.user_id, a.count]))
@@ -73,7 +73,7 @@ export async function adminRoutes(app: FastifyInstance) {
     const storage = await sql<{ user_id: string; total: string }>`
       SELECT ga.user_id, COALESCE(sum(am.size_bytes), 0)::text as total
       FROM archived_mails am
-      JOIN gmail_accounts ga ON am.gmail_account_id = ga.id
+      JOIN mail_accounts ga ON am.account_id = ga.id
       GROUP BY ga.user_id
     `.execute(db)
 
@@ -108,7 +108,7 @@ export async function adminRoutes(app: FastifyInstance) {
     if (!user) return notFound(reply, 'User not found')
 
     const accounts = await db
-      .selectFrom('gmail_accounts')
+      .selectFrom('mail_accounts')
       .select(['id', 'email', 'is_active', 'created_at'])
       .where('user_id', '=', userId)
       .execute()
@@ -190,7 +190,7 @@ export async function adminRoutes(app: FastifyInstance) {
       .innerJoin('users', 'jobs.user_id', 'users.id')
       .select([
         'jobs.id', 'jobs.bullmq_id', 'jobs.type', 'jobs.status', 'jobs.progress',
-        'jobs.total', 'jobs.processed', 'jobs.gmail_account_id', 'jobs.user_id',
+        'jobs.total', 'jobs.processed', 'jobs.account_id', 'jobs.user_id',
         'jobs.error', 'jobs.created_at', 'jobs.completed_at',
         'users.email as user_email',
       ])
@@ -208,7 +208,7 @@ export async function adminRoutes(app: FastifyInstance) {
   // ─── Statistiques globales ────────────────────────────────
   app.get('/stats', adminAuth, async () => {
     const usersCount = await sql<{ count: number }>`SELECT count(*)::int as count FROM users`.execute(db)
-    const accountsCount = await sql<{ count: number }>`SELECT count(*)::int as count FROM gmail_accounts`.execute(db)
+    const accountsCount = await sql<{ count: number }>`SELECT count(*)::int as count FROM mail_accounts`.execute(db)
 
     const jobsStats = await sql<{
       total: number; completed: number; failed: number; active: number

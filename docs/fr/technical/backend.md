@@ -56,7 +56,7 @@ La logique métier va dans un service (`src/{module}/{module}.service.ts`) dès 
 `plugins/index.ts` définit trois décorateurs :
 
 - **`app.authenticate`** — vérifie le JWT (cookie ou header), refuse un token présent dans la blacklist Redis et un utilisateur désactivé.
-- **`app.requireAccountOwnership`** — vérifie que le paramètre `:accountId` appartient à l'utilisateur authentifié (lookup dans `gmail_accounts`).
+- **`app.requireAccountOwnership`** — vérifie que le paramètre `:accountId` appartient à l'utilisateur authentifié (lookup dans `mail_accounts`).
 - **`app.requireAdmin`** — vérifie que `role === 'admin'`.
 
 Les routes les combinent via `authPresets(app)` (`utils/auth.ts`) :
@@ -81,7 +81,7 @@ Le gestionnaire d'erreurs global renvoie `400 { error, details }` pour une `ZodE
 
 Deux flux OAuth2 coexistent :
 
-1. **Gmail OAuth2** (`auth/oauth.service.ts`, `googleapis`) — connecte un compte Gmail (scopes `gmail.modify`, `gmail.labels`, `userinfo.email`, `prompt: 'consent'`). Les tokens sont stockés dans `gmail_accounts` (`access_token`, `refresh_token`, `token_expiry`), en clair.
+1. **Gmail OAuth2** (`auth/oauth.service.ts`, `googleapis`) — connecte un compte Gmail (scopes `gmail.modify`, `gmail.labels`, `userinfo.email`, `prompt: 'consent'`). Les tokens sont stockés dans `mail_accounts` (`access_token`, `refresh_token`, `token_expiry`), en clair.
 2. **Login social** (`auth/social.service.ts`, `arctic`) — authentifie l'utilisateur (Google et providers optionnels). Le state et le code verifier PKCE sont gardés 5 min dans Redis.
 
 Le refresh Gmail est automatique via l'event `tokens` du client Google :
@@ -92,7 +92,7 @@ oauth2Client.on('tokens', async (tokens) => {
 })
 ```
 
-Un token expiré est rafraîchi avant le premier appel ; si Google refuse le refresh token (`invalid_grant`), `gmail_accounts.auth_error_at` est renseigné et l'interface affiche « Action requise » (reconnexion). La déconnexion d'un compte est douce : `is_active = false`, tokens à `NULL`, archives conservées.
+Un token expiré est rafraîchi avant le premier appel ; si Google refuse le refresh token (`invalid_grant`), `mail_accounts.auth_error_at` est renseigné et l'interface affiche « Action requise » (reconnexion). La déconnexion d'un compte est douce : `is_active = false`, tokens à `NULL`, archives conservées.
 
 ::: warning Refresh token
 Google ne retourne le `refresh_token` qu'au **premier** consentement. Si un utilisateur reconnecte le même compte, l'ancien refresh_token est conservé via `COALESCE` en SQL. Ne jamais écraser un refresh_token existant par `null` lors d'une reconnexion.

@@ -41,7 +41,7 @@ export function startRuleScheduler() {
       // ─── Inbox Zero snapshots — toutes les 6h ────────────
       if (!lastInboxSnapshot || (now.getTime() - lastInboxSnapshot.getTime()) > 6 * 3600 * 1000) {
         const accounts = await db
-          .selectFrom('gmail_accounts')
+          .selectFrom('mail_accounts')
           .select('id')
           .where('is_active', '=', true)
           .execute();
@@ -109,21 +109,21 @@ export function startRuleScheduler() {
       const rules = await db
         .selectFrom("rules")
         .innerJoin(
-          "gmail_accounts",
-          "rules.gmail_account_id",
-          "gmail_accounts.id",
+          "mail_accounts",
+          "rules.account_id",
+          "mail_accounts.id",
         )
         .select((eb) => [
           "rules.id",
-          "rules.gmail_account_id",
+          "rules.account_id",
           "rules.schedule",
           "rules.last_run_at",
-          eb.ref("gmail_accounts.email").as("account_email") as any,
-          eb.ref("gmail_accounts.user_id").as("user_id") as any,
+          eb.ref("mail_accounts.email").as("account_email") as any,
+          eb.ref("mail_accounts.user_id").as("user_id") as any,
         ])
         .where("rules.is_active", "=", true)
-        .where("gmail_accounts.is_active", "=", true) // disconnected accounts have no Gmail access
-        .where("gmail_accounts.auth_error_at", "is", null) // pending reconnection: every run would fail and notify
+        .where("mail_accounts.is_active", "=", true) // disconnected accounts have no Gmail access
+        .where("mail_accounts.auth_error_at", "is", null) // pending reconnection: every run would fail and notify
         .where("rules.schedule", "is not", null)
         .execute();
 
@@ -131,7 +131,7 @@ export function startRuleScheduler() {
         if (rule.schedule && shouldRun(rule.schedule, rule.last_run_at, now)) {
           // last_run_at is only written once the rule ran, so dedupe the minutes it waits in the queue
           await enqueueJob("run_rule", {
-            accountId: rule.gmail_account_id,
+            accountId: rule.account_id,
             userId: rule.user_id,
             ruleId: rule.id,
           }, { dedupId: `run_rule-${rule.id}` });
@@ -161,7 +161,7 @@ const BACKUP_INTERVAL_MS: Record<BackupInterval, number> = { '1h': 3_600_000, '6
 export async function enqueueDueBackups(now: Date) {
   const db = getDb();
   const accounts = await db
-    .selectFrom('gmail_accounts')
+    .selectFrom('mail_accounts')
     .select(['id', 'user_id', 'backup_interval', 'last_backup_at'])
     .where('is_active', '=', true)
     .where('backup_enabled', '=', true)
@@ -172,7 +172,7 @@ export async function enqueueDueBackups(now: Date) {
     const last = account.last_backup_at ? new Date(account.last_backup_at).getTime() : 0;
     if (now.getTime() - last < BACKUP_INTERVAL_MS[account.backup_interval]) continue;
     await enqueueJob('archive_mails', { accountId: account.id, userId: account.user_id, differential: true }, { dedupId: `backup-${account.id}` });
-    await db.updateTable('gmail_accounts').set({ last_backup_at: now }).where('id', '=', account.id).execute();
+    await db.updateTable('mail_accounts').set({ last_backup_at: now }).where('id', '=', account.id).execute();
     logger.info(`Enqueued automatic backup (${account.id}, every ${account.backup_interval})`);
   }
 }

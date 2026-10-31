@@ -43,7 +43,7 @@ export async function exchangeGmailCode(code: string, userId: string) {
   const db = getDb()
 
   const account = await db
-    .insertInto('gmail_accounts')
+    .insertInto('mail_accounts')
     .values({
       user_id:       userId,
       email:         data.email!,
@@ -52,13 +52,13 @@ export async function exchangeGmailCode(code: string, userId: string) {
       token_expiry:  new Date(tokens.expiry_date!),
     })
     .onConflict((oc) =>
-      oc.constraint('gmail_accounts_user_email_unique').doUpdateSet({
+      oc.constraint('mail_accounts_user_email_unique').doUpdateSet({
         access_token:  (eb) => eb.ref('excluded.access_token'),
         // Ne pas écraser le refresh_token si absent (Google ne le renvoie qu'au 1er consent)
         refresh_token: (eb) =>
           eb.fn('COALESCE', [
             eb.ref('excluded.refresh_token'),
-            eb.ref('gmail_accounts.refresh_token'),
+            eb.ref('mail_accounts.refresh_token'),
           ]) as any,
         token_expiry:  (eb) => eb.ref('excluded.token_expiry'),
         auth_error_at: null, // reconnected: « Action requise » cleared
@@ -77,7 +77,7 @@ export async function getAuthenticatedClient(accountId: string) {
   const db = getDb()
 
   const account = await db
-    .selectFrom('gmail_accounts')
+    .selectFrom('mail_accounts')
     .select(['access_token', 'refresh_token', 'token_expiry', 'is_active'])
     .where('id', '=', accountId)
     .executeTakeFirst()
@@ -100,7 +100,7 @@ export async function getAuthenticatedClient(accountId: string) {
     if (tokens.access_token) {
       logger.info({ accountId }, 'OAuth token refreshed')
       await db
-        .updateTable('gmail_accounts')
+        .updateTable('mail_accounts')
         .set({
           access_token: tokens.access_token,
           token_expiry: new Date(tokens.expiry_date!),
@@ -122,7 +122,7 @@ export async function getAuthenticatedClient(accountId: string) {
       if (isInvalidGrant(err) || !account.refresh_token) {
         logger.warn({ accountId }, 'Google refused the refresh token: reconnection required')
         // Only the first failure flags and notifies: every later Gmail call hits this again until reconnection
-        const flagged = await db.updateTable('gmail_accounts').set({ auth_error_at: new Date() })
+        const flagged = await db.updateTable('mail_accounts').set({ auth_error_at: new Date() })
           .where('id', '=', accountId).where('auth_error_at', 'is', null)
           .returning(['user_id', 'email']).executeTakeFirst()
         if (flagged) {

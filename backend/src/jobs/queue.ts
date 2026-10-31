@@ -77,7 +77,7 @@ export async function enqueueJob(type: JobType, payload: JobPayload, opts: { ded
         progress: 0,
         processed: 0,
         total: 0,
-        gmail_account_id: payload.accountId || null, // '' = job not tied to an account
+        account_id: payload.accountId || null, // '' = job not tied to an account
         user_id: payload.userId ?? null,
         payload: JSON.stringify(redacted),
       })

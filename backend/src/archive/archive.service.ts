@@ -43,7 +43,7 @@ export async function archiveMail(accountId: string, messageId: string): Promise
   const existing = await db
     .selectFrom('archived_mails')
     .select('id')
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .where('gmail_message_id', '=', messageId)
     .executeTakeFirst()
 
@@ -102,7 +102,7 @@ export async function archiveMail(accountId: string, messageId: string): Promise
   const archived = await db
     .insertInto('archived_mails')
     .values({
-      gmail_account_id: accountId,
+      account_id: accountId,
       gmail_message_id: messageId,
       thread_id:        msg.threadId ?? null,
       in_reply_to:      get('In-Reply-To') || null,
@@ -162,7 +162,7 @@ async function extractAttachments(
       .innerJoin('archived_mails', 'archived_mails.id', 'archived_attachments.archived_mail_id')
       .select('archived_attachments.file_path')
       .where('archived_attachments.content_hash', '=', contentHash)
-      .where('archived_mails.gmail_account_id', '=', accountId)
+      .where('archived_mails.account_id', '=', accountId)
       .executeTakeFirst()
 
     let filePath: string
@@ -193,7 +193,7 @@ export async function getArchivedIds(accountId: string): Promise<Set<string>> {
   const rows = await db
     .selectFrom('archived_mails')
     .select('gmail_message_id')
-    .where('gmail_account_id', '=', accountId)
+    .where('account_id', '=', accountId)
     .execute()
   return new Set(rows.map((r) => r.gmail_message_id))
 }

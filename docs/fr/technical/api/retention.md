@@ -16,7 +16,7 @@ Toutes les routes nécessitent une authentification JWT et ne portent que sur le
   {
     "id": "uuid",
     "user_id": "uuid",
-    "gmail_account_id": null,
+    "account_id": null,
     "name": "Archives > 2 ans",
     "label": null,
     "max_age_days": 730,

@@ -26,7 +26,7 @@ export async function streamArchiveZip(
       'aa.filename as att_filename',
       'aa.file_path as att_file_path',
     ])
-    .where('am.gmail_account_id', '=', accountId)
+    .where('am.account_id', '=', accountId)
     .where('am.id', 'in', mailIds)
     .execute()
 

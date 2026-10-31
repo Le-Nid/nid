@@ -35,7 +35,7 @@ describe('enqueueJob', () => {
 
   it('stores jobs without an account as NULL, not an invalid uuid', async () => {
     await enqueueJob('integrity_check', { accountId: '' })
-    expect(mockValues).toHaveBeenCalledWith(expect.objectContaining({ gmail_account_id: null }))
+    expect(mockValues).toHaveBeenCalledWith(expect.objectContaining({ account_id: null }))
   })
 
   it('does not insert a second job row when BullMQ deduplicates', async () => {

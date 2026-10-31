@@ -70,7 +70,7 @@ export async function attachmentsRoutes(app: FastifyInstance) {
         'archived_mails.gmail_message_id',
         'archived_mails.id as archived_mail_id',
       ])
-      .where('archived_mails.gmail_account_id', '=', accountId)
+      .where('archived_mails.account_id', '=', accountId)
 
     if (q) {
       query = query.where((eb: any) =>
@@ -95,7 +95,7 @@ export async function attachmentsRoutes(app: FastifyInstance) {
       .selectFrom('archived_attachments')
       .innerJoin('archived_mails', 'archived_mails.id', 'archived_attachments.archived_mail_id')
       .select((eb: any) => eb.fn.countAll().as('count'))
-      .where('archived_mails.gmail_account_id', '=', accountId)
+      .where('archived_mails.account_id', '=', accountId)
 
     if (q) {
       countQuery = countQuery.where((eb: any) =>
@@ -114,7 +114,7 @@ export async function attachmentsRoutes(app: FastifyInstance) {
       .selectFrom('archived_attachments')
       .innerJoin('archived_mails', 'archived_mails.id', 'archived_attachments.archived_mail_id')
       .select((eb: any) => eb.fn.sum('archived_attachments.size_bytes').as('total_size'))
-      .where('archived_mails.gmail_account_id', '=', accountId)
+      .where('archived_mails.account_id', '=', accountId)
 
     const { total_size } = await sizeQuery.executeTakeFirstOrThrow() as any
 
@@ -207,7 +207,7 @@ export async function attachmentsRoutes(app: FastifyInstance) {
       .innerJoin('archived_mails', 'archived_mails.id', 'archived_attachments.archived_mail_id')
       .selectAll('archived_attachments')
       .where('archived_attachments.id', '=', attachmentId)
-      .where('archived_mails.gmail_account_id', '=', accountId)
+      .where('archived_mails.account_id', '=', accountId)
       .executeTakeFirst()
 
     if (!att) return reply.code(404).send({ error: 'Attachment not found' })

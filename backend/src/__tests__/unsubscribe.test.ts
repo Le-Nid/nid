@@ -268,8 +268,8 @@ describe('newsletter scan cache', () => {
     const db = chain()
     await saveNewsletterScan('acc-1', [sender])
     expect(db.insertInto).toHaveBeenCalledWith('newsletter_scans')
-    expect(db.values).toHaveBeenCalledWith(expect.objectContaining({ gmail_account_id: 'acc-1', senders: JSON.stringify([sender]) }))
-    expect(db.column).toHaveBeenCalledWith('gmail_account_id')
+    expect(db.values).toHaveBeenCalledWith(expect.objectContaining({ account_id: 'acc-1', senders: JSON.stringify([sender]) }))
+    expect(db.column).toHaveBeenCalledWith('account_id')
     expect(db.doUpdateSet).toHaveBeenCalledWith(expect.objectContaining({ senders: JSON.stringify([sender]) }))
   })
 
@@ -288,7 +288,7 @@ describe('newsletter scan cache', () => {
     const db = chain()
     await forgetNewsletterSender('acc-1', 'N@X.com')
     expect(db.updateTable).toHaveBeenCalledWith('newsletter_scans')
-    expect(db.where).toHaveBeenCalledWith('gmail_account_id', '=', 'acc-1')
+    expect(db.where).toHaveBeenCalledWith('account_id', '=', 'acc-1')
     const { senders } = db.set.mock.calls[0][0]
     // Filtered in SQL (atomic), lowercased like the scan's keys
     expect(JSON.stringify(senders.toOperationNode())).toContain('"n@x.com"')

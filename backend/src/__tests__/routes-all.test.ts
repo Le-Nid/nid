@@ -753,7 +753,7 @@ describe('unifiedRoutes', () => {
     await app.register(unifiedRoutes)
     await app.ready()
 
-    mockExecute.mockResolvedValueOnce([]) // gmail_accounts
+    mockExecute.mockResolvedValueOnce([]) // mail_accounts
 
     const res = await app.inject({ method: 'GET', url: '/messages' })
     expect(res.statusCode).toBe(200)

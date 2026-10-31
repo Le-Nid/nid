@@ -25,7 +25,7 @@ Renvoie tous les libellés du compte, supprimés compris, triés par nom, avec l
 ```json
 [
   {
-    "gmail_account_id": "uuid",
+    "account_id": "uuid",
     "id": "Label_12",
     "name": "Factures",
     "color_bg": "#16a765",

@@ -47,7 +47,7 @@ Supported providers: Google, Microsoft, Discord, Facebook, LinkedIn, Keycloak (p
 
 ### Gmail Tokens
 
-Gmail OAuth2 tokens (`access_token`, `refresh_token`) are stored **in plain text** in `gmail_accounts`: protection relies on database access. When an account is disconnected, they are set to `NULL`.
+Gmail OAuth2 tokens (`access_token`, `refresh_token`) are stored **in plain text** in `mail_accounts`: protection relies on database access. When an account is disconnected, they are set to `NULL`.
 
 ---
 

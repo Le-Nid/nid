@@ -57,7 +57,7 @@ describe('GET /api/summary', () => {
       jobs: { active: 2, failed_24h: 1 }, unread_notifications: 7,
     })
     expect(body.accounts[0]).toMatchObject({ email: 'ana@gmail.com', needs_reauth: true, archived_mails: 10, archived_bytes: 2048 })
-    expect(wheres).toEqual(expect.arrayContaining([['id', '=', 'u1'], ['gmail_accounts.user_id', '=', 'u1'], ['user_id', '=', 'u1']]))
+    expect(wheres).toEqual(expect.arrayContaining([['id', '=', 'u1'], ['mail_accounts.user_id', '=', 'u1'], ['user_id', '=', 'u1']]))
   })
 
   it('works with no account at all', async () => {
