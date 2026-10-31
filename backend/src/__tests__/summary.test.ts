@@ -3,13 +3,25 @@ import Fastify from 'fastify'
 const mockExecute = vi.fn()
 const mockTakeFirstOrThrow = vi.fn()
 const wheres: unknown[][] = []
-const chain: any = new Proxy({}, {
+// Callable chain that also runs the builder callbacks (join, select, filterWhere) so their code is exercised:
+// every property is itself a callable chain (eb.fn.countAll(), f.and([...]), eb('col', 'is', null)…)
+const handler: ProxyHandler<any> = {
+  apply: () => chain,
   get: (_t, prop) => {
+    if (prop === 'then') return undefined
     if (prop === 'execute') return mockExecute
     if (prop === 'executeTakeFirstOrThrow') return mockTakeFirstOrThrow
-    return (...args: unknown[]) => { if (prop === 'where') wheres.push(args); return chain }
+    return new Proxy(function () {}, {
+      ...handler,
+      apply: (_f, _this, args: unknown[]) => {
+        if (prop === 'where') wheres.push(args)
+        for (const arg of args) if (typeof arg === 'function') arg(chain)
+        return chain
+      },
+    })
   },
-})
+}
+const chain: any = new Proxy(function () {}, handler)
 vi.mock('../db', () => ({ getDb: () => new Proxy({}, { get: () => () => chain }) }))
 
 import { summaryRoutes } from '../routes/summary'
