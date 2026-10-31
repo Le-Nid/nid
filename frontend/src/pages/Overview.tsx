@@ -220,6 +220,71 @@ function ActiveJobs({ activeJobs }: Readonly<{ activeJobs?: number }>) {
   )
 }
 
+/** A Gmail account's figures: KPIs, daily archiving, top senders, suggestions, heaviest mails. */
+function GmailOverview({ accountId, archive, counters }: Readonly<{
+  accountId: string; archive: ReturnType<typeof useDashboardArchiveStats>['data']; counters: LiveCounters | null
+}>) {
+  const { t, i18n } = useTranslation()
+  const stats = useDashboardStats(accountId)
+  const scan = useNewsletters(accountId).data
+  const rules = useRuleStats(accountId).data
+  const n = new Intl.NumberFormat(i18n.language)
+  const live = counters?.mails[accountId]
+  const mails: number | undefined = typeof live === 'number' ? live : stats.data?.totalMessages
+  const archived = archive ? Number(archive.total_mails ?? 0) : undefined
+  const coverage = mails && archived !== undefined ? Math.min(100, Math.round((archived / mails) * 100)) : undefined
+  const senders: { totalSizeBytes: number }[] = scan?.senders ?? []
+  const activeRules = counters?.activeRules ?? rules?.active
+  const recoverable = scan?.scannedAt ? formatBytes(senders.reduce((sum, s) => sum + s.totalSizeBytes, 0)) : '—'
+
+  return (
+    <>
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <KpiCard
+          to="/mails"
+          label={t('overview.kpi.mails')}
+          value={kpiValue(mails, !stats.isLoading, n)}
+          hint={stats.data ? t('overview.kpi.unread', { count: stats.data.unreadCount ?? 0 }) : undefined}
+        />
+        <KpiCard
+          to="/cleanup"
+          label={t('overview.kpi.recoverable')}
+          value={scan ? recoverable : undefined}
+          hint={scan && t(scan.scannedAt ? 'overview.kpi.recoverableHint' : 'overview.kpi.notScanned', { count: senders.length })}
+        />
+        <KpiCard
+          to="/archives"
+          label={t('overview.kpi.backup')}
+          value={coverage === undefined ? kpiValue(undefined, !!archive, n) : new Intl.NumberFormat(i18n.language, { style: 'percent' }).format(coverage / 100)}
+          hint={archived === undefined ? undefined : backupHint(t, archived, archive.dedup_saved_bytes)}
+          progress={coverage}
+        />
+        <KpiCard
+          to="/rules"
+          label={t('overview.kpi.rules')}
+          value={kpiValue(activeRules, !!rules, n)}
+          hint={rules && t('overview.kpi.rulesHint', { count: rules.processed30d })}
+        />
+      </div>
+
+      <DailySection archive={archive} />
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <Section title={t('overview.top.title')} to="/cleanup">
+          {stats.isError && <LoadError message={t('overview.top.loadError')} onRetry={() => void stats.refetch()} />}
+          {stats.isLoading && <Skeleton className="h-40 w-full" />}
+          {stats.data && <TopSenders senders={stats.data.bySender ?? []} />}
+        </Section>
+        <Section title={t('overview.suggestions.title')} to="/cleanup">
+          <Suggestions accountId={accountId} />
+        </Section>
+      </div>
+
+      <HeaviestSections archive={archive} />
+    </>
+  )
+}
+
 /** /overview (§7.1, artboards 9–10): the account in 5 s and the next useful action. */
 export default function OverviewPage() {
   const { t, i18n } = useTranslation()
@@ -227,12 +292,7 @@ export default function OverviewPage() {
   const { accountId, account } = useAccount()
   // AppShell's live counters (B3); null until the first frame, then they win over the cached figures
   const counters = useOutletContext<LiveCounters | null>()
-  // An IMAP account is archived only: no Gmail figures, cleanup scan or rules to fetch
-  const gmailId = account?.provider === 'imap' ? null : accountId
-  const stats = useDashboardStats(gmailId)
   const archive = useDashboardArchiveStats(accountId).data
-  const scan = useNewsletters(gmailId).data
-  const rules = useRuleStats(gmailId).data
 
   const name = user?.display_name || user?.email.split('@')[0] || ''
   const greeting = t('overview.greeting', { name })
@@ -248,72 +308,18 @@ export default function OverviewPage() {
     )
   }
 
-  const n = new Intl.NumberFormat(i18n.language)
-  const live = counters?.mails[accountId]
-  const mails: number | undefined = typeof live === 'number' ? live : stats.data?.totalMessages
-  const archived = archive ? Number(archive.total_mails ?? 0) : undefined
-  const coverage = mails && archived !== undefined ? Math.min(100, Math.round((archived / mails) * 100)) : undefined
-  const senders: { totalSizeBytes: number }[] = scan?.senders ?? []
-  const activeRules = counters?.activeRules ?? rules?.active
   const backup = archive?.last_archived_at
     ? t('archives.status.last', { when: formatRelative(archive.last_archived_at, i18n.language) })
     : t('archives.status.never')
-
-  const recoverable = scan?.scannedAt ? formatBytes(senders.reduce((sum, s) => sum + s.totalSizeBytes, 0)) : '—'
+  // An IMAP account is archived only: no Gmail figures, cleanup scan or rules to fetch
+  const imap = account?.provider === 'imap'
 
   return (
     <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-4 p-4 md:px-6 md:pt-8">
       <PageHeader title={greeting} description={[account?.email, archive && backup].filter(Boolean).join(' · ')} />
 
-      {gmailId === null && <p className="text-sm text-muted-foreground">{t('settings.imap.overviewHint')}</p>}
-      {gmailId === null ? <ImapOverview archive={archive} /> : (
-        <>
-
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            <KpiCard
-              to="/mails"
-              label={t('overview.kpi.mails')}
-              value={kpiValue(mails, !stats.isLoading, n)}
-              hint={stats.data ? t('overview.kpi.unread', { count: stats.data.unreadCount ?? 0 }) : undefined}
-            />
-            <KpiCard
-              to="/cleanup"
-              label={t('overview.kpi.recoverable')}
-              value={scan ? recoverable : undefined}
-              hint={scan && t(scan.scannedAt ? 'overview.kpi.recoverableHint' : 'overview.kpi.notScanned', { count: senders.length })}
-            />
-            <KpiCard
-              to="/archives"
-              label={t('overview.kpi.backup')}
-              value={coverage === undefined ? kpiValue(undefined, !!archive, n) : new Intl.NumberFormat(i18n.language, { style: 'percent' }).format(coverage / 100)}
-              hint={archived === undefined ? undefined : backupHint(t, archived, archive.dedup_saved_bytes)}
-              progress={coverage}
-            />
-            <KpiCard
-              to="/rules"
-              label={t('overview.kpi.rules')}
-              value={kpiValue(activeRules, !!rules, n)}
-              hint={rules && t('overview.kpi.rulesHint', { count: rules.processed30d })}
-            />
-          </div>
-
-          <DailySection archive={archive} />
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <Section title={t('overview.top.title')} to="/cleanup">
-              {stats.isError && <LoadError message={t('overview.top.loadError')} onRetry={() => void stats.refetch()} />}
-              {stats.isLoading && <Skeleton className="h-40 w-full" />}
-              {stats.data && <TopSenders senders={stats.data.bySender ?? []} />}
-            </Section>
-            <Section title={t('overview.suggestions.title')} to="/cleanup">
-              <Suggestions accountId={accountId} />
-            </Section>
-          </div>
-
-          <HeaviestSections archive={archive} />
-
-        </>
-      )}
+      {imap && <p className="text-sm text-muted-foreground">{t('settings.imap.overviewHint')}</p>}
+      {imap ? <ImapOverview archive={archive} /> : <GmailOverview accountId={accountId} archive={archive} counters={counters} />}
 
       <Section title={t('overview.jobs.title')} to="/activity">
         <ActiveJobs activeJobs={counters?.activeJobs} />
