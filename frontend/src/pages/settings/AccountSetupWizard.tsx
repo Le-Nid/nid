@@ -67,7 +67,7 @@ export function AccountSetupWizard({ account, onClose }: Readonly<{ account: Gma
   const fromTemplate = useCreateRuleFromTemplate(account.id)
   const [step, setStep] = useState(1)
   const [backupEnabled, setBackupEnabled] = useState(!!account.backup_enabled)
-  const [interval, setEvery] = useState<BackupInterval>(account.backup_interval ?? '24h')
+  const [every, setEvery] = useState<BackupInterval>(account.backup_interval ?? '24h')
   const [firstBackup, setFirstBackup] = useState<FirstBackup>('year')
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [saving, setSaving] = useState(false)
@@ -83,8 +83,9 @@ export function AccountSetupWizard({ account, onClose }: Readonly<{ account: Gma
   const finish = async () => {
     setSaving(true)
     try {
-      await update.mutateAsync({ id: account.id, backup_enabled: backupEnabled, backup_interval: interval })
-      for (const tpl of chosen) await fromTemplate.mutateAsync(tpl.id)
+      await update.mutateAsync({ id: account.id, backup_enabled: backupEnabled, backup_interval: every })
+      // Independent (no Gmail label to create for these categories): created side by side
+      await Promise.all(chosen.map((tpl) => fromTemplate.mutateAsync(tpl.id)))
       if (firstBackup !== 'none') {
         await archiveApi.triggerArchive(account.id, { differential: true, ...(firstBackup === 'year' ? { query: 'newer_than:1y' } : {}) })
       }
@@ -127,7 +128,7 @@ export function AccountSetupWizard({ account, onClose }: Readonly<{ account: Gma
             />
             <div className="flex flex-wrap items-center justify-between gap-2">
               <label htmlFor={`${id}-every`} className="text-sm font-medium">{t('settings.gmail.frequency')}</label>
-              <select id={`${id}-every`} value={interval} disabled={!backupEnabled} onChange={(e) => setEvery(e.target.value as BackupInterval)} className={selectClass}>
+              <select id={`${id}-every`} value={every} disabled={!backupEnabled} onChange={(e) => setEvery(e.target.value as BackupInterval)} className={selectClass}>
                 {INTERVALS.map((every) => <option key={every} value={every}>{t(`settings.gmail.every.${every}`)}</option>)}
               </select>
             </div>
@@ -157,7 +158,7 @@ export function AccountSetupWizard({ account, onClose }: Readonly<{ account: Gma
         {step === 3 && (
           <dl className="grid gap-x-4 gap-y-2 text-sm sm:grid-cols-[auto_1fr]">
             <dt className="font-medium">{t('settings.gmail.autoBackup')}</dt>
-            <dd>{backupEnabled ? t(`settings.gmail.every.${interval}`) : t('settings.gmail.wizard.off')}</dd>
+            <dd>{backupEnabled ? t(`settings.gmail.every.${every}`) : t('settings.gmail.wizard.off')}</dd>
             <dt className="font-medium">{t('settings.gmail.wizard.firstBackup')}</dt>
             <dd>{t(`settings.gmail.wizard.first.${firstBackup}`)}</dd>
             <dt className="font-medium">{t('settings.gmail.wizard.step.rules')}</dt>

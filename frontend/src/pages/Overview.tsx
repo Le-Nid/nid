@@ -1,6 +1,7 @@
 import { useEffect, useId, type ReactNode } from 'react'
 import { Link, useOutletContext } from 'react-router'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { Activity, BarChart3, Paperclip, Users } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PageHeader } from '@/components/app/PageHeader'
@@ -141,6 +142,47 @@ function Heaviest({ items, empty }: Readonly<{ items: Heavy[]; empty: string }>)
   )
 }
 
+/** Archived count, plus what attachment deduplication saved when there is anything. */
+function backupHint(t: TFunction, archived: number, savedBytes: number | undefined) {
+  const count = t('archives.status.count', { count: archived })
+  return savedBytes ? `${count} · ${t('overview.kpi.dedupSaved', { size: formatBytes(savedBytes) })}` : count
+}
+
+type ArchiveStats = {
+  daily?: Day[]
+  biggestMails?: { id: string; subject: string | null; sender: string | null; size_bytes: number }[]
+  biggestAttachments?: { id: string; filename: string; subject: string | null; size_bytes: number }[]
+} | undefined
+
+function DailySection({ archive }: Readonly<{ archive: ArchiveStats }>) {
+  const { t } = useTranslation()
+  return (
+    <Section title={t('overview.daily.title')} to="/archives">
+      {/* daily is missing from a pre-upgrade cached answer (5 min): keep the skeleton rather than a false « no mail » */}
+      {archive?.daily ? <DailyVolume days={archive.daily} /> : <Skeleton className="h-36 w-full" />}
+    </Section>
+  )
+}
+
+function HeaviestSections({ archive }: Readonly<{ archive: ArchiveStats }>) {
+  const { t } = useTranslation()
+  const empty = t('overview.heaviest.empty')
+  const mails = (archive?.biggestMails ?? []).map((m) => ({
+    id: m.id, name: m.subject || t('overview.heaviest.noSubject'), detail: m.sender && formatSender(m.sender), size: Number(m.size_bytes),
+  }))
+  const attachments = (archive?.biggestAttachments ?? []).map((a) => ({ id: a.id, name: a.filename, detail: a.subject, size: Number(a.size_bytes) }))
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      <Section title={t('overview.heaviest.mails')} to="/archives">
+        {archive ? <Heaviest empty={empty} items={mails} /> : <Skeleton className="h-32 w-full" />}
+      </Section>
+      <Section title={t('overview.heaviest.attachments')} to="/attachments">
+        {archive ? <Heaviest empty={empty} items={attachments} /> : <Skeleton className="h-32 w-full" />}
+      </Section>
+    </div>
+  )
+}
+
 function ActiveJobs({ activeJobs }: Readonly<{ activeJobs?: number }>) {
   const { t } = useTranslation()
   const jobs = useJobs({ status: 'active' })
@@ -228,10 +270,7 @@ export default function OverviewPage() {
           to="/archives"
           label={t('overview.kpi.backup')}
           value={coverage === undefined ? kpiValue(undefined, !!archive, n) : new Intl.NumberFormat(i18n.language, { style: 'percent' }).format(coverage / 100)}
-          hint={archived === undefined ? undefined : [
-            t('archives.status.count', { count: archived }),
-            archive?.dedup_saved_bytes > 0 && t('overview.kpi.dedupSaved', { size: formatBytes(archive.dedup_saved_bytes) }),
-          ].filter(Boolean).join(' · ')}
+          hint={archived === undefined ? undefined : backupHint(t, archived, archive.dedup_saved_bytes)}
           progress={coverage}
         />
         <KpiCard
@@ -242,10 +281,7 @@ export default function OverviewPage() {
         />
       </div>
 
-      <Section title={t('overview.daily.title')} to="/archives">
-        {/* daily is missing from a pre-upgrade cached answer (5 min): keep the skeleton rather than a false « no mail » */}
-        {archive?.daily ? <DailyVolume days={archive.daily} /> : <Skeleton className="h-36 w-full" />}
-      </Section>
+      <DailySection archive={archive} />
 
       <div className="grid gap-4 md:grid-cols-2">
         <Section title={t('overview.top.title')} to="/cleanup">
@@ -258,18 +294,7 @@ export default function OverviewPage() {
         </Section>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Section title={t('overview.heaviest.mails')} to="/archives">
-          {archive
-            ? <Heaviest empty={t('overview.heaviest.empty')} items={(archive.biggestMails ?? []).map((m: { id: string; subject: string | null; sender: string | null; size_bytes: number }) => ({ id: m.id, name: m.subject || t('overview.heaviest.noSubject'), detail: m.sender && formatSender(m.sender), size: Number(m.size_bytes) }))} />
-            : <Skeleton className="h-32 w-full" />}
-        </Section>
-        <Section title={t('overview.heaviest.attachments')} to="/attachments">
-          {archive
-            ? <Heaviest empty={t('overview.heaviest.empty')} items={(archive.biggestAttachments ?? []).map((a: { id: string; filename: string; subject: string | null; size_bytes: number }) => ({ id: a.id, name: a.filename, detail: a.subject, size: Number(a.size_bytes) }))} />
-            : <Skeleton className="h-32 w-full" />}
-        </Section>
-      </div>
+      <HeaviestSections archive={archive} />
 
       <Section title={t('overview.jobs.title')} to="/activity">
         <ActiveJobs activeJobs={counters?.activeJobs} />
