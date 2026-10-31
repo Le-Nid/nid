@@ -57,6 +57,19 @@ export function foldersToSync(list: ListResponse[]): ListResponse[] {
 
 type SyncContext = { accountId: string; result: ImapSyncResult; onProgress?: (done: number) => Promise<void> }
 
+/** One fetched message into the archive; false (logged, counted) when it could not be archived. */
+async function archiveMessage(accountId: string, folder: string, uid: number, source: Buffer, result: ImapSyncResult): Promise<boolean> {
+  try {
+    const outcome = await importSingleEml(getDb(), getLocalStorage(), accountId, source, [folder])
+    result[outcome === 'imported' ? 'imported' : 'skipped']++
+    return true
+  } catch (err) {
+    result.errors++
+    logger.error({ err, accountId, folder, uid }, 'IMAP message not archived')
+    return false
+  }
+}
+
 /**
  * One folder: archives the UIDs above the last one archived, then moves the folder's mark.
  * A changed UIDVALIDITY (folder recreated) restarts the folder; already archived mails are skipped by Message-ID.
@@ -78,16 +91,10 @@ async function syncFolder(client: ImapFlow, folder: ListResponse, { accountId, r
   let failed = false
   for await (const msg of client.fetch(`${from + 1}:*`, { uid: true, source: true }, { uid: true })) {
     if (msg.uid <= from || !msg.source) continue
-    try {
-      // One IMAP connection, UIDs in order: the mark is only safe if mails are archived one after the other
-      const outcome = await importSingleEml(db, getLocalStorage(), accountId, msg.source, [folder.path]) // NOSONAR
-      result[outcome === 'imported' ? 'imported' : 'skipped']++
-      if (!failed) lastUid = msg.uid
-    } catch (err) {
-      failed = true
-      result.errors++
-      logger.error({ err, accountId, folder: folder.path, uid: msg.uid }, 'IMAP message not archived')
-    }
+    // One IMAP connection, UIDs in order: the mark is only safe if mails are archived one after the other
+    const ok = await archiveMessage(accountId, folder.path, msg.uid, msg.source, result) // NOSONAR
+    failed ||= !ok
+    if (!failed) lastUid = msg.uid
     const done = result.imported + result.skipped + result.errors
     if (onProgress && done % 20 === 0) await onProgress(done) // NOSONAR: progress follows the sequential import
   }
