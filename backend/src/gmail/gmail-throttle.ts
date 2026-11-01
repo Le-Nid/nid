@@ -125,7 +125,7 @@ function sleep(ms: number): Promise<void> {
 // same OAuth token.
 
 class Semaphore {
-  private queue: (() => void)[] = []
+  private readonly queue: (() => void)[] = []
   private running = 0
 
   constructor(private max: number) {}

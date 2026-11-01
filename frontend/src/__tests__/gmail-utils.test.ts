@@ -55,3 +55,14 @@ describe('gmail payload helpers', () => {
     expect(toBadge([], 'INBOX')).toEqual({ name: 'INBOX', type: 'system' })
   })
 })
+
+describe('hasRemoteContent on hostile HTML', () => {
+  it('stays linear on a long run of spaces after an attribute (no backtracking)', () => {
+    const html = `<img src=${' '.repeat(100_000)}x>`.repeat(5) + `<div style="background:url( ${' '.repeat(100_000)}">`
+    const started = performance.now()
+    expect(hasRemoteContent(html)).toBe(false)
+    expect(performance.now() - started).toBeLessThan(100)
+    expect(hasRemoteContent(`<img src = " //cdn.test/a.png">`)).toBe(true)
+    expect(hasRemoteContent(`<p style="background: url( 'https://x.test/p.gif')">`)).toBe(true)
+  })
+})

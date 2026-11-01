@@ -536,7 +536,7 @@ function mapSuggestion(row: any): CleanupSuggestionResult {
 }
 
 function extractEmail(sender: string): string {
-  const match = /<([^>]+)>/.exec(sender)
+  const match = /<([^<>]+)>/.exec(sender)
   return match ? match[1] : sender
 }
 

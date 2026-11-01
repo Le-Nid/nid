@@ -3,7 +3,7 @@ import { sql } from 'kysely'
 
 /** Escape ILIKE special characters to prevent wildcard injection */
 export function escapeIlike(str: string): string {
-  return str.replace(/[%_\\]/g, '\\$&')
+  return str.replaceAll(/[%_\\]/g, String.raw`\$&`)
 }
 
 /** Text search config created by migration 012 (french stemming + unaccent) */

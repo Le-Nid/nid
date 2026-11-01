@@ -66,7 +66,6 @@ export async function expirationRoutes(app: FastifyInstance) {
 
   // ─── Detect temporary emails (heuristic) ──────────────────
   app.post('/:accountId/detect', accountAuth, async (request) => {
-    const { accountId } = request.params as { accountId: string }
     const { messages } = detectSchema.parse(request.body)
 
     const detected = messages

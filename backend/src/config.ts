@@ -8,7 +8,7 @@ function require_env(key: string): string {
 
 export const config = {
   NODE_ENV: process.env.NODE_ENV ?? 'development',
-  PORT: parseInt(process.env.PORT ?? '4000', 10),
+  PORT: Number.parseInt(process.env.PORT ?? '4000', 10),
   LOG_LEVEL: process.env.LOG_LEVEL ?? 'info',
 
   DATABASE_URL: require_env('DATABASE_URL'),
@@ -68,11 +68,11 @@ export const config = {
   WEBHOOK_ALLOW_PRIVATE_NETWORKS: process.env.WEBHOOK_ALLOW_PRIVATE_NETWORKS === 'true',
 
   // Plafond d'une action de masse par requête Gmail (« sélectionner tous les résultats ») : le job s'arrête là
-  BULK_QUERY_MAX: parseInt(process.env.BULK_QUERY_MAX ?? '50000', 10),
+  BULK_QUERY_MAX: Number.parseInt(process.env.BULK_QUERY_MAX ?? '50000', 10),
   // Sauvegarde NAS par requête plafonnée à BULK_QUERY_MAX : la suite est remise en file après ce délai (minutes),
   // au plus ARCHIVE_CHAIN_MAX fois d'affilée
-  ARCHIVE_CONTINUE_DELAY_MIN: parseInt(process.env.ARCHIVE_CONTINUE_DELAY_MIN ?? '15', 10),
-  ARCHIVE_CHAIN_MAX: parseInt(process.env.ARCHIVE_CHAIN_MAX ?? '20', 10),
+  ARCHIVE_CONTINUE_DELAY_MIN: Number.parseInt(process.env.ARCHIVE_CONTINUE_DELAY_MIN ?? '15', 10),
+  ARCHIVE_CHAIN_MAX: Number.parseInt(process.env.ARCHIVE_CHAIN_MAX ?? '20', 10),
 
   // Gmail API throttle — stay under 250 quota units/user/sec
   // Most endpoints = 5 units → max ~50 concurrent requests/sec

@@ -111,94 +111,88 @@ async function listAllMessageIds(accountId: string, query?: string): Promise<str
   return ids
 }
 
+/** Ids still to archive (a query lists Gmail; differential skips the archived ones), capped like bulk-by-query. */
+async function idsToArchive(accountId: string, messageIds: string[] | undefined, query: string | undefined, differential: boolean) {
+  const byQuery = !messageIds?.length && !!query
+  let ids: string[] = messageIds?.length ? messageIds : await listAllMessageIds(accountId, query)
+  if (differential) {
+    const archived = await getArchivedIds(accountId)
+    ids = ids.filter((id) => !archived.has(id))
+  }
+  // The rest is picked up by a differential continuation (see handleArchive)
+  const capped = byQuery && ids.length > config.BULK_QUERY_MAX
+  return { ids: capped ? ids.slice(0, config.BULK_QUERY_MAX) : ids, capped }
+}
+
+/** Archives one mail after the other, progress every 10; returns how many failed. */
+async function archiveEach(job: Job, accountId: string, ids: string[]): Promise<number> {
+  const jobRow = () => getDb().updateTable('jobs').where('bullmq_id', '=', String(job.id))
+  let failed = 0
+  for (const [index, messageId] of ids.entries()) {
+    try {
+      await archiveMail(accountId, messageId) // NOSONAR: Gmail quota per user, one mail at a time
+    } catch (err) {
+      failed++
+      logger.error({ messageId, err }, 'Failed to archive message')
+    }
+    const processed = index + 1
+    const progress = Math.round((processed / ids.length) * 100)
+    if (processed % 10 === 0 || processed === ids.length) await jobRow().set({ progress, processed }).execute() // NOSONAR
+    await job.updateProgress(progress) // NOSONAR
+  }
+  return failed
+}
+
+/** Title and body of the end-of-archive notification. */
+function archiveNotice({ archivedCount, failed, allFailed, capped, continues }: {
+  archivedCount: number; failed: number; allFailed: boolean; capped: boolean; continues: boolean
+}) {
+  const failedNote = failed ? `, ${failed} en échec` : ''
+  if (continues) {
+    return { title: 'Sauvegarde partielle', body: `Sauvegarde partielle : ${archivedCount} mails sauvegardés${failedNote}, la suite reprend automatiquement dans ${config.ARCHIVE_CONTINUE_DELAY_MIN} min.` }
+  }
+  if (capped) {
+    return { title: 'Sauvegarde partielle', body: `Sauvegarde partielle : ${archivedCount} mails sauvegardés${failedNote}. Plafond atteint et reprise automatique arrêtée : relancez la sauvegarde pour la suite.` }
+  }
+  return { title: allFailed ? 'Archivage échoué' : 'Archivage terminé', body: `${archivedCount} mail(s) archivé(s) sur le NAS${failedNote}.` }
+}
+
 async function handleArchive(job: Job) {
   const { accountId, messageIds, query, differential = true, userId, chain = 0 } = job.data
   const db = getDb()
   // An IMAP account's backup (scheduler, « Sauvegarder », setup wizard) is an incremental IMAP sync, not Gmail
   const account = await db.selectFrom('mail_accounts').select('provider').where('id', '=', accountId).executeTakeFirst()
   if (account?.provider === 'imap') return runCountedJob(job, { done: 'Sauvegarde IMAP terminée', failed: 'Sauvegarde IMAP échouée' }, (onProgress) => syncImapAccount(accountId, onProgress))
+  const jobRow = () => db.updateTable('jobs').where('bullmq_id', '=', String(job.id))
 
   try {
-    const byQuery = !messageIds?.length && !!query
-    let ids: string[] = messageIds?.length ? messageIds : await listAllMessageIds(accountId, query)
-
-    if (differential) {
-      const archived = await getArchivedIds(accountId)
-      ids = ids.filter((id) => !archived.has(id))
-    }
-
-    // Same cap as bulk-by-query; the rest is picked up by a differential continuation (see below)
-    const capped = byQuery && ids.length > config.BULK_QUERY_MAX
-    if (capped) ids = ids.slice(0, config.BULK_QUERY_MAX)
-
+    const { ids, capped } = await idsToArchive(accountId, messageIds, query, differential)
     const total = ids.length
-
-    await db
-      .updateTable('jobs')
-      .set({ status: 'active', total })
-      .where('bullmq_id', '=', String(job.id))
-      .execute()
-
-    let processed = 0
-    let failed = 0
-    for (const messageId of ids) {
-      try {
-        await archiveMail(accountId, messageId)
-      } catch (err) {
-        failed++
-        logger.error({ messageId, err }, 'Failed to archive message')
-      }
-      processed++
-      const progress = Math.round((processed / total) * 100)
-
-      if (processed % 10 === 0 || processed === total) {
-        await db
-          .updateTable('jobs')
-          .set({ progress, processed })
-          .where('bullmq_id', '=', String(job.id))
-          .execute()
-      }
-      await job.updateProgress(progress)
-    }
+    await jobRow().set({ status: 'active', total }).execute()
+    const failed = await archiveEach(job, accountId, ids)
 
     // Every message failing means a systemic problem (token, disk…), not a bad mail
     const allFailed = total > 0 && failed === total
-    await db
-      .updateTable('jobs')
-      .set({
-        status: allFailed ? 'failed' : 'completed',
-        progress: 100,
-        processed: total,
-        completed_at: new Date(),
-        ...(failed ? { error: `${failed}/${total} message(s) failed to archive` } : {}),
-      })
-      .where('bullmq_id', '=', String(job.id))
-      .execute()
+    await jobRow().set({
+      status: allFailed ? 'failed' : 'completed',
+      progress: 100,
+      processed: total,
+      completed_at: new Date(),
+      ...(failed ? { error: `${failed}/${total} message(s) failed to archive` } : {}),
+    }).execute()
 
     const archivedCount = total - failed
     // Chain stops when a run saved nothing new (it would loop on the same failures) or after ARCHIVE_CHAIN_MAX runs
     const continues = capped && archivedCount > 0 && chain < config.ARCHIVE_CHAIN_MAX
-    let continuationId: string | undefined
-    if (continues) {
-      const next = await enqueueJob(
-        'archive_mails',
-        { accountId, userId, query, differential: true, chain: chain + 1 },
-        { delay: config.ARCHIVE_CONTINUE_DELAY_MIN * 60_000 },
-      )
-      continuationId = String(next.id)
-    }
+    const continuationId = continues
+      ? String((await enqueueJob('archive_mails', { accountId, userId, query, differential: true, chain: chain + 1 }, { delay: config.ARCHIVE_CONTINUE_DELAY_MIN * 60_000 })).id)
+      : undefined
 
     if (userId) {
-      const failedNote = failed ? `, ${failed} en échec` : ''
-      const delay = config.ARCHIVE_CONTINUE_DELAY_MIN
       await notify({
         userId,
         category: allFailed ? 'job_failed' : 'job_completed',
-        ...(continues
-          ? { title: 'Sauvegarde partielle', body: `Sauvegarde partielle : ${archivedCount} mails sauvegardés${failedNote}, la suite reprend automatiquement dans ${delay} min.` }
-          : capped
-            ? { title: 'Sauvegarde partielle', body: `Sauvegarde partielle : ${archivedCount} mails sauvegardés${failedNote}. Plafond atteint et reprise automatique arrêtée : relancez la sauvegarde pour la suite.` }
-            : { title: allFailed ? 'Archivage échoué' : 'Archivage terminé', body: `${archivedCount} mail(s) archivé(s) sur le NAS${failedNote}.` }),
+        ...archiveNotice({ archivedCount, failed, allFailed, capped, continues }),
         data: {
           jobId: String(job.id), count: archivedCount, failed,
           ...(capped ? { capped: true, query, continuationJobId: continuationId ?? null } : {}),
@@ -206,17 +200,7 @@ async function handleArchive(job: Job) {
       })
     }
   } catch (err) {
-    await db
-      .updateTable('jobs')
-      .set({ status: 'failed', error: String(err) })
-      .where('bullmq_id', '=', String(job.id))
-      .execute()
-    
-    await db
-      .updateTable('jobs')
-      .set({ status: 'failed', error: String(err) })
-      .where('bullmq_id', '=', String(job.id))
-      .execute()
+    await jobRow().set({ status: 'failed', error: String(err) }).execute()
     throw err
   }
 }
@@ -265,6 +249,19 @@ async function applyBulkAction(accountId: string, action: string, labelId: strin
   }
 }
 
+/** End-of-bulk notification: done, or the cap reached (no auto-relaunch: label/mark actions keep matching the query and would loop; the UI offers « Relancer », B11). */
+function bulkNotice(jobId: string, state: { processed: number; capped: boolean; estimate: number }, { query, action, labelId }: { query?: string; action: string; labelId?: string }) {
+  if (!state.capped) {
+    return { title: 'Opération bulk terminée', body: `${state.processed} élément(s) traité(s) (${action}).`, data: { jobId, action, count: state.processed, capped: false } }
+  }
+  const remainingEstimate = Math.max(state.estimate - state.processed, 0)
+  return {
+    title: 'Plafond atteint',
+    body: `${state.processed} mails traités sur ~${Math.max(state.estimate, state.processed)} — relancez l'action pour traiter la suite.`,
+    data: { capped: true, jobId, query, action, labelId: labelId ?? null, processed: state.processed, remainingEstimate },
+  }
+}
+
 async function handleBulk(job: Job) {
   const { accountId, action, messageIds, labelId, query, userId, senderEmail } = job.data
   const db = getDb()
@@ -302,25 +299,7 @@ async function handleBulk(job: Job) {
     // Cleanup « Tout supprimer »: the sender's mails are gone, keep the cached scan in step
     if (senderEmail) await forgetNewsletterSender(accountId, senderEmail)
 
-    if (userId && state.capped) {
-      // No auto-relaunch: label/mark actions keep matching the query and would loop. The UI offers "Relancer" (B11).
-      const remainingEstimate = Math.max(state.estimate - state.processed, 0)
-      await notify({
-        userId,
-        category: 'job_completed',
-        title: 'Plafond atteint',
-        body: `${state.processed} mails traités sur ~${Math.max(state.estimate, state.processed)} — relancez l'action pour traiter la suite.`,
-        data: { capped: true, jobId: String(job.id), query, action, labelId: labelId ?? null, processed: state.processed, remainingEstimate },
-      })
-    } else if (userId) {
-      await notify({
-        userId,
-        category: 'job_completed',
-        title: 'Opération bulk terminée',
-        body: `${state.processed} élément(s) traité(s) (${action}).`,
-        data: { jobId: String(job.id), action, count: state.processed, capped: false },
-      })
-    }
+    if (userId) await notify({ userId, category: 'job_completed', ...bulkNotice(String(job.id), state, { query, action, labelId }) })
   } catch (err) {
     await recordJobFailure(job, userId, 'Opération bulk échouée', err, { action })
     throw err
@@ -519,7 +498,7 @@ async function handleImportMbox(job: Job) {
 
     // Cleanup temp file
     try {
-      const fs = await import('fs/promises')
+      const fs = await import('node:fs/promises')
       await fs.unlink(filePath)
     } catch { /* ignore */ }
 

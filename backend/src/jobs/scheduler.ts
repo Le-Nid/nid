@@ -10,147 +10,100 @@ import type { BackupInterval } from '../db/types'
 
 const logger = createLogger('scheduler')
 
-// Simple cron scheduler — vérifie toutes les minutes si des règles
-// planifiées doivent être exécutées.
-// En production, remplacer par BullMQ repeateable jobs ou un vrai cron (node-cron).
+const HOUR = 3_600_000
 
+/** A background task run at most once per `every` ms, optionally only during hour `atHour` (server time). */
+type Periodic = { name: string; every: number; atHour?: number; run: (now: Date) => Promise<void> }
+
+const PERIODIC: Periodic[] = [
+  {
+    name: 'integrity check', every: 24 * HOUR, atHour: 3,
+    run: async () => { await enqueueJob('integrity_check', { accountId: '' }); logger.info('Enqueued daily integrity check') },
+  },
+  {
+    name: 'inbox snapshots', every: 6 * HOUR,
+    run: async () => {
+      const accounts = await getDb().selectFrom('mail_accounts').select('id')
+        .where('is_active', '=', true).where('provider', '=', 'gmail') // Gmail API figures
+        .execute()
+      for (const account of accounts) {
+        await recordInboxSnapshot(account.id).catch((err) => logger.error({ err, accountId: account.id }, 'Inbox snapshot failed')) // NOSONAR: Gmail quota
+      }
+      logger.info(`Inbox zero snapshots recorded (${accounts.length} accounts)`)
+    },
+  },
+  // 1 labels.list call per account
+  { name: 'labels sync', every: 24 * HOUR, run: async () => { await syncAllLabels() } },
+  {
+    name: 'expired emails', every: HOUR / 4,
+    run: async () => {
+      const result = await processExpiredEmails()
+      if (result.processed > 0 || result.errors > 0) logger.info(`Expired emails: ${result.processed} trashed, ${result.errors} errors`)
+    },
+  },
+  {
+    name: 'share links cleanup', every: HOUR,
+    run: async () => {
+      const cleaned = await cleanupExpiredShares()
+      if (cleaned > 0) logger.info(`Cleaned ${cleaned} expired share link(s)`)
+    },
+  },
+  {
+    name: 'archive trash purge', every: 24 * HOUR, atHour: 4,
+    run: async () => { await enqueueJob('purge_archive_trash', { accountId: '' }); logger.info('Enqueued daily archive trash purge') },
+  },
+  // B12: each tick, per account interval
+  { name: 'automatic backups', every: 0, run: enqueueDueBackups },
+  { name: 'scheduled rules', every: 0, run: enqueueDueRules },
+]
+
+/** Active rules with a schedule that is due, on Gmail accounts that can run them. */
+export async function enqueueDueRules(now: Date) {
+  const rules = await getDb()
+    .selectFrom('rules')
+    .innerJoin('mail_accounts', 'rules.account_id', 'mail_accounts.id')
+    .select(['rules.id', 'rules.account_id', 'rules.schedule', 'rules.last_run_at', 'mail_accounts.email as account_email', 'mail_accounts.user_id'])
+    .where('rules.is_active', '=', true)
+    .where('mail_accounts.is_active', '=', true) // disconnected accounts have no Gmail access
+    .where('mail_accounts.provider', '=', 'gmail') // rules act through the Gmail API
+    .where('mail_accounts.auth_error_at', 'is', null) // pending reconnection: every run would fail and notify
+    .where('rules.schedule', 'is not', null)
+    .execute()
+
+  for (const rule of rules) {
+    if (!rule.schedule || !shouldRun(rule.schedule, rule.last_run_at, now)) continue
+    // last_run_at is only written once the rule ran, so dedupe the minutes it waits in the queue
+    await enqueueJob('run_rule', { accountId: rule.account_id, userId: rule.user_id, ruleId: rule.id }, { dedupId: `run_rule-${rule.id}` }) // NOSONAR
+    logger.info(`Enqueued rule ${rule.id} (${rule.account_email})`)
+  }
+}
+
+// Simple cron scheduler — every minute, runs the background tasks that are due.
+// En production, remplacer par BullMQ repeatable jobs ou un vrai cron (node-cron).
 export function startRuleScheduler() {
-  const INTERVAL_MS = 60 * 1000; // toutes les minutes
-
-  let lastIntegrityCheck: Date | null = null;
-  let lastInboxSnapshot: Date | null = null;
-  let lastExpirationCheck: Date | null = null;
-  let lastShareCleanup: Date | null = null;
-  let lastTrashPurge: Date | null = null;
-  let lastLabelSync: Date | null = null;
+  const INTERVAL_MS = 60 * 1000 // toutes les minutes
+  const lastRun = new Map<string, number>()
 
   async function tick() {
-    const db = getDb();
-
-    try {
-      // ─── Integrity check — once per day ─────────────────
-      const now = new Date();
-      if (!lastIntegrityCheck || (now.getTime() - lastIntegrityCheck.getTime()) > 24 * 3600 * 1000) {
-        if (now.getHours() === 3) { // Run at 3 AM
-          await enqueueJob('integrity_check', { accountId: '' });
-          lastIntegrityCheck = now;
-          logger.info('Enqueued daily integrity check');
-        }
-      }
-
-      // ─── Inbox Zero snapshots — toutes les 6h ────────────
-      if (!lastInboxSnapshot || (now.getTime() - lastInboxSnapshot.getTime()) > 6 * 3600 * 1000) {
-        const accounts = await db
-          .selectFrom('mail_accounts')
-          .select('id')
-          .where('is_active', '=', true)
-          .where('provider', '=', 'gmail') // Gmail API figures
-          .execute();
-
-        for (const account of accounts) {
-          try {
-            await recordInboxSnapshot(account.id);
-          } catch (err) {
-            logger.error({ err, accountId: account.id }, 'Inbox snapshot failed');
-          }
-        }
-        lastInboxSnapshot = now;
-        logger.info(`Inbox zero snapshots recorded (${accounts.length} accounts)`);
-      }
-
-      // ─── Gmail labels sync — daily (1 labels.list call per account) ─
-      if (!lastLabelSync || (now.getTime() - lastLabelSync.getTime()) > 24 * 3600 * 1000) {
-        await syncAllLabels();
-        lastLabelSync = now;
-      }
-
-      // ─── Process expired emails — every 15 min ─────────────
-      if (!lastExpirationCheck || (now.getTime() - lastExpirationCheck.getTime()) > 15 * 60 * 1000) {
-        try {
-          const result = await processExpiredEmails();
-          if (result.processed > 0 || result.errors > 0) {
-            logger.info(`Expired emails: ${result.processed} trashed, ${result.errors} errors`);
-          }
-        } catch (err) {
-          logger.error({ err }, 'Expiration processing failed');
-        }
-        lastExpirationCheck = now;
-      }
-
-      // ─── Cleanup expired share links — every hour ──────────
-      if (!lastShareCleanup || (now.getTime() - lastShareCleanup.getTime()) > 3600 * 1000) {
-        try {
-          const cleaned = await cleanupExpiredShares();
-          if (cleaned > 0) {
-            logger.info(`Cleaned ${cleaned} expired share link(s)`);
-          }
-        } catch (err) {
-          logger.error({ err }, 'Share cleanup failed');
-        }
-        lastShareCleanup = now;
-      }
-
-      // ─── Purge archive trash — once per day at 4 AM ────────
-      if (!lastTrashPurge || (now.getTime() - lastTrashPurge.getTime()) > 24 * 3600 * 1000) {
-        if (now.getHours() === 4) {
-          await enqueueJob('purge_archive_trash', { accountId: '' });
-          lastTrashPurge = now;
-          logger.info('Enqueued daily archive trash purge');
-        }
-      }
-
-      // ─── Automatic NAS backups (B12) — each tick, per account interval ──
+    const now = new Date()
+    for (const task of PERIODIC) {
+      const last = lastRun.get(task.name)
+      if (last !== undefined && now.getTime() - last <= task.every) continue
+      if (task.atHour !== undefined && now.getHours() !== task.atHour) continue
       try {
-        await enqueueDueBackups(now);
+        await task.run(now) // NOSONAR: tasks one after the other, each logs its own outcome
+        lastRun.set(task.name, now.getTime())
       } catch (err) {
-        logger.error({ err }, 'Automatic backup scheduling failed');
+        // One failing task no longer skips the others; it is retried next tick
+        logger.error({ err, task: task.name }, 'Scheduled task failed')
       }
-
-      // Récupère les règles actives avec un schedule cron
-      const rules = await db
-        .selectFrom("rules")
-        .innerJoin(
-          "mail_accounts",
-          "rules.account_id",
-          "mail_accounts.id",
-        )
-        .select((eb) => [
-          "rules.id",
-          "rules.account_id",
-          "rules.schedule",
-          "rules.last_run_at",
-          eb.ref("mail_accounts.email").as("account_email") as any,
-          eb.ref("mail_accounts.user_id").as("user_id") as any,
-        ])
-        .where("rules.is_active", "=", true)
-        .where("mail_accounts.is_active", "=", true) // disconnected accounts have no Gmail access
-        .where("mail_accounts.provider", "=", "gmail") // rules act through the Gmail API
-        .where("mail_accounts.auth_error_at", "is", null) // pending reconnection: every run would fail and notify
-        .where("rules.schedule", "is not", null)
-        .execute();
-
-      for (const rule of rules) {
-        if (rule.schedule && shouldRun(rule.schedule, rule.last_run_at, now)) {
-          // last_run_at is only written once the rule ran, so dedupe the minutes it waits in the queue
-          await enqueueJob("run_rule", {
-            accountId: rule.account_id,
-            userId: rule.user_id,
-            ruleId: rule.id,
-          }, { dedupId: `run_rule-${rule.id}` });
-          logger.info(
-            `Enqueued rule ${rule.id} (${rule.account_email})`,
-          );
-        }
-      }
-    } catch (err) {
-      logger.error({ err }, 'Error during tick');
     }
   }
 
   // Démarrer la boucle
-  void enqueueBodyTextBackfill(); // logs its own errors
-  setInterval(tick, INTERVAL_MS);
-  logger.info('Rule scheduler started (1min interval)');
+  void enqueueBodyTextBackfill() // logs its own errors
+  setInterval(tick, INTERVAL_MS)
+  logger.info('Rule scheduler started (1min interval)')
 }
 
 const BACKUP_INTERVAL_MS: Record<BackupInterval, number> = { '1h': 3_600_000, '6h': 6 * 3_600_000, '24h': 24 * 3_600_000 };

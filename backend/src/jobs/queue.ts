@@ -1,8 +1,7 @@
 import { randomUUID } from 'node:crypto'
-import { Queue, Worker, Job } from 'bullmq'
+import { Queue } from 'bullmq'
 import { getRedis } from '../plugins/redis'
 import { getDb } from '../db'
-import { config } from '../config'
 
 export type JobType =
   | 'bulk_operation'

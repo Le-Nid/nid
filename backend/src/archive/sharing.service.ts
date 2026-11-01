@@ -1,8 +1,7 @@
 import crypto from 'node:crypto'
-import fs from 'fs/promises'
+import fs from 'node:fs/promises'
 import { simpleParser } from 'mailparser'
 import { getDb } from '../db'
-import { config } from '../config'
 import { createLogger } from '../logger'
 
 const logger = createLogger('sharing')

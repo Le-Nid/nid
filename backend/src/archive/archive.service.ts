@@ -1,6 +1,6 @@
-import fs from 'fs/promises'
-import path from 'path'
-import { createHash } from 'crypto'
+import fs from 'node:fs/promises'
+import path from 'node:path'
+import { createHash } from 'node:crypto'
 import { simpleParser, type ParsedMail } from 'mailparser'
 import { bodyTextFromParsed } from './body-text'
 import { getDb } from '../db'
@@ -15,7 +15,7 @@ const logger = createLogger('archive')
 /** Decode RFC 2047 encoded-words: =?charset?encoding?text?= */
 function decodeMimeWords(str: string): string {
   return str.replaceAll(
-    /=\?([^?]+)\?(B|Q)\?([^?]*)\?=/gi,
+    /=\?([^?]+)\?([BQ])\?([^?]*)\?=/gi,
     (_match, charset: string, encoding: string, text: string) => {
       try {
         let bytes: Buffer
@@ -25,7 +25,7 @@ function decodeMimeWords(str: string): string {
           // Quoted-printable: _ → space, =XX → byte
           const decoded = text
             .replaceAll('_', ' ')
-            .replaceAll(/=([0-9A-Fa-f]{2})/g, (_m, hex) => String.fromCharCode(parseInt(hex, 16)))
+            .replaceAll(/=([0-9A-Fa-f]{2})/g, (_m, hex) => String.fromCodePoint(Number.parseInt(hex, 16)))
           bytes = Buffer.from(decoded, 'binary')
         }
         return new TextDecoder(charset).decode(bytes)

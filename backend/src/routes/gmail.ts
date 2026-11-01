@@ -2,7 +2,6 @@ import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import {
   listMessages, getMessage, getMessageFull, batchGetMessages,
-  trashMessages, modifyMessages,
   listLabels, createLabel, updateLabel, deleteLabel, getMailboxProfile,
   getGmailClient,
 } from '../gmail/gmail.service'
@@ -105,7 +104,7 @@ export async function gmailRoutes(app: FastifyInstance) {
     const runAt = new Date(Date.now() + delayMs).toISOString()
 
     // Query mode: the worker audits the real processed count once it is known
-    if (messageIds) await logAudit(userId, `bulk.${action === 'trash' ? 'trash' : action === 'archive' ? 'archive' : 'label'}` as any, {
+    if (messageIds) await logAudit(userId, `bulk.${action === 'trash' || action === 'archive' ? action : 'label'}` as any, {
       targetType: 'messages', targetId: accountId,
       details: { action, count: messageIds.length, jobId: job.id },
     })

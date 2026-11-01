@@ -2,7 +2,7 @@ import { getRedis } from '../plugins/redis'
 
 const DASHBOARD_TTL = 60 * 10 // 10 minutes
 
-export async function getCachedStats(accountId: string): Promise<any | null> {
+export async function getCachedStats(accountId: string): Promise<any> {
   const redis = getRedis()
   const cached = await redis.get(`dashboard:stats:${accountId}`)
   return cached ? JSON.parse(cached) : null
@@ -25,7 +25,7 @@ export async function invalidateDashboardCache(accountId: string): Promise<void>
 
 export const ARCHIVE_STATS_TTL = 60 * 5 // 5 minutes
 
-export async function getCachedArchiveStats(accountId: string): Promise<any | null> {
+export async function getCachedArchiveStats(accountId: string): Promise<any> {
   const redis = getRedis()
   const cached = await redis.get(`dashboard:archive-stats:${accountId}`)
   return cached ? JSON.parse(cached) : null

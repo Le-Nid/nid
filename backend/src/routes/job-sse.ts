@@ -4,7 +4,7 @@ import { getRedis } from "../plugins/redis";
 import { getDb } from "../db";
 import { createLogger } from '../logger'
 import { UUID_RE } from '../utils/db'
-import type { ServerResponse } from 'http'
+import type { ServerResponse } from 'node:http'
 
 const logger = createLogger('job-sse')
 

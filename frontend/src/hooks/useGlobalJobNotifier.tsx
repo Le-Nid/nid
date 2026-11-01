@@ -65,7 +65,7 @@ export function useGlobalJobNotifier() {
       }
     }
 
-    poll();
+    void poll(); // poll catches its own errors
     const interval = setInterval(poll, 5_000);
     return () => clearInterval(interval);
   }, [accountId, t]);

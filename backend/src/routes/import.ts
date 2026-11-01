@@ -20,9 +20,9 @@ export async function importRoutes(app: FastifyInstance) {
     const buffer = Buffer.concat(chunks)
 
     // Write to a temp file
-    const fs = await import('fs/promises')
-    const path = await import('path')
-    const os = await import('os')
+    const fs = await import('node:fs/promises')
+    const path = await import('node:path')
+    const os = await import('node:os')
     const tmpPath = path.join(os.tmpdir(), `mbox-import-${Date.now()}.mbox`)
     await fs.writeFile(tmpPath, buffer)
 

@@ -58,4 +58,4 @@ signals.forEach((signal) => {
   });
 });
 
-bootstrap();
+await bootstrap();

@@ -1,7 +1,8 @@
 import { getDb } from '../db'
-import * as crypto from 'crypto'
+import * as crypto from 'node:crypto'
 import { lookup } from 'node:dns/promises'
-import { BlockList, isIP } from 'node:net'
+import { isIP } from 'node:net'
+import ipaddr from 'ipaddr.js'
 import { URL } from 'node:url'
 import { config } from '../config'
 import { createLogger } from '../logger'
@@ -16,18 +17,13 @@ export type WebhookEvent =
   | 'integrity.failed'
   | 'account.reauth_required'
 
-// Loopback, private, link-local (cloud metadata), CGNAT and unspecified ranges
-const privateNetworks = new BlockList()
-for (const [net, prefix] of [['0.0.0.0', 8], ['10.0.0.0', 8], ['100.64.0.0', 10], ['127.0.0.0', 8], ['169.254.0.0', 16], ['172.16.0.0', 12], ['192.168.0.0', 16]] as const) {
-  privateNetworks.addSubnet(net, prefix, 'ipv4')
-}
-for (const [net, prefix] of [['::', 128], ['::1', 128], ['fc00::', 7], ['fe80::', 10]] as const) {
-  privateNetworks.addSubnet(net, prefix, 'ipv6')
-}
-
+/**
+ * Anything but a public unicast address: loopback, private, link-local (cloud metadata), CGNAT, unique-local,
+ * multicast, reserved… Ranges named by ipaddr.js (RFC lists), an IPv4-mapped IPv6 checked as IPv4.
+ */
 export function isPrivateAddress(address: string): boolean {
-  const mapped = address.toLowerCase().startsWith('::ffff:') && isIP(address.slice(7)) === 4 ? address.slice(7) : address
-  return privateNetworks.check(mapped, isIP(mapped) === 6 ? 'ipv6' : 'ipv4')
+  if (!ipaddr.isValid(address)) return true
+  return ipaddr.process(address).range() !== 'unicast'
 }
 
 /**

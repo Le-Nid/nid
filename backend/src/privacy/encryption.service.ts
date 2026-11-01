@@ -1,5 +1,5 @@
-import crypto from 'crypto'
-import fs from 'fs/promises'
+import crypto from 'node:crypto'
+import fs from 'node:fs/promises'
 import { getDb } from '../db'
 import { createLogger } from '../logger'
 

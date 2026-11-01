@@ -1,4 +1,4 @@
-import { createHash } from 'crypto'
+import { createHash } from 'node:crypto'
 import { getDb } from '../db'
 import { getLocalStorage } from '../storage/storage.service'
 import { sql } from 'kysely'
