@@ -50,9 +50,10 @@ export function extractAttachments(payload: Part | undefined): Attachment[] {
 }
 
 // Remote URL in an attribute (src, srcset, background, poster) or in CSS url(): what I4 blocks
-const REMOTE = /\b(?:src|srcset|background|poster)\s*=\s*(?:["']\s*)?(?:https?:)?\/\/|url\(\s*(?:["']\s*)?(?:https?:)?\/\//i
+const REMOTE_ATTR = /\b(?:src|srcset|background|poster)\s*=\s*(?:["']\s*)?(?:https?:)?\/\//i
+const REMOTE_CSS = /url\(\s*(?:["']\s*)?(?:https?:)?\/\//i
 
-export const hasRemoteContent = (html: string) => REMOTE.test(html)
+export const hasRemoteContent = (html: string) => REMOTE_ATTR.test(html) || REMOTE_CSS.test(html)
 
 /**
  * srcdoc of a mail body (I4, §6.7). A CSP blocks every remote fetch (images, CSS, fonts) without rewriting
