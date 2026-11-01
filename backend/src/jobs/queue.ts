@@ -9,7 +9,7 @@ export type JobType =
   | 'run_rule'
   | 'scan_unsubscribe'
   | 'integrity_check'
-  | 'encrypt_archives'
+  | 'decrypt_archives'
   | 'import_mbox'
   | 'import_imap'
   | 'apply_retention'

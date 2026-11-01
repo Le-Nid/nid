@@ -23,7 +23,7 @@ export interface NewsletterSender {
 }
 
 /** One fetched message into the per-sender totals: count, size, unread, newest date, unsubscribe links. */
-export function addMessageToSenders(senderMap: Map<string, NewsletterSender>, msg: gmail_v1.Schema$Message) {
+function addMessageToSenders(senderMap: Map<string, NewsletterSender>, msg: gmail_v1.Schema$Message) {
   const headers = msg.payload?.headers ?? []
   const getH = (name: string) => headers.find((h) => h.name?.toLowerCase() === name.toLowerCase())?.value ?? ''
   const from = getH('From')

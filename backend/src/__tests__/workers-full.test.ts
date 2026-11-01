@@ -54,10 +54,7 @@ vi.mock('../unsubscribe/unsubscribe.service', () => ({
   forgetNewsletterSender: (...args: any[]) => mockForgetNewsletterSender(...args),
 }))
 
-const mockEncryptArchives = vi.fn()
-vi.mock('../privacy/encryption.service', () => ({
-  encryptArchives: (...args: any[]) => mockEncryptArchives(...args),
-}))
+vi.mock('../privacy/encryption.service', () => ({ decryptArchives: vi.fn() }))
 
 const mockBackfillBodyText = vi.fn()
 const mockCountPendingBodyText = vi.fn()
@@ -282,36 +279,6 @@ describe('unified worker handlers', () => {
 
     await capturedHandler(job)
     expect(mockScanNewsletters).toHaveBeenCalled()
-  })
-
-  it('handles encrypt_archives job', async () => {
-    const { startUnifiedWorker } = await import('../jobs/workers/unified.worker')
-    startUnifiedWorker()
-
-    mockEncryptArchives.mockResolvedValue({ encrypted: 10, errors: 0 })
-
-    const job = createMockJob('encrypt_archives', {
-      accountId: 'acc-1',
-      userId: 'user-1',
-      action: 'encrypt_archives',
-      passphrase: 'secret',
-    })
-
-    await capturedHandler(job)
-    expect(mockEncryptArchives).toHaveBeenCalled()
-    expect(mockNotify).toHaveBeenCalled()
-  })
-
-  it('handles encrypt_archives without passphrase', async () => {
-    const { startUnifiedWorker } = await import('../jobs/workers/unified.worker')
-    startUnifiedWorker()
-
-    const job = createMockJob('encrypt_archives', {
-      accountId: 'acc-1',
-      action: 'encrypt_archives',
-    })
-
-    await expect(capturedHandler(job)).rejects.toThrow('Passphrase')
   })
 
   it('handles unknown job type', async () => {

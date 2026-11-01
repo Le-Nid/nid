@@ -48,7 +48,7 @@ Remet les mails archivés dans la boîte Gmail du compte, à partir de leur EML 
 - Une archive **chiffrée** ne peut pas être restaurée (la phrase secrète n'est pas conservée) : elle compte comme une erreur.
 - Indisponible pour un compte IMAP, et pour un compte Gmail à reconnecter.
 
-Un mail archivé chiffré affiche « Ce mail est chiffré : son contenu n'est pas lisible ici. » Le chiffrement des archives ne se règle pas depuis l'interface.
+Un mail archivé chiffré affiche « Ce mail est chiffré : son contenu n'est pas lisible ici. » Le chiffrement des archives a été retiré de Nid : remettez ces archives en clair dans [Paramètres › Données](settings.md#archives-chiffrees).
 
 ---
 

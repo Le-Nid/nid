@@ -42,202 +42,96 @@ vi.mock('../db', () => ({ getDb: () => ({
 vi.mock('pino', () => ({ default: () => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn() }) }))
 
 // ─── Import after mocks ────────────────────────────────────
-import {
-  hashPassphrase,
-  verifyPassphrase,
-  encryptFile,
-  decryptFile,
-  isFileEncrypted,
-  setupEncryption,
-  verifyEncryptionKey,
-  encryptArchives,
-  getEncryptionStatus,
-} from '../privacy/encryption.service'
+import { verifyPassphrase, decryptFile, isFileEncrypted, verifyEncryptionKey, decryptArchives, getEncryptionStatus } from '../privacy/encryption.service'
 
-beforeEach(() => {
+// Fixtures in the format archives were encrypted with (the encrypting code is gone): MAGIC + SALT + IV + TAG + data
+const MAGIC = Buffer.from('GMENC01')
+function encrypted(plain: string, passphrase: string): Buffer {
+  const salt = crypto.randomBytes(32)
+  const iv = crypto.randomBytes(12)
+  const key = crypto.pbkdf2Sync(passphrase, salt, 100_000, 32, 'sha512')
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv)
+  const data = Buffer.concat([cipher.update(plain), cipher.final()])
+  return Buffer.concat([MAGIC, salt, iv, cipher.getAuthTag(), data])
+}
+function storedHash(passphrase: string): string {
+  const salt = crypto.randomBytes(16).toString('hex')
+  return `${salt}:${crypto.scryptSync(passphrase, salt, 64).toString('hex')}`
+}
+
+let tmpDir: string
+beforeEach(async () => {
   vi.clearAllMocks()
-})
-
-// ─── hashPassphrase / verifyPassphrase ─────────────────────
-describe('hashPassphrase', () => {
-  it('produces salt:hash format', () => {
-    const hash = hashPassphrase('mySecret123')
-    expect(hash).toMatch(/^[a-f0-9]+:[a-f0-9]+$/)
-  })
-
-  it('produces different hashes for same passphrase (random salt)', () => {
-    const h1 = hashPassphrase('same')
-    const h2 = hashPassphrase('same')
-    expect(h1).not.toBe(h2)
-  })
+  tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'enc-'))
 })
 
 describe('verifyPassphrase', () => {
-  it('returns true for correct passphrase', () => {
-    const hash = hashPassphrase('correct-pass')
-    expect(verifyPassphrase('correct-pass', hash)).toBe(true)
-  })
-
-  it('returns false for wrong passphrase', () => {
-    const hash = hashPassphrase('correct-pass')
-    expect(verifyPassphrase('wrong-pass', hash)).toBe(false)
-  })
-
-  it('returns false for malformed hash', () => {
-    expect(verifyPassphrase('any', 'invalid')).toBe(false)
-  })
-
-  it('returns false for empty hash parts', () => {
-    expect(verifyPassphrase('any', ':')).toBe(false)
+  it('matches the stored scrypt hash, refuses a wrong or malformed one', () => {
+    const hash = storedHash('correct')
+    expect(verifyPassphrase('correct', hash)).toBe(true)
+    expect(verifyPassphrase('wrong', hash)).toBe(false)
+    expect(verifyPassphrase('x', 'nohash')).toBe(false)
+    expect(verifyPassphrase('x', ':')).toBe(false)
   })
 })
 
-// ─── encryptFile / decryptFile ─────────────────────────────
-describe('encryptFile and decryptFile', () => {
-  let tmpDir: string
-  let tmpFile: string
-
-  beforeEach(async () => {
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'encrypt-test-'))
-    tmpFile = path.join(tmpDir, 'test.eml')
-  })
-
-  it('encrypts and decrypts file correctly', async () => {
-    const content = 'Hello this is a test email content'
-    await fs.writeFile(tmpFile, content, 'utf-8')
-
-    await encryptFile(tmpFile, 'my-passphrase')
-
-    // File should now be encrypted
-    const encrypted = await fs.readFile(tmpFile)
-    expect(encrypted.subarray(0, 7).toString()).toBe('GMENC01')
-
-    const decrypted = await decryptFile(tmpFile, 'my-passphrase')
-    expect(decrypted.toString('utf-8')).toBe(content)
-  })
-
-  it('does not double-encrypt already encrypted files', async () => {
-    await fs.writeFile(tmpFile, 'test content', 'utf-8')
-    await encryptFile(tmpFile, 'pass')
-    const firstEncrypt = await fs.readFile(tmpFile)
-    await encryptFile(tmpFile, 'pass')
-    const secondEncrypt = await fs.readFile(tmpFile)
-    expect(firstEncrypt.equals(secondEncrypt)).toBe(true)
-  })
-
-  it('decryptFile returns plaintext as-is for non-encrypted file', async () => {
-    await fs.writeFile(tmpFile, 'plain text', 'utf-8')
-    const result = await decryptFile(tmpFile, 'any-pass')
-    expect(result.toString('utf-8')).toBe('plain text')
-  })
-
-  it('throws on wrong passphrase for decryption', async () => {
-    await fs.writeFile(tmpFile, 'secret', 'utf-8')
-    await encryptFile(tmpFile, 'correct')
-    await expect(decryptFile(tmpFile, 'wrong')).rejects.toThrow()
+describe('decryptFile / isFileEncrypted', () => {
+  it('decrypts an encrypted file, returns a plain one as is, fails on a wrong passphrase', async () => {
+    const enc = path.join(tmpDir, 'a.eml')
+    const plain = path.join(tmpDir, 'b.eml')
+    await fs.writeFile(enc, encrypted('Subject: hi', 'secret'))
+    await fs.writeFile(plain, 'Subject: plain')
+    expect(await isFileEncrypted(enc)).toBe(true)
+    expect(await isFileEncrypted(plain)).toBe(false)
+    expect((await decryptFile(enc, 'secret')).toString()).toBe('Subject: hi')
+    expect((await decryptFile(plain, 'secret')).toString()).toBe('Subject: plain')
+    await expect(decryptFile(enc, 'wrong')).rejects.toThrow()
   })
 })
 
-// ─── isFileEncrypted ────────────────────────────────────────
-describe('isFileEncrypted', () => {
-  let tmpFile: string
-
-  beforeEach(async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'enc-check-'))
-    tmpFile = path.join(tmpDir, 'test.eml')
-  })
-
-  it('returns true for encrypted file', async () => {
-    await fs.writeFile(tmpFile, 'plaintext', 'utf-8')
-    await encryptFile(tmpFile, 'pass')
-    expect(await isFileEncrypted(tmpFile)).toBe(true)
-  })
-
-  it('returns false for plain file', async () => {
-    await fs.writeFile(tmpFile, 'just a regular file', 'utf-8')
-    expect(await isFileEncrypted(tmpFile)).toBe(false)
-  })
-})
-
-// ─── setupEncryption ────────────────────────────────────────
-describe('setupEncryption', () => {
-  it('calls db update with hashed passphrase', async () => {
-    mockExecute.mockResolvedValue([])
-    await setupEncryption('user-1', 'my-pass')
-    expect(mockExecute).toHaveBeenCalled()
-  })
-})
-
-// ─── verifyEncryptionKey ────────────────────────────────────
 describe('verifyEncryptionKey', () => {
-  it('returns false when user has no encryption key', async () => {
-    mockExecuteTakeFirst.mockResolvedValue(null)
-    const result = await verifyEncryptionKey('user-1', 'pass')
-    expect(result).toBe(false)
-  })
-
-  it('returns false when hash is null', async () => {
-    mockExecuteTakeFirst.mockResolvedValue({ encryption_key_hash: null })
-    const result = await verifyEncryptionKey('user-1', 'pass')
-    expect(result).toBe(false)
-  })
-
-  it('returns true when passphrase matches', async () => {
-    const hash = hashPassphrase('correct')
-    mockExecuteTakeFirst.mockResolvedValue({ encryption_key_hash: hash })
-    const result = await verifyEncryptionKey('user-1', 'correct')
-    expect(result).toBe(true)
-  })
-
-  it('returns false when passphrase does not match', async () => {
-    const hash = hashPassphrase('correct')
-    mockExecuteTakeFirst.mockResolvedValue({ encryption_key_hash: hash })
-    const result = await verifyEncryptionKey('user-1', 'wrong')
-    expect(result).toBe(false)
+  it('false without a key, true only for the right passphrase', async () => {
+    mockExecuteTakeFirst.mockResolvedValueOnce(null)
+    expect(await verifyEncryptionKey('u1', 'pass')).toBe(false)
+    mockExecuteTakeFirst.mockResolvedValueOnce({ encryption_key_hash: null })
+    expect(await verifyEncryptionKey('u1', 'pass')).toBe(false)
+    const hash = storedHash('correct')
+    mockExecuteTakeFirst.mockResolvedValueOnce({ encryption_key_hash: hash })
+    expect(await verifyEncryptionKey('u1', 'correct')).toBe(true)
+    mockExecuteTakeFirst.mockResolvedValueOnce({ encryption_key_hash: hash })
+    expect(await verifyEncryptionKey('u1', 'wrong')).toBe(false)
   })
 })
 
-// ─── encryptArchives ───────────────────────────────────────
-describe('encryptArchives', () => {
-  let tmpDir: string
-
-  beforeEach(async () => {
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'enc-archives-'))
-  })
-
-  it('encrypts unencrypted archive files', async () => {
-    const emlPath = path.join(tmpDir, 'mail.eml')
-    await fs.writeFile(emlPath, 'email content', 'utf-8')
-
-    mockExecute.mockResolvedValueOnce([{ id: 'mail-1', eml_path: emlPath }]) // archived_mails query
-      .mockResolvedValueOnce([]) // attachments query
-      .mockResolvedValue([]) // update
-
-    const result = await encryptArchives('acc-1', 'secret')
-    expect(result.encrypted).toBe(1)
-    expect(result.errors).toBe(0)
-    expect(await isFileEncrypted(emlPath)).toBe(true)
-  })
-
-  it('counts errors for missing files', async () => {
-    mockExecute.mockResolvedValueOnce([{ id: 'mail-1', eml_path: '/nonexistent/file.eml' }])
-
-    const result = await encryptArchives('acc-1', 'secret')
-    expect(result.errors).toBe(1)
-    expect(result.encrypted).toBe(0)
-  })
-
-  it('calls onProgress callback', async () => {
-    const emlPath = path.join(tmpDir, 'p.eml')
-    await fs.writeFile(emlPath, 'content', 'utf-8')
-
-    mockExecute.mockResolvedValueOnce([{ id: 'm1', eml_path: emlPath }])
-      .mockResolvedValueOnce([]) // attachments
-      .mockResolvedValue([])
-
+describe('decryptArchives', () => {
+  it('puts the EML and its encrypted attachments back in clear, skips plain files, counts errors', async () => {
+    const eml = path.join(tmpDir, 'm.eml')
+    const att = path.join(tmpDir, 'a.pdf')
+    const plainAtt = path.join(tmpDir, 'b.txt')
+    await fs.writeFile(eml, encrypted('Subject: one', 'secret'))
+    await fs.writeFile(att, encrypted('%PDF', 'secret'))
+    await fs.writeFile(plainAtt, 'already clear')
+    mockExecute
+      .mockResolvedValueOnce([{ id: 'm1', eml_path: eml }, { id: 'm2', eml_path: '/missing.eml' }]) // encrypted mails
+      .mockResolvedValueOnce([{ file_path: att }, { file_path: plainAtt }]) // m1 attachments
+      .mockResolvedValueOnce([]) // m1 marked clear
+      .mockResolvedValueOnce([]) // m2 attachments
     const onProgress = vi.fn()
-    await encryptArchives('acc-1', 'pass', { onProgress })
-    expect(onProgress).toHaveBeenCalledWith(1, 1)
+
+    expect(await decryptArchives('acc-1', 'secret', onProgress)).toEqual({ imported: 1, skipped: 0, errors: 1 })
+    expect(await fs.readFile(eml, 'utf8')).toBe('Subject: one')
+    expect(await fs.readFile(att, 'utf8')).toBe('%PDF')
+    expect(await fs.readFile(plainAtt, 'utf8')).toBe('already clear')
+    expect(onProgress).toHaveBeenLastCalledWith(2, 2)
+  })
+
+  it('a wrong passphrase writes nothing', async () => {
+    const eml = path.join(tmpDir, 'm.eml')
+    const before = encrypted('Subject: one', 'secret')
+    await fs.writeFile(eml, before)
+    mockExecute.mockResolvedValueOnce([{ id: 'm1', eml_path: eml }]).mockResolvedValueOnce([])
+    expect(await decryptArchives('acc-1', 'wrong')).toEqual({ imported: 0, skipped: 0, errors: 1 })
+    expect((await fs.readFile(eml)).equals(before)).toBe(true)
   })
 })
 

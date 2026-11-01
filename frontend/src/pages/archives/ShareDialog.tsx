@@ -24,8 +24,8 @@ export type Share = {
 
 const HOURS = [1, 24, 72, 168, 720] // the API caps a link at 30 days
 
-export const shareUrl = (token: string) => `${window.location.origin}/shared/${token}`
-export const isLive = (s: Share) => new Date(s.expires_at).getTime() > Date.now() && (s.max_access === null || s.access_count < s.max_access)
+const shareUrl = (token: string) => `${window.location.origin}/shared/${token}`
+const isLive = (s: Share) => new Date(s.expires_at).getTime() > Date.now() && (s.max_access === null || s.access_count < s.max_access)
 
 /** Active links, newest first (the API also returns expired and used-up ones). */
 export function useActiveShares() {

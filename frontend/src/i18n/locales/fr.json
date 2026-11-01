@@ -84,40 +84,6 @@
     "CATEGORY_UPDATES": "Mises à jour",
     "CATEGORY_FORUMS": "Forums"
   },
-  "mailManager": {
-    "title": "Mes mails",
-    "searchPlaceholder": "from:, has:attachment, larger:5m…",
-    "inbox": "Boîte de réception",
-    "unread": "Non lus",
-    "withAttachment": "Avec PJ",
-    "large": "Gros (> 5 Mo)",
-    "promotions": "Promotions",
-    "social": "Réseaux sociaux",
-    "spam": "Spam",
-    "trash": "Corbeille",
-    "olderThan1y": "> 1 an",
-    "sender": "Expéditeur",
-    "subject": "Sujet",
-    "labels": "Labels",
-    "size": "Taille",
-    "date": "Date",
-    "loadError": "Erreur lors du chargement des mails",
-    "results": "~{{total}} résultats · {{loaded}} chargés",
-    "noMail": "Aucun mail",
-    "allLoaded": "— Tous les mails chargés —",
-    "trashAction": "Corbeille",
-    "archiveGmail": "Archiver Gmail",
-    "archiveNas": "Archiver NAS",
-    "archiveAll": "Tout archiver",
-    "archiveAllStarted": "Archivage lancé",
-    "archiveAllDesc": "Seuls les nouveaux mails seront archivés (différentiel).",
-    "shortcuts": "Raccourcis : j/k naviguer · Enter ouvrir · e archiver · # supprimer · / rechercher",
-    "saveSearch": "Sauvegarder cette recherche",
-    "searchSaved": "Recherche sauvegardée",
-    "bulkStarted": "Opération lancée",
-    "bulkStartedDesc": "{{count}} mail(s) — suivi dans Jobs.",
-    "bulkError": "Erreur lors de l'opération"
-  },
   "archives": {
     "title": "Archives",
     "noAccount": "Connectez un compte Gmail pour consulter ses archives.",
@@ -513,12 +479,12 @@
     "integrityCheck": "Vérification d'intégrité",
     "scanTracking": "Analyse des traceurs",
     "scanPii": "Analyse des données personnelles",
-    "encryptArchives": "Chiffrement des archives",
     "importMbox": "Import mbox",
     "importImap": "Import IMAP",
     "applyRetention": "Application de la rétention",
     "backfillBodyText": "Indexation du texte des archives",
-    "restoreGmail": "Restauration dans Gmail"
+    "restoreGmail": "Restauration dans Gmail",
+    "decryptArchives": "Déchiffrement des archives"
   },
   "settings": {
     "title": "Paramètres",
@@ -799,7 +765,16 @@
       "deleteSubmit": "Supprimer définitivement mon compte",
       "deleteTitle": "Supprimer votre compte ?",
       "deleteConfirm": "Vos archives et tous vos réglages seront perdus. Cette action est irréversible.",
-      "deleteFailed": "La suppression a échoué : vérifiez la confirmation saisie."
+      "deleteFailed": "La suppression a échoué : vérifiez la confirmation saisie.",
+      "decrypt": "Archives chiffrées",
+      "decryptHint_one": "{{count, number}} archive de {{email}} est encore chiffrée par l'ancien chiffrement, retiré de Nid : saisissez sa phrase secrète pour la remettre en clair (lecture, recherche et restauration redeviennent possibles).",
+      "decryptHint_other": "{{count, number}} archives de {{email}} sont encore chiffrées par l'ancien chiffrement, retiré de Nid : saisissez sa phrase secrète pour les remettre en clair (lecture, recherche et restauration redeviennent possibles).",
+      "decryptPassphrase": "Phrase secrète",
+      "decryptSubmit": "Déchiffrer",
+      "decryptStarted": "Déchiffrement lancé",
+      "decryptStartedHint": "Une notification vous préviendra à la fin.",
+      "decryptWrong": "Phrase secrète incorrecte.",
+      "decryptFailed": "Le déchiffrement n'a pas pu être lancé."
     },
     "about": {
       "versionTitle": "Version",
@@ -1122,10 +1097,7 @@
   "undoToast": {
     "message": "{{message}} dans {{seconds}} s",
     "undo": "Annuler",
-    "region": "Notifications",
-    "trash_one": "Suppression de {{count, number}} mail",
-    "trash_other": "Suppression de {{count, number}} mails",
-    "trashDescription": "Vers la corbeille Gmail · suivi dans Activité"
+    "region": "Notifications"
   },
   "jobProgress": {
     "stop": "Arrêter",

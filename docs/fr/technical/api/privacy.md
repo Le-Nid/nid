@@ -1,104 +1,32 @@
-# API Vie privée & Sécurité
+# API Vie privée — sortie du chiffrement des archives
 
 ## Préfixe : `/api/privacy`
 
-Toutes les routes nécessitent une authentification JWT.
+Session uniquement (refusé aux jetons d'API).
+
+Le **chiffrement des archives a été retiré** de Nid : il ne protégeait que le contenu des fichiers EML (objet, expéditeur, destinataires, extrait et noms des pièces jointes restaient en clair dans PostgreSQL), et il rendait le mail illisible dans Nid, introuvable par la recherche plein texte et impossible à restaurer ou à partager. Pour protéger les archives au repos, chiffrez le volume du NAS (LUKS, dataset ZFS chiffré…) : cela couvre aussi la base. Seule la sortie reste : remettre en clair les archives déjà chiffrées.
 
 ---
 
-## Chiffrement des archives
-
 ### `GET /:accountId/encryption/status`
 
-Statut du chiffrement pour un compte.
+Nombre d'archives du compte encore chiffrées.
 
-**Réponse :**
 ```json
-{
-  "total": 1500,
-  "encrypted": 1200,
-  "unencrypted": 300,
-  "percentage": 80,
-  "hasEncryptionKey": true
-}
+{ "total": 1500, "encrypted": 1200, "unencrypted": 300, "percentage": 80 }
 ```
 
-### `POST /encryption/setup`
+### `POST /:accountId/encryption/decrypt-all`
 
-Configure la phrase secrète de chiffrement (une seule fois).
-
-**Body :**
 ```json
-{ "passphrase": "ma-phrase-secrete-longue" }
+{ "passphrase": "ma-phrase-secrète" }
 ```
 
-**Réponse :**
-```json
-{ "ok": true }
-```
-
-**Erreurs :**
-- `400` — Phrase secrète trop courte (< 8 caractères)
-- `409` — Chiffrement déjà configuré
-
-### `POST /encryption/verify`
-
-Vérifie que la phrase secrète est correcte.
-
-**Body :**
-```json
-{ "passphrase": "ma-phrase-secrete-longue" }
-```
-
-**Réponse :**
-```json
-{ "valid": true }
-```
-
-### `POST /:accountId/encryption/encrypt`
-
-Lance le chiffrement AES-256-GCM de toutes les archives non chiffrées.
-
-**Body :**
-```json
-{ "passphrase": "ma-phrase-secrete-longue" }
-```
-
-**Réponse (202) :**
-```json
-{ "jobId": "encrypt_archives-1711891234567", "message": "Encryption job enqueued" }
-```
-
-**Erreurs :**
-- `403` — Phrase secrète invalide
-
-### `POST /:accountId/encryption/decrypt-mail`
-
-Déchiffre un mail archivé à la volée pour consultation.
-
-**Body :**
-```json
-{
-  "mailId": "uuid-du-mail",
-  "passphrase": "ma-phrase-secrete-longue"
-}
-```
-
-**Réponse :**
-```json
-{ "content": "From: sender@example.com\nTo: ...\n\nContenu du mail EML déchiffré" }
-```
-
-**Erreurs :**
-- `400` — Mail non chiffré ou paramètres manquants
-- `403` — Phrase secrète invalide
-- `404` — Mail non trouvé
+Vérifie la phrase secrète (`403` sinon), puis lance un job `decrypt_archives` (**202** `{ "jobId" }`) qui déchiffre sur place chaque EML et ses pièces jointes, marque l'archive lisible, puis relance le remplissage du texte intégral (`backfill_body_text`) pour la recherche. Une phrase fausse n'écrit rien (tag GCM). La phrase n'est ni stockée dans la table `jobs` ni conservée dans Redis après le job. Rate limit : 5/min. Interface : Paramètres › Données › **Archives chiffrées** (affichée seulement s'il en reste).
 
 ---
 
 ## Format du fichier chiffré
-
-Les fichiers EML chiffrés utilisent le format suivant :
 
 ```
 GMENC01 (7 octets magic) | SALT (32 octets) | IV (12 octets) | TAG (16 octets) | CIPHERTEXT

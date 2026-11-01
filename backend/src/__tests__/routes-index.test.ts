@@ -119,7 +119,7 @@ vi.mock('../notifications/notify', () => ({
 vi.mock('../privacy/encryption.service', () => ({
   setupEncryption: vi.fn(),
   verifyEncryptionKey: vi.fn().mockResolvedValue(true),
-  encryptArchives: vi.fn(),
+  decryptArchives: vi.fn(),
   getEncryptionStatus: vi.fn().mockResolvedValue({ total: 0, encrypted: 0, unencrypted: 0, percentage: 0 }),
   decryptFile: vi.fn(),
 }))

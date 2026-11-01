@@ -33,7 +33,7 @@ type Node = { name: string; path: string; label?: ApiLabel; children: Node[] }
 type Dialogs = { kind: 'new' } | { kind: 'rename' | 'color' | 'delete'; label: ApiLabel } | null
 
 /** Gmail nests labels by « / » in their name (« Factures/EDF »). */
-export function buildTree(labels: ApiLabel[]): Node[] {
+function buildTree(labels: ApiLabel[]): Node[] {
   const root: Node = { name: '', path: '', children: [] }
   for (const label of [...labels].sort((a, b) => a.name.localeCompare(b.name))) {
     let node = root

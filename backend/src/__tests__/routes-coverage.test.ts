@@ -123,7 +123,6 @@ beforeEach(() => vi.clearAllMocks())
 import { quotaRoutes } from '../routes/quota'
 import { sharingRoutes } from '../routes/sharing'
 import { retentionRoutes } from '../routes/retention'
-import { expirationRoutes } from '../routes/expiration'
 import { importRoutes } from '../routes/import'
 import { attachmentsRoutes } from '../routes/attachments'
 
@@ -316,99 +315,6 @@ describe('retentionRoutes', () => {
 
 // ═════════════════════════════════════════════════════════
 // EXPIRATION ROUTES
-// ═════════════════════════════════════════════════════════
-describe('expirationRoutes', () => {
-  it('GET /:accountId returns expirations', async () => {
-    const app = await buildTestApp()
-    await app.register(expirationRoutes)
-    await app.ready()
-    const res = await app.inject({ method: 'GET', url: '/acc-1' })
-    expect(res.statusCode).toBe(200)
-    await app.close()
-  })
-
-  it('GET /:accountId/stats returns stats', async () => {
-    const app = await buildTestApp()
-    await app.register(expirationRoutes)
-    await app.ready()
-    const res = await app.inject({ method: 'GET', url: '/acc-1/stats' })
-    expect(res.statusCode).toBe(200)
-    expect(res.json().total).toBe(0)
-    await app.close()
-  })
-
-  it('POST /:accountId creates expiration', async () => {
-    const app = await buildTestApp()
-    await app.register(expirationRoutes)
-    await app.ready()
-    const res = await app.inject({
-      method: 'POST',
-      url: '/acc-1',
-      payload: { gmailMessageId: 'msg-1', expiresInDays: 7 },
-    })
-    expect(res.statusCode).toBe(201)
-    await app.close()
-  })
-
-  it('POST /:accountId/batch creates batch', async () => {
-    const app = await buildTestApp()
-    await app.register(expirationRoutes)
-    await app.ready()
-    const res = await app.inject({
-      method: 'POST',
-      url: '/acc-1/batch',
-      payload: {
-        items: [{ gmailMessageId: 'msg-1', expiresInDays: 3 }],
-      },
-    })
-    expect(res.statusCode).toBe(201)
-    await app.close()
-  })
-
-  it('POST /:accountId/detect detects temporary emails', async () => {
-    const app = await buildTestApp()
-    await app.register(expirationRoutes)
-    await app.ready()
-    const res = await app.inject({
-      method: 'POST',
-      url: '/acc-1/detect',
-      payload: {
-        messages: [
-          { gmailMessageId: 'msg-1', subject: 'Your OTP code', sender: 'noreply@test.com' },
-        ],
-      },
-    })
-    expect(res.statusCode).toBe(200)
-    const body = res.json()
-    expect(Array.isArray(body)).toBe(true)
-    await app.close()
-  })
-
-  it('PATCH /:accountId/:expirationId updates date', async () => {
-    const app = await buildTestApp()
-    await app.register(expirationRoutes)
-    await app.ready()
-    const res = await app.inject({
-      method: 'PATCH',
-      url: '/acc-1/exp-1',
-      payload: { expiresAt: '2025-12-31T00:00:00Z' },
-    })
-    expect(res.statusCode).toBe(200)
-    await app.close()
-  })
-
-  it('DELETE /:accountId/:expirationId deletes expiration', async () => {
-    const app = await buildTestApp()
-    await app.register(expirationRoutes)
-    await app.ready()
-    const res = await app.inject({ method: 'DELETE', url: '/acc-1/exp-1' })
-    expect(res.statusCode).toBe(204)
-    await app.close()
-  })
-})
-
-// ═════════════════════════════════════════════════════════
-// IMPORT ROUTES
 // ═════════════════════════════════════════════════════════
 describe('importRoutes', () => {
   it('POST /:accountId/mbox uploads mbox file and enqueues job', async () => {

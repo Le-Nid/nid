@@ -39,7 +39,7 @@ Toutes les routes requièrent un JWT dans le cookie httpOnly `token` (ou un head
 | Libellés | `/api/labels` | [labels.md](labels.md) |
 | Boîte unifiée | `/api/unified` | [unified.md](unified.md) |
 | Rétention | `/api/retention` | [retention.md](retention.md) |
-| Expiration | `/api/expiration` | [expiration.md](expiration.md) |
+| Expiration (retirée) | — | [expiration.md](expiration.md) |
 | Partage | `/api/shares` | [sharing.md](sharing.md) |
 | Import / Export mbox | `/api/import` | [import.md](import.md) |
 | Quota Gmail API | `/api/quota` | [quota.md](quota.md) |

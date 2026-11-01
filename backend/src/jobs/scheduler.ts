@@ -58,7 +58,7 @@ const PERIODIC: Periodic[] = [
 ]
 
 /** Active rules with a schedule that is due, on Gmail accounts that can run them. */
-export async function enqueueDueRules(now: Date) {
+async function enqueueDueRules(now: Date) {
   const rules = await getDb()
     .selectFrom('rules')
     .innerJoin('mail_accounts', 'rules.account_id', 'mail_accounts.id')

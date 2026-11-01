@@ -42,7 +42,7 @@ const SORTS: Record<Sort, (s: NewsletterSender) => number> = {
   unread: (s) => s.unreadCount,
 }
 const isSort = (v: string | null): v is Sort => !!v && v in SORTS
-export const unsubscribeTarget = (s: NewsletterSender) => s.unsubscribeUrl ?? s.unsubscribeMailto
+const unsubscribeTarget = (s: NewsletterSender) => s.unsubscribeUrl ?? s.unsubscribeMailto
 export const senderName = (s: NewsletterSender) => formatSender(s.sender) || s.email
 
 /** Trash every mail of a sender with the 10 s undo (D1); the row shows the job until it ends. Also used by Vue d'ensemble. */

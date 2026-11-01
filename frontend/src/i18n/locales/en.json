@@ -84,40 +84,6 @@
     "CATEGORY_UPDATES": "Updates",
     "CATEGORY_FORUMS": "Forums"
   },
-  "mailManager": {
-    "title": "My Emails",
-    "searchPlaceholder": "from:, has:attachment, larger:5m…",
-    "inbox": "Inbox",
-    "unread": "Unread",
-    "withAttachment": "With attachment",
-    "large": "Large (> 5 MB)",
-    "promotions": "Promotions",
-    "social": "Social",
-    "spam": "Spam",
-    "trash": "Trash",
-    "olderThan1y": "> 1 year",
-    "sender": "Sender",
-    "subject": "Subject",
-    "labels": "Labels",
-    "size": "Size",
-    "date": "Date",
-    "loadError": "Error loading emails",
-    "results": "~{{total}} results · {{loaded}} loaded",
-    "noMail": "No email",
-    "allLoaded": "— All emails loaded —",
-    "trashAction": "Trash",
-    "archiveGmail": "Archive Gmail",
-    "archiveNas": "Archive NAS",
-    "archiveAll": "Archive all",
-    "archiveAllStarted": "Archiving started",
-    "archiveAllDesc": "Only new emails will be archived (differential).",
-    "shortcuts": "Shortcuts: j/k navigate · Enter open · e archive · # delete · / search",
-    "saveSearch": "Save this search",
-    "searchSaved": "Search saved",
-    "bulkStarted": "Operation started",
-    "bulkStartedDesc": "{{count}} email(s) — track in Jobs.",
-    "bulkError": "Operation failed"
-  },
   "archives": {
     "title": "Archives",
     "noAccount": "Connect a Gmail account to browse its archives.",
@@ -513,12 +479,12 @@
     "integrityCheck": "Integrity check",
     "scanTracking": "Tracker scan",
     "scanPii": "Personal data scan",
-    "encryptArchives": "Archive encryption",
     "importMbox": "Mbox import",
     "importImap": "IMAP import",
     "applyRetention": "Retention run",
     "backfillBodyText": "Archive full-text indexing",
-    "restoreGmail": "Restore to Gmail"
+    "restoreGmail": "Restore to Gmail",
+    "decryptArchives": "Archive decryption"
   },
   "settings": {
     "title": "Settings",
@@ -799,7 +765,16 @@
       "deleteSubmit": "Permanently delete my account",
       "deleteTitle": "Delete your account?",
       "deleteConfirm": "Your archives and all your settings will be lost. This cannot be undone.",
-      "deleteFailed": "Deletion failed: check the confirmation you typed."
+      "deleteFailed": "Deletion failed: check the confirmation you typed.",
+      "decrypt": "Encrypted archives",
+      "decryptHint_one": "{{count, number}} archive of {{email}} is still encrypted by the former encryption, removed from Nid: type its passphrase to put it back in clear (reading, search and restore work again).",
+      "decryptHint_other": "{{count, number}} archives of {{email}} are still encrypted by the former encryption, removed from Nid: type its passphrase to put them back in clear (reading, search and restore work again).",
+      "decryptPassphrase": "Passphrase",
+      "decryptSubmit": "Decrypt",
+      "decryptStarted": "Decryption started",
+      "decryptStartedHint": "A notification will tell you when it is done.",
+      "decryptWrong": "Wrong passphrase.",
+      "decryptFailed": "The decryption could not be started."
     },
     "about": {
       "versionTitle": "Version",
@@ -1122,10 +1097,7 @@
   "undoToast": {
     "message": "{{message}} in {{seconds}} s",
     "undo": "Undo",
-    "region": "Notifications",
-    "trash_one": "Deleting {{count, number}} email",
-    "trash_other": "Deleting {{count, number}} emails",
-    "trashDescription": "To Gmail trash · tracked in Activity"
+    "region": "Notifications"
   },
   "jobProgress": {
     "stop": "Stop",

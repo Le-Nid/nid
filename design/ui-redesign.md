@@ -466,7 +466,7 @@ Endpoints : existants (`frontend/src/api/index.ts`) ; **nouveaux** en gras (dét
 - **Données** : `/api/auth/2fa/*`, `/api/notifications/preferences`, `/api/webhooks*`, `/api/config/export|import`, `/api/import/:id/mbox|imap|export-mbox`, `/api/shares`, endpoints comptes existants (connexion, synchro, déconnexion).
 - **Nouveau** : **fréquence de sauvegarde par compte** (B12) ; **état « Action requise »** (jeton Google expiré/révoqué exposé par compte, S).
 - **Assistant d'ajout de compte (B17)** : dialog ouvert au retour de Google seulement pour un compte **nouvellement ajouté** (`?gmail=connected&account=…&new=1` ; une reconnexion ne l'ouvre pas), une fois (`new` retiré de l'URL à la fermeture). Étapes : ① Connexion Google (faite) ② **Sauvegarde** : sauvegarde automatique + fréquence, première sauvegarde (12 derniers mois par défaut / toute la boîte / plus tard) ③ **Règles de départ** : modèles des catégories nettoyage, archivage et organisation (les modèles libellé/expiration restent dans Libellés), décochés par défaut, chacun avec son action, sa fréquence et « ≈ N mails » (aperçu B6) ④ **Récapitulatif**. Rien n'est enregistré avant « Terminer » (préférences de sauvegarde, règles `from-template`, archivage différentiel `newer_than:1y` ou complet) ; « Plus tard » ferme sans rien enregistrer. Sert aussi au premier compte (premier lancement).
-- Chiffrement : masqué (P5, O1). Tracking/PII : supprimés de l'UI.
+- Chiffrement : retiré (O1) ; carte « Archives chiffrées » dans Données tant qu'il en reste. Tracking/PII : supprimés de l'UI.
 
 ### 7.8 Admin (`/admin`, D7) — artboard 18
 
@@ -563,11 +563,11 @@ Chaque lot : CI verte (`typecheck`, `test --coverage`, `build`, e2e), captures m
 
 | # | Sujet | À décider |
 |---|---|---|
-| O1 | Chiffrement des archives (P5) | Terminer (déchiffrement à la lecture, rotation, recherche impossible sur contenu chiffré vs D4) ou retirer ; masqué d'ici là. |
+| O1 | Chiffrement des archives (P5) | **Tranché : retiré** (métadonnées en clair en base, lecture/recherche/restauration cassées ; chiffrer le volume du NAS à la place). Reste la sortie : Paramètres › Données › « Archives chiffrées » (visible seulement s'il en reste), job `decrypt_archives`. |
 | O2 | Classification automatique par LLM | Hors périmètre ; éventuel modèle de règle « intelligent » plus tard. |
 | O3 | i18n des notifications backend | Textes générés côté serveur aujourd'hui ; passer des clés + paramètres traduits par le frontend, ou langue utilisateur en DB. |
 | O4 | Rapport hebdo par email (P1) | Le backend n'a pas d'envoi SMTP : ajouter un canal email (dépendance + config) ou se limiter à in-app/ntfy/webhook. |
-| O5 | Données Expiration existantes (P4) | Convertir les expirations en règles/libellés ou les laisser expirer puis supprimer la table. |
+| O5 | Données Expiration existantes (P4) | **Tranché : laisser expirer.** Routes `/api/expiration` supprimées ; `processExpiredEmails` honore les expirations en attente ; table, service et tâche à supprimer quand plus aucune n'est en attente. |
 | O6 | Heatmap et inbox-zero (ex-Analytics) | **Tranché** : non repris ; la Vue d'ensemble montre à la place le volume reçu sur 30 jours (B16). L'endpoint `snapshot` reste à retirer. |
 | O7 | Données PII / tracking existantes | Purge des tables et endpoints (L11). |
 | O8 | Labels de la barre mobile en 11 px | Proposé 12 px (lisibilité, pas d'exigence RGAA stricte). |

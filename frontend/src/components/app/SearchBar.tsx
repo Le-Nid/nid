@@ -9,7 +9,7 @@ export type SavedSearch = { id: string; name: string; query: string }
 const TERM = /-?[a-z_]+:(?:"[^"]*"|\S+)|"[^"]*"|\S+/gi
 const OPERATOR = /^-?[a-z_]+:\S/i
 
-export function splitQuery(query: string) {
+function splitQuery(query: string) {
   const terms = query.match(TERM) ?? []
   return { tokens: terms.filter((s) => OPERATOR.test(s)), text: terms.filter((s) => !OPERATOR.test(s)).join(' ') }
 }
