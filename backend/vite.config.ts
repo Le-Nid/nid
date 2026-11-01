@@ -34,6 +34,8 @@ export default defineConfig({
         'prom-client',
         'nodemailer',
         /^@simplewebauthn\//,
+        'unpdf',
+        'fflate',
       ],
     },
     // Pas de minification pour un serveur Node (debug plus facile + pas de gain réel)
