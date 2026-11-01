@@ -98,8 +98,7 @@ export async function restoreToImap(
   mailIds: string[],
   onProgress?: (done: number, total: number) => Promise<void>,
 ): Promise<RestoreResult> {
-  const db = getDb()
-  const mails = await db.selectFrom('archived_mails')
+  const mails = await getDb().selectFrom('archived_mails')
     .select(['id', 'gmail_message_id', 'label_ids', 'eml_path', 'is_encrypted', 'date'])
     .where('account_id', '=', accountId).where('id', 'in', mailIds).where('deleted_at', 'is', null)
     .execute()
@@ -109,49 +108,24 @@ export async function restoreToImap(
     throw Object.assign(new Error('Le serveur IMAP a refusé le mot de passe : reconnectez le compte dans Paramètres › Comptes.'), { authenticationFailed: true })
   })
   const result: RestoreResult = { imported: 0, skipped: 0, errors: 0 }
+  const count = async (outcome: keyof RestoreResult, n = 1) => {
+    result[outcome] += n
+    if (onProgress) await onProgress(result.imported + result.skipped + result.errors, mails.length)
+  }
   try {
-    const paths = new Map((await client.list()).filter((f) => !f.flags.has(String.raw`\Noselect`)).map((f) => [f.path.toLowerCase(), f.path]))
-    const labelIds = [...new Set(mails.flatMap((m) => m.label_ids))]
-    const names = new Map(labelIds.length
-      ? (await db.selectFrom('gmail_labels').select(['id', 'name']).where('account_id', '=', accountId).where('id', 'in', labelIds).execute()).map((l) => [l.id, l.name.toLowerCase()])
-      : [])
-    const byFolder = new Map<string, typeof mails>()
-    for (const mail of mails) {
-      const folder = mail.label_ids.map((id) => paths.get(names.get(id) ?? '')).find(Boolean) ?? 'INBOX'
-      const group = byFolder.get(folder)
-      if (group) group.push(mail)
-      else byFolder.set(folder, [mail])
-    }
-
-    for (const [folder, group] of byFolder) {
+    for (const [folder, group] of await groupByImapFolder(client, accountId, mails)) {
       // One connection selects one folder at a time; a folder gone since list() fails its mails only
       const lock = await client.getMailboxLock(folder).catch((err) => { // NOSONAR
         logger.error({ err, accountId, folder }, 'IMAP folder not selectable, its mails not restored')
         return null
       })
       if (!lock) {
-        result.errors += group.length
-        if (onProgress) await onProgress(result.imported + result.skipped + result.errors, mails.length) // NOSONAR
+        await count('errors', group.length) // NOSONAR
         continue
       }
       try {
-        for (const mail of group) {
-          try {
-            if (mail.is_encrypted) {
-              result.errors++
-              logger.warn({ accountId, mailId: mail.id }, 'Encrypted archive not restored')
-            } else if (await isInMailbox(client, mail.gmail_message_id)) { // NOSONAR: same connection, one mail after the other
-              result.skipped++
-            } else {
-              await client.append(folder, await fs.promises.readFile(mail.eml_path), [String.raw`\Seen`], mail.date ?? undefined) // NOSONAR
-              result.imported++
-            }
-          } catch (err) {
-            result.errors++
-            logger.error({ err, accountId, mailId: mail.id, folder }, 'Archived mail not restored to IMAP')
-          }
-          if (onProgress) await onProgress(result.imported + result.skipped + result.errors, mails.length) // NOSONAR
-        }
+        // Same connection, one mail after the other
+        for (const mail of group) await count(await appendMail(client, folder, mail, accountId)) // NOSONAR
       } finally {
         lock.release()
       }
@@ -162,8 +136,45 @@ export async function restoreToImap(
   return result
 }
 
+type ImapClient = Awaited<ReturnType<typeof connectImapAccount>>
+type RestoredMail = { id: string; gmail_message_id: string; label_ids: string[]; eml_path: string; is_encrypted: boolean; date: Date | null }
+
+/** Mails by target folder: their first label naming a folder on the server (case-insensitive), else INBOX. */
+async function groupByImapFolder<M extends RestoredMail>(client: ImapClient, accountId: string, mails: M[]): Promise<Map<string, M[]>> {
+  const paths = new Map((await client.list()).filter((f) => !f.flags.has(String.raw`\Noselect`)).map((f) => [f.path.toLowerCase(), f.path]))
+  const labelIds = [...new Set(mails.flatMap((m) => m.label_ids))]
+  const labels = labelIds.length
+    ? await getDb().selectFrom('gmail_labels').select(['id', 'name']).where('account_id', '=', accountId).where('id', 'in', labelIds).execute()
+    : []
+  const names = new Map(labels.map((l) => [l.id, l.name.toLowerCase()]))
+  const byFolder = new Map<string, M[]>()
+  for (const mail of mails) {
+    const folder = mail.label_ids.map((id) => paths.get(names.get(id) ?? '')).find(Boolean) ?? 'INBOX'
+    const group = byFolder.get(folder)
+    if (group) group.push(mail)
+    else byFolder.set(folder, [mail])
+  }
+  return byFolder
+}
+
+/** One mail into the selected folder; failures are logged and counted, never thrown. */
+async function appendMail(client: ImapClient, folder: string, mail: RestoredMail, accountId: string): Promise<keyof RestoreResult> {
+  try {
+    if (mail.is_encrypted) {
+      logger.warn({ accountId, mailId: mail.id }, 'Encrypted archive not restored')
+      return 'errors'
+    }
+    if (await isInMailbox(client, mail.gmail_message_id)) return 'skipped'
+    await client.append(folder, await fs.promises.readFile(mail.eml_path), [String.raw`\Seen`], mail.date ?? undefined)
+    return 'imported'
+  } catch (err) {
+    logger.error({ err, accountId, mailId: mail.id, folder }, 'Archived mail not restored to IMAP')
+    return 'errors'
+  }
+}
+
 /** The selected folder holds this Message-ID (archive id of a mail imported without one: never found). */
-async function isInMailbox(client: Awaited<ReturnType<typeof connectImapAccount>>, messageId: string): Promise<boolean> {
+async function isInMailbox(client: ImapClient, messageId: string): Promise<boolean> {
   if (messageId.startsWith('imported-')) return false
   // HEADER search matches substrings: the brackets keep `a@b` from matching `<xa@b>`
   const uids = await client.search({ header: { 'message-id': `<${messageId}>` } }, { uid: true })
