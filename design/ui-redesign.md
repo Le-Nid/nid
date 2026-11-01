@@ -36,7 +36,7 @@ Versions vérifiées le 2026-10-20 : `shadcn` 4.22.1 (CLI), `tailwindcss` 4.3.3,
 | N3 | Desktop : sidebar repliable + palette de commandes ⌘K / Ctrl+K. |
 | P1 | Dashboard + Analytics + Insights → Vue d'ensemble ; le rapport hebdo devient une notification/un email. |
 | P2 | UnifiedInbox → option « Tous les comptes » dans Mails. |
-| P3 | SavedSearches → chips dans la barre de recherche de Mails. |
+| P3 | SavedSearches → chips dans la barre de recherche de Mails ; la puce active, si c'est une recherche de l'utilisateur, offre « Renommer » (dialogue) et « Supprimer » (immédiat, « Annuler » dans le toast la recrée). |
 | P4 | Expiration → modèles de règles + action « expire dans X jours ». |
 | P5 | Privacy : le tracking devient un comportement du lecteur (images distantes bloquées par défaut) ; scan PII abandonné ; chiffrement masqué tant qu'il n'est pas complet (décision en attente, §10). |
 | P6 | OpsResilience éclaté : import/export → Paramètres > Données ; rétention utilisateur → Archives ; quota API → Admin. |

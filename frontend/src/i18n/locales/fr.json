@@ -1113,7 +1113,11 @@
     "placeholder": "Mots-clés ou opérateur : from:, has:attachment, larger:10M…",
     "removeFilter": "Retirer le filtre {{filter}}",
     "saved": "Recherches enregistrées",
-    "save": "Enregistrer la recherche"
+    "save": "Enregistrer la recherche",
+    "rename": "Renommer",
+    "delete": "Supprimer",
+    "renameTitle": "Renommer la recherche",
+    "name": "Nom"
   },
   "mails": {
     "title": "Mails",
@@ -1208,7 +1212,10 @@
       "thread_one": "Conversation ({{count}} message)",
       "thread_other": "Conversation ({{count}} messages)"
     },
-    "createRule": "Créer une règle"
+    "createRule": "Créer une règle",
+    "searchRenamed": "Recherche renommée en « {{name}} »",
+    "searchDeleted": "Recherche « {{name}} » supprimée",
+    "deleteSearchFailed": "Impossible de supprimer la recherche"
   },
   "cleanup": {
     "title": "Nettoyage",

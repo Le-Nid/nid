@@ -48,6 +48,8 @@ Au-dessus de la barre, des puces appliquent une recherche en un clic :
 
 Vos **recherches enregistrées** s'ajoutent à la suite. Pour en créer une, lancez une recherche puis cliquez sur **Enregistrer la recherche** (le bouton apparaît quand la recherche ne correspond à aucune puce) ; la puce prend pour nom le texte de la requête.
 
+Cliquez sur une de vos puces : **Renommer** (son nom seulement, la requête ne change pas) et **Supprimer** apparaissent à côté. La suppression est immédiate ; **Annuler**, dans le message de confirmation, la recrée. Les recherches rapides (Tous, Non lus…) ne se renomment ni ne se suppriment.
+
 La recherche et le compte sont dans l'adresse de la page (`?q=…&account=…`) : un marque-page ou le bouton retour les conservent.
 
 ---

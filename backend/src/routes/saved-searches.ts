@@ -60,6 +60,10 @@ export async function savedSearchRoutes(app: FastifyInstance) {
       sort_order?: number
     }
 
+    // A rename to blanks would leave a chip with no label
+    const blank = (v: unknown) => v !== undefined && (typeof v !== 'string' || !v.trim())
+    if (blank(name) || blank(query)) return reply.code(400).send({ error: 'name and query cannot be empty' })
+
     const existing = await db
       .selectFrom('saved_searches')
       .select('id')

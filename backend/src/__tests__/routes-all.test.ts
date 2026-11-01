@@ -931,6 +931,19 @@ describe('savedSearchRoutes - additional', () => {
     await app.close()
   })
 
+  it('PUT /:searchId refuses a blank name or query, before touching the DB', async () => {
+    const app = await buildTestApp()
+    await app.register(savedSearchRoutes)
+    await app.ready()
+    mockExecuteTakeFirst.mockClear()
+
+    for (const payload of [{ name: '   ' }, { query: '' }, { name: 42 }]) {
+      expect((await app.inject({ method: 'PUT', url: '/ss-1', payload })).statusCode).toBe(400)
+    }
+    expect(mockExecuteTakeFirst).not.toHaveBeenCalled()
+    await app.close()
+  })
+
   it('PUT /reorder reorders saved searches', async () => {
     const app = await buildTestApp()
     await app.register(savedSearchRoutes)

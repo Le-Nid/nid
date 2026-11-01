@@ -43,6 +43,26 @@ test.describe('Mails', () => {
     await expect(page.getByRole('button', { name: t('mails.saveAllNas') })).toBeVisible()
   })
 
+  test('a saved search: rename in a dialog, delete at once', async ({ page }) => {
+    await page.route((url) => url.pathname === '/api/saved-searches', (route) =>
+      route.request().method() === 'GET' ? route.fulfill({ json: [{ id: 'ss-1', name: 'Mes factures', query: 'label:factures' }] }) : route.fallback())
+    await page.route((url) => url.pathname === '/api/saved-searches/ss-1', (route) => route.fulfill({ json: { ok: true } }))
+    await page.goto('/mails')
+    await page.getByRole('button', { name: 'Mes factures' }).click()
+
+    await page.getByRole('button', { name: `${t('searchBar.rename')} Mes factures` }).click()
+    const dialog = page.getByRole('dialog', { name: t('searchBar.renameTitle') })
+    await dialog.getByLabel(t('searchBar.name')).fill('Factures EDF')
+    const put = page.waitForRequest((r) => r.method() === 'PUT' && r.url().endsWith('/api/saved-searches/ss-1'))
+    await dialog.getByRole('button', { name: t('searchBar.rename') }).click()
+    expect((await put).postDataJSON()).toEqual({ name: 'Factures EDF' })
+    await expect(dialog).toBeHidden()
+
+    const del = page.waitForRequest((r) => r.method() === 'DELETE' && r.url().endsWith('/api/saved-searches/ss-1'))
+    await page.getByRole('button', { name: `${t('searchBar.delete')} Mes factures` }).click()
+    await del
+  })
+
   test('selecting rows shows the bulk action bar', async ({ page }) => {
     await page.goto('/mails')
     await select(page, "Facture d'octobre").check()
