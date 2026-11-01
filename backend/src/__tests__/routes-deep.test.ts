@@ -1247,19 +1247,6 @@ describe('notificationsRoutes - branch coverage', () => {
 })
 
 describe('savedSearchRoutes - branch coverage', () => {
-  it('POST / returns 400 for empty name', async () => {
-    const app = await buildTestApp()
-    await app.register(savedSearchRoutes)
-    await app.ready()
-    const res = await app.inject({
-      method: 'POST',
-      url: '/',
-      payload: { name: '', query: 'test' },
-    })
-    expect(res.statusCode).toBe(400)
-    await app.close()
-  })
-
   it('PUT /:searchId returns 404 when not found', async () => {
     const app = await buildTestApp()
     await app.register(savedSearchRoutes)
@@ -1334,20 +1321,6 @@ describe('savedSearchRoutes - branch coverage', () => {
     })
     expect(res.statusCode).toBe(200)
     expect(res.json().ok).toBe(true)
-    await app.close()
-  })
-
-  it('PUT /reorder with invalid body returns ok false', async () => {
-    const app = await buildTestApp()
-    await app.register(savedSearchRoutes)
-    await app.ready()
-    const res = await app.inject({
-      method: 'PUT',
-      url: '/reorder',
-      payload: { ids: 'not-an-array' },
-    })
-    expect(res.statusCode).toBe(200)
-    expect(res.json().ok).toBe(false)
     await app.close()
   })
 

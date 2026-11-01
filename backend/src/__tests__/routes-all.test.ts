@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import Fastify from 'fastify'
+import { ZodError } from 'zod'
 
 // ─── Mocks ──────────────────────────────────────────────────
 const mockExecute = vi.fn()
@@ -931,16 +932,25 @@ describe('savedSearchRoutes - additional', () => {
     await app.close()
   })
 
-  it('PUT /:searchId refuses a blank name or query, before touching the DB', async () => {
+  it('missing, blank or mistyped bodies are a 400 (not a 500), before touching the DB', async () => {
     const app = await buildTestApp()
+    // The app's global handler (plugins/index.ts) turns a ZodError into a 400
+    app.setErrorHandler((err, _req, reply) => reply.code(err instanceof ZodError ? 400 : 500).send({ error: String(err) }))
     await app.register(savedSearchRoutes)
     await app.ready()
     mockExecuteTakeFirst.mockClear()
+    mockExecuteTakeFirstOrThrow.mockClear()
 
-    for (const payload of [{ name: '   ' }, { query: '' }, { name: 42 }]) {
-      expect((await app.inject({ method: 'PUT', url: '/ss-1', payload })).statusCode).toBe(400)
+    const cases: [string, string, unknown][] = [
+      ['PUT', '/ss-1', undefined], ['PUT', '/ss-1', { name: '   ' }], ['PUT', '/ss-1', { query: '' }], ['PUT', '/ss-1', { name: 42 }],
+      ['POST', '/', undefined], ['POST', '/', { name: 'x' }], ['PUT', '/reorder', undefined], ['PUT', '/reorder', { ids: 'a' }],
+    ]
+    for (const [method, url, payload] of cases) {
+      const res = await app.inject({ method: method as 'PUT', url, ...(payload === undefined ? {} : { payload: payload as object }) })
+      expect(res.statusCode, `${method} ${url} ${JSON.stringify(payload)}`).toBe(400)
     }
     expect(mockExecuteTakeFirst).not.toHaveBeenCalled()
+    expect(mockExecuteTakeFirstOrThrow).not.toHaveBeenCalled()
     await app.close()
   })
 

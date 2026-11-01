@@ -74,7 +74,7 @@ Retourne toutes les recherches sauvegardées de l'utilisateur connecté, triées
 
 **Réponse 200** — La recherche mise à jour.
 
-**Réponse 400** — `name` ou `query` fourni vide (ou pas une chaîne).
+**Réponse 400** — corps absent, `name` ou `query` fourni vide, ou champ du mauvais type.
 
 ::: warning Ownership
 Seul le propriétaire de la recherche peut la modifier. Retourne `404` si l'ID ne correspond pas à l'utilisateur authentifié.
@@ -114,6 +114,8 @@ Réorganise l'ordre d'affichage de toutes les recherches.
 ```json
 { "ok": true }
 ```
+
+`400` si `ids` manque ou n'est pas une liste de chaînes (500 au plus).
 
 ---
 
