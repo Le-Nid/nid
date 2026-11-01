@@ -109,6 +109,7 @@
     "backupFailed": "The backup could not be started.",
     "allMails": "All mails",
     "labelTree": "Labels",
+    "folderTree": "Folders",
     "search": "Search the archives",
     "searchPlaceholder": "Subject, sender, content — \"exact phrase\", -exclude, OR",
     "filters": "Filters",
@@ -122,7 +123,12 @@
       "from": "From",
       "to": "To",
       "attachments": "With attachment",
-      "tag": "Tag"
+      "tag": "Tag",
+      "folder": "Folder",
+      "sizeMin": "Min size (MB)",
+      "sizeMax": "Max size (MB)",
+      "attachmentType": "Attachment type",
+      "attachmentTypePlaceholder": "pdf, docx, image/…"
     },
     "results_one": "{{count, number}} result",
     "results_other": "{{count, number}} results",

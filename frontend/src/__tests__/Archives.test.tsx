@@ -154,6 +154,19 @@ describe('Archives — search', () => {
     }))
   })
 
+  it('size range in Mo and attachment type; an IMAP account names its labels « Dossiers »', async () => {
+    account.provider = 'imap'
+    const { router } = setup()
+    expect(await screen.findByRole('tree', { name: 'Dossiers' })).toBeInTheDocument()
+    await user().type(screen.getByLabelText('Taille min (Mo)'), '1.5')
+    await user().type(screen.getByLabelText('Taille max (Mo)'), '10')
+    await user().type(screen.getByLabelText('Type de pièce jointe'), 'pdf')
+    await waitFor(() => expect(archiveApi.listMails).toHaveBeenLastCalledWith('acc-1', {
+      size_min: '1572864', size_max: '10485760', attachment_type: 'pdf', page: 1, limit: 50,
+    }))
+    expect(router.state.location.search).toBe('?smin=1.5&smax=10&atype=pdf')
+  })
+
   it('debounces the search into ?q=, and offers to clear filters when nothing matches', async () => {
     const { router } = setup()
     await user().type(screen.getByRole('searchbox', { name: 'Rechercher dans les archives' }), 'facture')

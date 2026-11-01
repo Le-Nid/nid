@@ -109,6 +109,7 @@
     "backupFailed": "La sauvegarde n'a pas pu être lancée.",
     "allMails": "Tous les mails",
     "labelTree": "Libellés",
+    "folderTree": "Dossiers",
     "search": "Rechercher dans les archives",
     "searchPlaceholder": "Objet, expéditeur, contenu — \"phrase exacte\", -exclure, OR",
     "filters": "Filtres",
@@ -122,7 +123,12 @@
       "from": "Du",
       "to": "Au",
       "attachments": "Avec pièce jointe",
-      "tag": "Tag"
+      "tag": "Tag",
+      "folder": "Dossier",
+      "sizeMin": "Taille min (Mo)",
+      "sizeMax": "Taille max (Mo)",
+      "attachmentType": "Type de pièce jointe",
+      "attachmentTypePlaceholder": "pdf, docx, image/…"
     },
     "results_one": "{{count, number}} résultat",
     "results_other": "{{count, number}} résultats",

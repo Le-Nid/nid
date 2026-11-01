@@ -51,7 +51,9 @@ export function useDebounced(value: string, commit: (next: string) => void) {
   return [draft, setDraft] as const
 }
 
-const FILTERS = ['q', 'sender', 'from', 'to', 'att', 'label', 'tag'] as const
+const FILTERS = ['q', 'sender', 'from', 'to', 'att', 'label', 'tag', 'smin', 'smax', 'atype'] as const
+const MB = 1024 * 1024 // formatBytes' Mo
+const mbToBytes = (mb: string) => (mb.trim() !== '' && Number(mb) >= 0 ? String(Math.round(Number(mb) * MB)) : undefined)
 export type Filters = Record<(typeof FILTERS)[number], string>
 
 /** Search and filters of the archive list, in the URL (§3.3) so a search can be shared and survives back. */
@@ -67,6 +69,10 @@ export function useArchiveFilters() {
   if (filters.att) apiParams.has_attachments = 'true'
   if (filters.label) apiParams.label = filters.label
   if (filters.tag) apiParams.tag = filters.tag
+  const [sizeMin, sizeMax] = [mbToBytes(filters.smin), mbToBytes(filters.smax)]
+  if (sizeMin) apiParams.size_min = sizeMin
+  if (sizeMax) apiParams.size_max = sizeMax
+  if (filters.atype.trim()) apiParams.attachment_type = filters.atype.trim()
   // Quick successive changes (typing, then a checkbox) must not drop each other: navigation is async, so
   // each write starts from the previous write rather than from the params of the render it comes from
   const latest = useRef(params)
