@@ -1,7 +1,15 @@
 import { FastifyInstance } from 'fastify'
+import { z } from 'zod'
 import { getDb } from '../db'
 import { authPresets } from '../utils/auth'
 import { notFound } from '../utils/db'
+
+// Trimmed, cut to the column size; blank refused (a chip with no label, a search that matches everything)
+const text = (max: number) => z.string().trim().min(1).transform((v) => v.slice(0, max))
+const optional = (max: number) => z.string().transform((v) => v.slice(0, max)).nullish()
+const createSchema = z.object({ name: text(255), query: text(2000), icon: optional(64), color: optional(32) })
+const updateSchema = createSchema.partial().extend({ sort_order: z.number().int().optional() })
+const reorderSchema = z.object({ ids: z.array(z.string()).max(500) })
 
 export async function savedSearchRoutes(app: FastifyInstance) {
   const { auth } = authPresets(app)
@@ -22,25 +30,16 @@ export async function savedSearchRoutes(app: FastifyInstance) {
   // ─── Create saved search ─────────────────────────────────
   app.post('/', auth, async (request, reply) => {
     const userId = request.user.sub
-    const { name, query, icon, color } = request.body as {
-      name: string
-      query: string
-      icon?: string
-      color?: string
-    }
-
-    if (!name?.trim() || !query?.trim()) {
-      return reply.code(400).send({ error: 'name and query are required' })
-    }
+    const { name, query, icon, color } = createSchema.parse(request.body)
 
     const search = await db
       .insertInto('saved_searches')
       .values({
         user_id: userId,
-        name: name.trim().slice(0, 255),
-        query: query.trim().slice(0, 2000),
-        icon: icon?.slice(0, 64) ?? null,
-        color: color?.slice(0, 32) ?? null,
+        name,
+        query,
+        icon: icon ?? null,
+        color: color ?? null,
       })
       .returningAll()
       .executeTakeFirstOrThrow()
@@ -52,17 +51,7 @@ export async function savedSearchRoutes(app: FastifyInstance) {
   app.put('/:searchId', auth, async (request, reply) => {
     const userId = request.user.sub
     const { searchId } = request.params as { searchId: string }
-    const { name, query, icon, color, sort_order } = request.body as {
-      name?: string
-      query?: string
-      icon?: string
-      color?: string
-      sort_order?: number
-    }
-
-    // A rename to blanks would leave a chip with no label
-    const blank = (v: unknown) => v !== undefined && (typeof v !== 'string' || !v.trim())
-    if (blank(name) || blank(query)) return reply.code(400).send({ error: 'name and query cannot be empty' })
+    const { name, query, icon, color, sort_order } = updateSchema.parse(request.body)
 
     const existing = await db
       .selectFrom('saved_searches')
@@ -74,10 +63,10 @@ export async function savedSearchRoutes(app: FastifyInstance) {
     if (!existing) return notFound(reply)
 
     const updates: Record<string, unknown> = { updated_at: new Date() }
-    if (name !== undefined) updates.name = name.trim().slice(0, 255)
-    if (query !== undefined) updates.query = query.trim().slice(0, 2000)
-    if (icon !== undefined) updates.icon = icon?.slice(0, 64) ?? null
-    if (color !== undefined) updates.color = color?.slice(0, 32) ?? null
+    if (name !== undefined) updates.name = name
+    if (query !== undefined) updates.query = query
+    if (icon !== undefined) updates.icon = icon
+    if (color !== undefined) updates.color = color
     if (sort_order !== undefined) updates.sort_order = sort_order
 
     const updated = await db
@@ -109,9 +98,7 @@ export async function savedSearchRoutes(app: FastifyInstance) {
   // ─── Reorder saved searches ───────────────────────────────
   app.put('/reorder', auth, async (request) => {
     const userId = request.user.sub
-    const { ids } = request.body as { ids: string[] }
-
-    if (!Array.isArray(ids)) return { ok: false }
+    const { ids } = reorderSchema.parse(request.body)
 
     for (let i = 0; i < ids.length; i++) {
       await db

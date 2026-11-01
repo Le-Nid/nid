@@ -74,7 +74,7 @@ Returns all saved searches for the authenticated user, sorted by `sort_order`.
 
 **Response 200** — The updated search.
 
-**Response 400** — `name` or `query` given empty (or not a string).
+**Response 400** — no body, `name` or `query` given empty, or a field of the wrong type.
 
 ::: warning Ownership
 Only the search owner can edit it. Returns `404` if the ID does not belong to the authenticated user.
@@ -114,6 +114,8 @@ Reorganizes the display order of all searches.
 ```json
 { "ok": true }
 ```
+
+`400` if `ids` is missing or not a list of strings (500 at most).
 
 ---
 
