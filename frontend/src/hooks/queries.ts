@@ -676,6 +676,10 @@ export function useCreateSavedSearch() {
   })
 }
 
+export const useRenameSavedSearch = () =>
+  useInvalidatingMutation(({ id, name }: { id: string; name: string }) => savedSearchesApi.update(id, { name }), queryKeys.savedSearches())
+export const useDeleteSavedSearch = () => useInvalidatingMutation(savedSearchesApi.remove, queryKeys.savedSearches())
+
 // ─── Unified Inbox ────────────────────────────────────────
 
 export function useUnifiedMessages(params: Record<string, any>, enabled = true) {

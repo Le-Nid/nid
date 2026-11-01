@@ -48,6 +48,8 @@ Above the bar, chips apply a search in one click:
 
 Your **saved searches** follow. To create one, run a search then click **Save search** (the button shows when the search matches no chip); the chip is named after the query text.
 
+Click one of your chips: **Rename** (its name only, the query stays) and **Delete** show next to it. Deleting is immediate; **Cancel**, in the confirmation message, saves it again. Quick searches (All, Unread…) cannot be renamed or deleted.
+
 The search and the account are part of the page address (`?q=…&account=…`): a bookmark or the back button keeps them.
 
 ---

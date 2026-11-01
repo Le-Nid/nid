@@ -74,6 +74,8 @@ Retourne toutes les recherches sauvegardées de l'utilisateur connecté, triées
 
 **Réponse 200** — La recherche mise à jour.
 
+**Réponse 400** — `name` ou `query` fourni vide (ou pas une chaîne).
+
 ::: warning Ownership
 Seul le propriétaire de la recherche peut la modifier. Retourne `404` si l'ID ne correspond pas à l'utilisateur authentifié.
 :::

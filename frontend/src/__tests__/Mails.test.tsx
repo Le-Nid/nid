@@ -18,6 +18,8 @@ const messages = vi.hoisted(() => ({ current: {} as Record<string, unknown> }))
 const useGmailMessages = vi.hoisted(() => vi.fn())
 const useUnifiedMessages = vi.hoisted(() => vi.fn())
 const createSaved = vi.hoisted(() => vi.fn())
+const renameSaved = vi.hoisted(() => vi.fn())
+const deleteSaved = vi.hoisted(() => vi.fn())
 vi.mock('../hooks/queries', () => ({
   useGmailMessages,
   useUnifiedMessages,
@@ -31,6 +33,8 @@ vi.mock('../hooks/queries', () => ({
   }),
   useSavedSearches: () => ({ data: [{ id: 's1', name: 'Mes factures', query: 'label:factures' }] }),
   useCreateSavedSearch: () => ({ mutate: createSaved }),
+  useRenameSavedSearch: () => ({ mutate: renameSaved, isPending: false }),
+  useDeleteSavedSearch: () => ({ mutate: deleteSaved }),
 }))
 vi.mock('../api', () => ({
   gmailApi: { bulkOperation: vi.fn() },
@@ -158,6 +162,36 @@ describe('MailsPage', () => {
     onError()
     expect(toast.success).toHaveBeenCalledWith('Recherche enregistrée')
     expect(toast.error).toHaveBeenCalledWith("Impossible d'enregistrer la recherche")
+  })
+
+  it('renames the active saved search, not a built-in shortcut', async () => {
+    setup('/mails?q=is:unread')
+    expect(screen.queryByRole('button', { name: /^Renommer/ })).not.toBeInTheDocument()
+    await user().click(screen.getByRole('button', { name: 'Mes factures' }))
+    await user().click(screen.getByRole('button', { name: 'Renommer Mes factures' }))
+    const dialog = screen.getByRole('dialog', { name: 'Renommer la recherche' })
+    const field = within(dialog).getByLabelText('Nom')
+    expect(field).toHaveValue('Mes factures')
+    await user().clear(field)
+    expect(within(dialog).getByRole('button', { name: 'Renommer' })).toBeDisabled()
+    await user().type(field, ' Factures EDF {Enter}')
+    expect(renameSaved).toHaveBeenCalledWith({ id: 's1', name: 'Factures EDF' }, expect.anything())
+    act(() => renameSaved.mock.calls[0][1].onSuccess())
+    expect(toast.success).toHaveBeenCalledWith('Recherche renommée en « Factures EDF »')
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  })
+
+  it('deletes the active saved search, « Annuler » saves it again', async () => {
+    setup('/mails?q=label:factures')
+    await user().click(screen.getByRole('button', { name: 'Supprimer Mes factures' }))
+    expect(deleteSaved).toHaveBeenCalledWith('s1', expect.anything())
+    deleteSaved.mock.calls[0][1].onSuccess()
+    const [message, options] = vi.mocked(toast.success).mock.calls.at(-1)!
+    expect(message).toBe('Recherche « Mes factures » supprimée')
+    ;(options as unknown as { action: { onClick: () => void } }).action.onClick()
+    expect(createSaved).toHaveBeenCalledWith({ name: 'Mes factures', query: 'label:factures' }, expect.anything())
+    deleteSaved.mock.calls[0][1].onError()
+    expect(toast.error).toHaveBeenCalledWith('Impossible de supprimer la recherche')
   })
 
   it('archives the selection with the undo window, hides the rows, and undo restores them', async () => {

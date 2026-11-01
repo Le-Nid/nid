@@ -74,6 +74,8 @@ Returns all saved searches for the authenticated user, sorted by `sort_order`.
 
 **Response 200** — The updated search.
 
+**Response 400** — `name` or `query` given empty (or not a string).
+
 ::: warning Ownership
 Only the search owner can edit it. Returns `404` if the ID does not belong to the authenticated user.
 :::

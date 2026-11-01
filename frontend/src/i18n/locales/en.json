@@ -1113,7 +1113,11 @@
     "placeholder": "Keywords or operator: from:, has:attachment, larger:10M…",
     "removeFilter": "Remove filter {{filter}}",
     "saved": "Saved searches",
-    "save": "Save search"
+    "save": "Save search",
+    "rename": "Rename",
+    "delete": "Delete",
+    "renameTitle": "Rename the search",
+    "name": "Name"
   },
   "mails": {
     "title": "Mail",
@@ -1208,7 +1212,10 @@
       "thread_one": "Conversation ({{count}} message)",
       "thread_other": "Conversation ({{count}} messages)"
     },
-    "createRule": "Create a rule"
+    "createRule": "Create a rule",
+    "searchRenamed": "Search renamed to “{{name}}”",
+    "searchDeleted": "Search “{{name}}” deleted",
+    "deleteSearchFailed": "Could not delete the search"
   },
   "cleanup": {
     "title": "Cleanup",

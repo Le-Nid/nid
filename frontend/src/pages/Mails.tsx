@@ -17,6 +17,7 @@ import { DataList, dataListFeatures } from '@/components/app/DataList'
 import { LoadError } from '@/components/app/LoadError'
 import { BulkActionBar, type BulkAction } from '@/components/app/BulkActionBar'
 import { SearchBar, type SavedSearch } from '@/components/app/SearchBar'
+import { RenameSearchDialog } from '@/components/app/RenameSearchDialog'
 import { PageHeader } from '@/components/app/PageHeader'
 import { EmptyState } from '@/components/app/EmptyState'
 import { JobProgressInline } from '@/components/app/JobProgressInline'
@@ -24,7 +25,7 @@ import { LabelBadge } from '@/components/app/LabelBadge'
 import { MailViewer, type ViewerAction } from '@/components/app/MailViewer'
 import { RuleSheet, type RuleSheetTarget } from '@/components/app/RuleSheet'
 import { useAccount } from '@/hooks/useAccount'
-import { useCreateSavedSearch, useGmailMessages, useLabels, useSavedSearches, useUnifiedMessages } from '@/hooks/queries'
+import { useCreateSavedSearch, useDeleteSavedSearch, useGmailMessages, useLabels, useRenameSavedSearch, useSavedSearches, useUnifiedMessages } from '@/hooks/queries'
 import { useKeyboardShortcuts, useShortcutsPref } from '@/hooks/useKeyboardShortcuts'
 import { useMailActions, type MailAction, type Target } from '@/hooks/useMailActions'
 import { formatBytes, formatEmail, formatSender } from '@/utils/format'
@@ -315,6 +316,9 @@ export default function MailsPage() {
   const { data: labels = [] } = useLabels(accountId)
   const { data: savedSearches = [] } = useSavedSearches()
   const createSaved = useCreateSavedSearch()
+  const renameSaved = useRenameSavedSearch()
+  const deleteSaved = useDeleteSavedSearch()
+  const [renaming, setRenaming] = useState<SavedSearch | null>(null)
   const { messages, list, loaded, total } = useMailList(allMode, accountId, q)
   const { pending, run, done } = useMailActions(accountId, (id) => ['gmail', id, 'messages'])
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
@@ -416,13 +420,27 @@ export default function MailsPage() {
   }
   const chips: SavedSearch[] = [
     ...QUICK.map(([key, query]) => ({ id: `quick-${key}`, name: t(`mails.quick.${key}`), query })),
-    ...(savedSearches as SavedSearch[]).map(({ id, name, query }) => ({ id, name, query })),
+    ...(savedSearches as SavedSearch[]).map(({ id, name, query }) => ({ id, name, query, editable: true })),
   ]
-  const saveSearch = () =>
-    createSaved.mutate({ name: q.slice(0, 60), query: q }, {
+  const saveSearch = (search = { name: q.slice(0, 60), query: q }) =>
+    createSaved.mutate(search, {
       onSuccess: () => toast.success(t('mails.searchSaved')),
       onError: () => toast.error(t('mails.saveFailed')),
     })
+  const rename = (name: string) => renaming && renameSaved.mutate({ id: renaming.id, name }, {
+    onSuccess: () => {
+      toast.success(t('mails.searchRenamed', { name }))
+      setRenaming(null)
+    },
+    onError: () => toast.error(t('mails.saveFailed')),
+  })
+  // A saved search is cheap to recreate: deleted at once, « Annuler » saves it again
+  const remove = ({ id, name, query }: SavedSearch) => deleteSaved.mutate(id, {
+    onSuccess: () => toast.success(t('mails.searchDeleted', { name }), {
+      action: { label: t('common.cancel'), onClick: () => saveSearch({ name, query }) },
+    }),
+    onError: () => toast.error(t('mails.deleteSearchFailed')),
+  })
 
   // Shortcuts act on the selection, else on the row whose open button has focus (j/k move that focus)
   const rowButtons = () => Array.from(pageRef.current?.querySelectorAll<HTMLElement>('[data-row-open]') ?? [])
@@ -478,7 +496,8 @@ export default function MailsPage() {
         <AccountSelect accounts={activeAccounts} allMode={allMode} accountId={accountId} onChange={switchAccount} />
       )}
 
-      <SearchBar value={q} onChange={search} saved={chips} onSave={saveSearch} />
+      <SearchBar value={q} onChange={search} saved={chips} onSave={() => saveSearch()} onRename={setRenaming} onDelete={remove} />
+      <RenameSearchDialog search={renaming} pending={renameSaved.isPending} onClose={() => setRenaming(null)} onSubmit={rename} />
 
       {pending.map((p) => p.jobId && (
         <JobProgressInline key={p.key} jobId={p.jobId} label={p.label} onDone={(job) => void done(p, job)} />

@@ -8,7 +8,7 @@ beforeAll(() => i18n.changeLanguage('fr'))
 
 const SAVED: SavedSearch[] = [
   { id: 's1', name: 'Promotions > 6 mois', query: 'category:promotions older_than:6m' },
-  { id: 's2', name: 'Factures', query: 'label:factures' },
+  { id: 's2', name: 'Factures', query: 'label:factures', editable: true },
 ]
 
 function Harness({ initial = '', onChange = vi.fn(), onSave }: Readonly<{ initial?: string; onChange?: (q: string) => void; onSave?: () => void }>) {
@@ -54,5 +54,18 @@ describe('SearchBar', () => {
     render(<Harness initial="is:unread" onSave={onSave} />)
     await userEvent.click(screen.getByRole('button', { name: 'Enregistrer la recherche' }))
     expect(onSave).toHaveBeenCalledOnce()
+  })
+
+  it('offers rename and delete on the active editable chip only', async () => {
+    const onRename = vi.fn()
+    const onDelete = vi.fn()
+    const { rerender } = render(<SearchBar value="category:promotions older_than:6m" onChange={vi.fn()} saved={SAVED} onRename={onRename} onDelete={onDelete} />)
+    expect(screen.queryByRole('button', { name: /^Renommer/ })).not.toBeInTheDocument()
+
+    rerender(<SearchBar value="label:factures" onChange={vi.fn()} saved={SAVED} onRename={onRename} onDelete={onDelete} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Renommer Factures' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Supprimer Factures' }))
+    expect(onRename).toHaveBeenCalledWith(SAVED[1])
+    expect(onDelete).toHaveBeenCalledWith(SAVED[1])
   })
 })

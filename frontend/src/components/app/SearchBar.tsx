@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Plus, Search, X } from 'lucide-react'
+import { Pencil, Plus, Search, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-export type SavedSearch = { id: string; name: string; query: string }
+/** `editable`: the user's own search (renamed, deleted), not one of the built-in shortcuts. */
+export type SavedSearch = { id: string; name: string; query: string; editable?: boolean }
 
 // A Gmail term: operator (`from:x`, `-label:"a b"`), quoted phrase or word
 const TERM = /-?[a-z_]+:(?:"[^"]*"|\S+)|"[^"]*"|\S+/gi
@@ -17,12 +18,16 @@ function splitQuery(query: string) {
 /**
  * Gmail search (§5.2, P3): operators become removable tokens on Enter, the rest stays free text;
  * saved searches are chips above. `onChange` gets the whole query, on submit only.
+ * The active chip, when editable, offers « Renommer » and « Supprimer » (aria-label, not an sr-only span: absolute, it
+ * would escape the scrolling chip row and widen the mobile page).
  */
-export function SearchBar({ value, onChange, saved = [], onSave }: Readonly<{
+export function SearchBar({ value, onChange, saved = [], onSave, onRename, onDelete }: Readonly<{
   value: string
   onChange: (query: string) => void
   saved?: SavedSearch[]
   onSave?: () => void
+  onRename?: (search: SavedSearch) => void
+  onDelete?: (search: SavedSearch) => void
 }>) {
   const { t } = useTranslation()
   const { tokens, text } = splitQuery(value)
@@ -56,6 +61,28 @@ export function SearchBar({ value, onChange, saved = [], onSave }: Readonly<{
           {onSave && value && !active && (
             <Button variant="ghost" size="sm" className="h-9 text-muted-foreground md:h-8" onClick={onSave}>
               <Plus aria-hidden="true" />{t('searchBar.save')}
+            </Button>
+          )}
+          {active?.editable && onRename && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 shrink-0 text-muted-foreground md:h-8"
+              aria-label={`${t('searchBar.rename')} ${active.name}`}
+              onClick={() => onRename(active)}
+            >
+              <Pencil aria-hidden="true" />{t('searchBar.rename')}
+            </Button>
+          )}
+          {active?.editable && onDelete && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 shrink-0 text-muted-foreground md:h-8"
+              aria-label={`${t('searchBar.delete')} ${active.name}`}
+              onClick={() => onDelete(active)}
+            >
+              <Trash2 aria-hidden="true" />{t('searchBar.delete')}
             </Button>
           )}
         </div>
