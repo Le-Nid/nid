@@ -52,8 +52,6 @@ vi.mock('../gmail/gmail.service', () => ({
 
 // ─── Import after mocks ─────────────────────────────────────
 import {
-  computeHeatmap,
-  getHeatmap,
   computeSenderScores,
   getSenderScores,
   getCleanupSuggestions,
@@ -66,85 +64,6 @@ beforeEach(() => {
   vi.clearAllMocks()
   mockRedis.get.mockResolvedValue(null)
   mockRedis.set.mockResolvedValue('OK')
-})
-
-// ─── computeHeatmap ─────────────────────────────────────────
-describe('computeHeatmap', () => {
-  it('returns empty array when no messages', async () => {
-    mockListMessages.mockResolvedValue({ messages: [] })
-    const result = await computeHeatmap('acc-1')
-    expect(result).toEqual([])
-  })
-
-  it('computes heatmap cells from messages', async () => {
-    // Wednesday Jan 15 2025 10:30
-    const wed = new Date(2025, 0, 15, 10, 30)
-    mockListMessages.mockResolvedValue({ messages: [{ id: 'm1' }, { id: 'm2' }] })
-    mockBatchGetMessages.mockResolvedValue([
-      { date: wed.toISOString() },
-      { date: wed.toISOString() },
-    ])
-    mockExecute.mockResolvedValue([])
-
-    const result = await computeHeatmap('acc-1')
-    expect(result.length).toBeGreaterThan(0)
-    // Wednesday => jsDay=3 => day=2
-    expect(result[0].day).toBe(2)
-    expect(result[0].hour).toBe(10)
-    expect(result[0].count).toBe(2)
-  })
-
-  it('handles Sunday correctly (day=6)', async () => {
-    const sun = new Date(2025, 0, 19, 14, 0) // Sunday
-    mockListMessages.mockResolvedValue({ messages: [{ id: 'm1' }] })
-    mockBatchGetMessages.mockResolvedValue([{ date: sun.toISOString() }])
-    mockExecute.mockResolvedValue([])
-
-    const result = await computeHeatmap('acc-1')
-    expect(result[0].day).toBe(6)
-  })
-
-  it('skips invalid dates', async () => {
-    mockListMessages.mockResolvedValue({ messages: [{ id: 'm1' }] })
-    mockBatchGetMessages.mockResolvedValue([{ date: 'invalid-date' }])
-    mockExecute.mockResolvedValue([])
-
-    const result = await computeHeatmap('acc-1')
-    expect(result).toEqual([])
-  })
-})
-
-// ─── getHeatmap ─────────────────────────────────────────────
-describe('getHeatmap', () => {
-  it('returns cached data when available', async () => {
-    const cached = [{ day: 0, hour: 10, count: 5 }]
-    mockRedis.get.mockResolvedValue(JSON.stringify(cached))
-
-    const result = await getHeatmap('acc-1')
-    expect(result).toEqual(cached)
-    expect(mockListMessages).not.toHaveBeenCalled()
-  })
-
-  it('queries DB when no cache and data exists', async () => {
-    mockRedis.get.mockResolvedValue(null)
-    mockExecute.mockResolvedValue([
-      { day_of_week: 1, hour_of_day: 14, email_count: 10 },
-    ])
-
-    const result = await getHeatmap('acc-1')
-    expect(result).toEqual([{ day: 1, hour: 14, count: 10 }])
-    expect(mockRedis.set).toHaveBeenCalled()
-  })
-
-  it('forces recompute when refresh=true', async () => {
-    mockListMessages.mockResolvedValue({ messages: [] })
-    mockExecute.mockResolvedValue([])
-    mockExecuteTakeFirst.mockResolvedValue(null)
-
-    const result = await getHeatmap('acc-1', true)
-    expect(result).toEqual([])
-    expect(mockListMessages).toHaveBeenCalled()
-  })
 })
 
 // ─── computeSenderScores ───────────────────────────────────

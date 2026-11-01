@@ -14,12 +14,12 @@ vi.mock('kysely/migration', () => ({
 const { runMigrations } = await import('../db')
 
 describe('runMigrations', () => {
-  it('hands Kysely every in-code migration, 018 last', async () => {
+  it('hands Kysely every in-code migration, 019 last', async () => {
     migrator.results = [{ status: 'Success', migrationName: '018_account_shares' }]
     await runMigrations()
     const names = Object.keys(await migrator.provider.getMigrations())
     expect(names).toEqual([...names].sort())
-    expect(names.at(-1)).toBe('018_account_shares')
+    expect(names.at(-1)).toBe('019_drop_activity_heatmap')
   })
 
   it('throws the migrator error', async () => {

@@ -29,6 +29,18 @@ One bar per day, from the archives (receipt date of the backed-up mails): the ch
 
 ---
 
+## When your mail arrives
+
+A day × hour grid: the darker the cell, the more mail you receive in that slot. It counts **your whole archive** (not only 30 days), in your browser's local time, and spells out the busiest slot (« Peak: Mon at 9 AM »). Screen readers get the grid as a table. Also shown for IMAP accounts.
+
+---
+
+## Inbox zero
+
+Gmail accounts: how many mails sit in the inbox (and how many are unread), the days in a row at zero and your best streak, then the last 30 days (each day's lowest). Nid checks the inbox every 6 hours: the history fills in day after day.
+
+---
+
 ## Top senders
 
 The senders who send you the most mails, with "N mails · size". **See all** opens [Cleanup](cleanup.md).

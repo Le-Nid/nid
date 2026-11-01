@@ -111,6 +111,12 @@ const ROUTES: [string, RegExp, Handler][] = [
   ['DELETE', /^\/api\/retention\/[^/]+$/, {}],
   ['GET', /^\/api\/analytics\/[^/]+\/cleanup-suggestions$/, dashboard.suggestions],
   ['PATCH', /^\/api\/analytics\/suggestions\/[^/]+\/dismiss$/, { ok: true }],
+  ['GET', /^\/api\/analytics\/[^/]+\/heatmap$/, [{ day: 0, hour: 9, count: 42 }, { day: 1, hour: 10, count: 30 }, { day: 4, hour: 18, count: 12 }, { day: 6, hour: 21, count: 3 }]],
+  ['GET', /^\/api\/analytics\/[^/]+\/inbox-zero$/, {
+    current: { inboxCount: 12, unreadCount: 3 },
+    history: [{ date: '2026-10-29', inboxCount: 30, unreadCount: 8 }, { date: '2026-10-30', inboxCount: 18, unreadCount: 4 }, { date: '2026-10-31', inboxCount: 12, unreadCount: 3 }],
+    streak: 0, bestStreak: 2,
+  }],
   ['GET', /^\/api\/rules\/templates$/, load('templates')],
   ['GET', /^\/api\/rules\/[^/]+\/stats$/, dashboard.ruleStats],
   ['GET', /^\/api\/rules\/[^/]+$/, load('rules')],

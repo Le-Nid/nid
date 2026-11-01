@@ -29,86 +29,21 @@ export interface HeatmapCell {
   count: number
 }
 
-export async function computeHeatmap(accountId: string): Promise<HeatmapCell[]> {
-  logger.info({ accountId }, 'computing email heatmap')
-  // Récupère les mails récents pour construire le heatmap
-  const listRes = await listMessages(accountId, { maxResults: 500 })
-  if (!listRes.messages.length) return []
-
-  const messageIds = listRes.messages.map((m: any) => m.id)
-  const messages = await batchGetMessages(accountId, messageIds)
-
-  const grid = new Map<string, number>()
-
-  for (const msg of messages) {
-    const d = new Date(msg.date)
-    if (Number.isNaN(d.getTime())) continue
-
-    // getDay() : 0=dimanche, on convertit en 0=lundi
-    const jsDay = d.getDay()
-    const day = jsDay === 0 ? 6 : jsDay - 1
-    const hour = d.getHours()
-    const key = `${day}-${hour}`
-    grid.set(key, (grid.get(key) ?? 0) + 1)
-  }
-
-  const db = getDb()
-
-  // Upsert les données dans la table
-  for (const [key, count] of grid) {
-    const [day, hour] = key.split('-').map(Number)
-    await db
-      .insertInto('email_activity_heatmap')
-      .values({
-        account_id: accountId,
-        day_of_week: day,
-        hour_of_day: hour,
-        email_count: count,
-      })
-      .onConflict((oc) =>
-        oc.columns(['account_id', 'day_of_week', 'hour_of_day']).doUpdateSet({
-          email_count: count,
-          computed_at: sql`NOW()`,
-        })
-      )
-      .execute()
-  }
-
-  return [...grid.entries()].map(([key, count]) => {
-    const [day, hour] = key.split('-').map(Number)
-    return { day, hour, count }
-  })
-}
-
-export async function getHeatmap(accountId: string, refresh = false): Promise<HeatmapCell[]> {
-  const cacheKey = `analytics:heatmap:${accountId}`
-  if (!refresh) {
-    const cached = await getCached<HeatmapCell[]>(cacheKey)
-    if (cached) return cached
-  }
-
-  // Essaie les données DB d'abord
-  const db = getDb()
-  const rows = await db
-    .selectFrom('email_activity_heatmap')
-    .select(['day_of_week', 'hour_of_day', 'email_count'])
-    .where('account_id', '=', accountId)
-    .execute()
-
-  if (rows.length > 0 && !refresh) {
-    const result = rows.map((r) => ({
-      day: r.day_of_week,
-      hour: r.hour_of_day,
-      count: Number(r.email_count),
-    }))
-    await setCache(cacheKey, result)
-    return result
-  }
-
-  // Recalcule
-  const result = await computeHeatmap(accountId)
-  await setCache(cacheKey, result)
-  return result
+/**
+ * Archived mails (trash excluded) per weekday × hour in `timeZone` (IANA, checked by the route): the whole archive,
+ * Gmail and IMAP alike, no Gmail call.
+ * shortcut: one scan of the account's archive per call (index on account_id); cache it if archives pass a few million mails.
+ */
+export async function getHeatmap(accountId: string, timeZone: string): Promise<HeatmapCell[]> {
+  const { rows } = await sql<{ day: number; hour: number; count: string }>`
+    SELECT (extract(isodow FROM date AT TIME ZONE ${timeZone}) - 1)::int AS day,
+      extract(hour FROM date AT TIME ZONE ${timeZone})::int AS hour,
+      count(*) AS count
+    FROM archived_mails
+    WHERE account_id = ${accountId} AND deleted_at IS NULL AND date IS NOT NULL
+    GROUP BY 1, 2
+  `.execute(getDb())
+  return rows.map((r) => ({ day: r.day, hour: r.hour, count: Number(r.count) }))
 }
 
 // ─── Score d'encombrement par expéditeur ────────────────
@@ -491,13 +426,14 @@ export async function getInboxZeroData(accountId: string, refresh = false): Prom
   const history = await db
     .selectFrom('inbox_zero_snapshots')
     .select([
-      sql<string>`DATE(recorded_at)`.as('date'),
+      // text, not DATE: pg turns a DATE into a JS Date, which neither sorts with localeCompare nor prints as YYYY-MM-DD
+      sql<string>`to_char(recorded_at, 'YYYY-MM-DD')`.as('date'),
       sql<number>`MIN(inbox_count)`.as('inbox_count'),
       sql<number>`MIN(unread_count)`.as('unread_count'),
     ])
     .where('account_id', '=', accountId)
     .where('recorded_at', '>=', thirtyDaysAgo)
-    .groupBy(sql`DATE(recorded_at)`)
+    .groupBy(sql`1`)
     .orderBy('date', 'asc')
     .execute()
 

@@ -18,7 +18,7 @@ vi.mock('../api', () => ({
   dashboardApi: { getStats: vi.fn(), getArchiveStats: vi.fn() },
   unsubscribeApi: { getNewsletters: vi.fn(), deleteSender: vi.fn() },
   rulesApi: { getStats: vi.fn(), preview: vi.fn(), create: vi.fn() },
-  analyticsApi: { getCleanupSuggestions: vi.fn(), dismissSuggestion: vi.fn() },
+  analyticsApi: { getCleanupSuggestions: vi.fn(), dismissSuggestion: vi.fn(), getHeatmap: vi.fn(), getInboxZero: vi.fn() },
   jobsApi: { list: vi.fn(), cancel: vi.fn() },
   labelsApi: { list: vi.fn() },
 }))
@@ -52,6 +52,13 @@ const SUGGESTIONS = [
   { id: 's2', type: 'bulk_unread', title: '', sender: 'Bank <info@bank.test>', emailCount: 30, totalSizeBytes: 1024 },
 ]
 
+const HEATMAP = [{ day: 0, hour: 9, count: 12 }, { day: 6, hour: 22, count: 3 }]
+const INBOX = {
+  current: { inboxCount: 4, unreadCount: 1 },
+  history: [{ date: '2026-10-30', inboxCount: 9, unreadCount: 2 }, { date: '2026-10-31', inboxCount: 0, unreadCount: 0 }],
+  streak: 0, bestStreak: 1,
+}
+
 function setup(counters: LiveCounters | null = null) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const router = createMemoryRouter(
@@ -80,6 +87,8 @@ beforeEach(() => {
   vi.mocked(labelsApi.list).mockResolvedValue([])
   vi.mocked(analyticsApi.getCleanupSuggestions).mockResolvedValue(SUGGESTIONS)
   vi.mocked(analyticsApi.dismissSuggestion).mockResolvedValue({ ok: true })
+  vi.mocked(analyticsApi.getHeatmap).mockResolvedValue(HEATMAP)
+  vi.mocked(analyticsApi.getInboxZero).mockResolvedValue(INBOX)
   vi.mocked(jobsApi.list).mockResolvedValue([])
   vi.spyOn(window, 'open').mockReturnValue(null)
 })
@@ -184,6 +193,37 @@ describe('OverviewPage', () => {
     expect(screen.getByRole('link', { name: 'Tout voir : Plus grosses pièces jointes' })).toHaveAttribute('href', '/attachments')
   })
 
+  it('activity heatmap: the peak in words, every cell in a table', async () => {
+    setup()
+    const section = (await screen.findByRole('heading', { name: 'Quand arrivent vos mails' })).closest('section')!
+    expect(await within(section).findByText(/^Pic : lun\. à 09 h \(12 mail\(s\) archivé\(s\)/)).toBeInTheDocument()
+    const table = within(section).getByRole('table', { name: 'Quand arrivent vos mails' })
+    const sunday = within(table).getByRole('row', { name: /^dim\./ })
+    expect(within(sunday).getAllByRole('cell').map((c) => c.textContent)[22]).toBe('3')
+  })
+
+  it('activity heatmap: empty archive', async () => {
+    vi.mocked(analyticsApi.getHeatmap).mockResolvedValueOnce([])
+    setup()
+    expect(await screen.findByText("Aucun mail archivé pour l'instant")).toBeInTheDocument()
+  })
+
+  it('inbox zero: inbox now, streak, 30-day history', async () => {
+    setup()
+    const section = (await screen.findByRole('heading', { name: 'Inbox zero' })).closest('section')!
+    expect(await within(section).findByText("4 mail(s) en boîte de réception")).toBeInTheDocument()
+    expect(within(section).getByText(/série : 0 jour\(s\) à zéro \(record 1\)/)).toBeInTheDocument()
+    expect(within(section).getByRole('table', { name: 'Boîte de réception, minimum par jour, 30 derniers jours' })).toBeInTheDocument()
+  })
+
+  it('inbox zero load error offers a retry', async () => {
+    vi.mocked(analyticsApi.getInboxZero).mockRejectedValueOnce(new Error('down')).mockResolvedValue(INBOX)
+    setup()
+    const section = (await screen.findByRole('heading', { name: 'Inbox zero' })).closest('section')!
+    await user().click(await within(section).findByRole('button', { name: 'Réessayer' }))
+    expect(await within(section).findByText("4 mail(s) en boîte de réception")).toBeInTheDocument()
+  })
+
   it('an IMAP account: archive figures only, no Gmail call', async () => {
     account.provider = 'imap'
     vi.mocked(dashboardApi.getArchiveStats).mockResolvedValue({ total_mails: 3, daily: [{ day: '2026-10-30', count: 3 }], biggestMails: [], biggestAttachments: [] })
@@ -193,6 +233,8 @@ describe('OverviewPage', () => {
     expect(screen.queryByRole('link', { name: /Mails dans Gmail/ })).not.toBeInTheDocument()
     expect(dashboardApi.getStats).not.toHaveBeenCalled()
     expect(unsubscribeApi.getNewsletters).not.toHaveBeenCalled()
+    expect(await screen.findByRole('heading', { name: 'Quand arrivent vos mails' })).toBeInTheDocument()
+    expect(analyticsApi.getInboxZero).not.toHaveBeenCalled()
   })
 
   it('no mail archived over 30 days, nothing archived yet: empty states', async () => {

@@ -459,28 +459,10 @@ describe('API modules', () => {
   })
 
   describe('analyticsApi', () => {
-    it('getHeatmap', async () => {
-      mockGet({})
-      await analyticsApi.getHeatmap('acc-1', false)
-      expect(api.get).toHaveBeenCalledWith('/api/analytics/acc-1/heatmap', { params: {} })
-    })
-
-    it('getHeatmap with refresh', async () => {
-      mockGet({})
-      await analyticsApi.getHeatmap('acc-1', true)
-      expect(api.get).toHaveBeenCalledWith('/api/analytics/acc-1/heatmap', { params: { refresh: '1' } })
-    })
-
-    it('getSenderScores', async () => {
-      mockGet({})
-      await analyticsApi.getSenderScores('acc-1', false)
-      expect(api.get).toHaveBeenCalledWith('/api/analytics/acc-1/sender-scores', { params: {} })
-    })
-
-    it('getSenderScores with refresh', async () => {
-      mockGet({})
-      await analyticsApi.getSenderScores('acc-1', true)
-      expect(api.get).toHaveBeenCalledWith('/api/analytics/acc-1/sender-scores', { params: { refresh: '1' } })
+    it('getHeatmap sends the browser time zone', async () => {
+      mockGet([])
+      await analyticsApi.getHeatmap('acc-1')
+      expect(api.get).toHaveBeenCalledWith('/api/analytics/acc-1/heatmap', { params: { tz: Intl.DateTimeFormat().resolvedOptions().timeZone } })
     })
 
     it('getCleanupSuggestions', async () => {
@@ -503,20 +485,8 @@ describe('API modules', () => {
 
     it('getInboxZero', async () => {
       mockGet({})
-      await analyticsApi.getInboxZero('acc-1', false)
-      expect(api.get).toHaveBeenCalledWith('/api/analytics/acc-1/inbox-zero', { params: {} })
-    })
-
-    it('getInboxZero with refresh', async () => {
-      mockGet({})
-      await analyticsApi.getInboxZero('acc-1', true)
-      expect(api.get).toHaveBeenCalledWith('/api/analytics/acc-1/inbox-zero', { params: { refresh: '1' } })
-    })
-
-    it('recordSnapshot', async () => {
-      mockPost({})
-      await analyticsApi.recordSnapshot('acc-1')
-      expect(api.post).toHaveBeenCalledWith('/api/analytics/acc-1/inbox-zero/snapshot')
+      await analyticsApi.getInboxZero('acc-1')
+      expect(api.get).toHaveBeenCalledWith('/api/analytics/acc-1/inbox-zero')
     })
   })
 

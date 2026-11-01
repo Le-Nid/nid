@@ -6,13 +6,13 @@
 
 ### GET /api/analytics/:accountId/heatmap
 
-Grille jour × heure indiquant quand l'utilisateur reçoit le plus de mails (style contributions GitHub). Analyse les 500 derniers messages.
+Grille jour × heure indiquant quand arrivent les mails, calculée à chaque appel depuis **toutes les archives** du compte (corbeille Nid exclue), Gmail comme IMAP, sans appel Gmail. Affichée dans la Vue d'ensemble (« Quand arrivent vos mails »).
 
 **Query params**
 
 | Param | Défaut | Description |
 |---|---|---|
-| `refresh` | - | `1` pour forcer le recalcul (sinon cache Redis 15 min + données DB) |
+| `tz` | `UTC` | Fuseau IANA dans lequel compter jours et heures (`Europe/Paris`) ; le frontend envoie celui du navigateur. Fuseau inconnu : 400 |
 
 **Réponse**
 ```json
@@ -27,56 +27,23 @@ Grille jour × heure indiquant quand l'utilisateur reçoit le plus de mails (sty
 |---|---|---|
 | `day` | integer | Jour de la semaine (0=lundi, 6=dimanche) |
 | `hour` | integer | Heure de la journée (0-23) |
-| `count` | integer | Nombre de mails reçus à ce créneau |
+| `count` | integer | Nombre de mails archivés reçus à ce créneau |
 
-**Authentification** : JWT + ownership du compte Gmail
+Seuls les créneaux non vides sont renvoyés.
+
+**Authentification** : JWT + ownership du compte
 
 ---
 
 ## Score d'encombrement par expéditeur
 
-### GET /api/analytics/:accountId/sender-scores
-
-Score combinant volume, taille, taux de lecture, et présence de `List-Unsubscribe`. Classement des expéditeurs "pollueurs" avec suggestion de nettoyage.
-
-**Query params**
-
-| Param | Défaut | Description |
-|---|---|---|
-| `refresh` | - | `1` pour forcer le recalcul |
-
-**Réponse**
-```json
-[
-  {
-    "sender": "Newsletter Corp <news@corp.com>",
-    "emailCount": 234,
-    "totalSizeBytes": 45678901,
-    "unreadCount": 180,
-    "hasUnsubscribe": true,
-    "readRate": 0.23,
-    "clutterScore": 85
-  }
-]
-```
-
-| Champ | Type | Description |
-|---|---|---|
-| `sender` | string | Nom et email de l'expéditeur |
-| `emailCount` | integer | Nombre total de mails |
-| `totalSizeBytes` | integer | Taille totale en octets |
-| `unreadCount` | integer | Nombre de mails non lus |
-| `hasUnsubscribe` | boolean | Présence dans les promotions / newsletters |
-| `readRate` | float | Taux de lecture (0.0 - 1.0) |
-| `clutterScore` | integer | Score d'encombrement (0-100, 100 = très encombrant) |
+Calcul interne (pas d'endpoint) qui alimente les suggestions de nettoyage ci-dessous : volume, taille, taux de lecture et présence de `List-Unsubscribe`, sur les 500 derniers mails Gmail, mis en cache 15 min.
 
 **Calcul du score** :
 - Volume (0-30 pts) : proportionnel au nombre de mails (cap à 50)
 - Taille (0-25 pts) : proportionnel à la taille totale (cap à 50 Mo)
 - Taux de lecture inversé (0-25 pts) : plus le taux est faible, plus le score est élevé
 - Unsubscribe (0-20 pts) : bonus si l'expéditeur est une newsletter/promotion
-
-**Authentification** : JWT + ownership du compte Gmail
 
 ---
 
@@ -142,13 +109,7 @@ Ignore une suggestion (ne sera plus affichée). `404` si elle n'existe pas ou n'
 
 ### GET /api/analytics/:accountId/inbox-zero
 
-Compteur temps réel + historique de la progression vers inbox zero. Streak, graphique d'évolution, gamification légère.
-
-**Query params**
-
-| Param | Défaut | Description |
-|---|---|---|
-| `refresh` | - | `1` pour forcer un nouveau snapshot |
+Taille de la boîte de réception Gmail maintenant et sur 30 jours, et les jours consécutifs à zéro. Affiché dans la Vue d'ensemble (comptes Gmail). Le scheduler enregistre un snapshot toutes les 6 heures (2 appels Gmail de liste) ; sans snapshot encore, cet appel en enregistre un.
 
 **Réponse**
 ```json
@@ -170,21 +131,9 @@ Compteur temps réel + historique de la progression vers inbox zero. Streak, gra
 | Champ | Type | Description |
 |---|---|---|
 | `current` | object | État actuel de l'inbox |
-| `history` | array | Historique des 30 derniers jours (min inbox_count par jour) |
+| `history` | array | Historique des 30 derniers jours (inbox_count le plus bas du jour, `YYYY-MM-DD` UTC) |
 | `streak` | integer | Jours consécutifs à inbox zero (0 mails dans INBOX) |
 | `bestStreak` | integer | Meilleur streak historique |
-
-### POST /api/analytics/:accountId/inbox-zero/snapshot
-
-Enregistre manuellement un snapshot de l'état de l'inbox. Appelé automatiquement par le scheduler toutes les 6 heures.
-
-**Réponse**
-```json
-{
-  "inboxCount": 12,
-  "unreadCount": 5
-}
-```
 
 **Authentification** : JWT + ownership du compte Gmail
 
@@ -196,7 +145,6 @@ Enregistre manuellement un snapshot de l'état de l'inbox. Appelé automatiqueme
 
 | Table | Contenu |
 |---|---|
-| `email_activity_heatmap` | Cache agrégé jour×heure par compte Gmail |
 | `sender_scores` | Score d'encombrement calculé par expéditeur |
 | `cleanup_suggestions` | Suggestions de nettoyage (dismissable) |
 | `inbox_zero_snapshots` | Historique des snapshots inbox (toutes les 6h) |
@@ -205,8 +153,6 @@ Enregistre manuellement un snapshot de l'état de l'inbox. Appelé automatiqueme
 
 | Clé | TTL | Description |
 |---|---|---|
-| `analytics:heatmap:{accountId}` | 15 min | Données heatmap |
-| `analytics:sender-scores:{accountId}` | 15 min | Scores expéditeurs |
 | `analytics:cleanup:{accountId}` | 15 min | Suggestions de nettoyage |
 | `analytics:inbox-zero:{accountId}` | 15 min | Données Inbox Zero |
 
