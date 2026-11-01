@@ -5,6 +5,32 @@ import { createLogger } from '../logger'
 
 const logger = createLogger('export')
 
+type ZipMail = {
+  gmail_message_id: string
+  subject: string | null
+  date: Date | null
+  eml_path: string
+  attachments: { filename: string; file_path: string }[]
+}
+type ZipRow = {
+  id: string; gmail_message_id: string; subject: string | null; date: unknown; eml_path: string
+  att_id: string | null; att_filename: string | null; att_file_path: string | null
+}
+
+/** One entry per mail, its attachments gathered (the query returns one row per attachment). */
+function groupByMail(rows: ZipRow[]): Map<string, ZipMail> {
+  const mailMap = new Map<string, ZipMail>()
+  for (const row of rows) {
+    let mail = mailMap.get(row.id)
+    if (!mail) {
+      mail = { gmail_message_id: row.gmail_message_id, subject: row.subject, date: row.date as Date | null, eml_path: row.eml_path, attachments: [] }
+      mailMap.set(row.id, mail)
+    }
+    if (row.att_id && row.att_filename && row.att_file_path) mail.attachments.push({ filename: row.att_filename, file_path: row.att_file_path })
+  }
+  return mailMap
+}
+
 export async function streamArchiveZip(
   accountId: string,
   mailIds: string[],
@@ -30,32 +56,7 @@ export async function streamArchiveZip(
     .where('am.id', 'in', mailIds)
     .execute()
 
-  // Regrouper les PJ par mail
-  const mailMap = new Map<string, {
-    gmail_message_id: string
-    subject: string | null
-    date: Date | null
-    eml_path: string
-    attachments: { filename: string; file_path: string }[]
-  }>()
-
-  for (const row of mails) {
-    if (!mailMap.has(row.id)) {
-      mailMap.set(row.id, {
-        gmail_message_id: row.gmail_message_id,
-        subject:          row.subject,
-        date:             row.date as unknown as Date | null,
-        eml_path:         row.eml_path,
-        attachments:      [],
-      })
-    }
-    if (row.att_id && row.att_filename && row.att_file_path) {
-      mailMap.get(row.id)!.attachments.push({
-        filename:  row.att_filename,
-        file_path: row.att_file_path,
-      })
-    }
-  }
+  const mailMap = groupByMail(mails)
 
   const zip = archiver('zip', { zlib: { level: 6 } })
   zip.pipe(outputStream)

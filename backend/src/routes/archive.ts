@@ -258,7 +258,7 @@ export async function archiveRoutes(app: FastifyInstance) {
           ${sender ? sql`AND sender ILIKE ${'%' + escapeIlike(sender) + '%'}` : sql``}
           ${from_date ? sql`AND date >= ${new Date(from_date)}` : sql``}
           ${to_date ? sql`AND date <= ${new Date(to_date)}` : sql``}
-          ${has_attachments === "true" ? sql`AND has_attachments = true` : has_attachments === "false" ? sql`AND has_attachments = false` : sql``}
+          ${has_attachments ? sql`AND has_attachments = ${has_attachments === "true"}` : sql``}
           ${q ? sql`AND search_vector @@ ${ftsQuery(q.trim().slice(0, 200))}` : sql``}
         GROUP BY thread_id
         ORDER BY latest_date DESC

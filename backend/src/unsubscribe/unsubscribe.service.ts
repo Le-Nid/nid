@@ -22,6 +22,41 @@ export interface NewsletterSender {
   sampleMessageIds: string[]
 }
 
+/** One fetched message into the per-sender totals: count, size, unread, newest date, unsubscribe links. */
+export function addMessageToSenders(senderMap: Map<string, NewsletterSender>, msg: gmail_v1.Schema$Message) {
+  const headers = msg.payload?.headers ?? []
+  const getH = (name: string) => headers.find((h) => h.name?.toLowerCase() === name.toLowerCase())?.value ?? ''
+  const from = getH('From')
+  const key = extractEmail(from).toLowerCase()
+  const unread = msg.labelIds?.includes('UNREAD') ? 1 : 0
+  const date = getH('Date')
+  const { url, mailto } = parseUnsubscribeHeader(getH('List-Unsubscribe'))
+
+  const existing = senderMap.get(key)
+  if (!existing) {
+    senderMap.set(key, {
+      sender: from,
+      email: key,
+      count: 1,
+      totalSizeBytes: msg.sizeEstimate ?? 0,
+      unreadCount: unread,
+      unsubscribeUrl: url,
+      unsubscribeMailto: mailto,
+      latestDate: date || new Date().toISOString(),
+      sampleMessageIds: [msg.id!],
+    })
+    return
+  }
+  existing.count++
+  existing.totalSizeBytes += msg.sizeEstimate ?? 0
+  existing.unreadCount += unread
+  if (existing.sampleMessageIds.length < 5) existing.sampleMessageIds.push(msg.id!)
+  if (date && new Date(date) > new Date(existing.latestDate)) existing.latestDate = date
+  // Prefer URL over mailto
+  existing.unsubscribeUrl ||= url
+  existing.unsubscribeMailto ||= mailto
+}
+
 // ─── Scan mailing-list senders (List-* headers) ─────────
 // Senders without List-Unsubscribe are kept with null url/mailto: the UI disables unsubscribe for them (D3)
 export async function scanNewsletters(
@@ -64,49 +99,7 @@ export async function scanNewsletters(
         config.GMAIL_CONCURRENCY
       )
 
-      for (const msg of fetched) {
-        const headers = msg.payload?.headers ?? []
-        const getH = (name: string) =>
-          headers.find((h: any) => h.name?.toLowerCase() === name.toLowerCase())?.value ?? ''
-
-        const unsubHeader = getH('List-Unsubscribe')
-        const unread = msg.labelIds?.includes('UNREAD') ? 1 : 0
-        const from = getH('From')
-        const email = extractEmail(from)
-        const key = email.toLowerCase()
-
-        const { url, mailto } = parseUnsubscribeHeader(unsubHeader)
-
-        const existing = senderMap.get(key)
-        if (existing) {
-          existing.count++
-          existing.totalSizeBytes += msg.sizeEstimate ?? 0
-          existing.unreadCount += unread
-          if (existing.sampleMessageIds.length < 5) {
-            existing.sampleMessageIds.push(msg.id!)
-          }
-          // Keep most recent date
-          const newDate = getH('Date')
-          if (newDate && new Date(newDate) > new Date(existing.latestDate)) {
-            existing.latestDate = newDate
-          }
-          // Prefer URL over mailto
-          if (!existing.unsubscribeUrl && url) existing.unsubscribeUrl = url
-          if (!existing.unsubscribeMailto && mailto) existing.unsubscribeMailto = mailto
-        } else {
-          senderMap.set(key, {
-            sender: from,
-            email: key,
-            count: 1,
-            totalSizeBytes: msg.sizeEstimate ?? 0,
-            unreadCount: unread,
-            unsubscribeUrl: url,
-            unsubscribeMailto: mailto,
-            latestDate: getH('Date') || new Date().toISOString(),
-            sampleMessageIds: [msg.id!],
-          })
-        }
-      }
+      for (const msg of fetched) addMessageToSenders(senderMap, msg)
 
       totalFetched += chunk.length
       onProgress?.(totalFetched, listRes.data.resultSizeEstimate ?? totalFetched)

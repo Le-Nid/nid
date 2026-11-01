@@ -85,46 +85,30 @@ export async function deleteRule(id: string, accountId: string) {
 
 // ─── Conversion conditions → query Gmail native ───────────
 
-export function buildGmailQuery(conditions: RuleCondition[]): string {
-  const parts: string[] = []
+const TEXT_FIELDS = new Set(['from', 'to', 'subject'])
+const SIZE_AND_AGE: Record<string, string> = { size_gt: 'larger', size_lt: 'smaller', older_than: 'older_than', newer_than: 'newer_than' }
 
-  for (const cond of conditions) {
-    const before = parts.length
-    switch (cond.field) {
-      case 'from':
-        if (cond.operator === 'contains' || cond.operator === 'equals')
-          parts.push(`from:(${cond.value})`)
-        else if (cond.operator === 'not_contains' || cond.operator === 'not_equals')
-          parts.push(`-from:(${cond.value})`)
-        break
-      case 'to':
-        if (cond.operator === 'contains' || cond.operator === 'equals')
-          parts.push(`to:(${cond.value})`)
-        else if (cond.operator === 'not_contains' || cond.operator === 'not_equals')
-          parts.push(`-to:(${cond.value})`)
-        break
-      case 'subject':
-        if (cond.operator === 'contains' || cond.operator === 'equals')
-          parts.push(`subject:(${cond.value})`)
-        else if (cond.operator === 'not_contains' || cond.operator === 'not_equals')
-          parts.push(`-subject:(${cond.value})`)
-        break
-      case 'has_attachment':
-        parts.push(cond.value === true || cond.value === 'true' ? 'has:attachment' : '-has:attachment')
-        break
-      case 'size_gt': parts.push(`larger:${cond.value}`);  break
-      case 'size_lt': parts.push(`smaller:${cond.value}`); break
-      case 'older_than': parts.push(`older_than:${cond.value}`); break
-      case 'newer_than': parts.push(`newer_than:${cond.value}`); break
-      case 'label':
-        if (cond.operator === 'equals')     parts.push(`label:${cond.value}`)
-        else if (cond.operator === 'not_equals') parts.push(`-label:${cond.value}`)
-        break
-    }
-    // An ignored condition widens the query, up to the whole mailbox: refuse it
-    if (parts.length === before) throw new Error(`Unsupported rule condition: ${cond.field} ${cond.operator}`)
+/** One condition as a Gmail search term; null when the field/operator pair is not supported. */
+function conditionTerm(cond: RuleCondition): string | null {
+  if (TEXT_FIELDS.has(cond.field)) {
+    if (cond.operator === 'contains' || cond.operator === 'equals') return `${cond.field}:(${cond.value})`
+    if (cond.operator === 'not_contains' || cond.operator === 'not_equals') return `-${cond.field}:(${cond.value})`
+    return null
   }
+  if (cond.field === 'has_attachment') return cond.value === true || cond.value === 'true' ? 'has:attachment' : '-has:attachment'
+  if (Object.hasOwn(SIZE_AND_AGE, cond.field)) return `${SIZE_AND_AGE[cond.field]}:${cond.value}`
+  if (cond.field === 'label' && cond.operator === 'equals') return `label:${cond.value}`
+  if (cond.field === 'label' && cond.operator === 'not_equals') return `-label:${cond.value}`
+  return null
+}
 
+export function buildGmailQuery(conditions: RuleCondition[]): string {
+  const parts = conditions.map((cond) => {
+    const term = conditionTerm(cond)
+    // An ignored condition widens the query, up to the whole mailbox: refuse it
+    if (!term) throw new Error(`Unsupported rule condition: ${cond.field} ${cond.operator}`)
+    return term
+  })
   if (!parts.length) throw new Error('A rule needs at least one condition')
   return parts.join(' ')
 }
