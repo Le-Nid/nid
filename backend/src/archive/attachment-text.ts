@@ -141,6 +141,9 @@ export async function backfillAttachmentText(onProgress?: (done: number) => Prom
   }
 }
 
+/** An attachment's text as a tsvector: the expression of the index of migration 023, so a match can use it. */
+export const attachmentTsv = () => sql`to_tsvector(${FTS_CONFIG}, COALESCE(archived_attachments.text_content, ''))`
+
 /**
  * For search results: per mail, its first attachment (by name) whose text matches, with a highlighted excerpt.
  * Only the page's mails are looked at, so the tsvector is computed on the fly for a few attachments at most.
@@ -152,7 +155,7 @@ export async function attachmentMatches(mailIds: string[], tsQuery: RawBuilder<u
     .select(['archived_mail_id', 'filename', sql<string>`ts_headline(${FTS_CONFIG}, text_content, ${tsQuery}, ${HEADLINE_OPTIONS})`.as('highlight')])
     .where('archived_mail_id', 'in', mailIds)
     .where('text_content', '<>', '')
-    .where(sql<boolean>`to_tsvector(${FTS_CONFIG}, text_content) @@ ${tsQuery}`)
+    .where(sql<boolean>`${attachmentTsv()} @@ ${tsQuery}`)
     .orderBy('archived_mail_id').orderBy('filename')
     .execute()
   return new Map(rows.map((r) => [r.archived_mail_id, { filename: r.filename, highlight: highlightToHtml(r.highlight) }]))

@@ -1028,7 +1028,7 @@
     "sourceArchived": "Archives locales",
     "sourceLive": "Gmail (>100 Ko)",
     "reload": "Recharger",
-    "searchPlaceholder": "Rechercher par nom, sujet ou expéditeur...",
+    "searchPlaceholder": "Nom, sujet, expéditeur ou contenu (PDF, Word)…",
     "noAttachment": "Aucune pièce jointe trouvée",
     "actions": "Actions",
     "download": "Télécharger",

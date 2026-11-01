@@ -10,6 +10,7 @@ import { DataList, dataListFeatures } from '@/components/app/DataList'
 import { EmptyState } from '@/components/app/EmptyState'
 import { LoadError } from '@/components/app/LoadError'
 import { PageHeader } from '@/components/app/PageHeader'
+import { Highlight } from '@/components/app/Highlight'
 import { attachmentsApi } from '@/api'
 import { useAccount } from '@/hooks/useAccount'
 import { useArchivedAttachments, useDedupBackfill, useDedupStats, useLiveAttachments } from '@/hooks/queries'
@@ -17,9 +18,10 @@ import { formatBytes, formatSender } from '@/utils/format'
 import { Pager } from './admin/shared'
 
 type Source = 'archived' | 'live'
-type Row = { id: string; filename: string; mime: string | null; size: number; subject: string; sender: string; date: string; href: string; preview: string | null }
+type Row = { id: string; filename: string; mime: string | null; size: number; subject: string; sender: string; date: string; href: string; preview: string | null; highlight?: string | null }
 
-type ArchivedAttachment = { id: string; filename: string; mime_type: string | null; size_bytes: number | string; mail_subject: string | null; mail_sender: string | null; mail_date: string | null }
+/** `highlight`: with a search, the matching excerpt of the attachment's text (PDF/DOCX), <mark>-only HTML */
+type ArchivedAttachment = { id: string; filename: string; mime_type: string | null; size_bytes: number | string; mail_subject: string | null; mail_sender: string | null; mail_date: string | null; highlight?: string | null }
 type LiveAttachment = { messageId: string; filename: string; mimeType: string; sizeBytes: number; mailSubject: string; mailSender: string; mailDate: string }
 
 const PAGE_SIZE = 50
@@ -55,6 +57,7 @@ function toRows(accountId: string, source: Source, archived?: ArchivedAttachment
     subject: a.mail_subject ?? '', sender: a.mail_sender ?? '', date: a.mail_date ?? '',
     href: attachmentsApi.downloadArchivedUrl(accountId, a.id),
     preview: isPreviewable(a.mime_type) ? attachmentsApi.downloadArchivedUrl(accountId, a.id, true) : null,
+    highlight: a.highlight,
   }))
 }
 
@@ -74,9 +77,14 @@ function buildColumns(t: TFunction) {
       header: t('attachments.filename'),
       meta: { mobile: 'title' },
       cell: ({ row }) => (
-        <span className="flex max-w-72 min-w-0 items-center gap-2">
-          <FileIcon mime={row.original.mime} />
-          <span className="truncate font-medium">{row.original.filename}</span>
+        <span className="flex max-w-72 min-w-0 flex-col">
+          <span className="flex min-w-0 items-center gap-2">
+            <FileIcon mime={row.original.mime} />
+            <span className="truncate font-medium">{row.original.filename}</span>
+          </span>
+          {row.original.highlight && (
+            <span className="line-clamp-2 text-xs text-muted-foreground"><Highlight html={row.original.highlight} /></span>
+          )}
         </span>
       ),
     }),

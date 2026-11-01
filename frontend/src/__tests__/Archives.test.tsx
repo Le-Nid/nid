@@ -174,10 +174,12 @@ describe('Archives — search', () => {
     account.provider = 'imap'
     const { router } = setup()
     expect(await screen.findByRole('tree', { name: 'Dossiers' })).toBeInTheDocument()
-    await user().type(screen.getByLabelText('Taille min (Mo)'), '1.5')
-    await user().type(screen.getByLabelText('Taille max (Mo)'), '10')
-    await user().type(screen.getByLabelText('Type de pièce jointe'), 'pdf')
-    // Three debounced fields (300 ms each, typed one after the other): more than waitFor's default 1 s on a busy runner
+    // One input event per field (paste): typing key by key re-renders the whole search per key, minutes on a busy runner
+    for (const [label, value] of [['Taille min (Mo)', '1.5'], ['Taille max (Mo)', '10'], ['Type de pièce jointe', 'pdf']]) {
+      await user().click(screen.getByLabelText(label))
+      await user().paste(value)
+    }
+    // The last field is debounced (300 ms) before the request; a busy runner renders slowly
     await waitFor(() => expect(archiveApi.listMails).toHaveBeenLastCalledWith('acc-1', {
       size_min: '1572864', size_max: '10485760', attachment_type: 'pdf', page: 1, limit: 50,
     }), { timeout: 5000 })

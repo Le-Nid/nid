@@ -8,7 +8,7 @@ import { config } from '../config'
 import { createLogger } from '../logger'
 import { resolveImportedLabelIds } from '../labels/labels.service'
 import { bodyTextFromParsed } from './body-text'
-import { extractAttachmentText } from './attachment-text'
+import { extractAttachments } from './archive.service'
 
 const logger = createLogger('import')
 
@@ -144,22 +144,8 @@ export async function importSingleEml(
   await storage.writeFile(emlPath, rawEml)
 
   // Extract and save attachments
-  const attachments: { filename: string; mimeType: string; size: number; filePath: string; textContent: string | null }[] = []
-  for (const [i, att] of (parsed.attachments ?? []).entries()) {
-    if (!att.filename) continue
-    await storage.mkdir(attachDir)
-    const safeName = `${i}_${att.filename.replace(/[^a-zA-Z0-9._-]/g, '_')}`
-    const attPath = path.join(attachDir, safeName)
-    await storage.writeFile(attPath, att.content)
-    const mimeType = att.contentType ?? 'application/octet-stream'
-    attachments.push({
-      filename: att.filename,
-      mimeType,
-      size: att.size,
-      filePath: attPath,
-      textContent: await extractAttachmentText(att.filename, mimeType, att.content), // NOSONAR: one attachment at a time
-    })
-  }
+  // Same as a Gmail backup: a file already archived in this account (same SHA-256) is not written again
+  const attachments = await extractAttachments(parsed, attachDir, accountId)
 
   const attachmentNames = attachments.map((a) => a.filename).join(' ')
   // Takeout mbox: `X-Gmail-Labels: Inbox,Category Promotions,Factures`
@@ -202,6 +188,7 @@ export async function importSingleEml(
           mime_type: a.mimeType,
           size_bytes: BigInt(a.size),
           file_path: a.filePath,
+          content_hash: a.contentHash,
           text_content: a.textContent,
         })),
       )

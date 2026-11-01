@@ -30,6 +30,7 @@ Migrations in-code dans `backend/src/db/migrations/`, enregistrées dans `backen
 | `020_drop_storage_configs` | Suppression de `storage_configs` (jamais utilisée) |
 | `021_attachment_text` | `archived_attachments.text_content` (texte des PDF/DOCX), ajouté au `search_vector` du mail (poids D) ; triggers qui recalculent le vecteur du mail quand ce texte arrive |
 | `022_imap_sync_scope` | `mail_accounts.imap_folders` (`text[]`, dossiers à sauvegarder, `NULL` = défaut) et `imap_since` (`date`, lue en `imap_since::text`) |
+| `023_attachment_text_index` | Index GIN `archived_attachments_text_fts_idx` sur `to_tsvector('nid_french', COALESCE(text_content, ''))` (recherche de la page Pièces jointes) |
 
 ---
 
@@ -374,6 +375,7 @@ La migration 001 créait `storage_configs` (stockage `local | s3` par utilisateu
 | `archived_mails` | `(account_id, deleted_at)` (partiel, `deleted_at IS NOT NULL`) | BTree | Listing corbeille |
 | `archived_attachments` | `archived_mail_id` | BTree | Join mails ↔ PJ |
 | `archived_attachments` | `content_hash` | BTree | Déduplication |
+| `archived_attachments` | `to_tsvector('nid_french', COALESCE(text_content, ''))` | GIN | Recherche dans le texte des PJ (page Pièces jointes) |
 | `archive_shares` | `token` | Unique | Accès au lien partagé |
 | `archive_shares` | `archived_mail_id`, `expires_at` | BTree | Partages d'un mail, nettoyage |
 | `rules` | `(account_id, template_id)` (partiel) | Unique | Création idempotente depuis un template |

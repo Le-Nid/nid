@@ -143,7 +143,8 @@ export async function archiveMail(accountId: string, messageId: string): Promise
   logger.info({ accountId, messageId, attachments: attachments.length, emlPath }, 'mail archived successfully')
 }
 
-async function extractAttachments(
+/** Each named attachment to disk once per account (SHA-256), with its searchable text. */
+export async function extractAttachments(
   parsed: ParsedMail,
   attachDir: string,
   accountId: string

@@ -30,6 +30,7 @@ In-code migrations in `backend/src/db/migrations/`, registered in `backend/src/d
 | `020_drop_storage_configs` | Drops `storage_configs` (never used) |
 | `021_attachment_text` | `archived_attachments.text_content` (PDF/DOCX text), added to the mail's `search_vector` (weight D); triggers recompute the mail's vector when that text lands |
 | `022_imap_sync_scope` | `mail_accounts.imap_folders` (`text[]`, folders to back up, `NULL` = default) and `imap_since` (`date`, read as `imap_since::text`) |
+| `023_attachment_text_index` | GIN index `archived_attachments_text_fts_idx` on `to_tsvector('nid_french', COALESCE(text_content, ''))` (Attachments page search) |
 
 ---
 
@@ -374,6 +375,7 @@ Migration 001 created `storage_configs` (one `local | s3` storage per user, with
 | `archived_mails` | `(account_id, deleted_at)` (partial, `deleted_at IS NOT NULL`) | BTree | Trash listing |
 | `archived_attachments` | `archived_mail_id` | BTree | Mails ↔ attachments join |
 | `archived_attachments` | `content_hash` | BTree | Deduplication |
+| `archived_attachments` | `to_tsvector('nid_french', COALESCE(text_content, ''))` | GIN | Search in attachment text (Attachments page) |
 | `archive_shares` | `token` | Unique | Share link access |
 | `archive_shares` | `archived_mail_id`, `expires_at` | BTree | A mail's shares, cleanup |
 | `rules` | `(account_id, template_id)` (partial) | Unique | Idempotent creation from a template |

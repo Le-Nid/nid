@@ -98,7 +98,7 @@ describe('attachmentMatches', () => {
     const out = await attachmentMatches(['m1', 'm2'], sql`websearch_to_tsquery('nid_french', ${'impot'})`)
     expect(out.get('m1')).toEqual({ filename: 'avis.pdf', highlight: 'votre <mark>impot</mark> &lt;b&gt;' })
     expect(seen[0].sql).toMatch(/^select distinct on \("archived_mail_id"\) "archived_mail_id", "filename", ts_headline\('nid_french', text_content/)
-    expect(seen[0].sql).toContain('where "archived_mail_id" in ($3, $4) and "text_content" <> $5 and to_tsvector(\'nid_french\', text_content) @@ websearch_to_tsquery')
+    expect(seen[0].sql).toContain('where "archived_mail_id" in ($3, $4) and "text_content" <> $5 and to_tsvector(\'nid_french\', COALESCE(archived_attachments.text_content, \'\')) @@ websearch_to_tsquery')
     expect(await attachmentMatches([], sql``)).toEqual(new Map())
   })
 })
