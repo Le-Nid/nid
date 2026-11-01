@@ -177,9 +177,10 @@ describe('Archives — search', () => {
     await user().type(screen.getByLabelText('Taille min (Mo)'), '1.5')
     await user().type(screen.getByLabelText('Taille max (Mo)'), '10')
     await user().type(screen.getByLabelText('Type de pièce jointe'), 'pdf')
+    // Three debounced fields (300 ms each, typed one after the other): more than waitFor's default 1 s on a busy runner
     await waitFor(() => expect(archiveApi.listMails).toHaveBeenLastCalledWith('acc-1', {
       size_min: '1572864', size_max: '10485760', attachment_type: 'pdf', page: 1, limit: 50,
-    }))
+    }), { timeout: 5000 })
     expect(router.state.location.search).toBe('?smin=1.5&smax=10&atype=pdf')
   })
 
