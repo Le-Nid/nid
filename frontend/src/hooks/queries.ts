@@ -751,6 +751,14 @@ export function useImportMbox(accountId: string) {
   })
 }
 
+export function useImportEml(accountId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (files: File[]) => importApi.importEml(accountId, files),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['archive', accountId] }),
+  })
+}
+
 export function useImportImap(accountId: string) {
   return useMutation({
     mutationFn: (data: Parameters<typeof importApi.importImap>[1]) =>

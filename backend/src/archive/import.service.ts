@@ -101,6 +101,11 @@ export async function importMbox(
   return { imported, skipped, errors }
 }
 
+/** Starts with a header field (RFC 5322 `name:`): anything else uploaded as .eml would be archived as an empty mail. */
+export function looksLikeEml(raw: Buffer): boolean {
+  return /^[\x21-\x39\x3b-\x7e]+:/.test(raw.subarray(0, 1000).toString('latin1'))
+}
+
 /**
  * Import a single EML string into the archive; `folderLabels` (IMAP folder) join the Takeout labels.
  */

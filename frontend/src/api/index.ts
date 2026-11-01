@@ -485,6 +485,15 @@ export const importApi = {
     }).then((r) => r.data)
   },
 
+  /** Archived at once (no job): counts back. */
+  importEml: (accountId: string, files: File[]): Promise<{ imported: number; skipped: number; errors: number }> => {
+    const form = new FormData()
+    for (const file of files) form.append('files', file)
+    return api.post(`/api/import/${accountId}/eml`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then((r) => r.data)
+  },
+
   importImap: (accountId: string, data: {
     host: string
     port: number

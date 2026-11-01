@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useId, useRef, useState, type ChangeEvent, type DragEvent, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ConfirmDialog } from '@/components/app/ConfirmDialog'
 import { FormField } from '@/components/app/FormField'
-import { useDeleteMe, useExportConfig, useExportMyData, useImportConfig, useImportImap, useImportMbox } from '@/hooks/queries'
+import { useDeleteMe, useExportConfig, useExportMyData, useImportConfig, useImportEml, useImportImap, useImportMbox } from '@/hooks/queries'
 import { useAuthStore } from '@/store/auth.store'
 import { useAccount } from '@/hooks/useAccount'
 import { saveBlob } from '@/utils/download'
@@ -26,18 +26,27 @@ function useJobStarted() {
   })
 }
 
-/** Hidden file input behind a real button (the native one cannot be styled or named consistently). */
-function FilePicker({ label, accept, disabled, onFile }: Readonly<{ label: string; accept: string; disabled?: boolean; onFile: (file: File) => void }>) {
+/** Hidden file input behind a real button (the native one cannot be styled or named consistently); files can be dropped on it. */
+function FilePicker({ label, accept, multiple, disabled, onFiles }: Readonly<{
+  label: string; accept: string; multiple?: boolean; disabled?: boolean; onFiles: (files: File[]) => void
+}>) {
   const ref = useRef<HTMLInputElement>(null)
+  const pick = (list: FileList | null) => {
+    const files = [...(list ?? [])].slice(0, multiple ? undefined : 1)
+    if (files.length) onFiles(files)
+  }
   const change = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+    pick(e.target.files)
     e.target.value = '' // the same file can be picked again
-    if (file) onFile(file)
+  }
+  const drop = (e: DragEvent<HTMLButtonElement>) => {
+    e.preventDefault()
+    if (!disabled) pick(e.dataTransfer.files)
   }
   return (
     <>
-      <input ref={ref} type="file" accept={accept} className="hidden" tabIndex={-1} aria-hidden="true" onChange={change} />
-      <Button variant="outline" className="h-11 w-fit md:h-9" disabled={disabled} onClick={() => ref.current?.click()}>
+      <input ref={ref} type="file" accept={accept} multiple={multiple} className="hidden" tabIndex={-1} aria-hidden="true" onChange={change} />
+      <Button variant="outline" className="h-11 w-fit md:h-9" disabled={disabled} onClick={() => ref.current?.click()} onDragOver={(e) => e.preventDefault()} onDrop={drop}>
         <Upload aria-hidden="true" />{label}
       </Button>
     </>
@@ -49,6 +58,7 @@ function MailImportCards({ accountId, email }: Readonly<{ accountId: string; ema
   const id = useId()
   const started = useJobStarted()
   const mbox = useImportMbox(accountId)
+  const eml = useImportEml(accountId)
   const imap = useImportImap(accountId)
   const exporter = useMboxExport(accountId)
   const failed = () => toast.error(t('settings.data.importFailed'))
@@ -73,7 +83,20 @@ function MailImportCards({ accountId, email }: Readonly<{ accountId: string; ema
   return (
     <>
       <SettingsCard title={t('settings.data.mbox')} description={t('settings.data.mboxHint', { email })}>
-        <FilePicker label={t('settings.data.mboxPick')} accept=".mbox,.mbx" disabled={mbox.isPending} onFile={(file) => mbox.mutate(file, { onSuccess: started, onError: failed })} />
+        <FilePicker label={t('settings.data.mboxPick')} accept=".mbox,.mbx" disabled={mbox.isPending} onFiles={([file]) => mbox.mutate(file, { onSuccess: started, onError: failed })} />
+      </SettingsCard>
+
+      <SettingsCard title={t('settings.data.eml')} description={t('settings.data.emlHint', { email })}>
+        <FilePicker
+          label={t('settings.data.emlPick')}
+          accept=".eml,message/rfc822"
+          multiple
+          disabled={eml.isPending}
+          onFiles={(files) => eml.mutate(files, {
+            onSuccess: (r) => (r.imported || r.skipped ? toast.success : toast.error)(t('settings.data.emlDone', { count: r.imported, skipped: r.skipped, errors: r.errors })),
+            onError: failed,
+          })}
+        />
       </SettingsCard>
 
       <SettingsCard title={t('settings.data.imap')} description={t('settings.data.imapHint', { email })}>
@@ -137,7 +160,7 @@ function ConfigCard() {
         <Button variant="outline" className="h-11 md:h-9" disabled={exportConfig.isPending} onClick={save}>
           <Download aria-hidden="true" />{t('settings.data.configExport')}
         </Button>
-        <FilePicker label={t('settings.data.configImport')} accept=".json,application/json" disabled={importConfig.isPending} onFile={load} />
+        <FilePicker label={t('settings.data.configImport')} accept=".json,application/json" disabled={importConfig.isPending} onFiles={([file]) => load(file)} />
       </div>
     </SettingsCard>
   )

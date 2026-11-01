@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createMemoryRouter, Outlet, RouterProvider } from 'react-router'
@@ -22,7 +22,7 @@ vi.mock('../api', () => ({
   sharingApi: { list: vi.fn() },
   webhooksApi: { list: vi.fn(), create: vi.fn(), toggle: vi.fn(), remove: vi.fn(), test: vi.fn() },
   configApi: { exportConfig: vi.fn(), importConfig: vi.fn() },
-  importApi: { importMbox: vi.fn(), importImap: vi.fn(), exportMbox: vi.fn() },
+  importApi: { importMbox: vi.fn(), importEml: vi.fn(), importImap: vi.fn(), exportMbox: vi.fn() },
   labelsApi: { sync: vi.fn() },
   gmailAccountsApi: { connectUrl: vi.fn(), update: vi.fn(), disconnect: vi.fn() },
   rulesApi: { getTemplates: vi.fn(), preview: vi.fn(), createFromTemplate: vi.fn() },
@@ -547,6 +547,20 @@ describe('Données', () => {
     expect(importApi.importImap).toHaveBeenCalledWith('acc-1', {
       host: 'imap.example.com', port: 993, secure: true, user: 'ana', pass: 'secret', folder: undefined, maxMessages: undefined,
     })
+  })
+
+  it('imports several .eml files at once (picked or dropped) and reports the counts', async () => {
+    vi.mocked(importApi.importEml).mockResolvedValueOnce({ imported: 2, skipped: 1, errors: 0 }).mockResolvedValueOnce({ imported: 0, skipped: 0, errors: 1 })
+    setup('/settings/data')
+    const files = [new File(['Subject: a'], 'a.eml'), new File(['Subject: b'], 'b.eml'), new File(['Subject: c'], 'c.eml')]
+    const button = screen.getByRole('button', { name: 'Choisir ou déposer des fichiers .eml' })
+    await userEvent.upload(button.previousElementSibling as HTMLInputElement, files)
+    expect(importApi.importEml).toHaveBeenCalledWith('acc-1', files)
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('2 mails importés, 1 ignoré(s), 0 erreur(s)'))
+
+    fireEvent.drop(button, { dataTransfer: { files: [files[0]] } })
+    await waitFor(() => expect(importApi.importEml).toHaveBeenLastCalledWith('acc-1', [files[0]]))
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('0 mail importé, 0 ignoré(s), 1 erreur(s)'))
   })
 
   it('exports the archives and the configuration, and imports a configuration', async () => {
