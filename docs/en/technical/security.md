@@ -136,6 +136,14 @@ Webhooks of type `generic` include an `X-Webhook-Signature` header (`sha256=<HMA
 
 SSRF protection: URLs resolving to a loopback, private, link-local (cloud metadata), CGNAT or unspecified address are refused, unless `WEBHOOK_ALLOW_PRIVATE_NETWORKS=true` (ntfy, Home Assistant on the LAN…).
 
+### IMAP autoconfiguration
+
+`GET /api/auth/imap/autoconfig` contacts `autoconfig.thunderbird.net` and `autoconfig.<domain of the typed address>`: the same guard (`utils/net.ts`, `ipaddr.js`) applies, **with no bypass** (a non-public host is never contacted, whatever the configuration), following no redirect, 3 s and 64 KB at most per request, 20 requests/min. As for webhooks, the DNS rebinding window between resolution and request remains.
+
+### Parsed attachments
+
+The text of PDFs (pdf.js through `unpdf`, no `eval`) and DOCX files is extracted in the Node process, bounded to 20 MB, 100 pages, 50,000 characters and 10 s; a DOCX whose `word/document.xml` claims more than 20 MB is not inflated (zip bomb). An unreadable or hostile file gives an empty text, never an archiving error.
+
 ### Email Content
 
 Remote images in emails are blocked by default in the reader (`notification_preferences.remote_images = 'block'`), which defeats tracking pixels.

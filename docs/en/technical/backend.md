@@ -8,7 +8,7 @@
 | `@fastify/jwt` + `@fastify/cookie` | JWT auth (HS256) read from the httpOnly `token` cookie or the `Authorization` header |
 | `@fastify/cors` | CORS restricted to `FRONTEND_URL` |
 | `@fastify/rate-limit` | 100 req/min per IP by default, stricter limits per route |
-| `@fastify/multipart` | Uploads (mbox import) |
+| `@fastify/multipart` | Uploads (mbox and .eml import) |
 | `@fastify/swagger` + `@fastify/swagger-ui` | OpenAPI, UI at `/docs` |
 | `kysely` + `pg` | Typed SQL queries, in-code migrations |
 | `bullmq` + `ioredis` | Job queue (Redis), SSE pub/sub, JWT blacklist |
@@ -16,7 +16,9 @@
 | `arctic` | OAuth2 for login providers (Google, Microsoft, Discord, Facebook, LinkedIn, Keycloak) |
 | `zod` | Input validation |
 | `mailparser` | EML parsing |
-| `imapflow` | IMAP import |
+| `imapflow` | IMAP accounts (sync, restore by `APPEND`) and IMAP import |
+| `unpdf` | Text of attached PDFs ("serverless" pdf.js, pure JS) |
+| `fflate` | Reading an attached DOCX's zip (`word/document.xml`) |
 | `archiver` | ZIP export |
 | `bcrypt` | Password hashing |
 | `otplib` + `qrcode` | TOTP 2FA |
@@ -35,16 +37,17 @@ src/
 ├── logger.ts           ← createLogger(name)
 ├── plugins/            ← index.ts (cors, cookie, jwt, rate-limit, multipart, swagger, decorators), db.ts, redis.ts
 ├── routes/             ← One file per module, registered under /api/<module> in routes/index.ts
-├── db/                 ← index.ts (Kysely + Migrator), types.ts, migrations/001…009
+├── db/                 ← index.ts (Kysely + Migrator), types.ts, migrations/001…022
 ├── jobs/               ← queue.ts (enqueueJob), scheduler.ts, workers/unified.worker.ts
 ├── events/             ← events.service.ts (per-user SSE stream, Redis pub/sub)
 ├── gmail/              ← gmail.service.ts, gmail-throttle.ts, quota.service.ts
 ├── auth/               ← oauth.service.ts (Gmail), social.service.ts (Arctic login)
-├── archive/            ← archive, body-text, dedup, export, import, integrity, retention, sharing, trash
+├── archive/            ← archive, attachment-text, body-text, contacts, dedup, export, import, integrity, restore, retention, sharing, trash
+├── imap/               ← imap.service.ts (connection, incremental sync, folders), autoconfig.ts (ISPDB / the domain's autoconfig)
 ├── rules/  labels/  unsubscribe/  expiration/  analytics/  dashboard/ (cache)
 ├── notifications/      ← notify.ts, notification-prefs.service.ts
 ├── webhooks/  audit/  reports/  privacy/ (encryption.service.ts)  storage/
-├── utils/              ← auth.ts (authPresets), db.ts, pagination.ts
+├── utils/              ← auth.ts (authPresets), db.ts, net.ts (SSRF guard), pagination.ts, secret.ts (sealed IMAP passwords)
 ```
 
 Business logic goes into a service (`src/{module}/{module}.service.ts`) as soon as it has more than one consumer (route, scheduler, worker) or needs a transaction; a trivial single-consumer CRUD can stay in the route.
@@ -158,4 +161,4 @@ Subjects using RFC 2047 encoding (`=?UTF-8?B?...?=`, `=?UTF-8?Q?...?=`) are deco
 - **Quoted-Printable** (`?Q?`) — replacement of `=XX` and `_` (space)
 - **Multiple charsets** — via `TextDecoder` (UTF-8, ISO-8859-1, etc.)
 
-The plain-text body is extracted into `archived_mails.body_text` (`archive/body-text.ts`) for full-text search.
+The plain-text body is extracted into `archived_mails.body_text` (`archive/body-text.ts`) and the text of attached PDF/DOCX into `archived_attachments.text_content` (`archive/attachment-text.ts`, bounds 20 MB / 100 pages / 50,000 characters / 10 s), both indexed for full-text search (see [Database](database.md)).

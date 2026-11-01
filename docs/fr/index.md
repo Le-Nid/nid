@@ -16,14 +16,14 @@ Elle remplace des outils comme Gmail Cleaner et OpenArchiver, sans envoyer vos d
 | 📬 **Mails** | Recherche Gmail à jetons, recherches enregistrées, actions en masse avec annulation, lecteur, raccourcis clavier, « Tous les comptes » |
 | 🧹 **Nettoyage** | Expéditeurs et newsletters (List-Unsubscribe), gros mails, désabonnement et suppression en masse |
 | 🤖 **Règles** | Conditions Gmail + actions, planification, modèles prêts à l'emploi, libellés |
-| 📦 **Archives** | Stockage EML sur NAS, recherche plein texte avec surlignage, partage par lien, corbeille, rétention |
+| 📦 **Archives** | Stockage EML sur NAS (Gmail et comptes IMAP), recherche plein texte avec surlignage, y compris dans les PDF et DOCX joints, filtres taille / type de pièce jointe, restauration dans la boîte mail, partage par lien, corbeille, rétention |
 | 📎 **Pièces jointes** | Gmail et archives, aperçu des images et PDF, déduplication |
 | ⚙️ **Activité** | Suivi des jobs en temps réel (BullMQ + SSE), annuler, relancer |
 | 🔐 **Comptes** | JWT local, SSO Google et autres fournisseurs, 2FA/TOTP, multi-utilisateurs, sauvegarde automatique par compte Gmail |
 | 🔔 **Notifications** | In-app, webhooks (Discord, Slack, Ntfy, HTTP), rapport hebdomadaire |
 | 🛡️ **Admin** | Utilisateurs, quota Gmail API, journal d'audit, intégrité des archives, corbeille globale |
 | 🔒 **Vie privée** | Images distantes (et pixels espions) bloquées par le lecteur jusqu'à « Afficher » |
-| 💾 **Données** | Export/import de la configuration, import IMAP/mbox, export mbox |
+| 💾 **Données** | Export/import de la configuration, import IMAP / mbox / .eml, export mbox |
 | 🌐 **i18n** | Français / Anglais, thème clair/sombre, mobile |
 
 ---

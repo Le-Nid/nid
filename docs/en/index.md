@@ -16,14 +16,14 @@ It replaces tools like Gmail Cleaner and OpenArchiver, without sending your data
 | 📬 **Mails** | Token-based Gmail search, saved searches, bulk actions with undo, reader, keyboard shortcuts, « All accounts » |
 | 🧹 **Cleanup** | Senders and newsletters (List-Unsubscribe), large mails, bulk unsubscribe and delete |
 | 🤖 **Rules** | Gmail conditions + actions, scheduling, ready-made templates, labels |
-| 📦 **Archives** | EML storage on your NAS, full-text search with highlighting, link sharing, trash, retention |
+| 📦 **Archives** | EML storage on your NAS (Gmail and IMAP accounts), full-text search with highlighting, attached PDF and DOCX included, size / attachment type filters, restore to the mailbox, link sharing, trash, retention |
 | 📎 **Attachments** | Gmail and archives, image and PDF preview, deduplication |
 | ⚙️ **Activity** | Real-time job tracking (BullMQ + SSE), cancel, retry |
 | 🔐 **Accounts** | Local JWT, Google and other SSO providers, 2FA/TOTP, multi-user, automatic backup per Gmail account |
 | 🔔 **Notifications** | In-app, webhooks (Discord, Slack, Ntfy, HTTP), weekly report |
 | 🛡️ **Admin** | Users, Gmail API quota, audit log, archive integrity, global trash |
 | 🔒 **Privacy** | Remote images (and tracking pixels) blocked by the reader until « Show » |
-| 💾 **Data** | Configuration export/import, IMAP/mbox import, mbox export |
+| 💾 **Data** | Configuration export/import, IMAP / mbox / .eml import, mbox export |
 | 🌐 **i18n** | French / English, light/dark theme, mobile |
 
 ---
