@@ -91,7 +91,7 @@ export function ImapAccountDialog({ account, onClose, onCreated }: Readonly<{
               <Input id={`${id}-port`} type="number" required min={1} max={65535} value={port} onChange={(e) => editServer(setPort)(e.target.value)} className={inputClass} />
             </FormField>
           </div>
-          {found && <p role="status" className="text-sm text-muted-foreground">{t(found === 'guess' ? 'settings.imap.guessed' : 'settings.imap.found')}</p>}
+          {found && <output className="block text-sm text-muted-foreground">{t(found === 'guess' ? 'settings.imap.guessed' : 'settings.imap.found')}</output>}
           <label htmlFor={`${id}-secure`} className="flex min-h-11 items-center gap-3 text-sm md:min-h-0">
             <Checkbox id={`${id}-secure`} checked={secure} onCheckedChange={(v) => editServer(setSecure)(v === true)} />
             {t('settings.imap.secure')}

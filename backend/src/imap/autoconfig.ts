@@ -10,7 +10,7 @@ const MAX_BYTES = 64 * 1024
 export function parseAutoconfig(xml: string, domain: string): ImapServer | null {
   const servers: (ImapServer & { rank: number })[] = []
   for (const [, block] of xml.matchAll(/<incomingServer\s+type="imap"\s*>([\s\S]*?)<\/incomingServer>/gi)) {
-    const tag = (name: string) => new RegExp(`<${name}>\\s*([^<]*?)\\s*</${name}>`, 'i').exec(block)?.[1] ?? ''
+    const tag = (name: string) => new RegExp(String.raw`<${name}>\s*([^<]*?)\s*</${name}>`, 'i').exec(block)?.[1] ?? ''
     const host = tag('hostname').replaceAll('%EMAILDOMAIN%', domain).toLowerCase()
     const port = Number(tag('port'))
     const rank = ['SSL', 'STARTTLS'].indexOf(tag('socketType').toUpperCase())
@@ -18,7 +18,7 @@ export function parseAutoconfig(xml: string, domain: string): ImapServer | null 
       servers.push({ host, port, secure: rank === 0, rank })
     }
   }
-  const best = servers.sort((a, b) => a.rank - b.rank)[0]
+  const best = servers.toSorted((a, b) => a.rank - b.rank)[0]
   return best ? { host: best.host, port: best.port, secure: best.secure } : null
 }
 
