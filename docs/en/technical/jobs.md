@@ -31,7 +31,7 @@ BullMQ allows:
 | `restore_gmail` | `POST /api/archive/:accountId/mails/restore-mailbox` (Gmail account) |
 | `restore_imap` | `POST /api/archive/:accountId/mails/restore-mailbox` (IMAP account); a refused password flags the account to reconnect |
 | `purge_archive_trash` | scheduler (daily, 4 AM) |
-| `backfill_body_text` | scheduler, once at startup if some archives still lack `body_text` |
+| `backfill_body_text` | scheduler, once at startup if some archives still lack `body_text` or some PDF/DOCX attachments lack `text_content` (bodies, then attachments) |
 | `apply_retention` | No caller at the moment: `POST /api/retention/run` applies the policies synchronously |
 
 `POST /api/jobs/:jobId/retry` can re-enqueue any type (see [Retry](#retry)).

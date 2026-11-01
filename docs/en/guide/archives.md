@@ -19,7 +19,7 @@ Other ways to fill the archives: **Save to the NAS** in [Mail](mails.md), an acc
 ## Mails tab: search
 
 - **Label tree** (on the left on desktop): **All mails** then the labels that hold archived mails, with their count. For an IMAP account, these are its folders (**Folders**).
-- **Full-text search**: subject, sender, content and body, accent-insensitive, with `"exact phrase"`, `-excluded` and `OR`. Matching terms are highlighted in the extract.
+- **Full-text search**: subject, sender, content and body, plus the text of PDF and Word (.docx) attachments, accent-insensitive, with `"exact phrase"`, `-excluded` and `OR`. Matching terms are highlighted in the extract; a mail found through an attachment shows "Found in attachment “…”" with that attachment's excerpt. Existing archives are indexed in the background after the update (shown in [Activity](activity.md)).
 - **Tags** (below the labels on desktop): **All tags** then your tags, with their count. A selected tag filters the list and offers **Delete tag "…"**, which removes it from every archive of the account without deleting the mails.
 - **Filters**: **Sender**, period (**From** / **To**), **Min size (MB)** / **Max size (MB)**, **Attachment type** (an extension such as `pdf` or `docx`, or a MIME type such as `image/` for every image), **With attachment**. On mobile they sit in the **Filters (N)** panel with the **Label** (the **Folder** for an IMAP account) and the **Tag**, then **Show results**.
 

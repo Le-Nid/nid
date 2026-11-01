@@ -38,6 +38,14 @@ test.describe('Archives', () => {
     await expect(page.getByText(MORNING)).toHaveCount(0)
   })
 
+  test('a search term found in an attachment names it', async ({ page }) => {
+    await page.goto('/archives')
+    await page.getByRole('searchbox', { name: t('archives.search') }).fill('impôt')
+    await expect(results(page)).toHaveText('1 résultat · 0,12 s')
+    await expect(page.getByText(t('archives.foundInAttachment', { name: 'avis-impot-2025.pdf' }))).toBeVisible()
+    await expect(page.locator('mark').filter({ hasText: 'impôt' })).toBeVisible()
+  })
+
   test('filters by size and attachment type', async ({ page, isMobile }) => {
     await page.goto('/archives')
     await expect(results(page)).toHaveText('2 résultats · 0,12 s')

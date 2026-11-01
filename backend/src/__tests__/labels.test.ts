@@ -27,7 +27,7 @@ vi.mock('../db', () => ({ getDb: () => chain }))
 const mockSqlExecute = vi.fn()
 vi.mock('kysely', async () => ({
   ...(await vi.importActual<any>('kysely')),
-  sql: () => ({ execute: mockSqlExecute }),
+  sql: Object.assign(() => ({ execute: mockSqlExecute }), { lit: (v: unknown) => v }),
 }))
 
 const mockListLabels = vi.fn()

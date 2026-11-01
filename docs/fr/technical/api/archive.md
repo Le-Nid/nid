@@ -24,7 +24,7 @@ Toutes les routes `/:accountId/...` exigent le JWT et la propriété du compte G
 | `page` | Page (défaut : 1) |
 | `limit` | Résultats par page (défaut : 50, max : 100) |
 
-Avec `q`, les résultats sont triés par pertinence puis par date, et chaque mail porte un champ `highlight` (extrait HTML avec les termes trouvés en `<mark>`). Les mails à la corbeille sont exclus. `body_text`, `search_vector` et `eml_path` ne sont jamais renvoyés.
+Avec `q`, les résultats sont triés par pertinence puis par date, et chaque mail porte un champ `highlight` (extrait HTML avec les termes trouvés en `<mark>`). La recherche couvre aussi le texte des pièces jointes PDF et DOCX : chaque mail porte alors `attachment_match`, `{ "filename", "highlight" }` de sa première pièce jointe (par nom) dont le texte correspond, ou `null`. Les mails à la corbeille sont exclus. `body_text`, `search_vector` et `eml_path` ne sont jamais renvoyés.
 
 **Réponse**
 ```json

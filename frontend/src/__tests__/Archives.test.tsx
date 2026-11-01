@@ -132,6 +132,22 @@ describe('Archives — search', () => {
     expect(screen.getByText('Relevé mensuel')).toBeInTheDocument()
   })
 
+  it('a match found in an attachment shows its excerpt and the attachment name', async () => {
+    vi.mocked(archiveApi.listMails).mockResolvedValue({
+      mails: [
+        { ...MAIL, highlight: 'Votre facture', attachment_match: { filename: 'avis-impot.pdf', highlight: 'revenu <mark>imposable</mark>' } },
+        { ...OTHER, highlight: 'Relevé <mark>imposable</mark>', attachment_match: { filename: 'releve.docx', highlight: '<mark>imposable</mark>' } },
+      ],
+      total: 2, page: 1, limit: 50,
+    })
+    setup('/archives?q=imposable')
+    expect(await screen.findByText('Trouvé dans la pièce jointe « avis-impot.pdf »')).toBeInTheDocument()
+    expect(screen.getByText('Trouvé dans la pièce jointe « releve.docx »')).toBeInTheDocument()
+    const marks = screen.getAllByText('imposable', { selector: 'mark' })
+    // Body without a match: the attachment excerpt; body with one: the body excerpt
+    expect(marks.map((m) => m.parentElement?.textContent)).toEqual(['revenu imposable', 'Relevé imposable'])
+  })
+
   it('filters by label with the tree (click and keyboard), and by sender, dates and attachments', async () => {
     const { router } = setup()
     const tree = await screen.findByRole('tree')

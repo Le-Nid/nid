@@ -174,7 +174,7 @@ describe('archiveRoutes — trash coverage gaps', () => {
     await app.register(archiveRoutes)
     await app.ready()
 
-    mockExecute.mockResolvedValueOnce([{ id: 'mail-1', subject: 'Found' }])
+    mockExecute.mockResolvedValueOnce([{ id: 'mail-1', subject: 'Found' }]).mockResolvedValueOnce([])
     mockExecuteTakeFirstOrThrow.mockResolvedValueOnce({ count: 1 })
 
     const res = await app.inject({

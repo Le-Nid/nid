@@ -14,6 +14,7 @@ import { applyRetentionPolicies } from '../../archive/retention.service'
 import { purgeArchiveTrash } from '../../archive/trash.service'
 import { checkArchiveIntegrity, saveIntegrityResult } from '../../archive/integrity.service'
 import { backfillBodyText, countPendingBodyText } from '../../archive/body-text'
+import { backfillAttachmentText, countPendingAttachmentText } from '../../archive/attachment-text'
 import { restoreToGmail, restoreToImap } from '../../archive/restore.service'
 import { createLogger } from '../../logger'
 import { config } from '../../config'
@@ -637,18 +638,19 @@ async function handleIntegrity(job: Job) {
   }
 }
 
-// ─── Backfill body_text (B2) ────────────────────────────────
+// ─── Backfill body_text (B2), then PDF/DOCX attachment text ─
 async function handleBackfillBodyText(job: Job) {
   const db = getDb()
   const setJob = (values: Record<string, unknown>) =>
     db.updateTable('jobs').set(values).where('bullmq_id', '=', String(job.id)).execute()
 
-  const total = await countPendingBodyText()
+  const total = await countPendingBodyText() + await countPendingAttachmentText()
   await setJob({ status: 'active', total })
+  const progress = (done: number) =>
+    setJob({ processed: done, progress: total ? Math.min(99, Math.round((done / total) * 100)) : 0 }).then(() => undefined)
   try {
-    const processed = await backfillBodyText((done) =>
-      setJob({ processed: done, progress: total ? Math.min(99, Math.round((done / total) * 100)) : 0 }).then(() => undefined),
-    )
+    const bodies = await backfillBodyText(progress)
+    const processed = bodies + await backfillAttachmentText((done) => progress(bodies + done))
     await setJob({ status: 'completed', progress: 100, processed, completed_at: new Date() })
     return { processed }
   } catch (err) {

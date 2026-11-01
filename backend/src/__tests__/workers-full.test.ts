@@ -58,6 +58,12 @@ vi.mock('../privacy/encryption.service', () => ({ decryptArchives: vi.fn() }))
 
 const mockBackfillBodyText = vi.fn()
 const mockCountPendingBodyText = vi.fn()
+const mockBackfillAttachmentText = vi.fn().mockResolvedValue(0)
+const mockCountPendingAttachmentText = vi.fn().mockResolvedValue(0)
+vi.mock('../archive/attachment-text', () => ({
+  backfillAttachmentText: (...args: any[]) => mockBackfillAttachmentText(...args),
+  countPendingAttachmentText: () => mockCountPendingAttachmentText(),
+}))
 vi.mock('../archive/body-text', () => ({
   backfillBodyText: (...args: any[]) => mockBackfillBodyText(...args),
   countPendingBodyText: (...args: any[]) => mockCountPendingBodyText(...args),
@@ -318,9 +324,17 @@ describe('unified worker handlers', () => {
       return 400
     })
 
+    mockCountPendingAttachmentText.mockResolvedValue(30)
+    mockBackfillAttachmentText.mockImplementation(async (onProgress: (n: number) => Promise<void>) => {
+      await onProgress(30)
+      return 30
+    })
+
     const result = await capturedHandler(createMockJob('backfill_body_text', { accountId: '' }))
-    expect(result).toEqual({ processed: 400 })
+    // Bodies first, then attachments, one progress over both
+    expect(result).toEqual({ processed: 430 })
     expect(mockBackfillBodyText).toHaveBeenCalledTimes(1)
+    expect(mockBackfillAttachmentText).toHaveBeenCalledTimes(1)
   })
 
   it('handles backfill_body_text failure', async () => {

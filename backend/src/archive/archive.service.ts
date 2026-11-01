@@ -9,6 +9,7 @@ import { gmailRetry } from '../gmail/gmail-throttle'
 import { trackApiCall } from '../gmail/quota.service'
 import { config } from '../config'
 import { createLogger } from '../logger'
+import { extractAttachmentText } from './attachment-text'
 
 const logger = createLogger('archive')
 
@@ -133,6 +134,7 @@ export async function archiveMail(accountId: string, messageId: string): Promise
           size_bytes:       BigInt(a.size),
           file_path:        a.filePath,
           content_hash:     a.contentHash,
+          text_content:     a.textContent,
         }))
       )
       .execute()
@@ -145,8 +147,8 @@ async function extractAttachments(
   parsed: ParsedMail,
   attachDir: string,
   accountId: string
-): Promise<{ filename: string; mimeType: string; size: number; filePath: string; contentHash: string }[]> {
-  const results: { filename: string; mimeType: string; size: number; filePath: string; contentHash: string }[] = []
+): Promise<{ filename: string; mimeType: string; size: number; filePath: string; contentHash: string; textContent: string | null }[]> {
+  const results: { filename: string; mimeType: string; size: number; filePath: string; contentHash: string; textContent: string | null }[] = []
   const db = getDb()
 
   const attachments = parsed.attachments ?? []
@@ -160,7 +162,7 @@ async function extractAttachments(
     const existing = await db
       .selectFrom('archived_attachments')
       .innerJoin('archived_mails', 'archived_mails.id', 'archived_attachments.archived_mail_id')
-      .select('archived_attachments.file_path')
+      .select(['archived_attachments.file_path', 'archived_attachments.text_content'])
       .where('archived_attachments.content_hash', '=', contentHash)
       .where('archived_mails.account_id', '=', accountId)
       .executeTakeFirst()
@@ -177,12 +179,15 @@ async function extractAttachments(
       await fs.writeFile(filePath, att.content)
     }
 
+    const mimeType = att.contentType ?? 'application/octet-stream'
     results.push({
       filename: att.filename,
-      mimeType: att.contentType ?? 'application/octet-stream',
+      mimeType,
       size:     att.size,
       filePath,
       contentHash,
+      // Same bytes already archived: same text, no second extraction
+      textContent: existing?.text_content ?? await extractAttachmentText(att.filename, mimeType, att.content), // NOSONAR: one attachment at a time
     })
   }
   return results

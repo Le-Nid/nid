@@ -15,6 +15,7 @@ import { authPresets } from "../utils/auth";
 import { createLogger } from "../logger";
 import { simpleParser } from "mailparser";
 import { HEADLINE_OPTIONS, highlightToHtml } from "../archive/body-text";
+import { attachmentMatches } from "../archive/attachment-text";
 
 /** Sanitize filename for Content-Disposition header (Point 17) */
 function sanitizeFilename(name: string): string {
@@ -104,8 +105,14 @@ export async function archiveRoutes(app: FastifyInstance) {
       base.select((eb) => eb.fn.countAll<number>().as("count")).executeTakeFirstOrThrow(),
     ]);
 
+    // « Trouvé dans la pièce jointe X »: the attachment whose text matched, for the page's mails only
+    const inAttachments = searchTerm ? await attachmentMatches(rows.map((m) => m.id), tsQuery) : new Map();
     const mails = searchTerm
-      ? rows.map((m) => ({ ...m, highlight: highlightToHtml((m as { highlight?: string }).highlight ?? "") }))
+      ? rows.map((m) => ({
+          ...m,
+          highlight: highlightToHtml((m as { highlight?: string }).highlight ?? ""),
+          attachment_match: inAttachments.get(m.id) ?? null,
+        }))
       : rows;
     return { mails, total: Number(count), page, limit: lim, tookMs: Math.round(performance.now() - started) };
   });

@@ -32,6 +32,11 @@ function archiveSearch(req: Request) {
     .filter((m: { label_ids: string[] }) => !label || m.label_ids.includes(label))
     .filter((m: { subject: string; snippet: string }) => !q || `${m.subject} ${m.snippet}`.toLowerCase().includes(q))
     .map((m: { snippet: string }) => (q ? { ...m, highlight: escape(m.snippet).replace(new RegExp(q, 'i'), (w) => `<mark>${w}</mark>`) } : m))
+  // Text found only in an attachment (PDF): « impôt » is in the invoice's PDF, not in the mail
+  if (q === 'impôt') {
+    const mail = archive.mails.find((m: { subject: string }) => m.subject.includes('facture'))
+    return { mails: [{ ...mail, highlight: escape(mail.snippet), attachment_match: { filename: 'avis-impot-2025.pdf', highlight: 'Votre avis d\'<mark>impôt</mark> sur les revenus' } }], total: 1, page: 1, limit: 50, tookMs: 120 }
+  }
   return { mails, total: mails.length, page: 1, limit: 50, tookMs: 120 }
 }
 

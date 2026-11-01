@@ -19,6 +19,16 @@ Migrations in-code dans `backend/src/db/migrations/`, enregistrées dans `backen
 | `009_drop_pii_tracking` | Suppression des tables `pii_findings` et `tracking_pixels` |
 | `010_password_changed_at` | `users.password_changed_at` : les JWT émis avant sont refusés (changement / reset du mot de passe) |
 | `011_passkeys` | Table `passkeys` (WebAuthn) : `credential_id` unique, clé publique, compteur, transports, nom ; supprimée avec l'utilisateur |
+| `012_search_improvements` | Configuration plein texte `nid_french` (`french` + `unaccent`), index trigrammes (`sender`, `subject`, `filename` des PJ) |
+| `013_api_tokens` | Table `api_tokens` (seul le SHA-256 du jeton est stocké) |
+| `014_account_reauth_notification` | Préférence de notification « Compte à reconnecter » |
+| `015_mail_accounts` | `gmail_accounts` → `mail_accounts`, `gmail_account_id` → `account_id` |
+| `016_imap_accounts` | Réglages IMAP sur `mail_accounts` (mot de passe scellé), table `imap_folder_state` (UIDVALIDITY, dernier UID par dossier) |
+| `017_archive_tags` | `archived_mails.tags` (tags Nid, index GIN) |
+| `018_account_shares` | Table `account_shares` (partage d'un compte en lecture seule) |
+| `019_drop_activity_heatmap` | Suppression de `email_activity_heatmap` (calculée à la volée) |
+| `020_drop_storage_configs` | Suppression de `storage_configs` (jamais utilisée) |
+| `021_attachment_text` | `archived_attachments.text_content` (texte des PDF/DOCX), ajouté au `search_vector` du mail (poids D) ; triggers qui recalculent le vecteur du mail quand ce texte arrive |
 
 ---
 
@@ -105,6 +115,7 @@ erDiagram
         bigint size_bytes
         text file_path
         varchar content_hash "déduplication"
+        text text_content "texte PDF/DOCX, NULL = à extraire"
         timestamptz created_at
     }
 
@@ -396,16 +407,20 @@ Le champ `search_vector` est mis à jour par le trigger `mail_search_vector_upda
 -- A (le plus fort) : sujet
 -- B : expéditeur, noms des pièces jointes
 -- C : snippet
--- D : corps du mail (body_text, migration 007)
+-- D : corps du mail (body_text, migration 007), texte des PJ PDF/DOCX (migration 021)
 NEW.search_vector :=
   setweight(to_tsvector('nid_french', COALESCE(NEW.subject,          '')), 'A') ||
   setweight(to_tsvector('nid_french', COALESCE(NEW.sender,           '')), 'B') ||
   setweight(to_tsvector('nid_french', COALESCE(NEW.snippet,          '')), 'C') ||
   setweight(to_tsvector('nid_french', COALESCE(NEW.attachment_names, '')), 'B') ||
-  setweight(to_tsvector('nid_french', COALESCE(NEW.body_text,        '')), 'D');
+  setweight(to_tsvector('nid_french', COALESCE(NEW.body_text,        '')), 'D') ||
+  setweight(to_tsvector('nid_french', COALESCE((SELECT left(string_agg(text_content, ' '), 200000)
+    FROM archived_attachments WHERE archived_mail_id = NEW.id AND text_content <> ''), '')), 'D');
 ```
 
 `body_text` reste `NULL` pour les archives chiffrées. Les archives antérieures à la migration 007 sont complétées par le job `backfill_body_text`.
+
+`archived_attachments.text_content` (migration 021) : texte des pièces jointes PDF et DOCX (type MIME ou extension), extrait à l'archivage (`archive/attachment-text.ts`, `unpdf` pour les PDF, `word/document.xml` lu avec `fflate` pour les DOCX). Bornes : 20 Mo par fichier, 100 pages, 50 000 caractères, 10 s ; un fichier illisible donne `''` et n'échoue jamais l'archivage. `NULL` = pas encore extrait (autres types : toujours `NULL`) ; une PJ dédupliquée (même `content_hash` dans le compte) reprend le texte de la première. Les PJ plus anciennes sont complétées par le même job `backfill_body_text`, après les corps. Comme ce texte arrive après la ligne du mail, les triggers `attachment_text_insert` / `attachment_text_update` (AFTER, si le texte n'est pas vide ou a changé) remettent `search_vector` à `NULL` sur le mail, ce qui le fait recalculer. Le total des PJ est plafonné à 200 000 caractères (un `tsvector` dépassant ~1 Mo est une erreur).
 
 La configuration `nid_french` (migration 012) est une copie de `french` avec `unaccent` avant la racinisation : `electricite` trouve `Électricité`, `factures` trouve `facture`.
 

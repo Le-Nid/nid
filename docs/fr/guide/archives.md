@@ -19,7 +19,7 @@ D'autres façons d'alimenter les archives : **Sauvegarder sur le NAS** dans [Mai
 ## Onglet Mails : rechercher
 
 - **Arbre des libellés** (à gauche sur ordinateur) : **Tous les mails** puis les libellés qui contiennent des mails archivés, avec leur nombre. Pour un compte IMAP, ce sont ses dossiers (**Dossiers**).
-- **Recherche plein texte** : objet, expéditeur, contenu et corps, insensible aux accents, avec `"phrase exacte"`, `-exclure` et `OR`. Les termes trouvés sont surlignés dans l'extrait.
+- **Recherche plein texte** : objet, expéditeur, contenu et corps, ainsi que le texte des pièces jointes PDF et Word (.docx), insensible aux accents, avec `"phrase exacte"`, `-exclure` et `OR`. Les termes trouvés sont surlignés dans l'extrait ; un mail trouvé grâce à une pièce jointe affiche « Trouvé dans la pièce jointe « … » » avec l'extrait de cette pièce jointe. Les archives existantes sont indexées en tâche de fond après la mise à jour (visible dans [Activité](activity.md)).
 - **Tags** (sous les libellés sur ordinateur) : **Tous les tags** puis vos tags, avec leur nombre. Un tag sélectionné filtre la liste et propose **Supprimer le tag « … »**, qui le retire de toutes les archives du compte sans supprimer les mails.
 - **Filtres** : **Expéditeur**, période (**Du** / **Au**), **Taille min (Mo)** / **Taille max (Mo)**, **Type de pièce jointe** (une extension comme `pdf` ou `docx`, ou un type MIME comme `image/` pour toutes les images), **Avec pièce jointe**. Sur mobile, ils sont regroupés dans le panneau **Filtres (N)** avec le **Libellé** (le **Dossier** pour un compte IMAP) et le **Tag**, puis **Afficher les résultats**.
 

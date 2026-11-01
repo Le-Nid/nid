@@ -19,6 +19,16 @@ In-code migrations in `backend/src/db/migrations/`, registered in `backend/src/d
 | `009_drop_pii_tracking` | Drops the `pii_findings` and `tracking_pixels` tables |
 | `010_password_changed_at` | `users.password_changed_at`: JWTs issued before it are rejected (password change / reset) |
 | `011_passkeys` | `passkeys` table (WebAuthn): unique `credential_id`, public key, counter, transports, name; removed with the user |
+| `012_search_improvements` | `nid_french` full-text configuration (`french` + `unaccent`), trigram indexes (`sender`, `subject`, attachment `filename`) |
+| `013_api_tokens` | `api_tokens` table (only the token's SHA-256 is stored) |
+| `014_account_reauth_notification` | « Account to reconnect » notification preference |
+| `015_mail_accounts` | `gmail_accounts` → `mail_accounts`, `gmail_account_id` → `account_id` |
+| `016_imap_accounts` | IMAP settings on `mail_accounts` (sealed password), `imap_folder_state` table (UIDVALIDITY, last UID per folder) |
+| `017_archive_tags` | `archived_mails.tags` (Nid tags, GIN index) |
+| `018_account_shares` | `account_shares` table (read-only account sharing) |
+| `019_drop_activity_heatmap` | Drops `email_activity_heatmap` (computed on the fly) |
+| `020_drop_storage_configs` | Drops `storage_configs` (never used) |
+| `021_attachment_text` | `archived_attachments.text_content` (PDF/DOCX text), added to the mail's `search_vector` (weight D); triggers recompute the mail's vector when that text lands |
 
 ---
 
@@ -105,6 +115,7 @@ erDiagram
         bigint size_bytes
         text file_path
         varchar content_hash "deduplication"
+        text text_content "PDF/DOCX text, NULL = to extract"
         timestamptz created_at
     }
 
@@ -396,16 +407,20 @@ The `search_vector` field is updated by the `mail_search_vector_update` trigger 
 -- A (strongest): subject
 -- B: sender, attachment names
 -- C: snippet
--- D: mail body (body_text, migration 007)
+-- D: mail body (body_text, migration 007), PDF/DOCX attachment text (migration 021)
 NEW.search_vector :=
   setweight(to_tsvector('nid_french', COALESCE(NEW.subject,          '')), 'A') ||
   setweight(to_tsvector('nid_french', COALESCE(NEW.sender,           '')), 'B') ||
   setweight(to_tsvector('nid_french', COALESCE(NEW.snippet,          '')), 'C') ||
   setweight(to_tsvector('nid_french', COALESCE(NEW.attachment_names, '')), 'B') ||
-  setweight(to_tsvector('nid_french', COALESCE(NEW.body_text,        '')), 'D');
+  setweight(to_tsvector('nid_french', COALESCE(NEW.body_text,        '')), 'D') ||
+  setweight(to_tsvector('nid_french', COALESCE((SELECT left(string_agg(text_content, ' '), 200000)
+    FROM archived_attachments WHERE archived_mail_id = NEW.id AND text_content <> ''), '')), 'D');
 ```
 
 `body_text` stays `NULL` for encrypted archives. Archives older than migration 007 are filled by the `backfill_body_text` job.
+
+`archived_attachments.text_content` (migration 021): text of PDF and DOCX attachments (MIME type or extension), extracted when archiving (`archive/attachment-text.ts`, `unpdf` for PDF, `word/document.xml` read with `fflate` for DOCX). Bounds: 20 MB per file, 100 pages, 50,000 characters, 10 s; an unreadable file gives `''` and never fails the archiving. `NULL` = not extracted yet (other types: always `NULL`); a deduplicated attachment (same `content_hash` in the account) reuses the first one's text. Older attachments are filled by the same `backfill_body_text` job, after the bodies. As this text lands after the mail row, the `attachment_text_insert` / `attachment_text_update` triggers (AFTER, when the text is non-empty or changed) set the mail's `search_vector` to `NULL`, which recomputes it. Attachments are capped at 200,000 characters in total (a `tsvector` over ~1 MB is an error).
 
 The `nid_french` configuration (migration 012) is a copy of `french` with `unaccent` before stemming: `electricite` matches `Électricité`, `factures` matches `facture`.
 

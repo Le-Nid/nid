@@ -103,6 +103,8 @@ export interface ArchivedAttachmentsTable {
   size_bytes:       Generated<bigint>
   file_path:        string
   content_hash:     string | null
+  /** PDF/DOCX text for search (migration 021): NULL not extracted yet, '' none */
+  text_content:     string | null
   created_at:       Generated<Date>
 }
 

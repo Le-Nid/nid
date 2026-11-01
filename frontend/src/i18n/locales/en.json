@@ -148,6 +148,7 @@
     "loadError": "Could not load the archives.",
     "noMatch": "No archive matches",
     "clearFilters": "Clear search and filters",
+    "foundInAttachment": "Found in attachment “{{name}}”",
     "empty": "No archived mail",
     "emptyDescription": "Back up mails to the NAS from Mails or with “Back up to the NAS now”.",
     "trashToast_one": "Deleting {{count, number}} archive",
