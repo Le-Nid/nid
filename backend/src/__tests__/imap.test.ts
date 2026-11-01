@@ -21,8 +21,10 @@ const chainFor = (op: string, table: string): any => {
       if (prop === 'execute') {
         return async () => {
           if (op === 'deleteFrom') resets.push(table)
-          const v = writes.at(-1)?.values
-          if (table === 'imap_folder_state' && op === 'insertInto') folderState.set(v.folder, { uid_validity: String(v.uid_validity), last_uid: String(v.last_uid) })
+          // The mark is written by INSERT … SELECT (sql.val): its values are the conflict update's, for the folder in use
+          if (table === 'imap_folder_state' && op === 'insertInto') {
+            folderState.set(server.current, { uid_validity: String(upsert.uid_validity), last_uid: String(upsert.last_uid) })
+          }
           return []
         }
       }
@@ -37,7 +39,15 @@ const chainFor = (op: string, table: string): any => {
   return chain
 }
 // Expression builder stand-in: every property and call gives itself back (eb.fn.countAll(), oc.constraint().doNothing()…)
-const eb: any = new Proxy(function () {}, { get: (_t, p) => (p === 'then' ? undefined : eb), apply: () => eb })
+let upsert: any = {}
+const eb: any = new Proxy(function () {}, {
+  get: (_t, p) => {
+    if (p === 'then') return undefined
+    if (p === 'doUpdateSet') return (v: unknown) => { upsert = v; return eb }
+    return eb
+  },
+  apply: () => eb,
+})
 const mockDb = new Proxy({}, { get: (_t, op: string) => (table: string) => chainFor(op, table) })
 vi.mock('../db', () => ({ getDb: () => mockDb }))
 vi.mock('../storage/storage.service', () => ({ getLocalStorage: () => ({}) }))

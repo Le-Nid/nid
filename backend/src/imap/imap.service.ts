@@ -104,8 +104,13 @@ async function syncFolder(client: ImapFlow, folder: ListResponse, { accountId, s
     const done = result.imported + result.skipped + result.errors
     if (onProgress && done % 20 === 0) await onProgress(done) // NOSONAR: progress follows the sequential import
   }
+  // Only while the start date is still the one used: a date changed meanwhile cleared the marks, the folder restarts
   await db.insertInto('imap_folder_state')
-    .values({ account_id: accountId, folder: folder.path, uid_validity: uidValidity, last_uid: lastUid })
+    .columns(['account_id', 'folder', 'uid_validity', 'last_uid'])
+    .expression(db.selectFrom('mail_accounts')
+      .select([sql.val(accountId).as('account_id'), sql.val(folder.path).as('folder'), sql.val(uidValidity).as('uid_validity'), sql.val(lastUid).as('last_uid')])
+      .where('id', '=', accountId)
+      .where(sql<boolean>`imap_since IS NOT DISTINCT FROM ${since}::date`))
     .onConflict((oc) => oc.columns(['account_id', 'folder']).doUpdateSet({ uid_validity: uidValidity, last_uid: lastUid }))
     .execute()
 }
@@ -149,7 +154,7 @@ export async function listImapFolders(accountId: string): Promise<ImapFolder[]> 
   try {
     const list = await client.list()
     const byDefault = new Set(foldersToSync(list).map((f) => f.path))
-    return foldersToSync(list, list.map((f) => f.path))
+    return list.filter((f) => !f.flags.has(String.raw`\Noselect`))
       .map((f) => ({ path: f.path, name: f.name, specialUse: f.specialUse ?? null, syncedByDefault: byDefault.has(f.path) }))
   } finally {
     await client.logout().catch(() => {})
