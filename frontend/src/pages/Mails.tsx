@@ -422,7 +422,7 @@ export default function MailsPage() {
     ...QUICK.map(([key, query]) => ({ id: `quick-${key}`, name: t(`mails.quick.${key}`), query })),
     ...(savedSearches as SavedSearch[]).map(({ id, name, query }) => ({ id, name, query, editable: true })),
   ]
-  const saveSearch = (search = { name: q.slice(0, 60), query: q }) =>
+  const saveSearch = (search: { name: string; query: string }) =>
     createSaved.mutate(search, {
       onSuccess: () => toast.success(t('mails.searchSaved')),
       onError: () => toast.error(t('mails.saveFailed')),
@@ -496,7 +496,7 @@ export default function MailsPage() {
         <AccountSelect accounts={activeAccounts} allMode={allMode} accountId={accountId} onChange={switchAccount} />
       )}
 
-      <SearchBar value={q} onChange={search} saved={chips} onSave={() => saveSearch()} onRename={setRenaming} onDelete={remove} />
+      <SearchBar value={q} onChange={search} saved={chips} onSave={() => saveSearch({ name: q.slice(0, 60), query: q })} onRename={setRenaming} onDelete={remove} />
       <RenameSearchDialog search={renaming} pending={renameSaved.isPending} onClose={() => setRenaming(null)} onSubmit={rename} />
 
       {pending.map((p) => p.jobId && (
