@@ -18,7 +18,7 @@ Lists attachments from archived emails with pagination, sorting and search.
 | `limit` | `50` | Results per page (max 100) |
 | `sort` | `size` | Sort by: `size` or `date` |
 | `order` | `desc` | Order: `asc` or `desc` |
-| `q` | — | Search in filename, subject, sender |
+| `q` | — | Search in filename, subject, sender (ILIKE) and in the text of PDF/DOCX (`websearch_to_tsquery`, GIN index of migration 023); with `q`, each attachment carries `highlight`: HTML excerpt (`<mark>` only) when its text matches, else `null` |
 
 **Response 200**
 ```json
@@ -106,7 +106,7 @@ Downloads an attachment straight from Gmail.
 
 ## Deduplication
 
-Archived attachments are identified by their SHA-256 fingerprint (`content_hash`); identical files are stored only once.
+Archived attachments are identified by their SHA-256 fingerprint (`content_hash`); identical files are stored only once per account, whatever the mail came from (Gmail backup, IMAP account, mbox / .eml import). `dedup-backfill` handles attachments archived before this rule.
 
 ### GET /api/attachments/dedup-stats 🔒
 

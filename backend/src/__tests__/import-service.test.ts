@@ -18,6 +18,8 @@ vi.mock('../storage/storage.service', () => ({
 
 vi.mock('fs/promises', () => ({
   default: {
+    mkdir: vi.fn().mockResolvedValue(undefined),
+    writeFile: vi.fn().mockResolvedValue(undefined),
     readFile: vi.fn().mockResolvedValue(
       'From sender@test.com Mon Jan 01 00:00:00 2024\nSubject: Test 1\nFrom: sender@test.com\n\nBody 1\nFrom sender@test.com Mon Jan 01 00:00:00 2024\nSubject: Test 2\nFrom: sender@test.com\n\nBody 2'
     ),

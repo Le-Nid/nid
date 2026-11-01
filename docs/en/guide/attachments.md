@@ -10,7 +10,7 @@ For a quick sort of large mails with bulk actions, the **Large mails & attachmen
 
 Two buttons pick the source:
 
-- **Archives** (default): attachments of the mails saved on the NAS. A search **by name, subject or sender** is available.
+- **Archives** (default): attachments of the mails saved on the NAS. A search **by name, subject, sender or content** is available: the text of PDFs and Word documents (.docx) is searched too (same rules as the [Archives](archives.md) search: accent-insensitive, `"exact phrase"`, `-exclude`, `OR`), and the matching excerpt shows under the file name.
 - **Live**: attachments over 100 KB still in Gmail.
 
 Source, search and page are kept in the address. **Reload** fetches the list again.
@@ -22,7 +22,7 @@ Source, search and page are kept in the address. **Reload** fetches the list aga
 - **Attachments**: number of files;
 - **Total size**;
 - **Source**: "Local archives" or "Gmail (>100 KB)";
-- **Space saved**: gain from deduplicating archived attachments ("N duplicate file(s), X saved"). If some files have not been analyzed yet, the **Analyze** button runs it.
+- **Space saved**: gain from deduplicating archived attachments ("N duplicate file(s), X saved"). An identical file (same content) is written once per account, whether the mail comes from a Gmail backup, an IMAP account or an mbox / .eml import. If some files archived before this deduplication have not been analyzed yet, the **Analyze** button runs it and merges the duplicates.
 
 ---
 

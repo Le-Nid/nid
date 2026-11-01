@@ -3,7 +3,10 @@ import { getDb } from '../db'
 import { getGmailClient } from '../gmail/gmail.service'
 import { trackApiCall } from '../gmail/quota.service'
 import { config } from '../config'
-import { escapeIlike } from '../utils/db'
+import { sql } from 'kysely'
+import { escapeIlike, FTS_CONFIG, ftsQuery } from '../utils/db'
+import { attachmentTsv } from '../archive/attachment-text'
+import { HEADLINE_OPTIONS, highlightToHtml } from '../archive/body-text'
 import { extractPagination } from '../utils/pagination'
 import { authPresets } from '../utils/auth'
 import { backfillAttachmentHashes, getDeduplicationStats } from '../archive/dedup.service'
@@ -72,14 +75,21 @@ export async function attachmentsRoutes(app: FastifyInstance) {
       ])
       .where('archived_mails.account_id', '=', accountId)
 
-    if (q) {
-      query = query.where((eb: any) =>
-        eb.or([
-          eb('archived_attachments.filename', 'ilike', `%${escapeIlike(q)}%`),
-          eb('archived_mails.subject', 'ilike', `%${escapeIlike(q)}%`),
-          eb('archived_mails.sender', 'ilike', `%${escapeIlike(q)}%`),
-        ])
-      )
+    // Name, subject, sender, or the text of a PDF/DOCX (same search syntax as the archives)
+    const term = q?.trim().slice(0, 200)
+    const tsQuery = term ? ftsQuery(term) : null
+    const matches = (eb: any) => eb.or([
+      eb('archived_attachments.filename', 'ilike', `%${escapeIlike(term!)}%`),
+      eb('archived_mails.subject', 'ilike', `%${escapeIlike(term!)}%`),
+      eb('archived_mails.sender', 'ilike', `%${escapeIlike(term!)}%`),
+      // A subquery, not the expression itself: ORed with the mail's columns, it would be computed for every attachment
+      // of the account; the subquery reads the GIN index of migration 023 once
+      sql<boolean>`archived_attachments.id IN (SELECT archived_attachments.id FROM archived_attachments WHERE ${attachmentTsv()} @@ ${tsQuery})`,
+    ])
+    if (tsQuery) {
+      // An excerpt only for an attachment whose text matched
+      query = query.where(matches).select(sql<string | null>`CASE WHEN ${attachmentTsv()} @@ ${tsQuery}
+        THEN ts_headline(${FTS_CONFIG}, archived_attachments.text_content, ${tsQuery}, ${HEADLINE_OPTIONS}) END`.as('highlight'))
     }
 
     const sortCol = sort === 'date' ? 'archived_mails.date' as any : 'archived_attachments.size_bytes' as any
@@ -97,15 +107,7 @@ export async function attachmentsRoutes(app: FastifyInstance) {
       .select((eb: any) => eb.fn.countAll().as('count'))
       .where('archived_mails.account_id', '=', accountId)
 
-    if (q) {
-      countQuery = countQuery.where((eb: any) =>
-        eb.or([
-          eb('archived_attachments.filename', 'ilike', `%${escapeIlike(q)}%`),
-          eb('archived_mails.subject', 'ilike', `%${escapeIlike(q)}%`),
-          eb('archived_mails.sender', 'ilike', `%${escapeIlike(q)}%`),
-        ])
-      )
-    }
+    if (tsQuery) countQuery = countQuery.where(matches)
 
     const { count } = await countQuery.executeTakeFirstOrThrow() as any
 
@@ -119,7 +121,10 @@ export async function attachmentsRoutes(app: FastifyInstance) {
     const { total_size } = await sizeQuery.executeTakeFirstOrThrow() as any
 
     return {
-      attachments,
+      attachments: attachments.map((a) => {
+        const highlight = (a as { highlight?: string | null }).highlight
+        return highlight ? { ...a, highlight: highlightToHtml(highlight) } : a
+      }),
       total: Number(count),
       totalSizeBytes: Number(total_size ?? 0),
       page,

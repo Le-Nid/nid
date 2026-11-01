@@ -84,6 +84,18 @@ describe('AttachmentsPage', () => {
     expect(attachmentsApi.listArchived).toHaveBeenLastCalledWith('acc-1', { page: 1, limit: 50, sort: 'size', order: 'desc', q: 'facture' })
   })
 
+  it('a search found in the text of a PDF shows its excerpt under the file name', async () => {
+    vi.mocked(attachmentsApi.listArchived).mockResolvedValue({
+      attachments: [archived('a1', 'avis.pdf', 'application/pdf', { highlight: 'revenu <mark>imposable</mark> &lt;b&gt;' }), archived('a2', 'imposable.png', 'image/png', { highlight: null })],
+      total: 2, totalSizeBytes: 4096,
+    })
+    setup('/attachments?q=imposable')
+    const mark = await screen.findByText('imposable', { selector: 'mark' })
+    expect(mark.parentElement).toHaveTextContent('revenu imposable <b>')
+    expect(screen.getAllByText('imposable', { selector: 'mark' })).toHaveLength(1)
+    expect(screen.getByRole('searchbox', { name: 'Rechercher dans les pièces jointes archivées' })).toHaveAttribute('placeholder', 'Nom, sujet, expéditeur ou contenu (PDF, Word)…')
+  })
+
   it('pages the archives on the server', async () => {
     vi.mocked(attachmentsApi.listArchived).mockResolvedValue({ attachments: ARCHIVED, total: 120, totalSizeBytes: 4096 })
     const router = setup()

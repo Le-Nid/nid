@@ -55,9 +55,19 @@ it('archiveMail extracts new attachments, reuses the text of a copy already arch
   expect(ins.parameters).toEqual(expect.arrayContaining(['avis.pdf', '/nas/old.pdf', 'texte déjà extrait', 'logo.png', null]))
 })
 
-it('importSingleEml stores each attachment text', async () => {
-  answer = (sql) => (sql.startsWith('insert into "archived_mails"') ? [{ id: 'mail-1' }] : [])
+it('importSingleEml (mbox, .eml, IMAP) deduplicates like a Gmail backup: hash stored, a copy reuses file and text', async () => {
+  answer = (sql) => {
+    if (sql.includes('"archived_attachments"."content_hash"')) return seen.filter((q) => q.sql.includes('content_hash')).length === 2 ? [{ file_path: '/nas/old.png', text_content: null }] : []
+    if (sql.startsWith('insert into "archived_mails"')) return [{ id: 'mail-1' }]
+    return []
+  }
   const storage = { mkdir: vi.fn(), writeFile: vi.fn() } as any
   expect(await importSingleEml(fakeDb as any, storage, 'acc-1', Buffer.from(EML))).toBe('imported')
-  expect(attachmentInsert().parameters).toEqual(expect.arrayContaining(['avis.pdf', 'texte de avis.pdf', 'logo.png', null]))
+  const ins = attachmentInsert()
+  expect(ins.sql).toContain('"content_hash"')
+  // avis.pdf is new: written and read; logo.png is already archived: its file, no write
+  expect(ins.parameters).toEqual(expect.arrayContaining(['avis.pdf', 'texte de avis.pdf', 'logo.png', '/nas/old.png']))
+  expect(ins.parameters.filter((p) => typeof p === 'string' && /^[0-9a-f]{64}$/.test(p))).toHaveLength(2)
+  const { default: fs } = await import('node:fs/promises')
+  expect(vi.mocked(fs.writeFile).mock.calls.map((c) => String(c[0]))).toEqual([expect.stringMatching(/0_avis\.pdf$/)])
 })

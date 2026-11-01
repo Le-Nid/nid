@@ -128,7 +128,10 @@ const ROUTES: [string, RegExp, Handler][] = [
   ['GET', /^\/api\/rules\/[^/]+$/, load('rules')],
   ['GET', /^\/api\/unsubscribe\/[^/]+\/newsletters$/, load('newsletters')],
   ['GET', /^\/api\/attachments\/dedup-stats$/, attachments.dedupStats],
-  ['GET', /^\/api\/attachments\/[^/]+\/archived$/, attachments.archived],
+  // `q` found in the PDF's text (« préavis » is in the contract, not in its name): an excerpt comes back
+  ['GET', /^\/api\/attachments\/[^/]+\/archived$/, (req: Request) => (new URL(req.url()).searchParams.get('q') === 'préavis'
+    ? { ...attachments.archived, total: 1, attachments: [{ ...attachments.archived.attachments[0], highlight: 'un <mark>préavis</mark> de trois mois' }] }
+    : attachments.archived)],
   ['GET', /^\/api\/attachments\/[^/]+\/live$/, attachments.live],
   ['POST', /^\/api\/unsubscribe\/[^/]+\/scan$/, { jobId: 'job-scan' }],
   ['POST', /^\/api\/unsubscribe\/[^/]+\/newsletters\/[^/]+\/delete$/, { jobId: 'job-sender', runAt: '2026-10-21T08:00:10Z', count: 12 }],

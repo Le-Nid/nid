@@ -18,7 +18,7 @@ Liste les PJ des mails archivés avec pagination, tri et recherche.
 | `limit` | `50` | Résultats par page (max 100) |
 | `sort` | `size` | Tri : `size` ou `date` |
 | `order` | `desc` | Ordre : `asc` ou `desc` |
-| `q` | — | Recherche dans filename, subject, sender |
+| `q` | — | Recherche dans filename, subject, sender (ILIKE) et dans le texte des PDF/DOCX (`websearch_to_tsquery`, index GIN de la migration 023) ; avec `q`, chaque pièce jointe porte `highlight` : extrait HTML (`<mark>` seul) si son texte correspond, sinon `null` |
 
 **Réponse 200**
 ```json
@@ -106,7 +106,7 @@ Télécharge une pièce jointe directement depuis Gmail.
 
 ## Déduplication
 
-Les pièces jointes archivées sont identifiées par leur empreinte SHA-256 (`content_hash`) ; les fichiers identiques ne sont stockés qu'une fois.
+Les pièces jointes archivées sont identifiées par leur empreinte SHA-256 (`content_hash`) ; les fichiers identiques ne sont stockés qu'une fois par compte, quelle que soit l'origine du mail (sauvegarde Gmail, compte IMAP, import mbox / .eml). `dedup-backfill` traite les pièces jointes archivées avant cette règle.
 
 ### GET /api/attachments/dedup-stats 🔒
 

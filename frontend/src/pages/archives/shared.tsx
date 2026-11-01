@@ -78,7 +78,12 @@ export function useArchiveFilters() {
   // Quick successive changes (typing, then a checkbox) must not drop each other: navigation is async, so
   // each write starts from the previous write rather than from the params of the render it comes from
   const latest = useRef(params)
-  latest.current = params
+  // Only a new location replaces it: a render in between two writes (still the old params) must not undo the first
+  const routed = useRef(params)
+  if (params !== routed.current) {
+    routed.current = params
+    latest.current = params
+  }
   const set = (patch: Partial<Filters>) => {
     const out = new URLSearchParams(latest.current)
     for (const [k, v] of Object.entries(patch)) {
