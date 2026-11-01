@@ -6,7 +6,7 @@ import { archiveMail, getArchivedIds } from '../../archive/archive.service'
 import { listMessages, trashMessages, modifyMessages } from '../../gmail/gmail.service'
 import { getRule, runRule } from '../../rules/rules.service'
 import { scanNewsletters, saveNewsletterScan, forgetNewsletterSender } from '../../unsubscribe/unsubscribe.service'
-import { encryptArchives } from '../../privacy/encryption.service'
+import { decryptArchives } from '../../privacy/encryption.service'
 import { importMbox, importImap } from '../../archive/import.service'
 import { isImapAuthError, syncImapAccount } from '../../imap/imap.service'
 import { flagReauthRequired } from '../../auth/oauth.service'
@@ -36,8 +36,8 @@ export function startUnifiedWorker() {
           return handleRule(job)
         case 'scan_unsubscribe':
           return handleUnsubscribe(job)
-        case 'encrypt_archives':
-          return handlePrivacy(job)
+        case 'decrypt_archives':
+          return handleDecryptArchives(job)
         case 'import_mbox':
           return handleImportMbox(job)
         case 'import_imap':
@@ -409,55 +409,14 @@ async function handleUnsubscribe(job: Job) {
 }
 
 // ─── Privacy ────────────────────────────────────────────────
-async function handlePrivacy(job: Job) {
-  const { accountId, userId, action } = job.data as {
-    accountId: string
-    userId?: string
-    action: 'encrypt_archives'
-  }
-  const db = getDb()
-
-  await db
-    .updateTable('jobs')
-    .set({ status: 'active' })
-    .where('bullmq_id', '=', String(job.id))
-    .execute()
-
-  try {
-    const passphrase = job.data.passphrase
-    if (!passphrase) throw new Error('Passphrase required')
-
-    const result = await encryptArchives(accountId, passphrase, {
-      onProgress: async (done: number, total: number) => {
-        const progress = Math.round((done / total) * 100)
-        await job.updateProgress(progress)
-        if (done % 10 === 0) {
-          await db.updateTable('jobs')
-            .set({ progress, processed: done, total })
-            .where('bullmq_id', '=', String(job.id))
-            .execute()
-        }
-      },
-    })
-
-    await db.updateTable('jobs')
-      .set({ status: 'completed', progress: 100, processed: result.encrypted, total: result.encrypted, completed_at: new Date() })
-      .where('bullmq_id', '=', String(job.id))
-      .execute()
-
-    if (userId) {
-      await notify({
-        userId,
-        category: 'job_completed',
-        title: 'Chiffrement terminé',
-        body: `${result.encrypted} archive(s) chiffrée(s).`,
-        data: { jobId: String(job.id), ...result },
-      })
-    }
-  } catch (err) {
-    await recordJobFailure(job, userId, `${action} échoué`, err)
-    throw err
-  }
+function handleDecryptArchives(job: Job) {
+  const { accountId, passphrase } = job.data
+  return runCountedJob(job, { done: 'Déchiffrement des archives terminé', failed: 'Déchiffrement des archives échoué', verb: 'déchiffrée(s)' }, async (onProgress) => {
+    const result = await decryptArchives(accountId, passphrase, onProgress)
+    // The decrypted mails get their full-text body back
+    if (result.imported) await enqueueJob('backfill_body_text', { accountId: '' }, { dedupId: 'backfill_body_text' })
+    return result
+  })
 }
 
 // ─── Import mbox ────────────────────────────────────────────

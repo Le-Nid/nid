@@ -846,50 +846,6 @@ describe('gmailRoutes - additional', () => {
   })
 })
 
-describe('privacyRoutes - additional', () => {
-  it('POST /encryption/setup sets up encryption', async () => {
-    const app = await buildTestApp()
-    await app.register(privacyRoutes)
-    await app.ready()
-
-    const res = await app.inject({
-      method: 'POST',
-      url: '/encryption/setup',
-      payload: { passphrase: 'my-secure-passphrase' },
-    })
-    expect(res.statusCode).toBe(200)
-    await app.close()
-  })
-
-  it('POST /encryption/verify verifies encryption key', async () => {
-    const app = await buildTestApp()
-    await app.register(privacyRoutes)
-    await app.ready()
-
-    const res = await app.inject({
-      method: 'POST',
-      url: '/encryption/verify',
-      payload: { passphrase: 'my-secure-passphrase' },
-    })
-    expect(res.statusCode).toBe(200)
-    await app.close()
-  })
-
-  it('POST /:accountId/encryption/encrypt triggers encryption', async () => {
-    const app = await buildTestApp()
-    await app.register(privacyRoutes)
-    await app.ready()
-
-    const res = await app.inject({
-      method: 'POST',
-      url: '/acc-1/encryption/encrypt',
-      payload: { passphrase: 'my-secure-passphrase' },
-    })
-    expect([200, 202]).toContain(res.statusCode)
-    await app.close()
-  })
-})
-
 describe('rulesRoutes - additional', () => {
   it('GET /:accountId/:ruleId returns a specific rule', async () => {
     const { getRule } = await import('../rules/rules.service')

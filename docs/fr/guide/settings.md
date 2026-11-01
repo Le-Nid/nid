@@ -122,6 +122,10 @@ De nombreux fournisseurs (Google, Outlook, Yahoo) exigent un **mot de passe d'ap
 
 **Exporter (.mbox)** : toutes les archives du compte dans un fichier .mbox, lisible par Thunderbird ou Apple Mail.
 
+### Archives chiffrées
+
+Affichée seulement si le compte a encore des archives chiffrées par l'ancien chiffrement, retiré de Nid : il laissait en clair objet, expéditeur et destinataires, et empêchait la lecture, la recherche et la restauration. Saisissez la **Phrase secrète** puis **Déchiffrer** : les archives sont remises en clair en tâche de fond (suivi dans [Activité](activity.md)), puis redeviennent lisibles et cherchables. Pour protéger les archives au repos, chiffrez plutôt le volume du NAS.
+
 ### Configuration
 
 Vos règles et webhooks dans un fichier JSON, pour les sauvegarder ou les reprendre sur une autre instance : **Exporter la configuration** / **Importer une configuration**.

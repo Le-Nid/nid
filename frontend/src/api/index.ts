@@ -20,8 +20,6 @@ export const gmailApi = {
   batchGetMessages: (accountId: string, ids: string[]) =>
     api.post(`/api/gmail/${accountId}/messages/batch`, { ids }).then((r) => r.data),
 
-  listLabels: (accountId: string) =>
-    api.get(`/api/gmail/${accountId}/labels`).then((r) => r.data),
 
   createLabel: (accountId: string, name: string) =>
     api.post(`/api/gmail/${accountId}/labels`, { name }).then((r) => r.data),
@@ -256,8 +254,6 @@ export const adminApi = {
   listUsers: (params: Record<string, any> = {}) =>
     api.get('/api/admin/users', { params }).then((r) => r.data),
 
-  getUser: (userId: string) =>
-    api.get(`/api/admin/users/${userId}`).then((r) => r.data),
 
   updateUser: (userId: string, dto: Record<string, any>) =>
     api.patch(`/api/admin/users/${userId}`, dto).then((r) => r.data),
@@ -298,8 +294,6 @@ export const unsubscribeApi = {
   scanAsync: (accountId: string) =>
     api.post(`/api/unsubscribe/${accountId}/scan`).then((r) => r.data),
 
-  getMessageIds: (accountId: string, senderEmail: string) =>
-    api.get(`/api/unsubscribe/${accountId}/newsletters/${encodeURIComponent(senderEmail)}/messages`).then((r) => r.data),
 
   /** Trash every mail of the sender after the server's 10 s undo window (D1): `{ jobId, runAt, count }`. */
   deleteSender: (accountId: string, senderEmail: string) =>
@@ -327,12 +321,6 @@ export const attachmentsApi = {
     api.post('/api/attachments/dedup-backfill').then((r) => r.data),
 }
 
-// ─── Reports ──────────────────────────────────────────────
-export const reportsApi = {
-  getWeekly: () =>
-    api.get('/api/reports/weekly').then((r) => r.data),
-}
-
 // ─── Notifications ────────────────────────────────────────
 export const notificationsApi = {
   list: (params: Record<string, any> = {}) =>
@@ -356,12 +344,6 @@ export const notificationsApi = {
   /** Notification switches, plus the reader's `remote_images: 'block' | 'allow'` (B10). */
   updatePreferences: (prefs: Record<string, boolean | string>) =>
     api.put('/api/notifications/preferences', prefs).then((r) => r.data),
-}
-
-// ─── Audit ────────────────────────────────────────────────
-export const auditApi = {
-  list: (params: Record<string, any> = {}) =>
-    api.get('/api/audit', { params }).then((r) => r.data),
 }
 
 // ─── 2FA / TOTP ──────────────────────────────────────────
@@ -399,8 +381,6 @@ export const webhooksApi = {
 
 // ─── Integrity ────────────────────────────────────────────
 export const integrityApi = {
-  check: (accountId?: string) =>
-    api.get('/api/integrity/check', { params: accountId ? { accountId } : {} }).then((r) => r.data),
 
   /** Whole-instance check as a job: `{ jobId }`. */
   checkAsync: () =>
@@ -418,21 +398,11 @@ export const configApi = {
 
 // ─── Privacy ──────────────────────────────────────────────
 export const privacyApi = {
-  // Encryption
+  /** Archive encryption was removed: how many archives are still encrypted, and the way out. */
   getEncryptionStatus: (accountId: string) =>
-    api.get(`/api/privacy/${accountId}/encryption/status`).then((r) => r.data),
-
-  setupEncryption: (passphrase: string) =>
-    api.post('/api/privacy/encryption/setup', { passphrase }).then((r) => r.data),
-
-  verifyEncryption: (passphrase: string) =>
-    api.post('/api/privacy/encryption/verify', { passphrase }).then((r) => r.data),
-
-  encryptArchives: (accountId: string, passphrase: string) =>
-    api.post(`/api/privacy/${accountId}/encryption/encrypt`, { passphrase }).then((r) => r.data),
-
-  decryptMail: (accountId: string, mailId: string, passphrase: string) =>
-    api.post(`/api/privacy/${accountId}/encryption/decrypt-mail`, { mailId, passphrase }).then((r) => r.data),
+    api.get(`/api/privacy/${accountId}/encryption/status`).then((r) => r.data as { total: number; encrypted: number }),
+  decryptAll: (accountId: string, passphrase: string) =>
+    api.post(`/api/privacy/${accountId}/encryption/decrypt-all`, { passphrase }).then((r) => r.data as { jobId: string }),
 }
 
 // ─── Analytics ────────────────────────────────────────────
@@ -470,8 +440,6 @@ export const savedSearchesApi = {
   remove: (searchId: string) =>
     api.delete(`/api/saved-searches/${searchId}`).then((r) => r.data),
 
-  reorder: (ids: string[]) =>
-    api.put('/api/saved-searches/reorder', { ids }).then((r) => r.data),
 }
 
 // ─── Unified Inbox ────────────────────────────────────────
@@ -482,8 +450,6 @@ export const unifiedApi = {
 
 // ─── Archive Threads ──────────────────────────────────────
 export const archiveThreadsApi = {
-  listThreads: (accountId: string, params: Record<string, any> = {}) =>
-    api.get(`/api/archive/${accountId}/threads`, { params }).then((r) => r.data),
 
   getThread: (accountId: string, threadId: string) =>
     api.get(`/api/archive/${accountId}/threads/${threadId}`).then((r) => r.data),
@@ -508,11 +474,6 @@ export const retentionApi = {
 }
 
 // ─── Gmail API Quota ─────────────────────────────────────
-export const quotaApi = {
-  getStats: (accountId: string) =>
-    api.get(`/api/quota/${accountId}`).then((r) => r.data),
-}
-
 // ─── Import (mbox / IMAP) ────────────────────────────────
 export const importApi = {
   importMbox: (accountId: string, file: File) => {

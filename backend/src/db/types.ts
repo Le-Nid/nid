@@ -1,4 +1,4 @@
-import { ColumnType, Generated, Selectable, Insertable } from 'kysely'
+import { ColumnType, Generated } from 'kysely'
 import type { NewsletterSender } from '../unsubscribe/unsubscribe.service'
 
 // ─── Helpers ──────────────────────────────────────────────
@@ -399,48 +399,3 @@ export interface Database {
   passkeys:             PasskeysTable
   api_tokens:           ApiTokensTable
 }
-
-// ─── Row types (Selectable = what you get back from SELECT) ─
-
-export type User               = Selectable<UsersTable>
-export type GmailAccount       = Selectable<GmailAccountsTable>
-export type ArchivedMail       = Selectable<ArchivedMailsTable>
-export type ArchivedAttachment = Selectable<ArchivedAttachmentsTable>
-export type Rule               = Selectable<RulesTable>
-export type Job                = Selectable<JobsTable>
-export type Notification       = Selectable<NotificationsTable>
-export type AuditLog           = Selectable<AuditLogsTable>
-export type Webhook            = Selectable<WebhooksTable>
-
-export type NewUser               = Insertable<UsersTable>
-export type NewGmailAccount       = Insertable<GmailAccountsTable>
-export type NewArchivedMail       = Insertable<ArchivedMailsTable>
-export type NewArchivedAttachment = Insertable<ArchivedAttachmentsTable>
-export type NewRule               = Insertable<RulesTable>
-export type NewJob                = Insertable<JobsTable>
-export type NewNotification       = Insertable<NotificationsTable>
-export type NewAuditLog           = Insertable<AuditLogsTable>
-export type NewWebhook            = Insertable<WebhooksTable>
-export type NotificationPreference = Selectable<NotificationPreferencesTable>
-
-
-export type RetentionPolicy    = Selectable<RetentionPoliciesTable>
-export type NewRetentionPolicy = Insertable<RetentionPoliciesTable>
-export type GmailApiUsage      = Selectable<GmailApiUsageTable>
-export type NewGmailApiUsage   = Insertable<GmailApiUsageTable>
-
-export type EmailActivityHeatmap    = Selectable<EmailActivityHeatmapTable>
-export type SenderScore             = Selectable<SenderScoresTable>
-export type CleanupSuggestion       = Selectable<CleanupSuggestionsTable>
-export type InboxZeroSnapshot       = Selectable<InboxZeroSnapshotsTable>
-
-export type UserSocialAccount    = Selectable<UserSocialAccountsTable>
-export type NewUserSocialAccount = Insertable<UserSocialAccountsTable>
-
-export type SavedSearch    = Selectable<SavedSearchesTable>
-export type NewSavedSearch = Insertable<SavedSearchesTable>
-
-export type EmailExpiration    = Selectable<EmailExpirationsTable>
-export type NewEmailExpiration = Insertable<EmailExpirationsTable>
-export type ArchiveShare       = Selectable<ArchiveSharesTable>
-export type NewArchiveShare    = Insertable<ArchiveSharesTable>

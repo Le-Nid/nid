@@ -2,12 +2,11 @@ import { describe, it, expect, vi } from 'vitest'
 import api from '../api/client'
 import {
   dashboardApi, gmailApi, archiveApi, rulesApi, jobsApi,
-  authApi, adminApi, unsubscribeApi, attachmentsApi, reportsApi,
-  notificationsApi, auditApi, twoFactorApi,
+  authApi, adminApi, unsubscribeApi, attachmentsApi, notificationsApi, twoFactorApi,
   webhooksApi, integrityApi, configApi, privacyApi, analyticsApi,
   savedSearchesApi, unifiedApi, archiveThreadsApi,
   sharingApi, importApi,
-  retentionApi, quotaApi,
+  retentionApi,
 } from '../api'
 
 describe('API modules', () => {
@@ -63,12 +62,6 @@ describe('API modules', () => {
       mockPost([])
       await gmailApi.batchGetMessages('acc-1', ['m1', 'm2'])
       expect(api.post).toHaveBeenCalledWith('/api/gmail/acc-1/messages/batch', { ids: ['m1', 'm2'] })
-    })
-
-    it('listLabels', async () => {
-      mockGet([])
-      await gmailApi.listLabels('acc-1')
-      expect(api.get).toHaveBeenCalledWith('/api/gmail/acc-1/labels')
     })
 
     it('createLabel', async () => {
@@ -266,12 +259,6 @@ describe('API modules', () => {
       expect(api.get).toHaveBeenCalledWith('/api/admin/users', { params: { page: 1 } })
     })
 
-    it('getUser', async () => {
-      mockGet({ id: 'u1' })
-      await adminApi.getUser('u1')
-      expect(api.get).toHaveBeenCalledWith('/api/admin/users/u1')
-    })
-
     it('updateUser', async () => {
       mockPatch({})
       await adminApi.updateUser('u1', { role: 'admin' })
@@ -296,12 +283,6 @@ describe('API modules', () => {
       mockPost({ jobId: 'j1' })
       await unsubscribeApi.scanAsync('acc-1')
       expect(api.post).toHaveBeenCalledWith('/api/unsubscribe/acc-1/scan')
-    })
-
-    it('getMessageIds', async () => {
-      mockGet([])
-      await unsubscribeApi.getMessageIds('acc-1', 'news@test.com')
-      expect(api.get).toHaveBeenCalledWith('/api/unsubscribe/acc-1/newsletters/news%40test.com/messages')
     })
 
     it('deleteSender', async () => {
@@ -358,14 +339,6 @@ describe('API modules', () => {
     })
   })
 
-  describe('reportsApi', () => {
-    it('getWeekly', async () => {
-      mockGet({ stats: {} })
-      await reportsApi.getWeekly()
-      expect(api.get).toHaveBeenCalledWith('/api/reports/weekly')
-    })
-  })
-
   describe('notificationsApi', () => {
     it('list', async () => {
       mockGet({ notifications: [], unreadCount: 0 })
@@ -407,14 +380,6 @@ describe('API modules', () => {
       mockPut({})
       await notificationsApi.updatePreferences({ weekly_report: false })
       expect(api.put).toHaveBeenCalledWith('/api/notifications/preferences', { weekly_report: false })
-    })
-  })
-
-  describe('auditApi', () => {
-    it('list', async () => {
-      mockGet([])
-      await auditApi.list({ page: 1 })
-      expect(api.get).toHaveBeenCalledWith('/api/audit', { params: { page: 1 } })
     })
   })
 
@@ -478,19 +443,6 @@ describe('API modules', () => {
     })
   })
 
-  describe('integrityApi', () => {
-    it('check without accountId', async () => {
-      mockGet({ ok: true })
-      await integrityApi.check()
-      expect(api.get).toHaveBeenCalledWith('/api/integrity/check', { params: {} })
-    })
-
-    it('check with accountId', async () => {
-      mockGet({ ok: true })
-      await integrityApi.check('acc-1')
-      expect(api.get).toHaveBeenCalledWith('/api/integrity/check', { params: { accountId: 'acc-1' } })
-    })
-  })
 
   describe('configApi', () => {
     it('exportConfig', async () => {
@@ -503,38 +455,6 @@ describe('API modules', () => {
       mockPost({ imported: 5 })
       await configApi.importConfig({ rules: [] })
       expect(api.post).toHaveBeenCalledWith('/api/config/import', { rules: [] })
-    })
-  })
-
-  describe('privacyApi', () => {
-    it('getEncryptionStatus', async () => {
-      mockGet({})
-      await privacyApi.getEncryptionStatus('acc-1')
-      expect(api.get).toHaveBeenCalledWith('/api/privacy/acc-1/encryption/status')
-    })
-
-    it('setupEncryption', async () => {
-      mockPost({})
-      await privacyApi.setupEncryption('pass123')
-      expect(api.post).toHaveBeenCalledWith('/api/privacy/encryption/setup', { passphrase: 'pass123' })
-    })
-
-    it('verifyEncryption', async () => {
-      mockPost({})
-      await privacyApi.verifyEncryption('pass123')
-      expect(api.post).toHaveBeenCalledWith('/api/privacy/encryption/verify', { passphrase: 'pass123' })
-    })
-
-    it('encryptArchives', async () => {
-      mockPost({})
-      await privacyApi.encryptArchives('acc-1', 'pass123')
-      expect(api.post).toHaveBeenCalledWith('/api/privacy/acc-1/encryption/encrypt', { passphrase: 'pass123' })
-    })
-
-    it('decryptMail', async () => {
-      mockPost({})
-      await privacyApi.decryptMail('acc-1', 'mail-1', 'pass123')
-      expect(api.post).toHaveBeenCalledWith('/api/privacy/acc-1/encryption/decrypt-mail', { mailId: 'mail-1', passphrase: 'pass123' })
     })
   })
 
@@ -625,10 +545,24 @@ describe('API modules', () => {
       expect(api.delete).toHaveBeenCalledWith('/api/saved-searches/s1')
     })
 
-    it('reorder', async () => {
-      mockPut({})
-      await savedSearchesApi.reorder(['s2', 's1'])
-      expect(api.put).toHaveBeenCalledWith('/api/saved-searches/reorder', { ids: ['s2', 's1'] })
+  })
+
+  describe('privacyApi (way out of encryption)', () => {
+    it('getEncryptionStatus, decryptAll', async () => {
+      mockGet({ total: 3, encrypted: 1 })
+      await privacyApi.getEncryptionStatus('acc-1')
+      expect(api.get).toHaveBeenCalledWith('/api/privacy/acc-1/encryption/status')
+      mockPost({ jobId: 'j1' })
+      await privacyApi.decryptAll('acc-1', 'secret')
+      expect(api.post).toHaveBeenCalledWith('/api/privacy/acc-1/encryption/decrypt-all', { passphrase: 'secret' })
+    })
+  })
+
+  describe('integrityApi', () => {
+    it('checkAsync', async () => {
+      mockPost({ jobId: 'j1' })
+      await integrityApi.checkAsync()
+      expect(api.post).toHaveBeenCalled()
     })
   })
 
@@ -641,12 +575,6 @@ describe('API modules', () => {
   })
 
   describe('archiveThreadsApi', () => {
-    it('listThreads', async () => {
-      mockGet([])
-      await archiveThreadsApi.listThreads('acc-1', { page: 1 })
-      expect(api.get).toHaveBeenCalledWith('/api/archive/acc-1/threads', { params: { page: 1 } })
-    })
-
     it('getThread', async () => {
       mockGet({ id: 't1' })
       await archiveThreadsApi.getThread('acc-1', 't1')
@@ -737,11 +665,4 @@ describe('API modules', () => {
     })
   })
 
-  describe('quotaApi', () => {
-    it('getStats', async () => {
-      mockGet({ usage: {} })
-      await quotaApi.getStats('acc-1')
-      expect(api.get).toHaveBeenCalledWith('/api/quota/acc-1')
-    })
-  })
 })

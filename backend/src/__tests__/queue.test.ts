@@ -47,7 +47,7 @@ describe('enqueueJob', () => {
 
   it('never stores credentials in the jobs table, and drops them from Redis once done', async () => {
     await enqueueJob('import_imap', { accountId: 'acc-1', imapConfig: { host: 'h', user: 'u', pass: 'secret' } })
-    await enqueueJob('encrypt_archives', { accountId: 'acc-1', passphrase: 'hunter22' })
+    await enqueueJob('decrypt_archives', { accountId: 'acc-1', passphrase: 'hunter22' })
     const stored = mockValues.mock.calls.map(([v]: any) => v.payload).join(' ')
     expect(stored).not.toContain('secret')
     expect(stored).not.toContain('hunter22')

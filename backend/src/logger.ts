@@ -17,4 +17,3 @@ export function createLogger(name: string) {
   return rootLogger.child({ module: name })
 }
 
-export { rootLogger as logger }

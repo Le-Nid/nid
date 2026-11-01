@@ -48,7 +48,7 @@ Puts archived mails back into the account's Gmail mailbox, from their EML: same 
 - An **encrypted** archive cannot be restored (the passphrase is not kept): it counts as an error.
 - Not available for an IMAP account, nor for a Gmail account that must be reconnected.
 
-An encrypted archived mail shows "This mail is encrypted: its content cannot be read here." Archive encryption is not configured from the interface.
+An encrypted archived mail shows "This mail is encrypted: its content cannot be read here." Archive encryption was removed from Nid: put these archives back in clear in [Settings › Data](settings.md#encrypted-archives).
 
 ---
 

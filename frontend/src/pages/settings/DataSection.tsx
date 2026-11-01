@@ -13,6 +13,7 @@ import { useAccount } from '@/hooks/useAccount'
 import { saveBlob } from '@/utils/download'
 import { useMboxExport } from '../archives/shared'
 import { SettingsCard } from './shared'
+import { DecryptArchivesCard } from './DecryptArchivesCard'
 
 const today = () => new Date().toISOString().slice(0, 10)
 
@@ -216,7 +217,10 @@ export function DataSection() {
   return (
     <div className="flex flex-col gap-4">
       {accountId && account ? (
-        <MailImportCards accountId={accountId} email={account.email} />
+        <>
+          <MailImportCards accountId={accountId} email={account.email} />
+          {!account.shared_by && <DecryptArchivesCard accountId={accountId} email={account.email} />}
+        </>
       ) : (
         <p className="text-sm text-muted-foreground">
           {t('settings.data.noAccount')}{' '}

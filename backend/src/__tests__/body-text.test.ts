@@ -47,7 +47,6 @@ import {
   extractBodyText, bodyTextFromParsed, highlightToHtml, backfillBodyText, countPendingBodyText,
 } from '../archive/body-text'
 import { archiveRoutes } from '../routes/archive'
-import { encryptArchives } from '../privacy/encryption.service'
 import { enqueueBodyTextBackfill } from '../jobs/scheduler'
 import { enqueueJob } from '../jobs/queue'
 
@@ -157,23 +156,6 @@ describe('enqueueBodyTextBackfill (scheduler startup)', () => {
     respond = () => { throw new Error('db down') }
     await enqueueBodyTextBackfill()
     expect(enqueueJob).not.toHaveBeenCalled()
-  })
-})
-
-// ─── Encryption clears body_text ────────────────────────────
-describe('encryptArchives', () => {
-  it('sets body_text to NULL when a mail becomes encrypted', async () => {
-    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'nid-bt-'))
-    const file = path.join(dir, 'm.eml')
-    await fs.writeFile(file, 'secret body')
-    respond = (q) => (q.sql.includes('from "archived_mails"') ? [{ id: 'm1', eml_path: file }] : [])
-
-    await encryptArchives('acc-1', 'passphrase')
-
-    const update = queries.find((q) => q.sql.startsWith('update "archived_mails"'))!
-    expect(update.sql).toMatch(/"is_encrypted" = \$1, "body_text" = \$2/)
-    expect(update.parameters.slice(0, 2)).toEqual([true, null])
-    await fs.rm(dir, { recursive: true, force: true })
   })
 })
 

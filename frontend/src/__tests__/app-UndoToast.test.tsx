@@ -7,12 +7,12 @@ beforeAll(() => i18n.changeLanguage('fr'))
 beforeEach(() => vi.useFakeTimers({ shouldAdvanceTime: true }))
 afterEach(() => vi.useRealTimers())
 
-const message = () => i18n.t('undoToast.trash', { count: 3 })
+const message = () => 'Suppression de 3 mails'
 
 describe('showUndoToast', () => {
   it('counts down, then closes on its own at the deadline', async () => {
     render(<Toaster />)
-    act(() => { showUndoToast({ message: message(), description: i18n.t('undoToast.trashDescription'), onUndo: vi.fn() }) })
+    act(() => { showUndoToast({ message: message(), description: 'Vers la corbeille Gmail · suivi dans Activité', onUndo: vi.fn() }) })
 
     // Announced once, politely, through the sonner region; the ticking copy is hidden from it
     expect(await screen.findByText('Suppression de 3 mails dans 10 s', { selector: '.sr-only' })).toBeInTheDocument()

@@ -6,7 +6,7 @@ import { notFound, UUID_RE } from '../utils/db'
 import { authPresets } from '../utils/auth'
 
 /** Types whose credentials enqueueJob redacts from the stored payload (see redactSecrets). */
-const SECRET_JOB_TYPES = new Set(['import_imap', 'encrypt_archives'])
+const SECRET_JOB_TYPES = new Set(['import_imap', 'decrypt_archives'])
 
 const STATUSES = ['scheduled', 'pending', 'active', 'completed', 'failed', 'cancelled'] as const
 const HISTORY_DAYS = 30

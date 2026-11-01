@@ -55,9 +55,9 @@ vi.mock('../unsubscribe/unsubscribe.service', () => ({
   forgetNewsletterSender: (...args: any[]) => mockForgetNewsletterSender(...args),
 }))
 
-const mockEncryptArchives = vi.fn().mockResolvedValue({ encrypted: 5 })
+const mockDecryptArchives = vi.fn().mockResolvedValue({ imported: 3, skipped: 0, errors: 0 })
 vi.mock('../privacy/encryption.service', () => ({
-  encryptArchives: (...args: any[]) => mockEncryptArchives(...args),
+  decryptArchives: (...args: any[]) => mockDecryptArchives(...args),
 }))
 
 const mockImportMbox = vi.fn().mockResolvedValue({ imported: 5, skipped: 1, errors: 0 })
@@ -325,38 +325,17 @@ describe('unified worker handlers', () => {
     expect(mockSaveNewsletterScan).toHaveBeenCalledWith('acc-1', senders)
   })
 
-  it('handles encrypt_archives', async () => {
-    const job = makeJob('encrypt_archives', {
-      accountId: 'acc-1',
-      userId: 'user-1',
-      action: 'encrypt_archives',
-      passphrase: 'my-secret',
-    })
-    await processJob(job)
-    expect(mockEncryptArchives).toHaveBeenCalled()
+  it('handles decrypt_archives, then refills the full-text bodies', async () => {
+    const job = makeJob('decrypt_archives', { accountId: 'acc-1', userId: 'user-1', passphrase: 'my-secret' })
+    expect(await processJob(job)).toEqual({ imported: 3, skipped: 0, errors: 0 })
+    expect(mockDecryptArchives).toHaveBeenCalledWith('acc-1', 'my-secret', expect.any(Function))
+    expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ title: 'Déchiffrement des archives terminé', body: '3 déchiffrée(s), 0 ignoré(s), 0 erreur(s).' }))
   })
 
-  it('reports encryption progress, every 10 archives, and skips the notification without a user', async () => {
-    mockEncryptArchives.mockImplementationOnce(async (_accountId: string, _passphrase: string, { onProgress }: any) => {
-      await onProgress(5, 20)
-      await onProgress(10, 20)
-      return { encrypted: 20 }
-    })
-    const job = makeJob('encrypt_archives', { accountId: 'acc-1', action: 'encrypt_archives', passphrase: 'secret' })
-    mockNotify.mockClear()
-    await processJob(job)
-    expect(job.updateProgress).toHaveBeenCalledWith(25)
-    expect(job.updateProgress).toHaveBeenCalledWith(50)
-    expect(mockNotify).not.toHaveBeenCalled()
-  })
-
-  it('handles encrypt_archives without passphrase', async () => {
-    const job = makeJob('encrypt_archives', {
-      accountId: 'acc-1',
-      userId: 'user-1',
-      action: 'encrypt_archives',
-    })
-    await expect(processJob(job)).rejects.toThrow('Passphrase required')
+  it('decrypt_archives with nothing decrypted does not refill bodies', async () => {
+    mockDecryptArchives.mockResolvedValueOnce({ imported: 0, skipped: 0, errors: 2 })
+    const job = makeJob('decrypt_archives', { accountId: 'acc-1', passphrase: 'x' })
+    expect(await processJob(job)).toEqual({ imported: 0, skipped: 0, errors: 2 })
   })
 
   it('handles import_mbox', async () => {
@@ -540,18 +519,6 @@ describe('unified worker handlers', () => {
     await expect(processJob(job)).rejects.toThrow('scan error')
   })
 
-  it('handles encrypt_archives with userId', async () => {
-    const job = makeJob('encrypt_archives', {
-      accountId: 'acc-1',
-      userId: 'user-1',
-      action: 'encrypt_archives',
-      passphrase: 'secret',
-    })
-    await processJob(job)
-    expect(mockEncryptArchives).toHaveBeenCalled()
-    expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ category: 'job_completed' }))
-  })
-
   it('handles import_mbox without userId (no notify)', async () => {
     const job = makeJob('import_mbox', {
       accountId: 'acc-1',
@@ -594,19 +561,6 @@ describe('unified worker handlers', () => {
     expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ category: 'job_failed' }))
   })
 
-  it('handles encrypt_archives failure with userId', async () => {
-    mockEncryptArchives.mockRejectedValueOnce(new Error('Encrypt fail'))
-    const job = makeJob('encrypt_archives', {
-      accountId: 'acc-1',
-      userId: 'user-1',
-      action: 'encrypt_archives',
-      passphrase: 'secret',
-    })
-    await expect(processJob(job)).rejects.toThrow('Encrypt fail')
-    expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ category: 'job_failed' }))
-  })
-
-  // Ported from the deleted per-type worker tests
   it('fails label/unlabel without labelId', async () => {
     for (const action of ['label', 'unlabel']) {
       const job = makeJob('bulk_operation', { accountId: 'acc-1', action, messageIds: ['msg-1'] })

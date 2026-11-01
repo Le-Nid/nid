@@ -122,6 +122,10 @@ Many providers (Google, Outlook, Yahoo) require an **app password** rather than 
 
 **Export (.mbox)**: all of the account's archives in an .mbox file, readable by Thunderbird or Apple Mail.
 
+### Encrypted archives
+
+Shown only when the account still has archives encrypted by the former encryption, removed from Nid: it left subject, sender and recipients in clear, and prevented reading, search and restore. Type the **Passphrase** then **Decrypt**: the archives are put back in clear in the background (followed in [Activity](activity.md)), then become readable and searchable again. To protect archives at rest, encrypt the NAS volume instead.
+
 ### Configuration
 
 Your rules and webhooks in a JSON file, to back them up or move them to another instance: **Export configuration** / **Import a configuration**.

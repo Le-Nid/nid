@@ -1,109 +1,37 @@
-# API Privacy & Security
+# API Privacy — way out of archive encryption
 
 ## Prefix: `/api/privacy`
 
-All routes require JWT authentication.
+Session only (refused to API tokens).
+
+**Archive encryption was removed** from Nid: it only protected the EML files' content (subject, sender, recipients, snippet and attachment names stayed in clear in PostgreSQL), and it made the mail unreadable in Nid, invisible to full-text search, and impossible to restore or share. To protect archives at rest, encrypt the NAS volume (LUKS, encrypted ZFS dataset…): it covers the database too. Only the way out remains: putting already encrypted archives back in clear.
 
 ---
 
-## Archive encryption
-
 ### `GET /:accountId/encryption/status`
 
-Encryption status for an account.
+How many archives of the account are still encrypted.
 
-**Response:**
 ```json
-{
-  "total": 1500,
-  "encrypted": 1200,
-  "unencrypted": 300,
-  "percentage": 80,
-  "hasEncryptionKey": true
-}
+{ "total": 1500, "encrypted": 1200, "unencrypted": 300, "percentage": 80 }
 ```
 
-### `POST /encryption/setup`
+### `POST /:accountId/encryption/decrypt-all`
 
-Configures the encryption passphrase (one-time only).
-
-**Body:**
 ```json
-{ "passphrase": "ma-phrase-secrete-longue" }
+{ "passphrase": "my-passphrase" }
 ```
 
-**Response:**
-```json
-{ "ok": true }
-```
-
-**Errors:**
-- `400` — Passphrase too short (< 8 characters)
-- `409` — Encryption already configured
-
-### `POST /encryption/verify`
-
-Verifies that the passphrase is correct.
-
-**Body:**
-```json
-{ "passphrase": "ma-phrase-secrete-longue" }
-```
-
-**Response:**
-```json
-{ "valid": true }
-```
-
-### `POST /:accountId/encryption/encrypt`
-
-Launches AES-256-GCM encryption of all unencrypted archives.
-
-**Body:**
-```json
-{ "passphrase": "ma-phrase-secrete-longue" }
-```
-
-**Response (202):**
-```json
-{ "jobId": "encrypt_archives-1711891234567", "message": "Encryption job enqueued" }
-```
-
-**Errors:**
-- `403` — Invalid passphrase
-
-### `POST /:accountId/encryption/decrypt-mail`
-
-Decrypts an archived email on-the-fly for viewing.
-
-**Body:**
-```json
-{
-  "mailId": "uuid-du-mail",
-  "passphrase": "ma-phrase-secrete-longue"
-}
-```
-
-**Response:**
-```json
-{ "content": "From: sender@example.com\nTo: ...\n\nContenu du mail EML déchiffré" }
-```
-
-**Errors:**
-- `400` — Email not encrypted or missing parameters
-- `403` — Invalid passphrase
-- `404` — Email not found
+Checks the passphrase (`403` otherwise), then starts a `decrypt_archives` job (**202** `{ "jobId" }`) that decrypts every EML and its attachments in place, marks the archive readable, then refills the full-text bodies (`backfill_body_text`) for search. A wrong passphrase writes nothing (GCM tag). The passphrase is neither stored in the `jobs` table nor kept in Redis after the job. Rate limit: 5/min. UI: Settings › Data › **Encrypted archives** (shown only when some remain).
 
 ---
 
 ## Encrypted file format
 
-Encrypted EML files use the following format:
-
 ```
-GMENC01 (7 bytes magic) | SALT (32 bytes) | IV (12 bytes) | TAG (16 bytes) | CIPHERTEXT
+GMENC01 (7 magic bytes) | SALT (32 bytes) | IV (12 bytes) | TAG (16 bytes) | CIPHERTEXT
 ```
 
 - Algorithm: AES-256-GCM
 - Key derivation: PBKDF2 (SHA-512, 100,000 iterations)
-- The passphrase is never stored; only a scrypt hash is kept for verification
+- The passphrase is never stored, only a scrypt hash is kept for verification

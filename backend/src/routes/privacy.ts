@@ -1,133 +1,32 @@
 import { FastifyInstance } from 'fastify'
+import { z } from 'zod'
 import { authPresets } from '../utils/auth'
 import { enqueueJob } from '../jobs/queue'
-import {
-  setupEncryption,
-  verifyEncryptionKey,
-  getEncryptionStatus,
-  decryptFile,
-} from '../privacy/encryption.service'
-import { getDb } from '../db'
+import { getEncryptionStatus, verifyEncryptionKey } from '../privacy/encryption.service'
 
-export async function privacyRoutes(app: FastifyInstance) {
-  const { auth, accountAuth } = authPresets(app)
+const decryptSchema = z.object({ passphrase: z.string().min(1).max(1024) })
 
-  // ═══════════════════════════════════════════════════════
-  // ENCRYPTION
-  // ═══════════════════════════════════════════════════════
+// Archive encryption was removed (metadata stayed in clear, search and restore broke): only the way out remains.
+// Mounted under /api/privacy, refused to API tokens.
+export function privacyRoutes(app: FastifyInstance, _opts: unknown, done: () => void) {
+  const { accountAuth } = authPresets(app)
 
-  // GET /:accountId/encryption/status — Encryption status
+  // How many archives of the account are still encrypted
   app.get('/:accountId/encryption/status', accountAuth, async (request) => {
     const { accountId } = request.params as { accountId: string }
-    const userId = request.user.sub
-    const db = getDb()
-    const user = await db
-      .selectFrom('users')
-      .select('encryption_key_hash')
-      .where('id', '=', userId)
-      .executeTakeFirst()
-
-    const status = await getEncryptionStatus(accountId)
-    return {
-      ...status,
-      hasEncryptionKey: !!user?.encryption_key_hash,
-    }
+    return getEncryptionStatus(accountId)
   })
 
-  // POST /encryption/setup — Set encryption passphrase
-  app.post('/encryption/setup', auth, async (request, reply) => {
-    const userId = request.user.sub
-    const { passphrase } = request.body as { passphrase: string }
-
-    if (!passphrase || passphrase.length < 8) {
-      return reply.code(400).send({ error: 'Passphrase must be at least 8 characters' })
-    }
-
-    // Check if already set up
-    const db = getDb()
-    const user = await db
-      .selectFrom('users')
-      .select('encryption_key_hash')
-      .where('id', '=', userId)
-      .executeTakeFirst()
-
-    if (user?.encryption_key_hash) {
-      return reply.code(409).send({ error: 'Encryption already set up. Use change-passphrase instead.' })
-    }
-
-    await setupEncryption(userId, passphrase)
-    return { ok: true }
-  })
-
-  // POST /encryption/verify — Verify encryption passphrase
-  app.post('/encryption/verify', auth, async (request, reply) => {
-    const userId = request.user.sub
-    const { passphrase } = request.body as { passphrase: string }
-
-    if (!passphrase) {
-      return reply.code(400).send({ error: 'Passphrase required' })
-    }
-
-    const valid = await verifyEncryptionKey(userId, passphrase)
-    return { valid }
-  })
-
-  // POST /:accountId/encryption/encrypt — Encrypt all archives
-  app.post('/:accountId/encryption/encrypt', accountAuth, async (request, reply) => {
+  // Puts every encrypted archive of the account back in clear (job), the passphrase checked first
+  app.post('/:accountId/encryption/decrypt-all', { ...accountAuth, config: { rateLimit: { max: 5, timeWindow: '1 minute' } } }, async (request, reply) => {
     const { accountId } = request.params as { accountId: string }
     const userId = request.user.sub
-    const { passphrase } = request.body as { passphrase: string }
-
-    if (!passphrase) {
-      return reply.code(400).send({ error: 'Passphrase required' })
-    }
-
-    const valid = await verifyEncryptionKey(userId, passphrase)
-    if (!valid) {
-      return reply.code(403).send({ error: 'Invalid passphrase' })
-    }
-
-    const job = await enqueueJob('encrypt_archives', {
-      accountId,
-      userId,
-      action: 'encrypt_archives',
-      passphrase,
-    })
-    return reply.code(202).send({ jobId: job.id, message: 'Encryption job enqueued' })
+    const { passphrase } = decryptSchema.parse(request.body)
+    if (!(await verifyEncryptionKey(userId, passphrase))) return reply.code(403).send({ error: 'Invalid passphrase' })
+    // passphrase: redacted from the stored payload, job removed from Redis once done (enqueueJob)
+    const job = await enqueueJob('decrypt_archives', { accountId, userId, passphrase })
+    return reply.code(202).send({ jobId: job.id })
   })
 
-  // POST /:accountId/encryption/decrypt-mail — Decrypt a single archive for viewing
-  app.post('/:accountId/encryption/decrypt-mail', accountAuth, async (request, reply) => {
-    const { accountId } = request.params as { accountId: string }
-    const userId = request.user.sub
-    const { mailId, passphrase } = request.body as { mailId: string; passphrase: string }
-
-    if (!passphrase || !mailId) {
-      return reply.code(400).send({ error: 'mailId and passphrase required' })
-    }
-
-    const valid = await verifyEncryptionKey(userId, passphrase)
-    if (!valid) {
-      return reply.code(403).send({ error: 'Invalid passphrase' })
-    }
-
-    const db = getDb()
-    const mail = await db
-      .selectFrom('archived_mails')
-      .select(['eml_path', 'is_encrypted'])
-      .where('id', '=', mailId)
-      .where('account_id', '=', accountId)
-      .executeTakeFirst()
-
-    if (!mail) {
-      return reply.code(404).send({ error: 'Mail not found' })
-    }
-
-    if (!mail.is_encrypted) {
-      return reply.code(400).send({ error: 'Mail is not encrypted' })
-    }
-
-    const content = await decryptFile(mail.eml_path, passphrase)
-    return { content: content.toString('utf-8') }
-  })
+  done()
 }

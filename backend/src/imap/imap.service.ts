@@ -40,7 +40,7 @@ export async function testImapLogin(s: ImapSettings): Promise<void> {
   await client.logout()
 }
 
-export async function getImapSettings(accountId: string): Promise<ImapSettings> {
+async function getImapSettings(accountId: string): Promise<ImapSettings> {
   const a = await getDb().selectFrom('mail_accounts')
     .select(['provider', 'imap_host', 'imap_port', 'imap_secure', 'imap_user', 'imap_password'])
     .where('id', '=', accountId).executeTakeFirst()

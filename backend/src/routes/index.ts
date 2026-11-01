@@ -28,7 +28,6 @@ import { unifiedRoutes } from './unified'
 import { retentionRoutes } from './retention'
 import { quotaRoutes } from './quota'
 import { importRoutes } from './import'
-import { expirationRoutes } from './expiration'
 import { sharingRoutes } from './sharing'
 import { eventsRoutes } from './events'
 import { labelsRoutes } from './labels'
@@ -75,7 +74,6 @@ export async function registerRoutes(app: FastifyInstance) {
   await app.register(retentionRoutes,     { prefix: '/api/retention' })
   await app.register(quotaRoutes,         { prefix: '/api/quota' })
   await app.register(importRoutes,        { prefix: '/api/import' })
-  await app.register(expirationRoutes,    { prefix: '/api/expiration' })
   await app.register(sharingRoutes,       { prefix: '/api/shares' })
   await app.register(eventsRoutes,        { prefix: '/api/events' })
   await app.register(labelsRoutes,        { prefix: '/api/labels' })

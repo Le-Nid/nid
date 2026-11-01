@@ -2,8 +2,8 @@ import { keepPreviousData, useQuery, useInfiniteQuery, useMutation, useQueryClie
 import {
   dashboardApi, gmailApi, archiveApi, rulesApi, jobsApi,
   adminApi, unsubscribeApi, attachmentsApi,
-  analyticsApi, notificationsApi,
-  auditApi, webhooksApi, savedSearchesApi, unifiedApi, archiveThreadsApi,
+  analyticsApi, notificationsApi, privacyApi,
+  webhooksApi, savedSearchesApi, unifiedApi, archiveThreadsApi,
   retentionApi, importApi,
   sharingApi, labelsApi, gmailAccountsApi, accountSharesApi, twoFactorApi, configApi, integrityApi, authApi, aboutApi, passkeysApi, apiTokensApi, imapAccountsApi,
 } from '../api'
@@ -58,7 +58,6 @@ export const queryKeys = {
   notifications: {
     preferences: () => ['notifications', 'preferences'] as const,
   },
-  audit: (params?: Record<string, any>) => ['audit', params] as const,
   webhooks: () => ['webhooks'] as const,
   retention: () => ['retention'] as const,
   shares: () => ['shares'] as const,
@@ -143,7 +142,7 @@ export function useGmailMessage(accountId: string | null, messageId: string | nu
 
 // ─── Archive ──────────────────────────────────────────────
 
-export const ARCHIVE_PAGE_SIZE = 50
+const ARCHIVE_PAGE_SIZE = 50
 
 /** Archive search (B2): `q` full text with a `highlight` per mail, filters, « Afficher plus » pages. */
 export function useArchiveMails(accountId: string | null, params: Record<string, any>) {
@@ -195,6 +194,14 @@ export function useArchiveContacts(accountId: string, q: string) {
 
 export function useRestoreToGmail(accountId: string) {
   return useMutation({ mutationFn: (mailIds: string[]) => archiveApi.restoreToGmail(accountId, mailIds) })
+}
+
+/** Archives still encrypted by the removed encryption feature (the decrypt card shows only when > 0). */
+export function useEncryptionStatus(accountId: string) {
+  return useQuery({ queryKey: ['archive', accountId, 'encryption'], queryFn: () => privacyApi.getEncryptionStatus(accountId) })
+}
+export function useDecryptArchives(accountId: string) {
+  return useMutation({ mutationFn: (passphrase: string) => privacyApi.decryptAll(accountId, passphrase) })
 }
 
 export function useArchiveTags(accountId: string) {
@@ -619,15 +626,6 @@ export const useDeleteMe = () => useMutation({ mutationFn: authApi.deleteMe })
 export const useExportConfig = () => useMutation({ mutationFn: configApi.exportConfig })
 export const useImportConfig = () => useMeMutation(configApi.importConfig)
 
-// ─── Audit ────────────────────────────────────────────────
-
-export function useAuditLogs(params: Record<string, any>) {
-  return useQuery({
-    queryKey: queryKeys.audit(params),
-    queryFn: () => auditApi.list(params),
-  })
-}
-
 // ─── Webhooks ─────────────────────────────────────────────
 
 export function useWebhooks() {
@@ -656,23 +654,6 @@ export function useCreateSavedSearch() {
   return useMutation({
     mutationFn: (data: { name: string; query: string; icon?: string; color?: string }) =>
       savedSearchesApi.create(data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.savedSearches() }),
-  })
-}
-
-export function useDeleteSavedSearch() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (searchId: string) => savedSearchesApi.remove(searchId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.savedSearches() }),
-  })
-}
-
-export function useUpdateSavedSearch() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: ({ id, ...data }: { id: string } & Record<string, any>) =>
-      savedSearchesApi.update(id, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.savedSearches() }),
   })
 }

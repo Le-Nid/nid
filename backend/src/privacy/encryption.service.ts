@@ -21,15 +21,6 @@ function deriveKey(passphrase: string, salt: Buffer): Buffer {
 }
 
 /**
- * Hash the passphrase for storage (to verify later without storing it).
- */
-export function hashPassphrase(passphrase: string): string {
-  const salt = crypto.randomBytes(16).toString('hex')
-  const hash = crypto.scryptSync(passphrase, salt, 64).toString('hex')
-  return `${salt}:${hash}`
-}
-
-/**
  * Verify a passphrase against its stored hash.
  */
 export function verifyPassphrase(passphrase: string, stored: string): boolean {
@@ -37,30 +28,6 @@ export function verifyPassphrase(passphrase: string, stored: string): boolean {
   if (!salt || !hash) return false
   const derived = crypto.scryptSync(passphrase, salt, 64).toString('hex')
   return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(derived, 'hex'))
-}
-
-/**
- * Encrypt a file in-place.
- * Format: MAGIC(7) + SALT(32) + IV(12) + TAG(16) + CIPHERTEXT
- */
-export async function encryptFile(filePath: string, passphrase: string): Promise<void> {
-  const plaintext = await fs.readFile(filePath)
-
-  // Skip if already encrypted
-  if (plaintext.subarray(0, MAGIC.length).equals(MAGIC)) {
-    return
-  }
-
-  const salt = crypto.randomBytes(SALT_LENGTH)
-  const key = deriveKey(passphrase, salt)
-  const iv = crypto.randomBytes(IV_LENGTH)
-
-  const cipher = crypto.createCipheriv(ALGORITHM, key, iv)
-  const encrypted = Buffer.concat([cipher.update(plaintext), cipher.final()])
-  const tag = cipher.getAuthTag()
-
-  const output = Buffer.concat([MAGIC, salt, iv, tag, encrypted])
-  await fs.writeFile(filePath, output)
 }
 
 /**
@@ -103,19 +70,6 @@ export async function isFileEncrypted(filePath: string): Promise<boolean> {
 }
 
 /**
- * Set up encryption for a user (stores passphrase hash).
- */
-export async function setupEncryption(userId: string, passphrase: string): Promise<void> {
-  const db = getDb()
-  const hash = hashPassphrase(passphrase)
-  await db
-    .updateTable('users')
-    .set({ encryption_key_hash: hash })
-    .where('id', '=', userId)
-    .execute()
-}
-
-/**
  * Verify encryption passphrase for a user.
  */
 export async function verifyEncryptionKey(userId: string, passphrase: string): Promise<boolean> {
@@ -131,87 +85,35 @@ export async function verifyEncryptionKey(userId: string, passphrase: string): P
 }
 
 /**
- * Older archives deduplicated attachments across accounts. Before encrypting a file
- * another account still uses, give this account its own copy so the other one stays readable.
+ * Way out of archive encryption (removed): puts back in clear every encrypted EML and attachment of an account,
+ * in place, then marks the mail readable again. A wrong passphrase fails each file (GCM tag), nothing is written.
  */
-async function detachSharedFile(filePath: string, accountId: string): Promise<string> {
-  const db = getDb()
-  const shared = await db
-    .selectFrom('archived_attachments')
-    .innerJoin('archived_mails', 'archived_mails.id', 'archived_attachments.archived_mail_id')
-    .select('archived_attachments.id')
-    .where('archived_attachments.file_path', '=', filePath)
-    .where('archived_mails.account_id', '!=', accountId)
-    .executeTakeFirst()
-  if (!shared) return filePath
-
-  const copyPath = `${filePath}.${accountId}`
-  await fs.copyFile(filePath, copyPath)
-  await db
-    .updateTable('archived_attachments')
-    .set({ file_path: copyPath })
-    .where('file_path', '=', filePath)
-    .where('archived_mail_id', 'in', db.selectFrom('archived_mails').select('id').where('account_id', '=', accountId))
-    .execute()
-  return copyPath
-}
-
-/**
- * Encrypt all un-encrypted archives for an account.
- */
-export async function encryptArchives(
+export async function decryptArchives(
   accountId: string,
   passphrase: string,
-  options: { onProgress?: (done: number, total: number) => void } = {},
-): Promise<{ encrypted: number; errors: number }> {
-  const { onProgress } = options
+  onProgress?: (done: number, total: number) => Promise<void>,
+): Promise<{ imported: number; skipped: number; errors: number }> {
   const db = getDb()
+  const mails = await db.selectFrom('archived_mails').select(['id', 'eml_path'])
+    .where('account_id', '=', accountId).where('is_encrypted', '=', true).execute()
+  const result = { imported: 0, skipped: 0, errors: 0 }
 
-  const mails = await db
-    .selectFrom('archived_mails')
-    .select(['id', 'eml_path'])
-    .where('account_id', '=', accountId)
-    .where('is_encrypted', '=', false)
-    .execute()
-
-  let encrypted = 0
-  let errors = 0
-
-  for (let i = 0; i < mails.length; i++) {
+  for (const [i, mail] of mails.entries()) {
     try {
-      await encryptFile(mails[i].eml_path, passphrase)
-
-      // Also encrypt attachments
-      const attachments = await db
-        .selectFrom('archived_attachments')
-        .select('file_path')
-        .where('archived_mail_id', '=', mails[i].id)
-        .execute()
-
-      for (const att of attachments) {
-        try {
-          await encryptFile(await detachSharedFile(att.file_path, accountId), passphrase)
-        } catch (err) {
-          logger.warn(`Failed to encrypt attachment ${att.file_path}: ${(err as Error).message}`)
-        }
+      const attachments = await db.selectFrom('archived_attachments').select('file_path') // NOSONAR: one mail after the other
+        .where('archived_mail_id', '=', mail.id).execute()
+      for (const path of [mail.eml_path, ...attachments.map((a) => a.file_path)]) {
+        if (await isFileEncrypted(path)) await fs.writeFile(path, await decryptFile(path, passphrase)) // NOSONAR
       }
-
-      await db
-        .updateTable('archived_mails')
-        .set({ is_encrypted: true, body_text: null }) // never keep plaintext of an encrypted archive
-        .where('id', '=', mails[i].id)
-        .execute()
-
-      encrypted++
+      await db.updateTable('archived_mails').set({ is_encrypted: false }).where('id', '=', mail.id).execute() // NOSONAR
+      result.imported++
     } catch (err) {
-      logger.warn(`Failed to encrypt ${mails[i].eml_path}: ${(err as Error).message}`)
-      errors++
+      result.errors++
+      logger.warn({ err, accountId, mailId: mail.id }, 'Archive not decrypted')
     }
-
-    onProgress?.(i + 1, mails.length)
+    await onProgress?.(i + 1, mails.length) // NOSONAR
   }
-
-  return { encrypted, errors }
+  return result
 }
 
 /**
