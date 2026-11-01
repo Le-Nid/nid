@@ -471,6 +471,22 @@ Le mot de passe est stocké scellé (AES-256-GCM, clé dérivée de `JWT_SECRET`
 
 Même corps sans `email` : nouveau serveur ou mot de passe, testé d'abord ; efface « Action requise » (`auth_error_at`) et une déconnexion. Tracé `imap.update`.
 
+### GET /api/auth/imap/autoconfig?email= 🔒
+
+Préremplit le formulaire d'ajout : `{ "host", "port", "secure", "source" }`. Ordre : base Mozilla ISPDB (`https://autoconfig.thunderbird.net/v1.1/<domaine>`, `source: "ispdb"`), puis le fichier du domaine (`https://autoconfig.<domaine>/mail/config-v1.1.xml`, `"domain"`), sinon `imap.<domaine>:993` TLS (`"guess"`). Les deux recherches partent en parallèle, 3 s et 64 Ko au plus chacune, sans suivre de redirection. Garde SSRF (`utils/net.ts`, le même que les webhooks) : un hôte qui résout vers une adresse non publique (`ipaddr.js`, `range() !== 'unicast'`) n'est jamais contacté. Serveur IMAP en SSL préféré à STARTTLS ; jamais en clair. `400` si l'adresse est invalide. Rate limit : 20/min.
+
+### GET /api/auth/imap/:accountId/folders 🔒
+
+Se connecte au serveur et liste les dossiers sélectionnables : `{ "folders": [{ "path", "name", "specialUse", "syncedByDefault" }], "chosen": ["INBOX", …] | null, "since": "2024-01-01" | null }`. `syncedByDefault` : sauvegardé quand `chosen` vaut `null` (tout sauf indésirables, corbeille, « Tous les messages »). **502** avec la raison du serveur s'il refuse la connexion, `404` si ce n'est pas un compte IMAP.
+
+### PUT /api/auth/imap/:accountId/scope 🔒
+
+```json
+{ "folders": ["INBOX", "Factures"], "since": "2024-01-01" }
+```
+
+Ce que couvre la sauvegarde : `folders` (1 à 1 000 chemins, ou `null` pour le comportement par défaut ; un dossier choisi peut être un dossier d'indésirables) et `since` (`AAAA-MM-JJ` : seuls les mails reçus ce jour-là ou après, via `SEARCH SINCE` ; `null` pour tout). Une nouvelle `since` vide `imap_folder_state` du compte : chaque dossier repart du début (les mails déjà archivés sont ignorés par `Message-ID`), sans quoi des mails plus anciens que l'ancienne date resteraient sautés. Ajouter un dossier ne relance que lui (il n'a pas d'état). Les archives existantes ne sont jamais supprimées. Tracé `imap.scope`.
+
 ### Sauvegarde
 
-La sauvegarde du compte (automatique, « Sauvegarder », assistant) est une synchronisation IMAP incrémentale : tous les dossiers sauf `\Noselect`, indésirables, corbeille et « Tous les messages » ; par dossier, seuls les UID au-delà du dernier archivé (`imap_folder_state`) ; un `UIDVALIDITY` changé relance le dossier ; les mails déjà archivés sont ignorés par `Message-ID` ; le dossier devient un libellé d'archive. Un login refusé par le serveur passe le compte en « Action requise » et envoie `account.reauth_required` une fois.
+La sauvegarde du compte (automatique, « Sauvegarder », assistant) est une synchronisation IMAP incrémentale : les dossiers choisis (`PUT …/scope`), sinon tous sauf `\Noselect`, indésirables, corbeille et « Tous les messages » ; à partir de la date de début si elle est fixée ; par dossier, seuls les UID au-delà du dernier archivé (`imap_folder_state`) ; un `UIDVALIDITY` changé relance le dossier ; les mails déjà archivés sont ignorés par `Message-ID` ; le dossier devient un libellé d'archive. Un login refusé par le serveur passe le compte en « Action requise » et envoie `account.reauth_required` une fois.

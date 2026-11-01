@@ -1,4 +1,5 @@
 import type { ImapFlow, ListResponse } from 'imapflow'
+import { sql } from 'kysely'
 import { getDb } from '../db'
 import { getLocalStorage } from '../storage/storage.service'
 import { importSingleEml } from '../archive/import.service'
@@ -51,11 +52,14 @@ async function getImapSettings(accountId: string): Promise<ImapSettings> {
 // Junk and trash are not worth keeping; « All Mail » (Gmail, some servers) repeats every other folder
 const SKIPPED_USES = new Set([String.raw`\Junk`, String.raw`\Trash`, String.raw`\All`])
 
-export function foldersToSync(list: ListResponse[]): ListResponse[] {
-  return list.filter((f) => !f.flags.has(String.raw`\Noselect`) && !(f.specialUse && SKIPPED_USES.has(f.specialUse)))
+/** The account's chosen folders, else every folder but junk, trash and All Mail. */
+export function foldersToSync(list: ListResponse[], chosen?: string[] | null): ListResponse[] {
+  const selectable = list.filter((f) => !f.flags.has(String.raw`\Noselect`))
+  if (chosen) return selectable.filter((f) => chosen.includes(f.path))
+  return selectable.filter((f) => !(f.specialUse && SKIPPED_USES.has(f.specialUse)))
 }
 
-type SyncContext = { accountId: string; result: ImapSyncResult; onProgress?: (done: number) => Promise<void> }
+type SyncContext = { accountId: string; since: string | null; result: ImapSyncResult; onProgress?: (done: number) => Promise<void> }
 
 /** One fetched message into the archive; false (logged, counted) when it could not be archived. */
 async function archiveMessage(accountId: string, folder: string, uid: number, source: Buffer, result: ImapSyncResult): Promise<boolean> {
@@ -74,7 +78,7 @@ async function archiveMessage(accountId: string, folder: string, uid: number, so
  * One folder: archives the UIDs above the last one archived, then moves the folder's mark.
  * A changed UIDVALIDITY (folder recreated) restarts the folder; already archived mails are skipped by Message-ID.
  */
-async function syncFolder(client: ImapFlow, folder: ListResponse, { accountId, result, onProgress }: SyncContext) {
+async function syncFolder(client: ImapFlow, folder: ListResponse, { accountId, since, result, onProgress }: SyncContext) {
   const db = getDb()
   const box = client.mailbox
   if (!box) return
@@ -89,7 +93,9 @@ async function syncFolder(client: ImapFlow, folder: ListResponse, { accountId, r
   // After a failure the folder's mark stops moving: that mail is retried next run (later ones are skipped by Message-ID)
   let lastUid = from
   let failed = false
-  for await (const msg of client.fetch(`${from + 1}:*`, { uid: true, source: true }, { uid: true })) {
+  // A start date: the server only returns mails received that day or later (older UIDs are passed over for good)
+  const range = since ? { uid: `${from + 1}:*`, since: new Date(since) } : `${from + 1}:*`
+  for await (const msg of client.fetch(range, { uid: true, source: true }, { uid: true })) {
     if (msg.uid <= from || !msg.source) continue
     // One IMAP connection, UIDs in order: the mark is only safe if mails are archived one after the other
     const ok = await archiveMessage(accountId, folder.path, msg.uid, msg.source, result) // NOSONAR
@@ -98,8 +104,13 @@ async function syncFolder(client: ImapFlow, folder: ListResponse, { accountId, r
     const done = result.imported + result.skipped + result.errors
     if (onProgress && done % 20 === 0) await onProgress(done) // NOSONAR: progress follows the sequential import
   }
+  // Only while the start date is still the one used: a date changed meanwhile cleared the marks, the folder restarts
   await db.insertInto('imap_folder_state')
-    .values({ account_id: accountId, folder: folder.path, uid_validity: uidValidity, last_uid: lastUid })
+    .columns(['account_id', 'folder', 'uid_validity', 'last_uid'])
+    .expression(db.selectFrom('mail_accounts')
+      .select([sql.val(accountId).as('account_id'), sql.val(folder.path).as('folder'), sql.val(uidValidity).as('uid_validity'), sql.val(lastUid).as('last_uid')])
+      .where('id', '=', accountId)
+      .where(sql<boolean>`imap_since IS NOT DISTINCT FROM ${since}::date`))
     .onConflict((oc) => oc.columns(['account_id', 'folder']).doUpdateSet({ uid_validity: uidValidity, last_uid: lastUid }))
     .execute()
 }
@@ -109,7 +120,7 @@ export async function connectImapAccount(accountId: string): Promise<ImapFlow> {
   return connect(await getImapSettings(accountId))
 }
 
-/** Archives what is new in every folder since the last run; the folder becomes an archive label. */
+/** Archives what is new in the account's folders since the last run; the folder becomes an archive label. */
 export async function syncImapAccount(
   accountId: string,
   onProgress?: (done: number) => Promise<void>,
@@ -117,11 +128,14 @@ export async function syncImapAccount(
   const client = await connectImapAccount(accountId)
   const result: ImapSyncResult = { imported: 0, skipped: 0, errors: 0, folders: 0 }
   try {
-    for (const folder of foldersToSync(await client.list())) {
+    const scope = await getDb().selectFrom('mail_accounts')
+      .select(['imap_folders', sql<string | null>`imap_since::text`.as('since')])
+      .where('id', '=', accountId).executeTakeFirst()
+    for (const folder of foldersToSync(await client.list(), scope?.imap_folders)) {
       // A single IMAP connection selects one folder at a time
       const lock = await client.getMailboxLock(folder.path) // NOSONAR
       try {
-        await syncFolder(client, folder, { accountId, result, onProgress }) // NOSONAR: same connection, one folder at a time
+        await syncFolder(client, folder, { accountId, since: scope?.since ?? null, result, onProgress }) // NOSONAR: same connection, one folder at a time
       } finally {
         lock.release()
       }
@@ -130,4 +144,19 @@ export async function syncImapAccount(
     await client.logout().catch(() => {})
   }
   return result
+}
+
+export type ImapFolder = { path: string; name: string; specialUse: string | null; syncedByDefault: boolean }
+
+/** The account's selectable folders on the server, for the folder picker. */
+export async function listImapFolders(accountId: string): Promise<ImapFolder[]> {
+  const client = await connectImapAccount(accountId)
+  try {
+    const list = await client.list()
+    const byDefault = new Set(foldersToSync(list).map((f) => f.path))
+    return list.filter((f) => !f.flags.has(String.raw`\Noselect`))
+      .map((f) => ({ path: f.path, name: f.name, specialUse: f.specialUse ?? null, syncedByDefault: byDefault.has(f.path) }))
+  } finally {
+    await client.logout().catch(() => {})
+  }
 }

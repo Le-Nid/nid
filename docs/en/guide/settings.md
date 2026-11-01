@@ -77,9 +77,11 @@ Back from Google, a **Set up the account** wizard opens for that new account (no
 
 Every step can be skipped; **Later** closes the wizard without saving anything. Created rules are then edited in [Rules & labels](rules.md).
 
-**Add an IMAP account** connects an account from another provider (OVH, Infomaniak, Fastmail, Outlook…) for **archiving only**: address, IMAP server, port (993 by default), encrypted connection, username (the address by default) and password — with two-factor authentication, an app password. Nid tests the login before saving and shows the server's reason when it refuses. The password is stored encrypted. The same wizard then opens (automatic backup, first backup: whole mailbox or later; no rules, they are Gmail-only).
+**Add an IMAP account** connects an account from another provider (OVH, Infomaniak, Fastmail, Outlook…) for **archiving only**: address, IMAP server, port (993 by default), encrypted connection, username (the address by default) and password — with two-factor authentication, an app password. As soon as the address is typed, Nid looks up the server, port and encryption (Thunderbird's database, then the address's domain, else `imap.<domain>`) and prefills the form, with "Server found automatically" or "Server guessed from the domain: check it"; a server typed by hand is never replaced. Nid tests the login before saving and shows the server's reason when it refuses. The password is stored encrypted. The same wizard then opens (automatic backup, first backup: whole mailbox or later; no rules, they are Gmail-only).
 
 An IMAP account carries the **IMAP · archive** badge. Its folders are backed up to the NAS and become labels in [Archives](archives.md); the overview shows only its archive figures, and Mail, Cleanup and Rules point to Archives. When the server refuses the login (password changed), the account turns **Action required**: **Update the server or password**.
+
+**Folders and period** chooses what an IMAP account's backup copies: **Every folder** (except junk, trash and All Mail, the default) or **Only these folders** (checkboxes, read from the server), and **Mails received since** (empty: the whole mailbox). The choice applies to the next backup; mails already archived stay in the archives. Changing the date reads every folder again from the start (mails already archived are skipped).
 
 ### Share an account read-only
 

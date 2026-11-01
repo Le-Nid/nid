@@ -79,6 +79,19 @@ export const imapAccountsApi = {
   /** The server tests the login first; 400 carries its reason. */
   create: (body: ImapSettings & { email: string }) => api.post('/api/auth/imap', body).then((r) => r.data as { id: string; email: string }),
   update: (accountId: string, body: ImapSettings) => api.put(`/api/auth/imap/${accountId}`, body).then((r) => r.data),
+  /** Server settings for an address (ISPDB, the domain's autoconfig, else `imap.<domain>`). */
+  autoconfig: (email: string) =>
+    api.get('/api/auth/imap/autoconfig', { params: { email } }).then((r) => r.data as ImapDiscovery),
+  folders: (accountId: string) => api.get(`/api/auth/imap/${accountId}/folders`).then((r) => r.data as ImapFolders),
+  setScope: (accountId: string, body: ImapScope) => api.put(`/api/auth/imap/${accountId}/scope`, body).then((r) => r.data as ImapScope),
+}
+export interface ImapDiscovery { host: string; port: number; secure: boolean; source: 'ispdb' | 'domain' | 'guess' }
+/** What an IMAP account's backup covers: `folders` null = every folder but junk, trash and All Mail; `since` YYYY-MM-DD. */
+export interface ImapScope { folders: string[] | null; since: string | null }
+export interface ImapFolders {
+  folders: { path: string; name: string; specialUse: string | null; syncedByDefault: boolean }[]
+  chosen: string[] | null
+  since: string | null
 }
 
 // ─── Archive ──────────────────────────────────────────────

@@ -29,6 +29,7 @@ In-code migrations in `backend/src/db/migrations/`, registered in `backend/src/d
 | `019_drop_activity_heatmap` | Drops `email_activity_heatmap` (computed on the fly) |
 | `020_drop_storage_configs` | Drops `storage_configs` (never used) |
 | `021_attachment_text` | `archived_attachments.text_content` (PDF/DOCX text), added to the mail's `search_vector` (weight D); triggers recompute the mail's vector when that text lands |
+| `022_imap_sync_scope` | `mail_accounts.imap_folders` (`text[]`, folders to back up, `NULL` = default) and `imap_since` (`date`, read as `imap_since::text`) |
 
 ---
 

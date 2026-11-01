@@ -4,6 +4,7 @@ import Fastify from 'fastify'
 // ─── DB stand-in: records writes, serves the folder state ───
 const folderState = new Map<string, { uid_validity: string; last_uid: string }>()
 const writes: { op: string; table: string; values?: any }[] = []
+const resets: string[] = []
 const mockTakeFirst = vi.fn()
 const mockTakeFirstOrThrow = vi.fn()
 const chainFor = (op: string, table: string): any => {
@@ -19,8 +20,11 @@ const chainFor = (op: string, table: string): any => {
       if (prop === 'executeTakeFirstOrThrow') return mockTakeFirstOrThrow
       if (prop === 'execute') {
         return async () => {
-          const v = writes.at(-1)?.values
-          if (table === 'imap_folder_state' && op === 'insertInto') folderState.set(v.folder, { uid_validity: String(v.uid_validity), last_uid: String(v.last_uid) })
+          if (op === 'deleteFrom') resets.push(table)
+          // The mark is written by INSERT … SELECT (sql.val): its values are the conflict update's, for the folder in use
+          if (table === 'imap_folder_state' && op === 'insertInto') {
+            folderState.set(server.current, { uid_validity: String(upsert.uid_validity), last_uid: String(upsert.last_uid) })
+          }
           return []
         }
       }
@@ -35,7 +39,15 @@ const chainFor = (op: string, table: string): any => {
   return chain
 }
 // Expression builder stand-in: every property and call gives itself back (eb.fn.countAll(), oc.constraint().doNothing()…)
-const eb: any = new Proxy(function () {}, { get: (_t, p) => (p === 'then' ? undefined : eb), apply: () => eb })
+let upsert: any = {}
+const eb: any = new Proxy(function () {}, {
+  get: (_t, p) => {
+    if (p === 'then') return undefined
+    if (p === 'doUpdateSet') return (v: unknown) => { upsert = v; return eb }
+    return eb
+  },
+  apply: () => eb,
+})
 const mockDb = new Proxy({}, { get: (_t, op: string) => (table: string) => chainFor(op, table) })
 vi.mock('../db', () => ({ getDb: () => mockDb }))
 vi.mock('../storage/storage.service', () => ({ getLocalStorage: () => ({}) }))
@@ -43,10 +55,12 @@ vi.mock('../audit/audit.service', () => ({ logAudit: vi.fn() }))
 
 const importSingleEml = vi.hoisted(() => vi.fn())
 vi.mock('../archive/import.service', () => ({ importSingleEml }))
+const discoverImap = vi.hoisted(() => vi.fn())
+vi.mock('../imap/autoconfig', () => ({ discoverImap }))
 
 // ─── imapflow stand-in: folders of { uid, source } ───
 const server = vi.hoisted(() => ({
-  folders: [] as { path: string; flags: Set<string>; specialUse?: string; uidValidity: number; messages: { uid: number }[] }[],
+  folders: [] as { path: string; name?: string; flags: Set<string>; specialUse?: string; uidValidity: number; messages: { uid: number; date?: Date }[] }[],
   current: '' as string,
   loginFails: false,
   fetched: [] as string[],
@@ -63,11 +77,13 @@ vi.mock('imapflow', () => ({
       this.mailbox = { uidValidity: BigInt(f.uidValidity), uidNext: Math.max(0, ...f.messages.map((m) => m.uid)) + 1 }
       return { release: () => {} }
     }
-    async *fetch(range: string) {
-      server.fetched.push(`${server.current} ${range}`)
-      const from = Number(range.split(':')[0])
+    async *fetch(range: string | { uid: string; since: Date }) {
+      const uids = typeof range === 'string' ? range : range.uid
+      server.fetched.push(`${server.current} ${typeof range === 'string' ? range : `${uids} since ${range.since.toISOString().slice(0, 10)}`}`)
+      const from = Number(uids.split(':')[0])
       const f = server.folders.find((x) => x.path === server.current)!
-      const newer = f.messages.filter((m) => m.uid >= from)
+      // a SEARCH range: only what the server dates on or after `since`
+      const newer = f.messages.filter((m) => m.uid >= from && (typeof range === 'string' || !m.date || m.date >= range.since))
       // `n:*` returns the newest message even when none is >= n (RFC 3501)
       for (const m of newer.length ? newer : f.messages.slice(-1)) yield { uid: m.uid, source: Buffer.from(`mail ${m.uid}`) }
     }
@@ -86,6 +102,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   folderState.clear()
   writes.length = 0
+  resets.length = 0
   server.fetched.length = 0
   server.loginFails = false
   mockTakeFirst.mockResolvedValue({ provider: 'imap', imap_host: 'imap.test', imap_port: 993, imap_secure: true, imap_user: 'ana', imap_password: SEALED })
@@ -140,6 +157,21 @@ describe('syncImapAccount', () => {
     await syncImapAccount('acc-1')
     expect(server.fetched.at(-1)).toBe('INBOX 1:*')
     expect(folderState.get('INBOX')).toEqual({ uid_validity: '8', last_uid: '3' })
+  })
+
+  it('chosen folders (junk included if chosen) and a start date', async () => {
+    const list: any[] = [box('INBOX', []), box('Spam', [], { specialUse: '\\Junk' }), box('Sent', []), box('[Gmail]', [], { flags: new Set(['\\Noselect']) })]
+    expect(foldersToSync(list, ['Spam', 'Sent', '[Gmail]', 'Gone']).map((f) => f.path)).toEqual(['Spam', 'Sent'])
+
+    server.folders = [box('INBOX', [1, 2, 3]), box('Sent', [9])]
+    server.folders[0].messages[0].date = new Date('2023-12-31')
+    // the connection settings, then what the backup covers
+    mockTakeFirst.mockReset()
+      .mockResolvedValueOnce({ provider: 'imap', imap_host: 'imap.test', imap_port: 993, imap_secure: true, imap_user: 'ana', imap_password: SEALED })
+      .mockResolvedValueOnce({ imap_folders: ['INBOX'], since: '2024-01-01' })
+    expect(await syncImapAccount('acc-1')).toMatchObject({ imported: 2, folders: 1 })
+    expect(server.fetched).toEqual(['INBOX 1:* since 2024-01-01'])
+    expect(folderState.get('INBOX')?.last_uid).toBe('3')
   })
 
   it('refuses an account that is not IMAP', async () => {
@@ -198,5 +230,60 @@ describe('IMAP account routes', () => {
     const res = await (await build()).inject({ method: 'PUT', url: '/acc-1', payload: { host: 'imap.mail.fr', user: 'ana', password: 'new' } })
     expect(res.statusCode).toBe(200)
     expect(writes.find((w) => w.op === 'updateTable')!.values).toMatchObject({ auth_error_at: null, is_active: true })
+  })
+
+  it('GET /autoconfig prefills from the address; a bad address is refused', async () => {
+    discoverImap.mockResolvedValueOnce({ host: 'imap.gmx.net', port: 993, secure: true, source: 'ispdb' })
+    const app = await build()
+    const res = await app.inject({ method: 'GET', url: '/autoconfig?email=Ana@GMX.fr' })
+    expect(res.json()).toEqual({ host: 'imap.gmx.net', port: 993, secure: true, source: 'ispdb' })
+    expect(discoverImap).toHaveBeenCalledWith('ana@gmx.fr')
+    expect((await app.inject({ method: 'GET', url: '/autoconfig?email=nope' })).statusCode).toBe(400)
+  })
+
+  it('GET /:id/folders lists the server folders with what the backup covers; a refused login is a 502', async () => {
+    server.folders = [box('INBOX', [], { name: 'INBOX' }), box('Spam', [], { name: 'Spam', specialUse: '\\Junk' }), box('[Gmail]', [], { flags: new Set(['\\Noselect']) })]
+    mockTakeFirst.mockReset()
+      .mockResolvedValueOnce({ imap_folders: ['INBOX'], since: '2024-01-01' })
+      .mockResolvedValue({ provider: 'imap', imap_host: 'imap.test', imap_port: 993, imap_secure: true, imap_user: 'ana', imap_password: SEALED })
+    const app = await build()
+    const res = await app.inject({ method: 'GET', url: '/acc-1/folders' })
+    expect(res.json()).toEqual({
+      folders: [
+        { path: 'INBOX', name: 'INBOX', specialUse: null, syncedByDefault: true },
+        { path: 'Spam', name: 'Spam', specialUse: '\\Junk', syncedByDefault: false },
+      ],
+      chosen: ['INBOX'], since: '2024-01-01',
+    })
+    server.loginFails = true
+    mockTakeFirst.mockResolvedValueOnce({ imap_folders: null, since: null })
+    const refused = await app.inject({ method: 'GET', url: '/acc-1/folders' })
+    expect([refused.statusCode, refused.json().error]).toEqual([502, 'Invalid credentials'])
+    mockTakeFirst.mockResolvedValueOnce(undefined)
+    expect((await app.inject({ method: 'GET', url: '/acc-1/folders' })).statusCode).toBe(404)
+  })
+
+  it('PUT /:id/scope stores folders and start date; a new date restarts the folders', async () => {
+    const app = await build()
+    mockTakeFirst.mockResolvedValueOnce({ since: null })
+    const res = await app.inject({ method: 'PUT', url: '/acc-1/scope', payload: { folders: ['INBOX', 'Factures'], since: '2024-01-01' } })
+    expect(res.json()).toEqual({ folders: ['INBOX', 'Factures'], since: '2024-01-01' })
+    expect(writes.find((w) => w.op === 'updateTable')!.values).toMatchObject({ imap_folders: ['INBOX', 'Factures'], imap_since: '2024-01-01' })
+    expect(resets).toEqual(['imap_folder_state']) // null → a date
+    resets.length = 0
+
+    // Same date, other folders: the marks stay
+    mockTakeFirst.mockResolvedValueOnce({ since: '2024-01-01' })
+    await app.inject({ method: 'PUT', url: '/acc-1/scope', payload: { folders: null, since: '2024-01-01' } })
+    expect(resets).toHaveLength(0)
+    mockTakeFirst.mockResolvedValueOnce({ since: '2024-01-01' })
+    await app.inject({ method: 'PUT', url: '/acc-1/scope', payload: { folders: null, since: null } })
+    expect(resets).toEqual(['imap_folder_state'])
+
+    for (const payload of [{ folders: [], since: null }, { folders: null, since: '2024-13-01' }, { folders: null }]) {
+      expect((await app.inject({ method: 'PUT', url: '/acc-1/scope', payload })).statusCode).toBe(400)
+    }
+    mockTakeFirst.mockResolvedValueOnce(undefined)
+    expect((await app.inject({ method: 'PUT', url: '/acc-1/scope', payload: { folders: null, since: null } })).statusCode).toBe(404)
   })
 })

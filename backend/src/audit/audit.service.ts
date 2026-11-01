@@ -11,6 +11,7 @@ export type AuditAction =
   | 'gmail.connect'
   | 'imap.connect'
   | 'imap.update'
+  | 'imap.scope'
   | 'account.share'
   | 'account.unshare'
   | 'gmail.disconnect'

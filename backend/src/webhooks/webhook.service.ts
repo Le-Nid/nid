@@ -1,8 +1,6 @@
 import { getDb } from '../db'
 import * as crypto from 'node:crypto'
-import { lookup } from 'node:dns/promises'
-import { isIP } from 'node:net'
-import ipaddr from 'ipaddr.js'
+import { isPublicHost } from '../utils/net'
 import { URL } from 'node:url'
 import { config } from '../config'
 import { createLogger } from '../logger'
@@ -17,25 +15,11 @@ export type WebhookEvent =
   | 'integrity.failed'
   | 'account.reauth_required'
 
-/**
- * Anything but a public unicast address: loopback, private, link-local (cloud metadata), CGNAT, unique-local,
- * multicast, reserved… Ranges named by ipaddr.js (RFC lists), an IPv4-mapped IPv6 checked as IPv4.
- */
-export function isPrivateAddress(address: string): boolean {
-  if (!ipaddr.isValid(address)) return true
-  return ipaddr.process(address).range() !== 'unicast'
-}
-
-/**
- * Any user can register a webhook URL, so refuse the internal network unless the admin allows it.
- * shortcut: DNS is resolved again by fetch (rebinding window), pin the resolved IP if this app is exposed publicly.
- */
+/** Any user can register a webhook URL, so refuse the internal network unless the admin allows it. */
 async function assertPublicUrl(url: string) {
   if (config.WEBHOOK_ALLOW_PRIVATE_NETWORKS) return
   const { hostname } = new URL(url)
-  const host = hostname.startsWith('[') ? hostname.slice(1, -1) : hostname // IPv6 literals come bracketed
-  const addresses = isIP(host) ? [{ address: host }] : await lookup(host, { all: true })
-  if (addresses.some((a) => isPrivateAddress(a.address))) {
+  if (!(await isPublicHost(hostname))) {
     throw new Error(`Webhook target ${hostname} is on a private network (set WEBHOOK_ALLOW_PRIVATE_NETWORKS=true to allow)`)
   }
 }

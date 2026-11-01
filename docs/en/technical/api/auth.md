@@ -471,6 +471,22 @@ The password is stored sealed (AES-256-GCM, key derived from `JWT_SECRET`): **ro
 
 Same body without `email`: new server or password, tested first; clears « Action requise » (`auth_error_at`) and a disconnection. Logged as `imap.update`.
 
+### GET /api/auth/imap/autoconfig?email= 🔒
+
+Prefills the add form: `{ "host", "port", "secure", "source" }`. Order: Mozilla's ISPDB (`https://autoconfig.thunderbird.net/v1.1/<domain>`, `source: "ispdb"`), then the domain's own file (`https://autoconfig.<domain>/mail/config-v1.1.xml`, `"domain"`), else `imap.<domain>:993` TLS (`"guess"`). Both lookups run at once, 3 s and 64 KB at most each, following no redirect. SSRF guard (`utils/net.ts`, the same as webhooks): a host resolving to a non-public address (`ipaddr.js`, `range() !== 'unicast'`) is never contacted. An SSL IMAP server is preferred to STARTTLS; plain text never. `400` on an invalid address. Rate limit: 20/min.
+
+### GET /api/auth/imap/:accountId/folders 🔒
+
+Logs in and lists the selectable folders: `{ "folders": [{ "path", "name", "specialUse", "syncedByDefault" }], "chosen": ["INBOX", …] | null, "since": "2024-01-01" | null }`. `syncedByDefault`: backed up when `chosen` is `null` (all but junk, trash and All Mail). **502** with the server's reason when it refuses the login, `404` if not an IMAP account.
+
+### PUT /api/auth/imap/:accountId/scope 🔒
+
+```json
+{ "folders": ["INBOX", "Factures"], "since": "2024-01-01" }
+```
+
+What the backup covers: `folders` (1 to 1,000 paths, or `null` for the default; a chosen folder may be a junk folder) and `since` (`YYYY-MM-DD`: only mails received that day or later, through `SEARCH SINCE`; `null` for everything). A new `since` clears the account's `imap_folder_state`: every folder starts over (mails already archived are skipped by `Message-ID`), otherwise mails older than the previous date would stay skipped. Adding a folder only starts that one (it has no state). Existing archives are never deleted. Logged as `imap.scope`.
+
 ### Backup
 
-The account's backup (automatic, « Sauvegarder », setup wizard) is an incremental IMAP sync: every folder except `\Noselect`, junk, trash and All Mail; per folder, only the UIDs above the last one archived (`imap_folder_state`); a changed `UIDVALIDITY` restarts the folder; mails already archived are skipped by `Message-ID`; the folder becomes an archive label. A login the server refuses flags the account « Action requise » and sends `account.reauth_required` once.
+The account's backup (automatic, « Sauvegarder », setup wizard) is an incremental IMAP sync: the chosen folders (`PUT …/scope`), else every folder except `\Noselect`, junk, trash and All Mail; from the start date when one is set; per folder, only the UIDs above the last one archived (`imap_folder_state`); a changed `UIDVALIDITY` restarts the folder; mails already archived are skipped by `Message-ID`; the folder becomes an archive label. A login the server refuses flags the account « Action requise » and sends `account.reauth_required` once.
