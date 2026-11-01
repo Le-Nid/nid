@@ -61,10 +61,11 @@ const XML_ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot:
 export function docxXmlText(xml: string): string {
   return xml
     .replaceAll(/<\/w:p>|<w:tab\/>|<w:br\/>/g, ' ')
-    .replaceAll(/<[^>]+>/g, '')
+    // [^<>]: an unclosed `<` stops at the next one, so a hostile file stays linear
+    .replaceAll(/<[^<>]*>/g, '')
     .replaceAll(/&(#x[\da-f]+|#\d+|\w+);/gi, (m, e: string) => {
-      if (e[0] !== '#') return XML_ENTITIES[e] ?? m
-      const code = e[1] === 'x' || e[1] === 'X' ? Number.parseInt(e.slice(2), 16) : Number(e.slice(1))
+      if (!e.startsWith('#')) return XML_ENTITIES[e] ?? m
+      const code = /^#x/i.test(e) ? Number.parseInt(e.slice(2), 16) : Number(e.slice(1))
       return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : ''
     })
 }
@@ -136,7 +137,7 @@ export async function backfillAttachmentText(onProgress?: (done: number) => Prom
       await db.updateTable('archived_attachments').set({ text_content: text ?? '' }).where('id', '=', row.id).execute() // NOSONAR
     }
     done += rows.length
-    await onProgress?.(done)
+    await onProgress?.(done) // NOSONAR: progress follows the sequential batches
   }
 }
 
