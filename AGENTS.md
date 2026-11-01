@@ -52,6 +52,7 @@ Le script CI (`.github/workflows/ci.yml`) exécute : `npm ci` → `typecheck` �
 - **Backend** : env `node`, mocks de config, DB Kysely, Gmail service, et `enqueueJob` dans le setup.
 - **Frontend** : env `jsdom`, mocks d'Axios, localStorage, `matchMedia`, `ResizeObserver` dans le setup.
 - Nommage : `*.test.ts` (backend) ou `*.test.tsx` (frontend).
+- **Intégration IMAP** : `backend/src/__integration__/` contre un vrai Dovecot + PostgreSQL, sans mocks (`npm run test:integration`, config `vitest.integration.config.ts`, job CI `backend-imap`). Voir `docs/fr/development/contributing.md`.
 
 ## Pièges connus
 

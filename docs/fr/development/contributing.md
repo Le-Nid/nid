@@ -141,6 +141,19 @@ cd backend && npm run typecheck
 cd frontend && npm run typecheck
 ```
 
+### Tests d'intégration IMAP
+
+`backend/src/__integration__/` teste la sauvegarde et la restauration IMAP contre un vrai Dovecot et un vrai PostgreSQL (aucun mock) : synchro incrémentale, dossiers choisis et date de début (`SEARCH SINCE`), restauration par `APPEND` dans le dossier d'origine, mot de passe refusé. Le job CI `backend-imap` lance `postgres:16-alpine` et `dovecot/dovecot:2.4.5` (STARTTLS avec un certificat généré pour `127.0.0.1`, approuvé par `NODE_EXTRA_CA_CERTS` : la vérification TLS reste active). En local, avec un Dovecot et une base vides :
+
+```bash
+cd backend
+DATABASE_URL=postgres://… JWT_SECRET=… GOOGLE_CLIENT_ID=x GOOGLE_CLIENT_SECRET=x GOOGLE_REDIRECT_URI=http://x \
+ARCHIVE_PATH=/tmp/archives IMAP_TEST_HOST=127.0.0.1 IMAP_TEST_PORT=31143 IMAP_TEST_PASSWORD=… \
+npm run test:integration
+```
+
+Ces tests ne passent pas par `src/__tests__/setup.ts` (config `vitest.integration.config.ts`) et ne comptent pas dans la couverture.
+
 ### Audit de sécurité
 
 Exécutez régulièrement un audit des dépendances pour identifier les vulnérabilités connues :
