@@ -82,7 +82,9 @@ export async function attachmentsRoutes(app: FastifyInstance) {
       eb('archived_attachments.filename', 'ilike', `%${escapeIlike(term!)}%`),
       eb('archived_mails.subject', 'ilike', `%${escapeIlike(term!)}%`),
       eb('archived_mails.sender', 'ilike', `%${escapeIlike(term!)}%`),
-      sql<boolean>`${attachmentTsv()} @@ ${tsQuery}`,
+      // A subquery, not the expression itself: ORed with the mail's columns, it would be computed for every attachment
+      // of the account; the subquery reads the GIN index of migration 023 once
+      sql<boolean>`archived_attachments.id IN (SELECT archived_attachments.id FROM archived_attachments WHERE ${attachmentTsv()} @@ ${tsQuery})`,
     ])
     if (tsQuery) {
       // An excerpt only for an attachment whose text matched

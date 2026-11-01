@@ -53,7 +53,7 @@ it('searches the text of PDF/DOCX too, with the indexed expression, and returns 
   const [list, count] = [seen[0], seen.find((q) => q.sql.includes('count(*)'))!]
   for (const q of [list, count]) {
     expect(q.sql).toContain('"archived_attachments"."filename" ilike $')
-    expect(q.sql).toContain(tsv)
+    expect(q.sql).toContain('archived_attachments.id IN (SELECT archived_attachments.id FROM archived_attachments WHERE ' + tsv)
     expect(q.parameters).toEqual(expect.arrayContaining(['%imposable%', 'imposable']))
   }
   expect(list.sql).toContain('CASE WHEN ' + tsv)
