@@ -24,6 +24,7 @@ import * as migration018 from './migrations/018_account_shares'
 import * as migration019 from './migrations/019_drop_activity_heatmap'
 import * as migration020 from './migrations/020_drop_storage_configs'
 import * as migration021 from './migrations/021_attachment_text'
+import * as migration022 from './migrations/022_imap_sync_scope'
 import { createLogger } from '../logger'
 
 const logger = createLogger('db')
@@ -69,6 +70,7 @@ const migrations: Record<string, Migration> = {
   '019_drop_activity_heatmap': migration019,
   '020_drop_storage_configs': migration020,
   '021_attachment_text': migration021,
+  '022_imap_sync_scope': migration022,
 }
 
 class InCodeMigrationProvider implements MigrationProvider {

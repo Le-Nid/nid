@@ -14,12 +14,12 @@ vi.mock('kysely/migration', () => ({
 const { runMigrations } = await import('../db')
 
 describe('runMigrations', () => {
-  it('hands Kysely every in-code migration, 021 last', async () => {
+  it('hands Kysely every in-code migration, 022 last', async () => {
     migrator.results = [{ status: 'Success', migrationName: '018_account_shares' }]
     await runMigrations()
     const names = Object.keys(await migrator.provider.getMigrations())
     expect(names).toEqual([...names].sort())
-    expect(names.at(-1)).toBe('021_attachment_text')
+    expect(names.at(-1)).toBe('022_imap_sync_scope')
   })
 
   it('throws the migrator error', async () => {

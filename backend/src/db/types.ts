@@ -49,6 +49,9 @@ export interface GmailAccountsTable {
   imap_secure:   boolean | null
   imap_user:     string | null
   imap_password: string | null   // sealed (utils/secret.ts), never sent to the client
+  imap_folders:  string[] | null // folders to back up (migration 022), NULL: all but junk/trash/All Mail
+  /** Back up from this day on (`date`): read it as `imap_since::text`, pg turns a date into a local-midnight Date */
+  imap_since:    ColumnType<Date | null, string | null, string | null>
   created_at:    Generated<Date>
   updated_at:    Generated<Date>
 }

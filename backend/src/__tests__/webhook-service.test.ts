@@ -34,7 +34,8 @@ vi.stubGlobal('fetch', mockFetch)
 const { mockLookup } = vi.hoisted(() => ({ mockLookup: vi.fn() }))
 vi.mock('node:dns/promises', () => ({ lookup: mockLookup }))
 
-import { triggerWebhooks, isPrivateAddress } from '../webhooks/webhook.service'
+import { triggerWebhooks } from '../webhooks/webhook.service'
+import { isPrivateAddress } from '../utils/net'
 
 /** sendWebhook is fire-and-forget and resolves DNS first */
 const flush = () => new Promise((r) => setTimeout(r, 0))
