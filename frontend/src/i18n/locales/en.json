@@ -137,7 +137,7 @@
       "open": "Open",
       "share": "Share",
       "trash": "Delete",
-      "restore": "Restore to Gmail"
+      "restore": "Restore to mailbox"
     },
     "loadError": "Could not load the archives.",
     "noMatch": "No archive matches",
@@ -286,10 +286,10 @@
       "loadError": "Could not load contacts."
     },
     "restore": {
-      "started_one": "Restoring {{count, number}} mail to Gmail",
-      "started_other": "Restoring {{count, number}} mails to Gmail",
+      "started_one": "Restoring {{count, number}} mail to the mailbox",
+      "started_other": "Restoring {{count, number}} mails to the mailbox",
       "startedHint": "A notification will tell you when it is done.",
-      "failed": "The restore to Gmail could not be started."
+      "failed": "The restore to the mailbox could not be started."
     }
   },
   "rules": {
@@ -484,6 +484,7 @@
     "applyRetention": "Retention run",
     "backfillBodyText": "Archive full-text indexing",
     "restoreGmail": "Restore to Gmail",
+    "restoreImap": "IMAP restore",
     "decryptArchives": "Archive decryption"
   },
   "settings": {

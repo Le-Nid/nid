@@ -21,13 +21,23 @@ const gmail = { users: { messages: { get: vi.fn(), untrash: vi.fn(), insert: vi.
 vi.mock('../gmail/gmail.service', () => ({ getGmailClient: vi.fn(async () => gmail) }))
 vi.mock('../gmail/gmail-throttle', () => ({ gmailRetry: (fn: () => unknown) => fn() }))
 vi.mock('../labels/labels.service', () => ({ findOrCreateLabel: vi.fn(async (_a: string, name: string) => `Label_new_${name}`) }))
-vi.mock('node:fs', () => ({ default: { createReadStream: vi.fn((p: string) => `stream:${p}`) } }))
+vi.mock('node:fs', () => ({ default: {
+  createReadStream: vi.fn((p: string) => `stream:${p}`),
+  promises: { readFile: vi.fn(async (p: string) => Buffer.from(`eml:${p}`)) },
+} }))
+const imap = { list: vi.fn(), getMailboxLock: vi.fn(), search: vi.fn(), append: vi.fn(), logout: vi.fn(async () => {}) }
+const release = vi.fn()
+const connectImapAccount = vi.fn(async () => imap)
+vi.mock('../imap/imap.service', () => ({
+  connectImapAccount: () => connectImapAccount(),
+  isImapAuthError: (err: any) => !!err?.authenticationFailed,
+}))
 
 vi.mock('../jobs/queue', () => ({ enqueueJob: vi.fn(async () => ({ id: 'job-r' })) }))
 vi.mock('../audit/audit.service', () => ({ logAudit: vi.fn() }))
 
 import Fastify from 'fastify'
-import { restoreToGmail } from '../archive/restore.service'
+import { restoreToGmail, restoreToImap } from '../archive/restore.service'
 import { archiveRoutes } from '../routes/archive'
 import { enqueueJob } from '../jobs/queue'
 import { logAudit } from '../audit/audit.service'
@@ -85,31 +95,88 @@ describe('restoreToGmail', () => {
   })
 })
 
-describe('POST /:accountId/mails/restore-gmail', () => {
-  async function post(account: unknown, mailIds: unknown = ['00000000-0000-4000-8000-000000000001']) {
+describe('restoreToImap', () => {
+  const folder = (path: string, flags: string[] = []) => ({ path, flags: new Set(flags) })
+  beforeEach(() => {
+    imap.list.mockResolvedValue([folder('INBOX'), folder('Factures/2024'), folder('[Gmail]', [String.raw`\Noselect`])])
+    imap.getMailboxLock.mockResolvedValue({ release })
+    imap.search.mockResolvedValue([])
+  })
+
+  it('appends each mail to its archived folder (else INBOX), skips one already there, counts errors', async () => {
+    const date = new Date('2024-03-01T10:00:00Z')
+    answer = (sql) => sql.includes('from "archived_mails"')
+      ? [
+          mail('a', { label_ids: ['imported:Factures/2024'], gmail_message_id: 'mid-a@x', date }),
+          mail('b', { label_ids: ['imported:Gone', 'imported:Inbox'], gmail_message_id: 'mid-b@x' }),
+          mail('c', { label_ids: [], gmail_message_id: 'imported-123-abc' }),
+          mail('d', { is_encrypted: true }),
+          mail('e', { label_ids: ['imported:Factures/2024'], gmail_message_id: 'mid-e@x' }),
+        ]
+      : sql.includes('from "gmail_labels"')
+        ? [{ id: 'imported:Factures/2024', name: 'Factures/2024' }, { id: 'imported:Gone', name: 'Gone' }, { id: 'imported:Inbox', name: 'Inbox' }]
+        : []
+    imap.search.mockImplementation(async (q: any) => (q.header['message-id'] === 'mid-e@x' ? [42] : []))
+    imap.append.mockImplementation(async (_f: string, content: Buffer) => {
+      if (content.toString().includes('/nas/c.eml')) throw new Error('NO [OVERQUOTA]')
+      return { uid: 1 }
+    })
+    const progress = vi.fn()
+
+    expect(await restoreToImap('acc-1', ['a', 'b', 'c', 'd', 'e'], progress)).toEqual({ imported: 2, skipped: 1, errors: 2 })
+    expect(imap.append).toHaveBeenCalledWith('Factures/2024', Buffer.from('eml:/nas/a.eml'), [String.raw`\Seen`], date)
+    expect(imap.append).toHaveBeenCalledWith('INBOX', Buffer.from('eml:/nas/b.eml'), [String.raw`\Seen`], undefined)
+    // No Message-ID in the source: nothing to look for, appended
+    expect(imap.search).toHaveBeenCalledTimes(3)
+    expect(imap.getMailboxLock.mock.calls.map((c) => c[0])).toEqual(['Factures/2024', 'INBOX'])
+    expect(release).toHaveBeenCalledTimes(2)
+    expect(imap.logout).toHaveBeenCalled()
+    expect(progress).toHaveBeenLastCalledWith(5, 5)
+    const labels = seen.find((q) => q.sql.includes('from "gmail_labels"'))!
+    expect(labels.sql).toContain('"account_id" = $1 and "id" in ($2, $3, $4)')
+  })
+
+  it('a refused password fails the job with a clear message, still an auth error', async () => {
+    answer = () => [mail('a')]
+    connectImapAccount.mockRejectedValueOnce(Object.assign(new Error('Command failed'), { authenticationFailed: true }))
+    const err = await restoreToImap('acc-1', ['a']).catch((e) => e)
+    expect(err.message).toMatch(/refusé le mot de passe/)
+    expect(err.authenticationFailed).toBe(true)
+    connectImapAccount.mockRejectedValueOnce(new Error('ECONNREFUSED'))
+    await expect(restoreToImap('acc-1', ['a'])).rejects.toThrow('ECONNREFUSED')
+  })
+})
+
+describe('POST /:accountId/mails/restore-mailbox', () => {
+  async function post(account: unknown, mailIds: unknown = ['00000000-0000-4000-8000-000000000001'], route = 'restore-mailbox') {
     answer = () => (account ? [account] : [])
     const app = Fastify()
     app.decorate('authenticate', async (req: any) => { req.user = { sub: 'u1' } })
     app.decorate('requireAccountOwnership', async () => {})
     app.decorate('requireAdmin', async () => {})
     await app.register(archiveRoutes)
-    const res = await app.inject({ method: 'POST', url: '/acc-1/mails/restore-gmail', payload: { mailIds } })
+    const res = await app.inject({ method: 'POST', url: `/acc-1/mails/${route}`, payload: { mailIds } })
     await app.close()
     return res
   }
 
-  it('queues the restore and audits it', async () => {
-    const res = await post({ provider: 'gmail', is_active: true, auth_error_at: null })
+  it.each([['gmail', 'restore_gmail'], ['imap', 'restore_imap']])('queues the %s restore and audits it', async (provider, type) => {
+    const res = await post({ provider, is_active: true, auth_error_at: null })
     expect(res.statusCode).toBe(202)
     expect(res.json()).toEqual({ jobId: 'job-r' })
-    expect(enqueueJob).toHaveBeenCalledWith('restore_gmail', { accountId: 'acc-1', userId: 'u1', mailIds: ['00000000-0000-4000-8000-000000000001'] })
-    expect(logAudit).toHaveBeenCalledWith('u1', 'archive.restore_gmail', expect.objectContaining({ details: { count: 1 } }))
+    expect(enqueueJob).toHaveBeenCalledWith(type, { accountId: 'acc-1', userId: 'u1', mailIds: ['00000000-0000-4000-8000-000000000001'] })
+    expect(logAudit).toHaveBeenCalledWith('u1', `archive.${type}`, expect.objectContaining({ details: { count: 1 } }))
   })
 
-  it('refuses an IMAP account, an account to reconnect, an empty selection', async () => {
-    expect((await post({ provider: 'imap', is_active: true, auth_error_at: null })).statusCode).toBe(409)
-    expect((await post({ provider: 'gmail', is_active: true, auth_error_at: new Date() })).json()).toEqual({ error: 'Gmail account must be reconnected first' })
-    expect((await post(undefined)).statusCode).toBe(409)
+  it('keeps the former restore-gmail route', async () => {
+    expect((await post({ provider: 'imap', is_active: true, auth_error_at: null }, undefined, 'restore-gmail')).statusCode).toBe(202)
+    expect(enqueueJob).toHaveBeenCalledWith('restore_imap', expect.anything())
+  })
+
+  it('refuses an account to reconnect, an unknown account, an empty selection', async () => {
+    expect((await post({ provider: 'imap', is_active: true, auth_error_at: new Date() })).json()).toEqual({ error: 'Account must be reconnected first' })
+    expect((await post({ provider: 'gmail', is_active: false, auth_error_at: null })).statusCode).toBe(409)
+    expect((await post(undefined)).statusCode).toBe(404)
     expect((await post({ provider: 'gmail', is_active: true, auth_error_at: null }, [])).statusCode).not.toBe(202)
     expect(enqueueJob).not.toHaveBeenCalled()
   })

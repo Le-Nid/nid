@@ -423,21 +423,25 @@ export async function archiveRoutes(app: FastifyInstance) {
     return { updated: Number(result.numUpdatedRows) };
   });
 
-  // ─── Restore to Gmail (archive → mailbox) ─────────────────
-  app.post("/:accountId/mails/restore-gmail", accountAuth, async (request, reply) => {
-    const { accountId } = request.params as { accountId: string };
-    const { mailIds } = trashSchema.parse(request.body);
-    const account = await db.selectFrom("mail_accounts").select(["provider", "is_active", "auth_error_at"])
-      .where("id", "=", accountId).executeTakeFirst();
-    if (account?.provider !== "gmail") return reply.code(409).send({ error: "Not a Gmail account" });
-    if (!account.is_active || account.auth_error_at) return reply.code(409).send({ error: "Gmail account must be reconnected first" });
+  // ─── Restore to the mailbox (archive → Gmail or IMAP server) ───
+  // `restore-gmail`: the route's name before IMAP, kept for API token scripts
+  for (const route of ["/:accountId/mails/restore-mailbox", "/:accountId/mails/restore-gmail"]) {
+    app.post(route, accountAuth, async (request, reply) => {
+      const { accountId } = request.params as { accountId: string };
+      const { mailIds } = trashSchema.parse(request.body);
+      const account = await db.selectFrom("mail_accounts").select(["provider", "is_active", "auth_error_at"])
+        .where("id", "=", accountId).executeTakeFirst();
+      if (!account) return notFound(reply);
+      if (!account.is_active || account.auth_error_at) return reply.code(409).send({ error: "Account must be reconnected first" });
 
-    const job = await enqueueJob("restore_gmail", { accountId, userId: request.user.sub, mailIds });
-    await logAudit(request.user.sub, "archive.restore_gmail", {
-      targetType: "mail_account", targetId: accountId, details: { count: mailIds.length }, ipAddress: request.ip,
+      const type = account.provider === "imap" ? "restore_imap" : "restore_gmail";
+      const job = await enqueueJob(type, { accountId, userId: request.user.sub, mailIds });
+      await logAudit(request.user.sub, `archive.${type}`, {
+        targetType: "mail_account", targetId: accountId, details: { count: mailIds.length }, ipAddress: request.ip,
+      });
+      return reply.code(202).send({ jobId: job.id });
     });
-    return reply.code(202).send({ jobId: job.id });
-  });
+  }
 
   // ─── List trash ───────────────────────────────────────────
   app.get("/:accountId/trash", accountAuth, async (request) => {

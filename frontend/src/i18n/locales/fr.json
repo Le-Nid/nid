@@ -137,7 +137,7 @@
       "open": "Ouvrir",
       "share": "Partager",
       "trash": "Supprimer",
-      "restore": "Restaurer dans Gmail"
+      "restore": "Restaurer dans la boîte mail"
     },
     "loadError": "Impossible de charger les archives.",
     "noMatch": "Aucune archive ne correspond",
@@ -286,10 +286,10 @@
       "loadError": "Impossible de charger les contacts."
     },
     "restore": {
-      "started_one": "Restauration de {{count, number}} mail dans Gmail lancée",
-      "started_other": "Restauration de {{count, number}} mails dans Gmail lancée",
+      "started_one": "Restauration de {{count, number}} mail dans la boîte mail lancée",
+      "started_other": "Restauration de {{count, number}} mails dans la boîte mail lancée",
       "startedHint": "Une notification vous préviendra à la fin.",
-      "failed": "La restauration dans Gmail n'a pas pu être lancée."
+      "failed": "La restauration dans la boîte mail n'a pas pu être lancée."
     }
   },
   "rules": {
@@ -484,6 +484,7 @@
     "applyRetention": "Application de la rétention",
     "backfillBodyText": "Indexation du texte des archives",
     "restoreGmail": "Restauration dans Gmail",
+    "restoreImap": "Restauration IMAP",
     "decryptArchives": "Déchiffrement des archives"
   },
   "settings": {

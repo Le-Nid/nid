@@ -14,7 +14,7 @@ import { applyRetentionPolicies } from '../../archive/retention.service'
 import { purgeArchiveTrash } from '../../archive/trash.service'
 import { checkArchiveIntegrity, saveIntegrityResult } from '../../archive/integrity.service'
 import { backfillBodyText, countPendingBodyText } from '../../archive/body-text'
-import { restoreToGmail } from '../../archive/restore.service'
+import { restoreToGmail, restoreToImap } from '../../archive/restore.service'
 import { createLogger } from '../../logger'
 import { config } from '../../config'
 import { logAudit, type AuditAction } from '../../audit/audit.service'
@@ -52,6 +52,8 @@ export function startUnifiedWorker() {
           return handleBackfillBodyText(job)
         case 'restore_gmail':
           return handleRestoreGmail(job)
+        case 'restore_imap':
+          return handleRestoreImap(job)
         default:
           // Fail loudly: a silent no-op left the job row pending forever
           throw new Error(`Unknown job type: ${job.name}`)
@@ -483,7 +485,7 @@ type CountedRun = { imported: number; skipped: number; errors: number }
 
 /**
  * One IMAP pass (one-shot import, or an IMAP account's backup): progress, job row, one notification each way.
- * A login the server refuses flags the account « à reconnecter » (backups only: an import has no stored account).
+ * A login the server refuses flags the account « à reconnecter » (backup, restore: an import has no stored account).
  */
 async function runCountedJob(job: Job, titles: { done: string; failed: string; verb?: string }, run: (onProgress: (done: number, total?: number) => Promise<void>) => Promise<CountedRun>) {
   const { accountId, userId } = job.data
@@ -512,7 +514,7 @@ async function runCountedJob(job: Job, titles: { done: string; failed: string; v
     }
     return result
   } catch (err) {
-    if (job.name === 'archive_mails' && isImapAuthError(err)) await flagReauthRequired(accountId, 'Le serveur IMAP')
+    if ((job.name === 'archive_mails' || job.name === 'restore_imap') && isImapAuthError(err)) await flagReauthRequired(accountId, 'Le serveur IMAP')
     await recordJobFailure(job, userId, titles.failed, err)
     throw err
   }
@@ -653,4 +655,9 @@ async function handleBackfillBodyText(job: Job) {
     await setJob({ status: 'failed', error: String(err) })
     throw err
   }
+}
+
+function handleRestoreImap(job: Job) {
+  const { accountId, mailIds } = job.data
+  return runCountedJob(job, { done: 'Restauration IMAP terminée', failed: 'Restauration IMAP échouée', verb: 'restauré(s)' }, (onProgress) => restoreToImap(accountId, mailIds, onProgress))
 }

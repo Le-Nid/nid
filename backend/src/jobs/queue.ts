@@ -16,6 +16,7 @@ export type JobType =
   | 'purge_archive_trash'
   | 'backfill_body_text'
   | 'restore_gmail'
+  | 'restore_imap'
 
 export interface JobPayload {
   accountId: string

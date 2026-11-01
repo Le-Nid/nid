@@ -3,6 +3,7 @@ import { getDb } from '../db'
 import { getGmailClient } from '../gmail/gmail.service'
 import { gmailRetry } from '../gmail/gmail-throttle'
 import { findOrCreateLabel } from '../labels/labels.service'
+import { connectImapAccount, isImapAuthError } from '../imap/imap.service'
 import { createLogger } from '../logger'
 
 const logger = createLogger('restore')
@@ -85,4 +86,75 @@ export async function restoreToGmail(
     if (onProgress) await onProgress(done, mails.length) // NOSONAR: progress follows the sequential restore
   }
   return result
+}
+
+/**
+ * Puts archived mails back on an IMAP account's server (APPEND of the EML, read, at its date) in the folder they
+ * were archived from (their label naming a folder still on the server), else INBOX. A mail whose Message-ID is
+ * already in that folder is skipped, so a retried job does not duplicate; the next sync skips it by Message-ID too.
+ */
+export async function restoreToImap(
+  accountId: string,
+  mailIds: string[],
+  onProgress?: (done: number, total: number) => Promise<void>,
+): Promise<RestoreResult> {
+  const db = getDb()
+  const mails = await db.selectFrom('archived_mails')
+    .select(['id', 'gmail_message_id', 'label_ids', 'eml_path', 'is_encrypted', 'date'])
+    .where('account_id', '=', accountId).where('id', 'in', mailIds).where('deleted_at', 'is', null)
+    .execute()
+  const client = await connectImapAccount(accountId).catch((err) => {
+    if (!isImapAuthError(err)) throw err
+    // Kept as an auth error: the worker flags the account « à reconnecter »
+    throw Object.assign(new Error('Le serveur IMAP a refusé le mot de passe : reconnectez le compte dans Paramètres › Comptes.'), { authenticationFailed: true })
+  })
+  const result: RestoreResult = { imported: 0, skipped: 0, errors: 0 }
+  try {
+    const paths = new Map((await client.list()).filter((f) => !f.flags.has(String.raw`\Noselect`)).map((f) => [f.path.toLowerCase(), f.path]))
+    const labelIds = [...new Set(mails.flatMap((m) => m.label_ids))]
+    const names = new Map(labelIds.length
+      ? (await db.selectFrom('gmail_labels').select(['id', 'name']).where('account_id', '=', accountId).where('id', 'in', labelIds).execute()).map((l) => [l.id, l.name.toLowerCase()])
+      : [])
+    const byFolder = new Map<string, typeof mails>()
+    for (const mail of mails) {
+      const folder = mail.label_ids.map((id) => paths.get(names.get(id) ?? '')).find(Boolean) ?? 'INBOX'
+      byFolder.set(folder, [...(byFolder.get(folder) ?? []), mail])
+    }
+
+    for (const [folder, group] of byFolder) {
+      // One connection selects one folder at a time
+      const lock = await client.getMailboxLock(folder) // NOSONAR
+      try {
+        for (const mail of group) {
+          try {
+            if (mail.is_encrypted) {
+              result.errors++
+              logger.warn({ accountId, mailId: mail.id }, 'Encrypted archive not restored')
+            } else if (await isInMailbox(client, mail.gmail_message_id)) { // NOSONAR: same connection, one mail after the other
+              result.skipped++
+            } else {
+              await client.append(folder, await fs.promises.readFile(mail.eml_path), [String.raw`\Seen`], mail.date ?? undefined) // NOSONAR
+              result.imported++
+            }
+          } catch (err) {
+            result.errors++
+            logger.error({ err, accountId, mailId: mail.id, folder }, 'Archived mail not restored to IMAP')
+          }
+          if (onProgress) await onProgress(result.imported + result.skipped + result.errors, mails.length) // NOSONAR
+        }
+      } finally {
+        lock.release()
+      }
+    }
+  } finally {
+    await client.logout().catch(() => {})
+  }
+  return result
+}
+
+/** The selected folder holds this Message-ID (archive id of a mail imported without one: never found). */
+async function isInMailbox(client: Awaited<ReturnType<typeof connectImapAccount>>, messageId: string): Promise<boolean> {
+  if (messageId.startsWith('imported-')) return false
+  const uids = await client.search({ header: { 'message-id': messageId } }, { uid: true })
+  return Array.isArray(uids) && uids.length > 0
 }

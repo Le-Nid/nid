@@ -25,17 +25,14 @@ import type { ApiLabel } from '@/utils/gmail'
 import { ShareDialog } from './ShareDialog'
 import { TagDialog } from './TagDialog'
 import {
-  actionsHeader, col, DateCell, mailColumns, useArchiveFilters, useArchiveTrashWithUndo, useDebounced, useMboxExport, useRestoreToGmailAction,
+  actionsHeader, col, DateCell, mailColumns, useArchiveFilters, useArchiveTrashWithUndo, useDebounced, useMboxExport, useRestoreToMailboxAction,
   type ArchivedMail, type Filters,
 } from './shared'
 
 type RowAction = 'open' | ArchiveViewerAction
 const FIELD = 'h-11 text-base md:h-9 md:text-sm'
 
-const rowActions = (readOnly: boolean, canRestore: boolean): RowAction[] => {
-  if (readOnly) return ['open']
-  return canRestore ? ['open', 'share', 'restore', 'trash'] : ['open', 'share', 'trash']
-}
+const rowActions = (readOnly: boolean): RowAction[] => (readOnly ? ['open'] : ['open', 'share', 'restore', 'trash'])
 
 /** The label or tag tree as a select, for the filters sheet <md. */
 function TreeSelect({ id, label, nodes, value, onChange }: Readonly<{
@@ -149,12 +146,10 @@ export function SearchTab({ accountId }: Readonly<{ accountId: string }>) {
   const search = useArchiveMails(accountId, apiParams)
   const exporter = useMboxExport(accountId)
   const trash = useArchiveTrashWithUndo(accountId)
-  const restore = useRestoreToGmailAction(accountId)
+  const restore = useRestoreToMailboxAction(accountId)
   const { account } = useAccount()
   // Shared by another user: read only (no selection, no action but « Ouvrir »)
   const readOnly = !!account?.shared_by
-  // An IMAP account has no Gmail mailbox to restore into
-  const canRestore = account?.provider !== 'imap' && !readOnly
   const [q, setQ] = useDebounced(filters.q, (v) => set({ q: v }))
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
   const [viewing, setViewing] = useState<string | null>(null)
@@ -187,8 +182,8 @@ export function SearchTab({ accountId }: Readonly<{ accountId: string }>) {
   const onRowRef = useRef<(action: RowAction, mail: ArchivedMail) => void>(() => {})
   onRowRef.current = (action, mail) => (action === 'open' ? setViewing(mail.id) : act(action, mail.id))
   const columns = useMemo(
-    () => buildColumns(t, rowActions(readOnly, canRestore), (a, m) => onRowRef.current(a, m)),
-    [t, readOnly, canRestore],
+    () => buildColumns(t, rowActions(readOnly), (a, m) => onRowRef.current(a, m)),
+    [t, readOnly],
   )
   const table = useTable({
     features: dataListFeatures,
@@ -205,14 +200,14 @@ export function SearchTab({ accountId }: Readonly<{ accountId: string }>) {
   const bulkActions: BulkAction[] = [
     { label: t('archives.export'), icon: <Download aria-hidden="true" />, onSelect: () => exporter.run(selected) },
     { label: t('archives.tags.title'), icon: <Tag aria-hidden="true" />, onSelect: () => setTagging(selected) },
-    ...(canRestore ? [{
+    {
       label: t('archives.action.restore'),
       icon: <MailPlus aria-hidden="true" />,
       onSelect: () => {
         restore.run(selected)
         setRowSelection({})
       },
-    }] : []),
+    },
     {
       label: t('archives.action.trash'),
       icon: <Trash2 aria-hidden="true" />,
@@ -329,7 +324,6 @@ export function SearchTab({ accountId }: Readonly<{ accountId: string }>) {
         onClose={() => setViewing(null)}
         onOpenMail={setViewing}
         onAction={(action) => viewing && act(action, viewing)}
-        canRestore={canRestore}
         readOnly={readOnly}
       />
       <TagDialog

@@ -194,8 +194,8 @@ export function useArchiveContacts(accountId: string, q: string) {
   })
 }
 
-export function useRestoreToGmail(accountId: string) {
-  return useMutation({ mutationFn: (mailIds: string[]) => archiveApi.restoreToGmail(accountId, mailIds) })
+export function useRestoreToMailbox(accountId: string) {
+  return useMutation({ mutationFn: (mailIds: string[]) => archiveApi.restoreToMailbox(accountId, mailIds) })
 }
 
 /** Archives still encrypted by the removed encryption feature (the decrypt card shows only when > 0). */
