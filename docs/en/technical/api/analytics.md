@@ -6,13 +6,13 @@
 
 ### GET /api/analytics/:accountId/heatmap
 
-Day × hour grid showing when the user receives the most emails (GitHub contributions style). Analyzes the last 500 messages.
+Day × hour grid of when mail arrives, computed on each call from **the whole archive** of the account (Nid trash excluded), Gmail and IMAP alike, with no Gmail call. Shown in the Overview (« When your mail arrives »).
 
 **Query params**
 
 | Param | Default | Description |
 |---|---|---|
-| `refresh` | - | `1` to force recalculation (otherwise Redis cache 15 min + DB data) |
+| `tz` | `UTC` | IANA time zone in which days and hours are counted (`Europe/Paris`); the frontend sends the browser's. Unknown zone: 400 |
 
 **Response**
 ```json
@@ -27,56 +27,23 @@ Day × hour grid showing when the user receives the most emails (GitHub contribu
 |---|---|---|
 | `day` | integer | Day of the week (0=Monday, 6=Sunday) |
 | `hour` | integer | Hour of the day (0-23) |
-| `count` | integer | Number of emails received at this time slot |
+| `count` | integer | Archived mails received in this slot |
 
-**Authentication**: JWT + Gmail account ownership
+Only non-empty slots are returned.
+
+**Authentication**: JWT + account ownership
 
 ---
 
 ## Sender clutter score
 
-### GET /api/analytics/:accountId/sender-scores
-
-Score combining volume, size, read rate, and presence of `List-Unsubscribe`. Ranking of "polluting" senders with cleanup suggestions.
-
-**Query params**
-
-| Param | Default | Description |
-|---|---|---|
-| `refresh` | - | `1` to force recalculation |
-
-**Response**
-```json
-[
-  {
-    "sender": "Newsletter Corp <news@corp.com>",
-    "emailCount": 234,
-    "totalSizeBytes": 45678901,
-    "unreadCount": 180,
-    "hasUnsubscribe": true,
-    "readRate": 0.23,
-    "clutterScore": 85
-  }
-]
-```
-
-| Field | Type | Description |
-|---|---|---|
-| `sender` | string | Sender name and email |
-| `emailCount` | integer | Total number of emails |
-| `totalSizeBytes` | integer | Total size in bytes |
-| `unreadCount` | integer | Number of unread emails |
-| `hasUnsubscribe` | boolean | Present in promotions / newsletters |
-| `readRate` | float | Read rate (0.0 - 1.0) |
-| `clutterScore` | integer | Clutter score (0-100, 100 = very cluttered) |
+Internal computation (no endpoint) feeding the cleanup suggestions below: volume, size, read rate and `List-Unsubscribe`, over the last 500 Gmail mails, cached 15 min.
 
 **Score calculation**:
 - Volume (0-30 pts): proportional to number of emails (capped at 50)
 - Size (0-25 pts): proportional to total size (capped at 50 MB)
 - Inverted read rate (0-25 pts): the lower the rate, the higher the score
 - Unsubscribe (0-20 pts): bonus if the sender is a newsletter/promotion
-
-**Authentication**: JWT + Gmail account ownership
 
 ---
 
@@ -142,13 +109,7 @@ Dismisses a suggestion (will no longer be displayed). `404` if it does not exist
 
 ### GET /api/analytics/:accountId/inbox-zero
 
-Real-time counter + history of progress toward inbox zero. Streak, evolution chart, light gamification.
-
-**Query params**
-
-| Param | Default | Description |
-|---|---|---|
-| `refresh` | - | `1` to force a new snapshot |
+Gmail inbox size now and over the last 30 days, and the days at zero in a row. Shown in the Overview (Gmail accounts). The scheduler records a snapshot every 6 hours (2 Gmail list calls); with no snapshot yet, this call records one.
 
 **Response**
 ```json
@@ -170,21 +131,9 @@ Real-time counter + history of progress toward inbox zero. Streak, evolution cha
 | Field | Type | Description |
 |---|---|---|
 | `current` | object | Current inbox state |
-| `history` | array | History of the last 30 days (min inbox_count per day) |
+| `history` | array | History of the last 30 days (lowest inbox_count per day, `YYYY-MM-DD` UTC) |
 | `streak` | integer | Consecutive days at inbox zero (0 emails in INBOX) |
 | `bestStreak` | integer | Best historical streak |
-
-### POST /api/analytics/:accountId/inbox-zero/snapshot
-
-Manually records a snapshot of the inbox state. Automatically called by the scheduler every 6 hours.
-
-**Response**
-```json
-{
-  "inboxCount": 12,
-  "unreadCount": 5
-}
-```
 
 **Authentication**: JWT + Gmail account ownership
 
@@ -196,7 +145,6 @@ Manually records a snapshot of the inbox state. Automatically called by the sche
 
 | Table | Content |
 |---|---|
-| `email_activity_heatmap` | Aggregated day×hour cache per Gmail account |
 | `sender_scores` | Calculated clutter score per sender |
 | `cleanup_suggestions` | Cleanup suggestions (dismissable) |
 | `inbox_zero_snapshots` | Inbox snapshot history (every 6h) |
@@ -205,8 +153,6 @@ Manually records a snapshot of the inbox state. Automatically called by the sche
 
 | Key | TTL | Description |
 |---|---|---|
-| `analytics:heatmap:{accountId}` | 15 min | Heatmap data |
-| `analytics:sender-scores:{accountId}` | 15 min | Sender scores |
 | `analytics:cleanup:{accountId}` | 15 min | Cleanup suggestions |
 | `analytics:inbox-zero:{accountId}` | 15 min | Inbox Zero data |
 

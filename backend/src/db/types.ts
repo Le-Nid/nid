@@ -206,15 +206,6 @@ export interface NotificationPreferencesTable {
 
 // ─── Analytics tables ─────────────────────────────────────
 
-export interface EmailActivityHeatmapTable {
-  id:               Generated<string>
-  account_id: string
-  day_of_week:      number      // 0=lundi … 6=dimanche
-  hour_of_day:      number      // 0-23
-  email_count:      Generated<number>
-  computed_at:      Generated<Date>
-}
-
 export interface SenderScoresTable {
   id:               Generated<string>
   account_id: string
@@ -383,7 +374,6 @@ export interface Database {
   audit_logs:           AuditLogsTable
   webhooks:             WebhooksTable
   notification_preferences: NotificationPreferencesTable
-  email_activity_heatmap: EmailActivityHeatmapTable
   sender_scores:       SenderScoresTable
   cleanup_suggestions: CleanupSuggestionsTable
   inbox_zero_snapshots: InboxZeroSnapshotsTable

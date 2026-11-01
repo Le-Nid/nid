@@ -14,6 +14,7 @@ import type { LiveCounters } from '@/hooks/useLiveCounters'
 import { useAuthStore } from '@/store/auth.store'
 import { formatBytes, formatRelative, formatSender, jobTypeKey } from '@/utils/format'
 import { Suggestions } from './overview/Suggestions'
+import { ActivityHeatmap, DayBars, InboxZero } from './overview/Activity'
 
 type Sender = { sender: string; count: number; sizeBytes: number }
 type Day = { day: string; count: number }
@@ -94,34 +95,11 @@ function TopSenders({ senders }: Readonly<{ senders: Sender[] }>) {
   )
 }
 
-/** Mails received per day over 30 days (from the archives): CSS bars, the same figures as a table for screen readers. */
+/** Mails received per day over 30 days (from the archives). */
 function DailyVolume({ days }: Readonly<{ days: Day[] }>) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   if (!days.some((d) => d.count)) return <EmptyState icon={<BarChart3 />} title={t('overview.daily.empty')} />
-  const max = Math.max(...days.map((d) => d.count))
-  const label = (day: string) => new Date(`${day}T00:00:00Z`).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', timeZone: 'UTC' })
-  return (
-    <figure className="flex flex-col gap-2">
-      <div aria-hidden="true" className="flex h-32 items-end gap-0.5">
-        {days.map((d) => (
-          <span
-            key={d.day}
-            title={t('overview.daily.bar', { day: label(d.day), count: d.count })}
-            className="flex-1 rounded-t-sm bg-primary"
-            style={{ height: `${(d.count / max) * 100}%`, minHeight: d.count ? 2 : 0 }}
-          />
-        ))}
-      </div>
-      <div aria-hidden="true" className="flex justify-between text-xs text-muted-foreground">
-        <span>{label(days[0].day)}</span><span>{label(days.at(-1)!.day)}</span>
-      </div>
-      <table className="sr-only">
-        <caption>{t('overview.daily.title')}</caption>
-        <thead><tr><th scope="col">{t('overview.daily.day')}</th><th scope="col">{t('overview.daily.mails')}</th></tr></thead>
-        <tbody>{days.map((d) => <tr key={d.day}><td>{label(d.day)}</td><td>{d.count}</td></tr>)}</tbody>
-      </table>
-    </figure>
-  )
+  return <DayBars days={days} caption={t('overview.daily.title')} />
 }
 
 /** The heaviest archived mails or attachments, largest first. */
@@ -184,10 +162,14 @@ function HeaviestSections({ archive }: Readonly<{ archive: ArchiveStats }>) {
 }
 
 /** IMAP accounts (archive only): the archive figures, nothing that needs Gmail. */
-function ImapOverview({ archive }: Readonly<{ archive: ArchiveStats & { total_mails?: string | number } }>) {
+function ImapOverview({ accountId, archive }: Readonly<{ accountId: string; archive: ArchiveStats & { total_mails?: string | number } }>) {
+  const { t } = useTranslation()
   return (
     <>
       <DailySection archive={archive} />
+      <Section title={t('overview.activity.title')} to="/archives">
+        <ActivityHeatmap accountId={accountId} />
+      </Section>
       <HeaviestSections archive={archive} />
     </>
   )
@@ -220,7 +202,7 @@ function ActiveJobs({ activeJobs }: Readonly<{ activeJobs?: number }>) {
   )
 }
 
-/** A Gmail account's figures: KPIs, daily archiving, top senders, suggestions, heaviest mails. */
+/** A Gmail account's figures: KPIs, daily archiving, top senders, suggestions, activity, inbox zero, heaviest mails. */
 function GmailOverview({ accountId, archive, counters }: Readonly<{
   accountId: string; archive: ReturnType<typeof useDashboardArchiveStats>['data']; counters: LiveCounters | null
 }>) {
@@ -280,6 +262,15 @@ function GmailOverview({ accountId, archive, counters }: Readonly<{
         </Section>
       </div>
 
+      <div className="grid gap-4 md:grid-cols-2">
+        <Section title={t('overview.activity.title')} to="/archives">
+          <ActivityHeatmap accountId={accountId} />
+        </Section>
+        <Section title={t('overview.inboxZero.title')} to="/mails">
+          <InboxZero accountId={accountId} />
+        </Section>
+      </div>
+
       <HeaviestSections archive={archive} />
     </>
   )
@@ -319,7 +310,7 @@ export default function OverviewPage() {
       <PageHeader title={greeting} description={[account?.email, archive && backup].filter(Boolean).join(' · ')} />
 
       {imap && <p className="text-sm text-muted-foreground">{t('settings.imap.overviewHint')}</p>}
-      {imap ? <ImapOverview archive={archive} /> : <GmailOverview accountId={accountId} archive={archive} counters={counters} />}
+      {imap ? <ImapOverview accountId={accountId} archive={archive} /> : <GmailOverview accountId={accountId} archive={archive} counters={counters} />}
 
       <Section title={t('overview.jobs.title')} to="/activity">
         <ActiveJobs activeJobs={counters?.activeJobs} />

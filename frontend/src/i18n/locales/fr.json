@@ -1349,6 +1349,21 @@
       "attachments": "Plus grosses pièces jointes",
       "empty": "Rien d'archivé pour l'instant",
       "noSubject": "(sans objet)"
+    },
+    "activity": {
+      "title": "Quand arrivent vos mails",
+      "peak": "Pic : {{day}} à {{hour}} ({{count, number}} mail(s) archivé(s), à votre heure locale)",
+      "cell": "{{day}} {{hour}} : {{count, number}} mail(s)",
+      "empty": "Aucun mail archivé pour l'instant",
+      "loadError": "Impossible de charger l'activité"
+    },
+    "inboxZero": {
+      "title": "Inbox zero",
+      "current": "{{count, number}} mail(s) en boîte de réception",
+      "unread": "dont {{count, number}} non lu(s)",
+      "streak": "série : {{count}} jour(s) à zéro (record {{best}})",
+      "history": "Boîte de réception, minimum par jour, 30 derniers jours",
+      "loadError": "Impossible de charger la boîte de réception"
     }
   },
   "activity": {

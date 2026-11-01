@@ -58,11 +58,9 @@ vi.mock('../dashboard/cache.service', () => ({
 }))
 vi.mock('../analytics/analytics.service', () => ({
   getHeatmap: vi.fn().mockResolvedValue([]),
-  getSenderScores: vi.fn().mockResolvedValue([]),
   getCleanupSuggestions: vi.fn().mockResolvedValue([]),
   dismissSuggestion: vi.fn().mockImplementation(async (id: string) => id !== 'foreign'),
   getInboxZeroData: vi.fn().mockResolvedValue({ snapshots: [], streak: 0 }),
-  recordInboxSnapshot: vi.fn(),
 }))
 vi.mock('../rules/rules.service', () => ({
   getRules: vi.fn().mockResolvedValue([]),
@@ -179,23 +177,19 @@ describe('auditRoutes', () => {
 // Analytics routes
 // ═══════════════════════════════════════════════════════════
 describe('analyticsRoutes', () => {
-  it('GET /:accountId/heatmap returns heatmap', async () => {
+  it('GET /:accountId/heatmap passes the browser time zone, refuses an unknown one', async () => {
+    const { getHeatmap } = await import('../analytics/analytics.service')
     const app = await buildTestApp()
     await app.register(analyticsRoutes)
     await app.ready()
 
-    const res = await app.inject({ method: 'GET', url: '/acc-1/heatmap' })
+    const res = await app.inject({ method: 'GET', url: '/acc-1/heatmap?tz=Europe/Paris' })
     expect(res.statusCode).toBe(200)
-    await app.close()
-  })
-
-  it('GET /:accountId/sender-scores returns sender scores', async () => {
-    const app = await buildTestApp()
-    await app.register(analyticsRoutes)
-    await app.ready()
-
-    const res = await app.inject({ method: 'GET', url: '/acc-1/sender-scores' })
-    expect(res.statusCode).toBe(200)
+    expect(getHeatmap).toHaveBeenCalledWith('acc-1', 'Europe/Paris')
+    expect((await app.inject({ method: 'GET', url: '/acc-1/heatmap' })).statusCode).toBe(200)
+    expect(getHeatmap).toHaveBeenLastCalledWith('acc-1', 'UTC')
+    expect((await app.inject({ method: 'GET', url: "/acc-1/heatmap?tz=Mars/Olympus'" })).statusCode).toBeGreaterThanOrEqual(400)
+    expect(getHeatmap).toHaveBeenCalledTimes(2)
     await app.close()
   })
 
@@ -227,16 +221,6 @@ describe('analyticsRoutes', () => {
     await app.ready()
 
     const res = await app.inject({ method: 'GET', url: '/acc-1/inbox-zero' })
-    expect(res.statusCode).toBe(200)
-    await app.close()
-  })
-
-  it('POST /:accountId/inbox-zero/snapshot records snapshot', async () => {
-    const app = await buildTestApp()
-    await app.register(analyticsRoutes)
-    await app.ready()
-
-    const res = await app.inject({ method: 'POST', url: '/acc-1/inbox-zero/snapshot' })
     expect(res.statusCode).toBe(200)
     await app.close()
   })

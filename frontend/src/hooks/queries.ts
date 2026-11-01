@@ -54,6 +54,8 @@ export const queryKeys = {
   },
   analytics: {
     suggestions: (accountId: string) => ['analytics', accountId, 'suggestions'] as const,
+    heatmap: (accountId: string) => ['analytics', accountId, 'heatmap'] as const,
+    inboxZero: (accountId: string) => ['analytics', accountId, 'inbox-zero'] as const,
   },
   notifications: {
     preferences: () => ['notifications', 'preferences'] as const,
@@ -486,6 +488,22 @@ export function useCleanupSuggestions(accountId: string | null) {
   return useQuery({
     queryKey: queryKeys.analytics.suggestions(accountId!),
     queryFn: () => analyticsApi.getCleanupSuggestions(accountId!),
+    enabled: !!accountId,
+  })
+}
+
+export function useActivityHeatmap(accountId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.analytics.heatmap(accountId!),
+    queryFn: () => analyticsApi.getHeatmap(accountId!),
+    enabled: !!accountId,
+  })
+}
+
+export function useInboxZero(accountId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.analytics.inboxZero(accountId!),
+    queryFn: () => analyticsApi.getInboxZero(accountId!),
     enabled: !!accountId,
   })
 }

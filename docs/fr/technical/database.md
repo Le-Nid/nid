@@ -266,15 +266,6 @@ erDiagram
         timestamptz created_at
     }
 
-    email_activity_heatmap {
-        uuid id PK
-        uuid account_id FK
-        integer day_of_week "0 = lundi"
-        integer hour_of_day
-        integer email_count
-        timestamptz computed_at
-    }
-
     sender_scores {
         uuid id PK
         uuid account_id FK
@@ -342,7 +333,6 @@ erDiagram
     users ||--o| notification_preferences : "paramètre"
     users ||--o{ webhooks : "configure"
     users ||--o{ audit_logs : "trace"
-    mail_accounts ||--o{ email_activity_heatmap : "analyse"
     mail_accounts ||--o{ sender_scores : "analyse"
     mail_accounts ||--o{ cleanup_suggestions : "analyse"
     mail_accounts ||--o{ inbox_zero_snapshots : "suit"
@@ -390,7 +380,6 @@ La migration 001 crée aussi `storage_configs` (une configuration de stockage `l
 | `audit_logs` | `(user_id, created_at)` | BTree | Logs par utilisateur |
 | `audit_logs` | `(action, created_at)` | BTree | Filtrage par action |
 | `webhooks` | `user_id` | BTree | Filtrage par utilisateur |
-| `email_activity_heatmap` | `(account_id, day_of_week, hour_of_day)` | Unique | Une case par créneau |
 | `sender_scores` | `(account_id, sender)` | Unique | Un score par expéditeur |
 | `inbox_zero_snapshots` | `(account_id, recorded_at DESC)` | BTree | Historique |
 | `gmail_api_usage` | `(account_id, recorded_at)` | BTree | Stats quota par compte |

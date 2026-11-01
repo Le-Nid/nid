@@ -1349,6 +1349,21 @@
       "attachments": "Heaviest attachments",
       "empty": "Nothing archived yet",
       "noSubject": "(no subject)"
+    },
+    "activity": {
+      "title": "When your mail arrives",
+      "peak": "Peak: {{day}} at {{hour}} ({{count, number}} archived mail(s), your local time)",
+      "cell": "{{day}} {{hour}}: {{count, number}} mail(s)",
+      "empty": "Nothing archived yet",
+      "loadError": "Could not load activity"
+    },
+    "inboxZero": {
+      "title": "Inbox zero",
+      "current": "{{count, number}} mail(s) in the inbox",
+      "unread": "{{count, number}} unread",
+      "streak": "streak: {{count}} day(s) at zero (best {{best}})",
+      "history": "Inbox, lowest per day, last 30 days",
+      "loadError": "Could not load the inbox"
     }
   },
   "activity": {

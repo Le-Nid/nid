@@ -407,11 +407,10 @@ export const privacyApi = {
 
 // ─── Analytics ────────────────────────────────────────────
 export const analyticsApi = {
-  getHeatmap: (accountId: string, refresh = false) =>
-    api.get(`/api/analytics/${accountId}/heatmap`, { params: refresh ? { refresh: '1' } : {} }).then((r) => r.data),
-
-  getSenderScores: (accountId: string, refresh = false) =>
-    api.get(`/api/analytics/${accountId}/sender-scores`, { params: refresh ? { refresh: '1' } : {} }).then((r) => r.data),
+  // Counted in the browser's time zone, so « 9 h » is the reader's 9 h
+  getHeatmap: (accountId: string) =>
+    api.get(`/api/analytics/${accountId}/heatmap`, { params: { tz: Intl.DateTimeFormat().resolvedOptions().timeZone } })
+      .then((r) => r.data as { day: number; hour: number; count: number }[]),
 
   getCleanupSuggestions: (accountId: string, refresh = false) =>
     api.get(`/api/analytics/${accountId}/cleanup-suggestions`, { params: refresh ? { refresh: '1' } : {} }).then((r) => r.data),
@@ -419,11 +418,13 @@ export const analyticsApi = {
   dismissSuggestion: (suggestionId: string) =>
     api.patch(`/api/analytics/suggestions/${suggestionId}/dismiss`).then((r) => r.data),
 
-  getInboxZero: (accountId: string, refresh = false) =>
-    api.get(`/api/analytics/${accountId}/inbox-zero`, { params: refresh ? { refresh: '1' } : {} }).then((r) => r.data),
-
-  recordSnapshot: (accountId: string) =>
-    api.post(`/api/analytics/${accountId}/inbox-zero/snapshot`).then((r) => r.data),
+  getInboxZero: (accountId: string) =>
+    api.get(`/api/analytics/${accountId}/inbox-zero`).then((r) => r.data as {
+      current: { inboxCount: number; unreadCount: number }
+      history: { date: string; inboxCount: number; unreadCount: number }[]
+      streak: number
+      bestStreak: number
+    }),
 }
 
 // ─── Saved Searches ───────────────────────────────────────

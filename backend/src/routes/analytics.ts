@@ -1,36 +1,33 @@
 import { FastifyInstance } from 'fastify'
+import { z } from 'zod'
 import { authPresets } from '../utils/auth'
 import { notFound } from '../utils/db'
 import {
   getHeatmap,
-  getSenderScores,
   getCleanupSuggestions,
   dismissSuggestion,
   getInboxZeroData,
-  recordInboxSnapshot,
 } from '../analytics/analytics.service'
+
+/** An IANA zone name the runtime knows (`Europe/Paris`), so PostgreSQL's AT TIME ZONE gets a real one. */
+function isTimeZone(tz: string): boolean {
+  try {
+    new Intl.DateTimeFormat('en', { timeZone: tz })
+    return true
+  } catch {
+    return false
+  }
+}
 
 export async function analyticsRoutes(app: FastifyInstance) {
   const { accountAuth } = authPresets(app)
 
-  // ─── Heatmap d'activité email ───────────────────────────
-  app.get<{
-    Params: { accountId: string }
-    Querystring: { refresh?: string }
-  }>('/:accountId/heatmap', accountAuth, async (request) => {
-    const { accountId } = request.params
-    const refresh = request.query.refresh === '1'
-    return getHeatmap(accountId, refresh)
-  })
+  // ─── Heatmap d'activité email (archives, fuseau du navigateur) ───
+  const heatmapQuerySchema = z.object({ tz: z.string().max(64).refine(isTimeZone, 'Unknown time zone').default('UTC') })
 
-  // ─── Score d'encombrement par expéditeur ────────────────
-  app.get<{
-    Params: { accountId: string }
-    Querystring: { refresh?: string }
-  }>('/:accountId/sender-scores', accountAuth, async (request) => {
-    const { accountId } = request.params
-    const refresh = request.query.refresh === '1'
-    return getSenderScores(accountId, refresh)
+  app.get('/:accountId/heatmap', accountAuth, async (request) => {
+    const { accountId } = request.params as { accountId: string }
+    return getHeatmap(accountId, heatmapQuerySchema.parse(request.query).tz)
   })
 
   // ─── Suggestions de nettoyage ───────────────────────────
@@ -53,20 +50,8 @@ export async function analyticsRoutes(app: FastifyInstance) {
   })
 
   // ─── Inbox Zero tracker ─────────────────────────────────
-  app.get<{
-    Params: { accountId: string }
-    Querystring: { refresh?: string }
-  }>('/:accountId/inbox-zero', accountAuth, async (request) => {
-    const { accountId } = request.params
-    const refresh = request.query.refresh === '1'
-    return getInboxZeroData(accountId, refresh)
-  })
-
-  // ─── Snapshot inbox (appelé par le scheduler) ───────────
-  app.post<{
-    Params: { accountId: string }
-  }>('/:accountId/inbox-zero/snapshot', accountAuth, async (request) => {
-    const { accountId } = request.params
-    return recordInboxSnapshot(accountId)
+  // No refresh: a snapshot costs Gmail calls, the scheduler takes one every 6 h
+  app.get<{ Params: { accountId: string } }>('/:accountId/inbox-zero', accountAuth, async (request) => {
+    return getInboxZeroData(request.params.accountId)
   })
 }

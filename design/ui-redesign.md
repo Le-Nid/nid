@@ -111,7 +111,7 @@ Toutes les anciennes routes restent en `<Navigate replace>` pendant au moins une
 |---|---|---|
 | `/` | Vue d'ensemble | `/overview` |
 | `/dashboard` (Dashboard) | Vue d'ensemble | `/overview` |
-| `/analytics` (heatmap, scores, suggestions, inbox zero) | Vue d'ensemble (suggestions, top encombreurs) + Nettoyage (scores expéditeurs) | `/overview` |
+| `/analytics` (heatmap, scores, suggestions, inbox zero) | Vue d'ensemble (suggestions, top encombreurs, heatmap, inbox zero) + Nettoyage (scores expéditeurs) | `/overview` |
 | `/insights` (rapport hebdo) | notification / email (P1) | `/overview` |
 | `/mails` (MailManager) | Mails | — |
 | `/unified` (UnifiedInbox) | Mails, compte = tous | `/mails?account=all` |
@@ -395,11 +395,12 @@ Endpoints : existants (`frontend/src/api/index.ts`) ; **nouveaux** en gras (dét
 - **But** : état du compte en 5 s et la prochaine action utile.
 - **Sections** : salutation + compte/sync ; KPI : Mails dans Gmail (quota Google), Récupérable (→ Nettoyage), Sauvegarde NAS % (→ Archives), Règles actives (→ Règles, « 1 284 mails traités ces 30 derniers jours ») ; Top encombreurs (barres, → Nettoyage) ; Suggestions (« LinkedIn vous a envoyé 3 812 mails… » : Se désabonner et nettoyer / Toujours faire ça / Ignorer) ; jobs en cours.
 - **Desktop** : grille 4 KPI + 2 colonnes (Top encombreurs | Suggestions). **Mobile** : KPI 2×2, sections empilées, « Tout voir ».
-- **Données** : `GET /api/dashboard/:id/stats`, `/archive-stats`, `GET /api/quota/:id` (usage stockage) ou stats existantes, `GET /api/analytics/:id/cleanup-suggestions`, `PATCH /api/analytics/suggestions/:id/dismiss`, `GET /api/analytics/:id/sender-scores`, `GET /api/jobs?status=active`.
-- **Nouveau** : **stats de règles sur 30 j** (agrégat jobs `run_rule`, S) ; heatmap et inbox-zero non repris (§10).
+- **Données** : `GET /api/dashboard/:id/stats`, `/archive-stats`, `GET /api/quota/:id` (usage stockage) ou stats existantes, `GET /api/analytics/:id/cleanup-suggestions`, `PATCH /api/analytics/suggestions/:id/dismiss`, `GET /api/analytics/:id/heatmap?tz=`, `GET /api/analytics/:id/inbox-zero`, `GET /api/jobs?status=active`.
+- **Nouveau** : **stats de règles sur 30 j** (agrégat jobs `run_rule`, S) ; heatmap et inbox-zero repris (O6).
 - **Ajouts (B16)**, sous les KPI puis après Top encombreurs | Suggestions, sans perdre l'orientation « prochaine action » :
   - **Mails reçus — 30 derniers jours** (pleine largeur, → Archives) : barres CSS (pas de bibliothèque de graphiques), une barre par jour UTC, jours vides inclus ; mêmes chiffres dans un tableau `sr-only` (caption = titre) ; état vide « Aucun mail archivé ces 30 derniers jours : activez la sauvegarde automatique ». Source : les archives (date du mail), donc fidèle quand la sauvegarde automatique est active.
   - **Plus gros mails archivés** (→ Archives) | **Plus grosses pièces jointes** (→ Pièces jointes, triées par taille) : 5 lignes chacun, nom + détail (expéditeur / objet) + taille.
+  - **Quand arrivent vos mails** | **Inbox zero** (O6, 2 colonnes, empilées sur mobile ; IMAP : heatmap seule) : grille 7 × 24 en une teinte (`primary`, opacité selon le volume, cases vides `muted`), heures 00/06/12/18, pic en texte (« Pic : lun. à 09 h »), tableau `sr-only` dans une `div sr-only` (un tableau ignore la largeur 1 px et élargirait la page mobile) ; inbox zero : nombre en boîte, non lus, série / record, barres des 30 jours (`DayBars`, partagé avec le volume quotidien).
   - KPI **Sauvegarde NAS** : l'indication ajoute « X économisés par la déduplication » quand le gain est positif.
 - Non repris de bichon : top 10 des comptes (la Vue d'ensemble est par compte actif), palettes de couleurs supplémentaires (chaque palette exigerait la vérification de contraste du §4.2).
 
@@ -568,7 +569,7 @@ Chaque lot : CI verte (`typecheck`, `test --coverage`, `build`, e2e), captures m
 | O3 | i18n des notifications backend | Textes générés côté serveur aujourd'hui ; passer des clés + paramètres traduits par le frontend, ou langue utilisateur en DB. |
 | O4 | Rapport hebdo par email (P1) | Le backend n'a pas d'envoi SMTP : ajouter un canal email (dépendance + config) ou se limiter à in-app/ntfy/webhook. |
 | O5 | Données Expiration existantes (P4) | **Tranché : laisser expirer.** Routes `/api/expiration` supprimées ; `processExpiredEmails` honore les expirations en attente ; table, service et tâche à supprimer quand plus aucune n'est en attente. |
-| O6 | Heatmap et inbox-zero (ex-Analytics) | **Tranché** : non repris ; la Vue d'ensemble montre à la place le volume reçu sur 30 jours (B16). L'endpoint `snapshot` reste à retirer. |
+| O6 | Heatmap et inbox-zero (ex-Analytics) | **Tranché : repris** dans la Vue d'ensemble, après Top encombreurs \| Suggestions. Heatmap calculée sur les archives (tout l'historique, Gmail et IMAP) au fuseau du navigateur ; inbox zero (Gmail) depuis les snapshots 6 h. Endpoints `sender-scores` et `POST …/snapshot` retirés, table `email_activity_heatmap` supprimée (019). |
 | O7 | Données PII / tracking existantes | Purge des tables et endpoints (L11). |
 | O8 | Labels de la barre mobile en 11 px | Proposé 12 px (lisibilité, pas d'exigence RGAA stricte). |
 | O9 | Tokens sombres success/warning/danger-soft/badge/progress/catégories | Définis §4.1 (AA vérifié), absents du prototype : à valider visuellement. |

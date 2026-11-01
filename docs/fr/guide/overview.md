@@ -29,6 +29,18 @@ Une barre par jour, d'après les archives (date de réception des mails sauvegar
 
 ---
 
+## Quand arrivent vos mails
+
+Une grille jour × heure : plus la case est foncée, plus vous recevez de mails à ce créneau. Elle compte **toutes vos archives** (pas seulement 30 jours), à l'heure locale de votre navigateur, et donne le créneau le plus chargé en toutes lettres (« Pic : lun. à 09 h »). Les lecteurs d'écran lisent la grille sous forme de tableau. Aussi affichée pour les comptes IMAP.
+
+---
+
+## Inbox zero
+
+Comptes Gmail : le nombre de mails dans la boîte de réception (et de non lus), la série de jours consécutifs à zéro et votre record, puis l'évolution sur 30 jours (le plus bas de chaque jour). Nid relève la boîte toutes les 6 heures : l'historique se remplit au fil des jours.
+
+---
+
 ## Top encombreurs
 
 Les expéditeurs qui vous envoient le plus de mails, avec « N mails · taille ». **Tout voir** ouvre [Nettoyage](cleanup.md).
