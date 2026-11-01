@@ -15,7 +15,7 @@ import { looksLikeEml } from '../archive/import.service'
 
 const EML = (subject: string) => `Message-ID: <${subject}@x>\r\nSubject: ${subject}\r\nFrom: a@b.c\r\n\r\nbody`
 
-async function upload(files: { name: string; content: string | Uint8Array }[]) {
+async function upload(files: { name: string; content: string | Uint8Array<ArrayBuffer> }[]) {
   const app = Fastify()
   await app.register(multipart)
   app.decorate('authenticate', async (req: any) => { req.user = { sub: 'u1' } })

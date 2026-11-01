@@ -28,6 +28,8 @@ BullMQ allows:
 | `encrypt_archives` | `POST /api/privacy/:accountId/encryption/encrypt` |
 | `import_mbox` | `POST /api/import/:accountId/mbox` |
 | `import_imap` | `POST /api/import/:accountId/imap` |
+| `restore_gmail` | `POST /api/archive/:accountId/mails/restore-mailbox` (Gmail account) |
+| `restore_imap` | `POST /api/archive/:accountId/mails/restore-mailbox` (IMAP account); a refused password flags the account to reconnect |
 | `purge_archive_trash` | scheduler (daily, 4 AM) |
 | `backfill_body_text` | scheduler, once at startup if some archives still lack `body_text` |
 | `apply_retention` | No caller at the moment: `POST /api/retention/run` applies the policies synchronously |

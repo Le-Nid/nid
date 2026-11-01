@@ -12,23 +12,23 @@ Five tabs: **Mails**, **Contacts**, **Trash**, **Retention**, **Shares**.
 - **Back up to the NAS now**: saves the account's mails not archived yet; progress shows under the header and in [Activity](activity.md).
 - **Export (.mbox)**: downloads the account's archives as mbox (readable by Thunderbird or Apple Mail). When a search or filter is active, only the loaded results are exported.
 
-Other ways to fill the archives: **Save to the NAS** in [Mail](mails.md), an account's **Automatic backup** in [Settings › Gmail accounts](settings.md#gmail-accounts), rules "Save to the NAS then delete", and the mbox / IMAP import in [Settings › Data](settings.md#data).
+Other ways to fill the archives: **Save to the NAS** in [Mail](mails.md), an account's **Automatic backup** in [Settings › Gmail accounts](settings.md#gmail-accounts), rules "Save to the NAS then delete", and the mbox / .eml / IMAP import in [Settings › Data](settings.md#data).
 
 ---
 
 ## Mails tab: search
 
-- **Label tree** (on the left on desktop): **All mails** then the labels that hold archived mails, with their count.
+- **Label tree** (on the left on desktop): **All mails** then the labels that hold archived mails, with their count. For an IMAP account, these are its folders (**Folders**).
 - **Full-text search**: subject, sender, content and body, accent-insensitive, with `"exact phrase"`, `-excluded` and `OR`. Matching terms are highlighted in the extract.
 - **Tags** (below the labels on desktop): **All tags** then your tags, with their count. A selected tag filters the list and offers **Delete tag "…"**, which removes it from every archive of the account without deleting the mails.
-- **Filters**: **Sender**, period (**From** / **To**), **With attachment**. On mobile they sit in the **Filters (N)** panel with the **Label** and the **Tag**, then **Show results**.
+- **Filters**: **Sender**, period (**From** / **To**), **Min size (MB)** / **Max size (MB)**, **Attachment type** (an extension such as `pdf` or `docx`, or a MIME type such as `image/` for every image), **With attachment**. On mobile they sit in the **Filters (N)** panel with the **Label** (the **Folder** for an IMAP account) and the **Tag**, then **Show results**.
 
 Results ("N results") show **Subject**, **Extract**, **Date**, **Sender**, **Size**. **Clear search and filters** goes back to the full list.
 
 ### Actions
 
-- A row's `⋯` menu: **Open**, **Share**, **Restore to Gmail**, **Delete**.
-- Selecting several rows: **Export .mbox**, **Tags**, **Restore to Gmail**, **Delete**.
+- A row's `⋯` menu: **Open**, **Share**, **Restore to mailbox**, **Delete**.
+- Selecting several rows: **Export .mbox**, **Tags**, **Restore to mailbox**, **Delete**.
 
 **Tags** adds or removes the typed tags (comma-separated, your existing tags are suggested) on the whole selection. Tags stay in Nid: Gmail never sees them, and they are kept when the mail is archived again.
 
@@ -36,17 +36,21 @@ Results ("N results") show **Subject**, **Extract**, **Date**, **Sender**, **Siz
 
 ### Archive reader
 
-**Open** shows the archived mail: headers, body (remote images blocked, as in [Mail](mails.md#read-a-mail)), downloadable attachments, its **Tags** (remove one with a click, add some with the **Add a tag…** field then Enter) and **Conversation**. Actions: **Share**, **Restore to Gmail**, **Delete**.
+**Open** shows the archived mail: headers, body (remote images blocked, as in [Mail](mails.md#read-a-mail)), downloadable attachments, its **Tags** (remove one with a click, add some with the **Add a tag…** field then Enter) and **Conversation**. Actions: **Share**, **Restore to mailbox**, **Delete**.
 
-### Restore to Gmail
+### Restore to mailbox
 
-Puts archived mails back into the account's Gmail mailbox, from their EML: same headers, same date, same labels. The restore runs in the background (shown in [Activity](activity.md)) and a notification gives the result.
+Puts archived mails back into the account's mailbox (Gmail or IMAP server), from their EML. The restore runs in the background (shown in [Activity](activity.md)) and a notification gives the result.
+
+**Gmail account**: same headers, same date, same labels.
 
 - A mail **still in Gmail** is skipped; a mail **in Gmail's trash** is taken out of it.
 - System labels (Inbox, Unread, Important, categories…) are put back as they were. A label deleted since is recreated with the same name. Trash, Spam and Drafts are not put back.
 - After the restore, the archive points to the new Gmail mail: the next backup does not archive it a second time.
 - An **encrypted** archive cannot be restored (the passphrase is not kept): it counts as an error.
-- Not available for an IMAP account, nor for a Gmail account that must be reconnected.
+- Not available for an account that must be reconnected.
+
+**IMAP account**: the mail is uploaded, marked read and at its date, to the folder it was archived from if it still exists on the server, else to the inbox. A mail already in that folder (same Message-ID) is skipped. If the server refuses the password, the restore fails with that message and the account moves to **Action required**.
 
 An encrypted archived mail shows "This mail is encrypted: its content cannot be read here." Archive encryption was removed from Nid: put these archives back in clear in [Settings › Data](settings.md#encrypted-archives).
 

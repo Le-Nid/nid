@@ -17,8 +17,10 @@ All `/:accountId/...` routes require the JWT and ownership of the Gmail account 
 | `from_date` | Start date (ISO 8601) |
 | `to_date` | End date (ISO 8601) |
 | `has_attachments` | Filter by attachment presence (`true` / `false`) |
-| `label` | Gmail label id the email must carry (e.g. `INBOX`, `Label_12`) |
+| `label` | Gmail label id the email must carry (e.g. `INBOX`, `Label_12`); for an IMAP account, its folder (`imported:<path>`, e.g. `imported:INBOX`) |
 | `tag` | Nid tag the email must carry (see [Tags](#tags)) |
+| `size_min` / `size_max` | EML size in bytes, bounds included |
+| `attachment_type` | At least one attachment of this type: extension (`pdf`, `.docx`, case-insensitive) or MIME type (`application/pdf`, or `image/` / `image/*` for the family) |
 | `page` | Page (default: 1) |
 | `limit` | Results per page (default: 50, max: 100) |
 
@@ -242,19 +244,27 @@ Returns all emails in a thread, sorted by date ascending (chronological order), 
 
 ---
 
-## Restore to Gmail
+## Restore to the mailbox
 
-### POST /api/archive/:accountId/mails/restore-gmail
+### POST /api/archive/:accountId/mails/restore-mailbox
 
-Starts a `restore_gmail` job that puts archived emails back in Gmail (`users.messages.insert`, `internalDateSource: dateHeader`, EML sent as `message/rfc822`). Existing OAuth scope (`gmail.modify`), no reconnection needed.
+Puts archived emails back in the account's mailbox: a `restore_gmail` job for a Gmail account, `restore_imap` for an IMAP account. The former `POST …/mails/restore-gmail` route stays as an alias (same behaviour).
 
 ```json
 { "mailIds": ["uuid-1", "uuid-2"] }
 ```
 
-`mailIds`: 1 to 500 UUIDs (emails not in the archive trash). Response **202** `{ "jobId": "…" }`, audit `archive.restore_gmail`. **409** when the account is not a Gmail account, or is deactivated or must be reconnected.
+`mailIds`: 1 to 500 UUIDs (emails not in the archive trash). Response **202** `{ "jobId": "…" }`, audit `archive.restore_gmail` or `archive.restore_imap`. **409** when the account is deactivated or must be reconnected. The job result (`imported` = restored, `skipped`, `errors`) comes as a notification.
 
-Per email: still in Gmail → skipped; in Gmail's trash → `untrash`; gone → inserted with its labels (system and live user labels as they are, deleted user or `imported:` labels recreated by name, `TRASH`/`SPAM`/`DRAFT`/`CHAT` dropped), then the archive's `gmail_message_id` updated. Encrypted archive: error. The job result (`imported` = restored, `skipped`, `errors`) comes as a notification.
+**Gmail** — the `restore_gmail` job puts archived emails back in Gmail (`users.messages.insert`, `internalDateSource: dateHeader`, EML sent as `message/rfc822`). Existing OAuth scope (`gmail.modify`), no reconnection needed.
+
+```json
+{ "mailIds": ["uuid-1", "uuid-2"] }
+```
+
+Per email: still in Gmail → skipped; in Gmail's trash → `untrash`; gone → inserted with its labels (system and live user labels as they are, deleted user or `imported:` labels recreated by name, `TRASH`/`SPAM`/`DRAFT`/`CHAT` dropped), then the archive's `gmail_message_id` updated. Encrypted archive: error.
+
+**IMAP** — the `restore_imap` job uploads the EML with `APPEND` (marked read, internal date = the email's date) to its original folder: the email's first label naming a folder still on the server (case-insensitive, `Inbox` → `INBOX`), else `INBOX`. An email whose Message-ID is already in that folder is skipped (a retried job does not duplicate; the next sync skips it by Message-ID too). Encrypted archive or refused `APPEND`: error, the other emails go on. Password refused by the server: the job fails with « Le serveur IMAP a refusé le mot de passe : reconnectez le compte… » and the account is flagged to reconnect.
 
 ---
 
