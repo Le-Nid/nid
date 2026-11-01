@@ -118,12 +118,22 @@ export async function restoreToImap(
     const byFolder = new Map<string, typeof mails>()
     for (const mail of mails) {
       const folder = mail.label_ids.map((id) => paths.get(names.get(id) ?? '')).find(Boolean) ?? 'INBOX'
-      byFolder.set(folder, [...(byFolder.get(folder) ?? []), mail])
+      const group = byFolder.get(folder)
+      if (group) group.push(mail)
+      else byFolder.set(folder, [mail])
     }
 
     for (const [folder, group] of byFolder) {
-      // One connection selects one folder at a time
-      const lock = await client.getMailboxLock(folder) // NOSONAR
+      // One connection selects one folder at a time; a folder gone since list() fails its mails only
+      const lock = await client.getMailboxLock(folder).catch((err) => { // NOSONAR
+        logger.error({ err, accountId, folder }, 'IMAP folder not selectable, its mails not restored')
+        return null
+      })
+      if (!lock) {
+        result.errors += group.length
+        if (onProgress) await onProgress(result.imported + result.skipped + result.errors, mails.length) // NOSONAR
+        continue
+      }
       try {
         for (const mail of group) {
           try {
@@ -155,6 +165,7 @@ export async function restoreToImap(
 /** The selected folder holds this Message-ID (archive id of a mail imported without one: never found). */
 async function isInMailbox(client: Awaited<ReturnType<typeof connectImapAccount>>, messageId: string): Promise<boolean> {
   if (messageId.startsWith('imported-')) return false
-  const uids = await client.search({ header: { 'message-id': messageId } }, { uid: true })
+  // HEADER search matches substrings: the brackets keep `a@b` from matching `<xa@b>`
+  const uids = await client.search({ header: { 'message-id': `<${messageId}>` } }, { uid: true })
   return Array.isArray(uids) && uids.length > 0
 }

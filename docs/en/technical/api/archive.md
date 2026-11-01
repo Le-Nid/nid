@@ -264,7 +264,7 @@ Puts archived emails back in the account's mailbox: a `restore_gmail` job for a 
 
 Per email: still in Gmail → skipped; in Gmail's trash → `untrash`; gone → inserted with its labels (system and live user labels as they are, deleted user or `imported:` labels recreated by name, `TRASH`/`SPAM`/`DRAFT`/`CHAT` dropped), then the archive's `gmail_message_id` updated. Encrypted archive: error.
 
-**IMAP** — the `restore_imap` job uploads the EML with `APPEND` (marked read, internal date = the email's date) to its original folder: the email's first label naming a folder still on the server (case-insensitive, `Inbox` → `INBOX`), else `INBOX`. An email whose Message-ID is already in that folder is skipped (a retried job does not duplicate; the next sync skips it by Message-ID too). Encrypted archive or refused `APPEND`: error, the other emails go on. Password refused by the server: the job fails with « Le serveur IMAP a refusé le mot de passe : reconnectez le compte… » and the account is flagged to reconnect.
+**IMAP** — the `restore_imap` job uploads the EML with `APPEND` (marked read, internal date = the email's date) to its original folder: the email's first label naming a folder still on the server (case-insensitive, `Inbox` → `INBOX`), else `INBOX`; a folder gone meanwhile counts its emails as errors. An email whose Message-ID is already in that folder is skipped (a retried job does not duplicate; the next sync skips it by Message-ID too). Encrypted archive or refused `APPEND`: error, the other emails go on. Password refused by the server: the job fails with « Le serveur IMAP a refusé le mot de passe : reconnectez le compte… » and the account is flagged to reconnect.
 
 ---
 

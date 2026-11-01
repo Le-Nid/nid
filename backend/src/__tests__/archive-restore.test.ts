@@ -116,7 +116,7 @@ describe('restoreToImap', () => {
       : sql.includes('from "gmail_labels"')
         ? [{ id: 'imported:Factures/2024', name: 'Factures/2024' }, { id: 'imported:Gone', name: 'Gone' }, { id: 'imported:Inbox', name: 'Inbox' }]
         : []
-    imap.search.mockImplementation(async (q: any) => (q.header['message-id'] === 'mid-e@x' ? [42] : []))
+    imap.search.mockImplementation(async (q: any) => (q.header['message-id'] === '<mid-e@x>' ? [42] : []))
     imap.append.mockImplementation(async (_f: string, content: Buffer) => {
       if (content.toString().includes('/nas/c.eml')) throw new Error('NO [OVERQUOTA]')
       return { uid: 1 }
@@ -134,6 +134,16 @@ describe('restoreToImap', () => {
     expect(progress).toHaveBeenLastCalledWith(5, 5)
     const labels = seen.find((q) => q.sql.includes('from "gmail_labels"'))!
     expect(labels.sql).toContain('"account_id" = $1 and "id" in ($2, $3, $4)')
+  })
+
+  it('a folder that cannot be selected fails its mails only', async () => {
+    answer = (sql) => sql.includes('from "archived_mails"')
+      ? [mail('a', { label_ids: ['imported:Factures/2024'], gmail_message_id: 'mid-a@x' }), mail('b', { gmail_message_id: 'mid-b@x' })]
+      : sql.includes('from "gmail_labels"') ? [{ id: 'imported:Factures/2024', name: 'Factures/2024' }] : []
+    imap.getMailboxLock.mockRejectedValueOnce(new Error('NO [NONEXISTENT]'))
+    expect(await restoreToImap('acc-1', ['a', 'b'])).toEqual({ imported: 1, skipped: 0, errors: 1 })
+    expect(imap.append).toHaveBeenCalledTimes(1)
+    expect(imap.append.mock.calls[0][0]).toBe('INBOX')
   })
 
   it('a refused password fails the job with a clear message, still an auth error', async () => {
