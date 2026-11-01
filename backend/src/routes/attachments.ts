@@ -33,7 +33,7 @@ function fileHeaders(mimeType: string, filename: string, inlineRequested: boolea
 }
 
 /** Recursively find a part by filename in a Gmail message payload */
-function findPartByFilename(parts: any[], filename: string): any | null {
+function findPartByFilename(parts: any[], filename: string): any {
   for (const part of parts) {
     if (part.filename === filename) return part
     if (part.parts) {
@@ -138,7 +138,7 @@ export async function attachmentsRoutes(app: FastifyInstance) {
     const listRes = await gmail.users.messages.list({
       userId: 'me',
       q: 'has:attachment larger:100k',
-      maxResults: Math.min(parseInt(maxResults), 500),
+      maxResults: Math.min(Number.parseInt(maxResults), 500),
     })
     trackApiCall(accountId, 'messages.list').catch(() => {})
 
@@ -147,10 +147,11 @@ export async function attachmentsRoutes(app: FastifyInstance) {
 
     const results: any[] = []
 
-    const fetchMessageMeta = (id: string) =>
-      gmail.users.messages
-        .get({ userId: 'me', id, format: 'metadata', metadataHeaders: ['Subject', 'From', 'Date'] })
-        .then((r) => { trackApiCall(accountId, 'messages.get').catch(() => {}); return r.data })
+    const fetchMessageMeta = async (id: string) => {
+      const r = await gmail.users.messages.get({ userId: 'me', id, format: 'metadata', metadataHeaders: ['Subject', 'From', 'Date'] })
+      trackApiCall(accountId, 'messages.get').catch(() => {})
+      return r.data
+    }
 
     for (let i = 0; i < messageIds.length; i += config.GMAIL_BATCH_SIZE) {
       const chunk = messageIds.slice(i, i + config.GMAIL_BATCH_SIZE)

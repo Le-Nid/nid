@@ -97,8 +97,8 @@ function MailBody({ html, text }: Readonly<{ html: string; text: string }>) {
 /** Same sandboxed body without the user preference: the public shared page (`/shared/:token`) has no session to read it. */
 export function MailFrame({ html, text, allowedByPref = false }: Readonly<{ html: string; text: string; allowedByPref?: boolean }>) {
   const { t } = useTranslation()
-  const [shown, setAllowRemote] = useState(false)
-  const allowRemote = shown || allowedByPref
+  const [allowedHere, setAllowedHere] = useState(false)
+  const allowRemote = allowedHere || allowedByPref
   if (!html) return <pre className="p-4 font-sans text-[15px] leading-normal whitespace-pre-wrap">{text || t('mails.viewer.empty')}</pre>
 
   return (
@@ -107,7 +107,7 @@ export function MailFrame({ html, text, allowedByPref = false }: Readonly<{ html
         <div className="m-4 mb-0 flex items-center gap-3 rounded-lg border border-warning-border bg-warning-soft px-3 py-2 text-sm text-warning">
           <ImageOff className="size-4 shrink-0" aria-hidden="true" />
           <span className="flex-1">{t('mails.viewer.remoteBlocked')}</span>
-          <Button variant="outline" size="sm" className="h-11 md:h-8" onClick={() => setAllowRemote(true)}>{t('mails.viewer.showRemote')}</Button>
+          <Button variant="outline" size="sm" className="h-11 md:h-8" onClick={() => setAllowedHere(true)}>{t('mails.viewer.showRemote')}</Button>
         </div>
       )}
       {/* No allow-scripts, no allow-same-origin; popups only so that links open in a new tab */}

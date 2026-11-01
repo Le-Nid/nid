@@ -29,7 +29,7 @@ export async function dashboardRoutes(app: FastifyInstance) {
       senderMap.set(msg.from, entry)
     }
 
-    const lim = parseInt(limit)
+    const lim = Number.parseInt(limit)
     const bySender     = [...senderMap.values()].sort((a, b) => b.count - a.count).slice(0, lim)
     const biggestMails = [...messages].sort((a, b) => b.sizeEstimate - a.sizeEstimate).slice(0, lim)
 
@@ -41,7 +41,7 @@ export async function dashboardRoutes(app: FastifyInstance) {
     const timelineMap = new Map<string, number>()
     for (const msg of messages) {
       const d = new Date(msg.date)
-      if (isNaN(d.getTime())) continue
+      if (Number.isNaN(d.getTime())) continue
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
       timelineMap.set(key, (timelineMap.get(key) ?? 0) + 1)
     }

@@ -20,7 +20,7 @@ const AttachmentsPage = lazy(() => import("./pages/Attachments"));
 const SharedMailPage = lazy(() => import("./pages/SharedMail"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPassword"));
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+function ProtectedRoute({ children }: Readonly<{ children: React.ReactNode }>) {
   const initialLoading = useAuthStore((s) => s.initialLoading);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   if (initialLoading) return <RouteFallback />;
@@ -28,7 +28,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function AdminRoute({ children }: { children: React.ReactNode }) {
+function AdminRoute({ children }: Readonly<{ children: React.ReactNode }>) {
   const user = useAuthStore((s) => s.user);
   if (user?.role !== "admin") return <Navigate to="/overview" replace />;
   return <>{children}</>;

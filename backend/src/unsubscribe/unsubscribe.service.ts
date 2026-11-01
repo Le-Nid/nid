@@ -53,11 +53,11 @@ export async function scanNewsletters(
       const chunk = messageIds.slice(i, i + config.GMAIL_BATCH_SIZE)
 
       const fetchOneMeta = (id: string) =>
-        gmailRetry(() =>
-          gmail.users.messages
-            .get({ userId: 'me', id, format: 'metadata', metadataHeaders: ['Subject', 'From', 'Date', 'List-Unsubscribe'] })
-            .then((r: any) => { trackApiCall(accountId, 'messages.get').catch(() => {}); return r.data })
-        )
+        gmailRetry(async () => {
+          const r: any = await gmail.users.messages.get({ userId: 'me', id, format: 'metadata', metadataHeaders: ['Subject', 'From', 'Date', 'List-Unsubscribe'] })
+          trackApiCall(accountId, 'messages.get').catch(() => {})
+          return r.data
+        })
 
       const fetched = await limitConcurrency(
         chunk.map((id: string) => () => fetchOneMeta(id)),
@@ -182,7 +182,7 @@ export async function getNewsletterMessageIds(
 
 // ─── Helpers ────────────────────────────────────────────
 function extractEmail(from: string): string {
-  const match = from.match(/<([^>]+)>/)
+  const match = /<([^<>]+)>/.exec(from)
   return match ? match[1] : from.trim()
 }
 
@@ -193,7 +193,7 @@ function parseUnsubscribeHeader(header: string): { url: string | null; mailto: s
   // Header format: <https://...>, <mailto:...>
   const parts = header.split(',').map((s) => s.trim())
   for (const part of parts) {
-    const match = part.match(/<([^>]+)>/)
+    const match = /<([^<>]+)>/.exec(part)
     if (!match) continue
     const value = match[1]
     if (value.startsWith('http://') || value.startsWith('https://')) {

@@ -3,19 +3,19 @@ export function formatBytes(bytes: number): string {
   const k = 1024
   const sizes = ['B', 'Ko', 'Mo', 'Go']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`
+  return `${Number.parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`
 }
 
 export function formatSender(sender: string): string {
   if (!sender) return '—'
   // Extract display name if present: "John Doe <john@example.com>" → "John Doe"
-  const match = sender.match(/^([^<]+)</)
+  const match = /^([^<]+)</.exec(sender)
   return match ? match[1].trim() : sender
 }
 
 export function formatEmail(sender: string): string {
   if (!sender) return '—'
-  const match = sender.match(/<([^>]+)>/)
+  const match = /<([^<>]+)>/.exec(sender)
   return match ? match[1] : sender
 }
 

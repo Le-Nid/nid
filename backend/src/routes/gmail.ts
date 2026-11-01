@@ -2,7 +2,6 @@ import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import {
   listMessages, getMessage, getMessageFull, batchGetMessages,
-  trashMessages, modifyMessages,
   listLabels, createLabel, updateLabel, deleteLabel, getMailboxProfile,
   getGmailClient,
 } from '../gmail/gmail.service'

@@ -1,4 +1,4 @@
-import { ColumnType, Generated, Selectable, Insertable, Updateable } from 'kysely'
+import { ColumnType, Generated, Selectable, Insertable } from 'kysely'
 import type { NewsletterSender } from '../unsubscribe/unsubscribe.service'
 
 // ─── Helpers ──────────────────────────────────────────────

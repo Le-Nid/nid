@@ -290,7 +290,7 @@ export default function ActivityPage() {
           <DialogHeader>
             <DialogTitle>{details?.label}</DialogTitle>
             <DialogDescription>
-              {details && `${t(`jobs.${details.status}`)} · ${t('activity.details.started', { when: formatRelative(details.created_at, i18n.language) })}`}
+              {details && [t(`jobs.${details.status}`), t('activity.details.started', { when: formatRelative(details.created_at, i18n.language) })].join(' · ')}
             </DialogDescription>
           </DialogHeader>
           <pre className="max-h-64 overflow-auto rounded-md bg-muted p-3 text-sm whitespace-pre-wrap">

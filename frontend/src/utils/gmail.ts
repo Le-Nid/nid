@@ -2,7 +2,7 @@ import type { GmailLabel } from '@/components/app/LabelBadge'
 
 /** Gmail's base64url → bytes (message bodies and attachments). */
 export function base64UrlToBytes(str: string): Uint8Array {
-  return Uint8Array.from(atob(str.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0))
+  return Uint8Array.from(atob(str.replaceAll('-', '+').replaceAll('_', '/')), (c) => c.codePointAt(0)!)
 }
 
 function decodeBase64Url(str: string): string {
@@ -50,7 +50,7 @@ export function extractAttachments(payload: Part | undefined): Attachment[] {
 }
 
 // Remote URL in an attribute (src, srcset, background, poster) or in CSS url(): what I4 blocks
-const REMOTE = /\b(?:src|srcset|background|poster)\s*=\s*["']?\s*(?:https?:)?\/\/|url\(\s*["']?\s*(?:https?:)?\/\//i
+const REMOTE = /\b(?:src|srcset|background|poster)\s*=\s*(?:["']\s*)?(?:https?:)?\/\/|url\(\s*(?:["']\s*)?(?:https?:)?\/\//i
 
 export const hasRemoteContent = (html: string) => REMOTE.test(html)
 

@@ -1,7 +1,7 @@
-import fs from 'fs/promises'
-import fsSync from 'fs'
-import path from 'path'
-import { Readable } from 'stream'
+import fs from 'node:fs/promises'
+import fsSync from 'node:fs'
+import path from 'node:path'
+import { Readable } from 'node:stream'
 
 export interface StorageBackend {
   type: 'local'

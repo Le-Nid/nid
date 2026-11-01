@@ -519,7 +519,7 @@ async function handleImportMbox(job: Job) {
 
     // Cleanup temp file
     try {
-      const fs = await import('fs/promises')
+      const fs = await import('node:fs/promises')
       await fs.unlink(filePath)
     } catch { /* ignore */ }
 

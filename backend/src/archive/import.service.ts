@@ -1,7 +1,6 @@
-import fs from 'fs/promises'
-import fsSync from 'fs'
-import path from 'path'
-import { Readable } from 'stream'
+import fs from 'node:fs/promises'
+import path from 'node:path'
+import { Readable } from 'node:stream'
 import { simpleParser } from 'mailparser'
 import { getDb } from '../db'
 import { getLocalStorage, type StorageBackend } from '../storage/storage.service'
@@ -313,7 +312,7 @@ export async function exportMbox(
   for (const mail of mails) {
     try {
       const eml = await storage.readFileUtf8(mail.eml_path)
-      const sender = mail.sender?.match(/<([^>]+)>/)?.[1] ?? mail.sender ?? 'unknown@unknown'
+      const sender = /<([^<>]+)>/.exec(mail.sender ?? '')?.[1] ?? mail.sender ?? 'unknown@unknown'
       const date = mail.date ? new Date(mail.date).toUTCString() : new Date().toUTCString()
 
       // Mbox separator line

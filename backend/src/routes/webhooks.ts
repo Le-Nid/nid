@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { getDb } from '../db'
-import * as crypto from 'crypto'
+import * as crypto from 'node:crypto'
 import { notFound } from '../utils/db'
 import { authPresets } from '../utils/auth'
 

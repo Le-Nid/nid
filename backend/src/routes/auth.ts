@@ -163,7 +163,7 @@ export async function authRoutes(app: FastifyInstance) {
       .executeTakeFirst()
 
     // Point 8: unified error message to prevent user enumeration
-    if (!user || !user.is_active || !user.password_hash) {
+    if (!user?.is_active || !user.password_hash) {
       // Constant-time hash to prevent timing oracle even when user doesn't exist
       if (!user) await bcrypt.hash(body.password, 12)
       return reply.code(401).send({ error: 'Invalid email or password' })

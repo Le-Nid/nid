@@ -1,5 +1,5 @@
 import archiver from 'archiver'
-import fs from 'fs'
+import fs from 'node:fs'
 import { getDb } from '../db'
 import { createLogger } from '../logger'
 
