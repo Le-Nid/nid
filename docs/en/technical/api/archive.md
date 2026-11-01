@@ -24,7 +24,7 @@ All `/:accountId/...` routes require the JWT and ownership of the Gmail account 
 | `page` | Page (default: 1) |
 | `limit` | Results per page (default: 50, max: 100) |
 
-With `q`, results are sorted by relevance then date, and each email carries a `highlight` field (HTML excerpt with matched terms in `<mark>`). Trashed emails are excluded. `body_text`, `search_vector` and `eml_path` are never returned.
+With `q`, results are sorted by relevance then date, and each email carries a `highlight` field (HTML excerpt with matched terms in `<mark>`). The search also covers the text of PDF and DOCX attachments: each email then carries `attachment_match`, `{ "filename", "highlight" }` of its first attachment (by name) whose text matches, or `null`. Trashed emails are excluded. `body_text`, `search_vector` and `eml_path` are never returned.
 
 **Response**
 ```json

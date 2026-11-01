@@ -5,6 +5,7 @@ import { processExpiredEmails } from "../expiration/expiration.service";
 import { cleanupExpiredShares } from "../archive/sharing.service";
 import { syncAllLabels } from "../labels/labels.service";
 import { countPendingBodyText } from "../archive/body-text";
+import { countPendingAttachmentText } from "../archive/attachment-text";
 import { createLogger } from '../logger'
 import type { BackupInterval } from '../db/types'
 
@@ -132,10 +133,10 @@ export async function enqueueDueBackups(now: Date) {
   }));
 }
 
-/** B2: once at startup, fill body_text of mails archived before migration 007 (fixed dedupId: one backfill at a time). */
+/** B2: once at startup, fill body_text (migration 007) and attachment text (021) of older archives (fixed dedupId: one backfill at a time). */
 export async function enqueueBodyTextBackfill() {
   try {
-    if ((await countPendingBodyText()) === 0) return;
+    if ((await countPendingBodyText()) + (await countPendingAttachmentText()) === 0) return;
     await enqueueJob('backfill_body_text', { accountId: '' }, { dedupId: 'backfill_body_text' });
     logger.info('Enqueued body_text backfill');
   } catch (err) {

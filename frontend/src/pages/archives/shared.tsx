@@ -23,6 +23,8 @@ export type ArchivedMail = {
   tags?: string[]
   deleted_at?: string | null
   highlight?: string
+  /** With `q`: the attachment whose text matched (PDF/DOCX), its excerpt as <mark>-only HTML. */
+  attachment_match?: { filename: string; highlight: string } | null
 }
 
 const DEBOUNCE_MS = 300

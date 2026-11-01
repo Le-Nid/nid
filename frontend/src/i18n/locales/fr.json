@@ -148,6 +148,7 @@
     "loadError": "Impossible de charger les archives.",
     "noMatch": "Aucune archive ne correspond",
     "clearFilters": "Effacer la recherche et les filtres",
+    "foundInAttachment": "Trouvé dans la pièce jointe « {{name}} »",
     "empty": "Aucun mail archivé",
     "emptyDescription": "Sauvegardez des mails sur le NAS depuis Mails ou avec « Sauvegarder sur le NAS maintenant ».",
     "trashToast_one": "Suppression de {{count, number}} archive",

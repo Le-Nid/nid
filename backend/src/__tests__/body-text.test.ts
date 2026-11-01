@@ -174,9 +174,11 @@ async function buildApp() {
 
 describe('GET /:accountId/mails', () => {
   it('applies every filter to both the page and the total, with highlight and tookMs', async () => {
-    respond = (q) => q.sql.includes('count(*)')
-      ? [{ count: '3' }]
-      : [{ id: 'm1', subject: 'Facture', highlight: '<script>x</script> \u0001facture\u0002' }]
+    respond = (q) => {
+      if (q.sql.includes('count(*)')) return [{ count: '3' }]
+      if (q.sql.includes('from "archived_attachments"')) return [{ archived_mail_id: 'm1', filename: 'facture.pdf', highlight: '\u0001facture\u0002 EDF' }]
+      return [{ id: 'm1', subject: 'Facture', highlight: '<script>x</script> \u0001facture\u0002' }]
+    }
     const app = await buildApp()
 
     const res = await app.inject({
@@ -189,6 +191,7 @@ describe('GET /:accountId/mails', () => {
     expect(body).toMatchObject({ total: 3, page: 2, limit: 10 })
     expect(Number.isInteger(body.tookMs)).toBe(true)
     expect(body.mails[0].highlight).toBe('&lt;script&gt;x&lt;/script&gt; <mark>facture</mark>')
+    expect(body.mails[0].attachment_match).toEqual({ filename: 'facture.pdf', highlight: '<mark>facture</mark> EDF' })
 
     const [list, count] = [queries.find((q) => !q.sql.includes('count(*)'))!, queries.find((q) => q.sql.includes('count(*)'))!]
     for (const q of [list, count]) {

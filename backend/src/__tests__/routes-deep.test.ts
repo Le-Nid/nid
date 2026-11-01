@@ -160,7 +160,7 @@ describe('archiveRoutes deep', () => {
     const app = await buildTestApp()
     await app.register(archiveRoutes)
     await app.ready()
-    mockExecute.mockResolvedValueOnce([{ id: 'mail-1', subject: 'Test' }])
+    mockExecute.mockResolvedValueOnce([{ id: 'mail-1', subject: 'Test' }]).mockResolvedValueOnce([])
     mockExecuteTakeFirstOrThrow.mockResolvedValueOnce({ count: 1 })
     const res = await app.inject({ method: 'GET', url: '/acc-1/mails?q=hello' })
     expect(res.statusCode).toBe(200)

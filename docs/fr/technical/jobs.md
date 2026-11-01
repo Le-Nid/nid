@@ -31,7 +31,7 @@ BullMQ permet :
 | `restore_gmail` | `POST /api/archive/:accountId/mails/restore-mailbox` (compte Gmail) |
 | `restore_imap` | `POST /api/archive/:accountId/mails/restore-mailbox` (compte IMAP) ; un mot de passe refusé passe le compte « à reconnecter » |
 | `purge_archive_trash` | scheduler (quotidien, 4 h) |
-| `backfill_body_text` | scheduler, une fois au démarrage s'il reste des archives sans `body_text` |
+| `backfill_body_text` | scheduler, une fois au démarrage s'il reste des archives sans `body_text` ou des PJ PDF/DOCX sans `text_content` (corps puis PJ) |
 | `apply_retention` | Aucun appelant actuellement : `POST /api/retention/run` applique les politiques de façon synchrone |
 
 `POST /api/jobs/:jobId/retry` peut ré-enfiler n'importe quel type (voir [Relance](#relance)).

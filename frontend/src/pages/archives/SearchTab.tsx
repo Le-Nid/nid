@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { useTable, type RowSelectionState } from '@tanstack/react-table'
 import { toast } from 'sonner'
-import { FileArchive, Download, ListFilter, MailPlus, Search, Tag, Trash2 } from 'lucide-react'
+import { FileArchive, Download, ListFilter, MailPlus, Paperclip, Search, Tag, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
@@ -94,10 +94,20 @@ function FilterFields({ filters, set, nodes, tagNodes, folders }: Readonly<{
   )
 }
 
+/** Snippet, or the search excerpt; a match found only in an attachment shows that attachment's excerpt and name. */
 function Extract({ mail }: Readonly<{ mail: ArchivedMail }>) {
+  const { t } = useTranslation()
+  const match = mail.attachment_match
+  const html = match && !mail.highlight?.includes('<mark>') ? match.highlight : mail.highlight
   return (
-    <span className="block max-w-96 text-muted-foreground md:line-clamp-2">
-      {mail.highlight === undefined ? mail.snippet : <Highlight html={mail.highlight} />}
+    <span className="block max-w-96 text-muted-foreground">
+      <span className="block md:line-clamp-2">{html === undefined ? mail.snippet : <Highlight html={html} />}</span>
+      {match && (
+        <span className="mt-0.5 flex min-w-0 items-center gap-1 text-xs">
+          <Paperclip aria-hidden="true" className="size-3 shrink-0" />
+          <span className="truncate">{t('archives.foundInAttachment', { name: match.filename })}</span>
+        </span>
+      )}
     </span>
   )
 }

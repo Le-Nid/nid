@@ -8,6 +8,7 @@ import { config } from '../config'
 import { createLogger } from '../logger'
 import { resolveImportedLabelIds } from '../labels/labels.service'
 import { bodyTextFromParsed } from './body-text'
+import { extractAttachmentText } from './attachment-text'
 
 const logger = createLogger('import')
 
@@ -143,18 +144,20 @@ export async function importSingleEml(
   await storage.writeFile(emlPath, rawEml)
 
   // Extract and save attachments
-  const attachments: { filename: string; mimeType: string; size: number; filePath: string }[] = []
+  const attachments: { filename: string; mimeType: string; size: number; filePath: string; textContent: string | null }[] = []
   for (const [i, att] of (parsed.attachments ?? []).entries()) {
     if (!att.filename) continue
     await storage.mkdir(attachDir)
     const safeName = `${i}_${att.filename.replace(/[^a-zA-Z0-9._-]/g, '_')}`
     const attPath = path.join(attachDir, safeName)
     await storage.writeFile(attPath, att.content)
+    const mimeType = att.contentType ?? 'application/octet-stream'
     attachments.push({
       filename: att.filename,
-      mimeType: att.contentType ?? 'application/octet-stream',
+      mimeType,
       size: att.size,
       filePath: attPath,
+      textContent: await extractAttachmentText(att.filename, mimeType, att.content), // NOSONAR: one attachment at a time
     })
   }
 
@@ -199,6 +202,7 @@ export async function importSingleEml(
           mime_type: a.mimeType,
           size_bytes: BigInt(a.size),
           file_path: a.filePath,
+          text_content: a.textContent,
         })),
       )
       .execute()
