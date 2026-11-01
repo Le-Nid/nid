@@ -73,12 +73,9 @@ jobs:
       GOOGLE_CLIENT_SECRET: ci
       GOOGLE_REDIRECT_URI: http://localhost/ci
       LOG_LEVEL: silent
-      ARCHIVE_PATH: ${{ runner.temp }}/archives
       IMAP_TEST_HOST: 127.0.0.1
       IMAP_TEST_PORT: '31143'
       IMAP_TEST_PASSWORD: nid-ci
-      # The certificate made for 127.0.0.1 below: STARTTLS is verified, nothing is weakened
-      NODE_EXTRA_CA_CERTS: ${{ runner.temp }}/dovecot-ssl/tls.crt
 
     steps:
       - uses: actions/checkout@v7
@@ -100,6 +97,10 @@ jobs:
           openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj "/CN=127.0.0.1" \
             -addext "subjectAltName=IP:127.0.0.1" -keyout "$SSL/tls.key" -out "$SSL/tls.crt"
           chmod 644 "$SSL"/*
+          # The runner context is not available in job-level env: paths go through GITHUB_ENV
+          # NODE_EXTRA_CA_CERTS: the certificate made for 127.0.0.1, so STARTTLS is verified, nothing is weakened
+          echo "NODE_EXTRA_CA_CERTS=$SSL/tls.crt" >> "$GITHUB_ENV"
+          echo "ARCHIVE_PATH=$RUNNER_TEMP/archives" >> "$GITHUB_ENV"
           docker run -d --name dovecot -p 31143:31143 \
             -e USER_PASSWORD='{PLAIN}nid-ci' \
             -v "$SSL:/etc/dovecot/ssl:ro" \
