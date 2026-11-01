@@ -339,8 +339,8 @@ erDiagram
     mail_accounts ||--o{ gmail_api_usage : "tracks"
 ```
 
-::: info `storage_configs` table
-Migration 001 also creates `storage_configs` (one `local | s3` storage configuration per user). It is neither typed in `types.ts` nor read by the current code.
+::: info `storage_configs` table (dropped)
+Migration 001 created `storage_configs` (one `local | s3` storage per user, with a column for an S3 secret key), never read nor written: migration 020 drops it (its `down` recreates it empty).
 :::
 
 ---

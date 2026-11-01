@@ -116,3 +116,17 @@ test.describe('« Plus » (mobile)', () => {
     await expect(page).toHaveURL(/\/login$/)
   })
 })
+
+test('imports several .eml files into the archives', async ({ page }) => {
+  await page.goto('/settings/data')
+  const upload = page.waitForRequest(is('POST', `/api/import/${ACCOUNT}/eml`))
+  const chooser = page.waitForEvent('filechooser')
+  await page.getByRole('button', { name: t('settings.data.emlPick') }).click()
+  await (await chooser).setFiles([
+    { name: 'a.eml', mimeType: 'message/rfc822', buffer: Buffer.from('Subject: a\r\n\r\nx') },
+    { name: 'b.eml', mimeType: 'message/rfc822', buffer: Buffer.from('Subject: b\r\n\r\ny') },
+  ])
+  const body = (await upload).postData() ?? ''
+  expect(body.match(/filename="[ab]\.eml"/g)).toHaveLength(2)
+  await expect(page.getByText('2 mails importés, 0 ignoré(s), 0 erreur(s)')).toBeVisible()
+})

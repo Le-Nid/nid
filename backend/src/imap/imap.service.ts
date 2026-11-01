@@ -104,12 +104,17 @@ async function syncFolder(client: ImapFlow, folder: ListResponse, { accountId, r
     .execute()
 }
 
+/** A logged-in client for a stored IMAP account; the caller logs out. */
+export async function connectImapAccount(accountId: string): Promise<ImapFlow> {
+  return connect(await getImapSettings(accountId))
+}
+
 /** Archives what is new in every folder since the last run; the folder becomes an archive label. */
 export async function syncImapAccount(
   accountId: string,
   onProgress?: (done: number) => Promise<void>,
 ): Promise<ImapSyncResult> {
-  const client = await connect(await getImapSettings(accountId))
+  const client = await connectImapAccount(accountId)
   const result: ImapSyncResult = { imported: 0, skipped: 0, errors: 0, folders: 0 }
   try {
     for (const folder of foldersToSync(await client.list())) {

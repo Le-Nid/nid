@@ -22,6 +22,7 @@ import * as migration016 from './migrations/016_imap_accounts'
 import * as migration017 from './migrations/017_archive_tags'
 import * as migration018 from './migrations/018_account_shares'
 import * as migration019 from './migrations/019_drop_activity_heatmap'
+import * as migration020 from './migrations/020_drop_storage_configs'
 import { createLogger } from '../logger'
 
 const logger = createLogger('db')
@@ -65,6 +66,7 @@ const migrations: Record<string, Migration> = {
   '017_archive_tags': migration017,
   '018_account_shares': migration018,
   '019_drop_activity_heatmap': migration019,
+  '020_drop_storage_configs': migration020,
 }
 
 class InCodeMigrationProvider implements MigrationProvider {

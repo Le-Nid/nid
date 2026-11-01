@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import { Paperclip } from 'lucide-react'
 import { dataListFeatures } from '@/components/app/DataList'
 import { showUndoToast } from '@/components/app/UndoToast'
-import { useExportMbox, useRestoreToGmail, useTrashArchived, useRestoreArchived } from '@/hooks/queries'
+import { useExportMbox, useRestoreToMailbox, useTrashArchived, useRestoreArchived } from '@/hooks/queries'
 import { saveBlob } from '@/utils/download'
 import { formatBytes, formatSender } from '@/utils/format'
 
@@ -51,7 +51,9 @@ export function useDebounced(value: string, commit: (next: string) => void) {
   return [draft, setDraft] as const
 }
 
-const FILTERS = ['q', 'sender', 'from', 'to', 'att', 'label', 'tag'] as const
+const FILTERS = ['q', 'sender', 'from', 'to', 'att', 'label', 'tag', 'smin', 'smax', 'atype'] as const
+const MB = 1024 * 1024 // formatBytes' Mo
+const mbToBytes = (mb: string) => (mb.trim() !== '' && Number(mb) >= 0 ? String(Math.round(Number(mb) * MB)) : undefined)
 export type Filters = Record<(typeof FILTERS)[number], string>
 
 /** Search and filters of the archive list, in the URL (§3.3) so a search can be shared and survives back. */
@@ -67,6 +69,10 @@ export function useArchiveFilters() {
   if (filters.att) apiParams.has_attachments = 'true'
   if (filters.label) apiParams.label = filters.label
   if (filters.tag) apiParams.tag = filters.tag
+  const [sizeMin, sizeMax] = [mbToBytes(filters.smin), mbToBytes(filters.smax)]
+  if (sizeMin) apiParams.size_min = sizeMin
+  if (sizeMax) apiParams.size_max = sizeMax
+  if (filters.atype.trim()) apiParams.attachment_type = filters.atype.trim()
   // Quick successive changes (typing, then a checkbox) must not drop each other: navigation is async, so
   // each write starts from the previous write rather than from the params of the render it comes from
   const latest = useRef(params)
@@ -83,10 +89,10 @@ export function useArchiveFilters() {
   return { filters, apiParams, set, filtered: Object.keys(apiParams).length > 0 }
 }
 
-/** « Restaurer dans Gmail » (job): the mails go back to the mailbox; the bell says when it is done. */
-export function useRestoreToGmailAction(accountId: string) {
+/** « Restaurer dans la boîte mail » (job, Gmail or IMAP): the mails go back to the mailbox; the bell says when it is done. */
+export function useRestoreToMailboxAction(accountId: string) {
   const { t } = useTranslation()
-  const restore = useRestoreToGmail(accountId)
+  const restore = useRestoreToMailbox(accountId)
   const run = (mailIds: string[]) => restore.mutate(mailIds, {
     onSuccess: () => toast.success(t('archives.restore.started', { count: mailIds.length }), { description: t('archives.restore.startedHint') }),
     onError: () => toast.error(t('archives.restore.failed')),

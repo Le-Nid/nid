@@ -26,6 +26,7 @@ export type AuditAction =
   | 'archive.trigger'
   | 'archive.export_zip'
   | 'archive.restore_gmail'
+  | 'archive.restore_imap'
   | 'newsletter.delete'
   | 'admin.update_user'
   | 'admin.empty_archive_trash'

@@ -194,8 +194,8 @@ export function useArchiveContacts(accountId: string, q: string) {
   })
 }
 
-export function useRestoreToGmail(accountId: string) {
-  return useMutation({ mutationFn: (mailIds: string[]) => archiveApi.restoreToGmail(accountId, mailIds) })
+export function useRestoreToMailbox(accountId: string) {
+  return useMutation({ mutationFn: (mailIds: string[]) => archiveApi.restoreToMailbox(accountId, mailIds) })
 }
 
 /** Archives still encrypted by the removed encryption feature (the decrypt card shows only when > 0). */
@@ -748,6 +748,14 @@ export function useRunRetention() {
 export function useImportMbox(accountId: string) {
   return useMutation({
     mutationFn: (file: File) => importApi.importMbox(accountId, file),
+  })
+}
+
+export function useImportEml(accountId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (files: File[]) => importApi.importEml(accountId, files),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['archive', accountId] }),
   })
 }
 

@@ -101,8 +101,8 @@ export const archiveApi = {
   restoreMails: (accountId: string, mailIds: string[]) =>
     api.post(`/api/archive/${accountId}/mails/restore`, { mailIds }).then((r) => r.data),
 
-  restoreToGmail: (accountId: string, mailIds: string[]): Promise<{ jobId: string }> =>
-    api.post(`/api/archive/${accountId}/mails/restore-gmail`, { mailIds }).then((r) => r.data),
+  restoreToMailbox: (accountId: string, mailIds: string[]): Promise<{ jobId: string }> =>
+    api.post(`/api/archive/${accountId}/mails/restore-mailbox`, { mailIds }).then((r) => r.data),
 
   listContacts: (accountId: string, params: Record<string, any> = {}) =>
     api.get(`/api/archive/${accountId}/contacts`, { params }).then((r) => r.data),
@@ -481,6 +481,15 @@ export const importApi = {
     const form = new FormData()
     form.append('file', file)
     return api.post(`/api/import/${accountId}/mbox`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then((r) => r.data)
+  },
+
+  /** Archived at once (no job): counts back. */
+  importEml: (accountId: string, files: File[]): Promise<{ imported: number; skipped: number; errors: number }> => {
+    const form = new FormData()
+    for (const file of files) form.append('files', file)
+    return api.post(`/api/import/${accountId}/eml`, form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }).then((r) => r.data)
   },

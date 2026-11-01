@@ -70,6 +70,7 @@ vi.mock('../archive/import.service', () => ({
 const mockRestoreToGmail = vi.fn().mockResolvedValue({ imported: 2, skipped: 1, errors: 0 })
 vi.mock('../archive/restore.service', () => ({
   restoreToGmail: (...args: any[]) => mockRestoreToGmail(...args),
+  restoreToImap: vi.fn(),
 }))
 
 const mockApplyRetentionPolicies = vi.fn().mockResolvedValue({ policiesRun: 2, totalDeleted: 10 })

@@ -32,9 +32,20 @@ const mailsQuerySchema = z.object({
   has_attachments: z.enum(["true", "false"]).optional(),
   label: z.string().min(1).max(200).optional(),
   tag: z.string().min(1).max(50).optional(),
+  size_min: z.coerce.number().int().nonnegative().optional(),
+  size_max: z.coerce.number().int().nonnegative().optional(),
+  // An extension (`pdf`, `.docx`) or a MIME type (`application/pdf`, `image/` or `image/*` for the family)
+  attachment_type: z.string().trim().toLowerCase().min(1).max(100).optional(),
   page: positiveInt,
   limit: positiveInt,
 });
+
+/** Attachment filename or MIME pattern (ILIKE) for `attachment_type`. */
+export function attachmentTypePattern(type: string): { column: "filename" | "mime_type"; pattern: string } {
+  if (!type.includes("/")) return { column: "filename", pattern: `%.${escapeIlike(type.replace(/^\*?\./, ""))}` };
+  const family = /^([^/]+)\/\*?$/.exec(type);
+  return { column: "mime_type", pattern: family ? `${escapeIlike(family[1])}/%` : escapeIlike(type) };
+}
 
 /** List rows: everything but body_text (heavy, derived), search_vector and eml_path (server path). */
 const MAIL_LIST_COLUMNS = [
@@ -50,7 +61,7 @@ export async function archiveRoutes(app: FastifyInstance) {
   // ─── Liste / recherche mails archivés ────────────────────
   app.get("/:accountId/mails", accountAuth, async (request) => {
     const { accountId } = request.params as { accountId: string };
-    const { q, sender, from_date, to_date, has_attachments, label, tag, ...pagination } =
+    const { q, sender, from_date, to_date, has_attachments, label, tag, size_min, size_max, attachment_type, ...pagination } =
       mailsQuerySchema.parse(request.query);
     const { page, limit: lim, offset } = extractPagination(pagination);
     const searchTerm = q?.trim().slice(0, 200);
@@ -66,6 +77,15 @@ export async function archiveRoutes(app: FastifyInstance) {
     if (has_attachments) base = base.where("has_attachments", "=", has_attachments === "true");
     if (label) base = base.where(sql<boolean>`label_ids @> ARRAY[${label}]::text[]`);
     if (tag) base = base.where(sql<boolean>`tags @> ARRAY[${tag}]::text[]`);
+    if (size_min !== undefined) base = base.where("size_bytes", ">=", BigInt(size_min));
+    if (size_max !== undefined) base = base.where("size_bytes", "<=", BigInt(size_max));
+    if (attachment_type) {
+      const { column, pattern } = attachmentTypePattern(attachment_type);
+      base = base.where(({ exists, selectFrom }) => exists(selectFrom("archived_attachments")
+        .select(sql`1`.as("one"))
+        .whereRef("archived_attachments.archived_mail_id", "=", "archived_mails.id")
+        .where(column, "ilike", pattern)));
+    }
     const tsQuery = ftsQuery(searchTerm ?? "");
     if (searchTerm) base = base.where(sql<boolean>`search_vector @@ ${tsQuery}`);
 
@@ -423,21 +443,25 @@ export async function archiveRoutes(app: FastifyInstance) {
     return { updated: Number(result.numUpdatedRows) };
   });
 
-  // ─── Restore to Gmail (archive → mailbox) ─────────────────
-  app.post("/:accountId/mails/restore-gmail", accountAuth, async (request, reply) => {
-    const { accountId } = request.params as { accountId: string };
-    const { mailIds } = trashSchema.parse(request.body);
-    const account = await db.selectFrom("mail_accounts").select(["provider", "is_active", "auth_error_at"])
-      .where("id", "=", accountId).executeTakeFirst();
-    if (account?.provider !== "gmail") return reply.code(409).send({ error: "Not a Gmail account" });
-    if (!account.is_active || account.auth_error_at) return reply.code(409).send({ error: "Gmail account must be reconnected first" });
+  // ─── Restore to the mailbox (archive → Gmail or IMAP server) ───
+  // `restore-gmail`: the route's name before IMAP, kept for API token scripts
+  for (const route of ["/:accountId/mails/restore-mailbox", "/:accountId/mails/restore-gmail"]) {
+    app.post(route, accountAuth, async (request, reply) => {
+      const { accountId } = request.params as { accountId: string };
+      const { mailIds } = trashSchema.parse(request.body);
+      const account = await db.selectFrom("mail_accounts").select(["provider", "is_active", "auth_error_at"])
+        .where("id", "=", accountId).executeTakeFirst();
+      if (!account) return notFound(reply);
+      if (!account.is_active || account.auth_error_at) return reply.code(409).send({ error: "Account must be reconnected first" });
 
-    const job = await enqueueJob("restore_gmail", { accountId, userId: request.user.sub, mailIds });
-    await logAudit(request.user.sub, "archive.restore_gmail", {
-      targetType: "mail_account", targetId: accountId, details: { count: mailIds.length }, ipAddress: request.ip,
+      const type = account.provider === "imap" ? "restore_imap" : "restore_gmail";
+      const job = await enqueueJob(type, { accountId, userId: request.user.sub, mailIds });
+      await logAudit(request.user.sub, `archive.${type}`, {
+        targetType: "mail_account", targetId: accountId, details: { count: mailIds.length }, ipAddress: request.ip,
+      });
+      return reply.code(202).send({ jobId: job.id });
     });
-    return reply.code(202).send({ jobId: job.id });
-  });
+  }
 
   // ─── List trash ───────────────────────────────────────────
   app.get("/:accountId/trash", accountAuth, async (request) => {

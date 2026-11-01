@@ -1,6 +1,6 @@
 # API — Import / Export mbox
 
-Import de mails dans les archives Nid (fichier mbox ou serveur IMAP) et export des archives au format mbox.
+Import de mails dans les archives Nid (fichier mbox, fichiers .eml ou serveur IMAP) et export des archives au format mbox.
 
 Toutes les routes nécessitent JWT + propriété du compte Gmail `:accountId` (les mails importés sont rattachés à ce compte).
 
@@ -24,6 +24,25 @@ Importe un fichier mbox (par exemple un export Google Takeout) dans les archives
 **Erreurs** : `400` aucun fichier.
 
 Le job s'exécute en arrière-plan. Suivez la progression via `/api/jobs/:jobId/events` (voir [jobs.md](jobs.md)).
+
+---
+
+## Importer des fichiers .eml
+
+### POST /api/import/:accountId/eml
+
+Archive tout de suite (sans job) un ou plusieurs fichiers `.eml`, par le même chemin que l'import mbox : EML et pièces jointes écrits sur le NAS, texte du corps indexé, doublon (même Message-ID sur ce compte) ignoré.
+
+**Content-Type :** `multipart/form-data`, un champ fichier par `.eml` (par ex. `files`), 200 fichiers et 50 Mo par fichier au plus.
+
+**Réponse 200**
+```json
+{ "imported": 2, "skipped": 1, "errors": 0 }
+```
+
+Un fichier qui ne commence pas par un en-tête (`Nom: valeur`, RFC 5322), tronqué (> 50 Mo) ou dont l'archivage échoue compte dans `errors` ; les autres fichiers continuent.
+
+**Erreurs** : `400` aucun fichier.
 
 ---
 

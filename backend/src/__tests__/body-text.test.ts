@@ -46,7 +46,7 @@ vi.mock('../dashboard/cache.service', () => ({ invalidateDashboardCache: vi.fn()
 import {
   extractBodyText, bodyTextFromParsed, highlightToHtml, backfillBodyText, countPendingBodyText,
 } from '../archive/body-text'
-import { archiveRoutes } from '../routes/archive'
+import { archiveRoutes, attachmentTypePattern } from '../routes/archive'
 import { enqueueBodyTextBackfill } from '../jobs/scheduler'
 import { enqueueJob } from '../jobs/queue'
 
@@ -216,8 +216,26 @@ describe('GET /:accountId/mails', () => {
     await app.close()
   })
 
+  it('size range and attachment type (extension or MIME family) filter through the attachments', async () => {
+    respond = (q) => (q.sql.includes('count(*)') ? [{ count: '0' }] : [])
+    const app = await buildApp()
+    const res = await app.inject({ method: 'GET', url: '/acc-1/mails?size_min=1048576&size_max=5242880&attachment_type=.PDF' })
+    expect(res.statusCode).toBe(200)
+    const count = queries.find((q) => q.sql.includes('count(*)'))!
+    expect(count.sql).toContain('"size_bytes" >= $2 and "size_bytes" <= $3 and exists (select 1 as "one" from "archived_attachments" where "archived_attachments"."archived_mail_id" = "archived_mails"."id" and "filename" ilike $4)')
+    expect(count.parameters).toEqual(['acc-1', 1048576n, 5242880n, '%.pdf'])
+    await app.close()
+  })
+
   it.each([
-    'has_attachments=yes', 'from_date=not-a-date', 'page=0', 'limit=-5', 'label=',
+    ['pdf', 'filename', '%.pdf'], ['*.tar_gz', 'filename', String.raw`%.tar\_gz`],
+    ['image/', 'mime_type', 'image/%'], ['image/*', 'mime_type', 'image/%'], ['application/pdf', 'mime_type', 'application/pdf'],
+  ])('attachmentTypePattern(%s)', (type, column, pattern) => {
+    expect(attachmentTypePattern(type)).toEqual({ column, pattern })
+  })
+
+  it.each([
+    'has_attachments=yes', 'from_date=not-a-date', 'page=0', 'limit=-5', 'label=', 'size_min=-1', 'size_max=1.5', 'attachment_type=%20',
   ])('rejects invalid query %s', async (qs) => {
     const app = await buildApp()
     const res = await app.inject({ method: 'GET', url: `/acc-1/mails?${qs}` })

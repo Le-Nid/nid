@@ -17,8 +17,10 @@ Toutes les routes `/:accountId/...` exigent le JWT et la propriété du compte G
 | `from_date` | Date de début (ISO 8601) |
 | `to_date` | Date de fin (ISO 8601) |
 | `has_attachments` | Filtrer par présence de pièces jointes (`true` / `false`) |
-| `label` | Id de libellé Gmail que le mail doit porter (ex. `INBOX`, `Label_12`) |
+| `label` | Id de libellé Gmail que le mail doit porter (ex. `INBOX`, `Label_12`) ; pour un compte IMAP, son dossier (`imported:<chemin>`, ex. `imported:INBOX`) |
 | `tag` | Tag Nid que le mail doit porter (voir [Tags](#tags)) |
+| `size_min` / `size_max` | Taille de l'EML en octets, bornes incluses |
+| `attachment_type` | Une pièce jointe au moins de ce type : extension (`pdf`, `.docx`, insensible à la casse) ou type MIME (`application/pdf`, ou `image/` / `image/*` pour la famille) |
 | `page` | Page (défaut : 1) |
 | `limit` | Résultats par page (défaut : 50, max : 100) |
 
@@ -242,19 +244,27 @@ Retourne tous les mails d'un thread, triés par date croissante (ordre chronolog
 
 ---
 
-## Restaurer dans Gmail
+## Restaurer dans la boîte mail
 
-### POST /api/archive/:accountId/mails/restore-gmail
+### POST /api/archive/:accountId/mails/restore-mailbox
 
-Lance un job `restore_gmail` qui remet les mails archivés dans Gmail (`users.messages.insert`, `internalDateSource: dateHeader`, EML envoyé en `message/rfc822`). Scope OAuth existant (`gmail.modify`), aucune reconnexion nécessaire.
+Remet les mails archivés dans la boîte du compte : job `restore_gmail` pour un compte Gmail, `restore_imap` pour un compte IMAP. L'ancienne route `POST …/mails/restore-gmail` reste un alias (même comportement).
 
 ```json
 { "mailIds": ["uuid-1", "uuid-2"] }
 ```
 
-`mailIds` : 1 à 500 UUID (mails hors corbeille d'archive). Réponse **202** `{ "jobId": "…" }`, audit `archive.restore_gmail`. **409** si le compte n'est pas un compte Gmail, ou s'il est désactivé ou à reconnecter.
+`mailIds` : 1 à 500 UUID (mails hors corbeille d'archive). Réponse **202** `{ "jobId": "…" }`, audit `archive.restore_gmail` ou `archive.restore_imap`. **409** si le compte est désactivé ou à reconnecter. Le résultat du job (`imported` = restaurés, `skipped`, `errors`) arrive par notification.
 
-Pour chaque mail : encore présent dans Gmail → ignoré ; dans la corbeille Gmail → `untrash` ; absent → inséré avec ses libellés (système et utilisateur actifs tels quels, utilisateur supprimé ou `imported:` recréé par nom, `TRASH`/`SPAM`/`DRAFT`/`CHAT` retirés), puis `gmail_message_id` de l'archive mis à jour. Archive chiffrée : erreur. Le résultat du job (`imported` = restaurés, `skipped`, `errors`) arrive par notification.
+**Gmail** — le job `restore_gmail` remet les mails archivés dans Gmail (`users.messages.insert`, `internalDateSource: dateHeader`, EML envoyé en `message/rfc822`). Scope OAuth existant (`gmail.modify`), aucune reconnexion nécessaire.
+
+```json
+{ "mailIds": ["uuid-1", "uuid-2"] }
+```
+
+Pour chaque mail : encore présent dans Gmail → ignoré ; dans la corbeille Gmail → `untrash` ; absent → inséré avec ses libellés (système et utilisateur actifs tels quels, utilisateur supprimé ou `imported:` recréé par nom, `TRASH`/`SPAM`/`DRAFT`/`CHAT` retirés), puis `gmail_message_id` de l'archive mis à jour. Archive chiffrée : erreur.
+
+**IMAP** — le job `restore_imap` dépose l'EML par `APPEND` (marqué lu, date interne = date du mail) dans le dossier d'origine : le premier libellé du mail qui nomme un dossier encore présent sur le serveur (comparaison insensible à la casse, `Inbox` → `INBOX`), sinon `INBOX` ; un dossier devenu introuvable compte ses mails en erreur. Un mail dont le Message-ID est déjà dans ce dossier est ignoré (un job relancé ne crée pas de doublon ; la synchro suivante l'ignore aussi par Message-ID). Archive chiffrée ou `APPEND` refusé : erreur, les autres mails continuent. Mot de passe refusé par le serveur : le job échoue avec « Le serveur IMAP a refusé le mot de passe : reconnectez le compte… » et le compte passe « à reconnecter ».
 
 ---
 

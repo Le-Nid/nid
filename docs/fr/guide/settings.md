@@ -110,6 +110,10 @@ Export Google Takeout ou autre client mail, ajouté aux archives du compte (libe
 3. Téléchargez l'archive et importez le fichier `.mbox` dans Nid
 :::
 
+### Importer des fichiers .eml
+
+Un ou plusieurs mails enregistrés depuis un client mail (Thunderbird, Outlook, Apple Mail…). **Choisir ou déposer des fichiers .eml** (ou glissez les fichiers sur le bouton) : ils sont archivés tout de suite et un message donne le nombre de mails importés, ignorés (déjà archivés) et en erreur (fichier qui n'est pas un mail, plus de 50 Mo).
+
 ### Importer depuis un serveur IMAP
 
 Copie les mails d'une autre boîte (Outlook, Fastmail…) dans les archives du compte. Champs : **Serveur**, **Port**, **Identifiant**, **Mot de passe**, **Dossier**, **Nombre maximal de mails**, **Connexion chiffrée (TLS)**, puis **Lancer l'import**. Le mot de passe n'est pas conservé.

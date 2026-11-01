@@ -22,6 +22,8 @@ vi.mock('../imap/imap.service', () => ({
   isImapAuthError: (err: any) => !!err?.authenticationFailed,
 }))
 vi.mock('../auth/oauth.service', () => ({ flagReauthRequired: flag }))
+const restoreImap = vi.hoisted(() => vi.fn())
+vi.mock('../archive/restore.service', () => ({ restoreToGmail: vi.fn(), restoreToImap: restoreImap }))
 const listMessages = vi.hoisted(() => vi.fn())
 vi.mock('../gmail/gmail.service', () => ({ listMessages, trashMessages: vi.fn(), modifyMessages: vi.fn() }))
 vi.mock('../events/events.service', () => ({ publishUserEvents: vi.fn().mockResolvedValue(undefined) }))
@@ -65,4 +67,17 @@ it('a login the IMAP server refuses flags the account « à reconnecter », then
   sync.mockRejectedValue(new Error('ETIMEDOUT'))
   await expect(processJob(job())).rejects.toThrow('ETIMEDOUT')
   expect(flag).not.toHaveBeenCalled()
+})
+
+it('restore_imap restores, and a refused password flags the account and fails the job with its message', async () => {
+  restoreImap.mockResolvedValueOnce({ imported: 2, skipped: 1, errors: 0 })
+  const restore = () => job({ name: 'restore_imap', data: { accountId: 'acc-1', userId: 'u1', mailIds: ['m1'] } })
+  await processJob(restore())
+  expect(restoreImap).toHaveBeenCalledWith('acc-1', ['m1'], expect.any(Function))
+  expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ title: 'Restauration IMAP terminée', body: '2 restauré(s), 1 ignoré(s), 0 erreur(s).' }))
+
+  restoreImap.mockRejectedValueOnce(Object.assign(new Error('Le serveur IMAP a refusé le mot de passe'), { authenticationFailed: true }))
+  await expect(processJob(restore())).rejects.toThrow('refusé le mot de passe')
+  expect(flag).toHaveBeenCalledWith('acc-1', 'Le serveur IMAP')
+  expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ category: 'job_failed', body: expect.stringContaining('refusé le mot de passe') }))
 })

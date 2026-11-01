@@ -110,6 +110,10 @@ A Google Takeout or other mail client export, added to the account's archives (G
 3. Download the archive and import the `.mbox` file into Nid
 :::
 
+### Import .eml files
+
+One or more mails saved from a mail client (Thunderbird, Outlook, Apple Mail…). **Choose or drop .eml files** (or drag the files onto the button): they are archived at once and a message gives the number of mails imported, skipped (already archived) and in error (not a mail, over 50 MB).
+
 ### Import from an IMAP server
 
 Copies the mails of another mailbox (Outlook, Fastmail…) into the account's archives. Fields: **Server**, **Port**, **Username**, **Password**, **Folder**, **Maximum number of mails**, **Encrypted connection (TLS)**, then **Start import**. The password is not kept.

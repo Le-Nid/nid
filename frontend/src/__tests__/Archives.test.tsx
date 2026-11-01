@@ -16,7 +16,7 @@ vi.mock('../hooks/useAccount', () => ({ useAccount: () => ({ accountId: account.
 vi.mock('../api', () => ({
   archiveApi: {
     listMails: vi.fn(), getMail: vi.fn(), trashMails: vi.fn(), restoreMails: vi.fn(), listTrash: vi.fn(), emptyTrash: vi.fn(),
-    getTrashConfig: vi.fn(), updateTrashConfig: vi.fn(), triggerArchive: vi.fn(), listTags: vi.fn(), tagMails: vi.fn(), deleteTag: vi.fn(), listContacts: vi.fn(), restoreToGmail: vi.fn(),
+    getTrashConfig: vi.fn(), updateTrashConfig: vi.fn(), triggerArchive: vi.fn(), listTags: vi.fn(), tagMails: vi.fn(), deleteTag: vi.fn(), listContacts: vi.fn(), restoreToMailbox: vi.fn(),
     downloadAttachment: (acc: string, id: string) => `/api/archive/${acc}/attachments/${id}/download`,
   },
   archiveThreadsApi: { getThread: vi.fn() },
@@ -81,7 +81,7 @@ beforeEach(() => {
   vi.mocked(archiveApi.trashMails).mockResolvedValue({ trashed: 1 })
   vi.mocked(archiveApi.restoreMails).mockResolvedValue({ restored: 1 })
   vi.mocked(archiveApi.listTags).mockResolvedValue([])
-  vi.mocked(archiveApi.restoreToGmail).mockResolvedValue({ jobId: 'job-restore' })
+  vi.mocked(archiveApi.restoreToMailbox).mockResolvedValue({ jobId: 'job-restore' })
   vi.mocked(archiveApi.listContacts).mockResolvedValue({
     contacts: [
       { email: 'bob@x.fr', name: 'Martin, Bob', from_count: 1204, to_count: 3, last_at: '2026-08-01T07:00:00Z' },
@@ -152,6 +152,19 @@ describe('Archives — search', () => {
     await waitFor(() => expect(archiveApi.listMails).toHaveBeenLastCalledWith('acc-1', {
       sender: 'edf', from_date: '2026-01-01', to_date: '2026-02-01T23:59:59.999Z', has_attachments: 'true', page: 1, limit: 50,
     }))
+  })
+
+  it('size range in Mo and attachment type; an IMAP account names its labels « Dossiers »', async () => {
+    account.provider = 'imap'
+    const { router } = setup()
+    expect(await screen.findByRole('tree', { name: 'Dossiers' })).toBeInTheDocument()
+    await user().type(screen.getByLabelText('Taille min (Mo)'), '1.5')
+    await user().type(screen.getByLabelText('Taille max (Mo)'), '10')
+    await user().type(screen.getByLabelText('Type de pièce jointe'), 'pdf')
+    await waitFor(() => expect(archiveApi.listMails).toHaveBeenLastCalledWith('acc-1', {
+      size_min: '1572864', size_max: '10485760', attachment_type: 'pdf', page: 1, limit: 50,
+    }))
+    expect(router.state.location.search).toBe('?smin=1.5&smax=10&atype=pdf')
   })
 
   it('debounces the search into ?q=, and offers to clear filters when nothing matches', async () => {
@@ -295,19 +308,19 @@ describe('Archives — mobile', () => {
     expect(toast.success).toHaveBeenCalledWith('Tag « impôts » supprimé')
   })
 
-  it('« Restaurer dans Gmail »: the selection, then from the reader; a failure is reported', async () => {
+  it('« Restaurer dans la boîte mail »: the selection, then from the reader; a failure is reported', async () => {
     setup()
     await user().click(await screen.findByRole('checkbox', { name: 'Sélectionner Facture EDF' }))
-    await user().click(within(screen.getByRole('toolbar', { name: 'Actions sur la sélection' })).getByRole('button', { name: 'Restaurer dans Gmail' }))
-    await waitFor(() => expect(archiveApi.restoreToGmail).toHaveBeenCalledWith('acc-1', [MAIL.id]))
-    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Restauration de 1 mail dans Gmail lancée', { description: 'Une notification vous préviendra à la fin.' }))
+    await user().click(within(screen.getByRole('toolbar', { name: 'Actions sur la sélection' })).getByRole('button', { name: 'Restaurer dans la boîte mail' }))
+    await waitFor(() => expect(archiveApi.restoreToMailbox).toHaveBeenCalledWith('acc-1', [MAIL.id]))
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Restauration de 1 mail dans la boîte mail lancée', { description: 'Une notification vous préviendra à la fin.' }))
 
-    vi.mocked(archiveApi.restoreToGmail).mockRejectedValueOnce(new Error('409'))
+    vi.mocked(archiveApi.restoreToMailbox).mockRejectedValueOnce(new Error('409'))
     await user().click(screen.getByText('Relevé'))
     const reader = await screen.findByRole('dialog')
-    await user().click(within(within(reader).getByRole('toolbar')).getByRole('button', { name: 'Restaurer dans Gmail' }))
-    await waitFor(() => expect(archiveApi.restoreToGmail).toHaveBeenLastCalledWith('acc-1', [OTHER.id]))
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("La restauration dans Gmail n'a pas pu être lancée."))
+    await user().click(within(within(reader).getByRole('toolbar')).getByRole('button', { name: 'Restaurer dans la boîte mail' }))
+    await waitFor(() => expect(archiveApi.restoreToMailbox).toHaveBeenLastCalledWith('acc-1', [OTHER.id]))
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("La restauration dans la boîte mail n'a pas pu être lancée."))
   })
 
   it('an account shared read-only: search and read only (no header actions, selection, row or reader actions, owner tabs)', async () => {
@@ -327,14 +340,12 @@ describe('Archives — mobile', () => {
     expect(within(tags).queryByRole('combobox')).toBeNull()
   })
 
-  it('an IMAP account has no « Restaurer dans Gmail »', async () => {
+  it('an IMAP account restores too, to its server', async () => {
     account.provider = 'imap'
     setup()
     await user().click(await screen.findByRole('checkbox', { name: 'Sélectionner Facture EDF' }))
-    expect(within(screen.getByRole('toolbar', { name: 'Actions sur la sélection' })).queryByRole('button', { name: 'Restaurer dans Gmail' })).toBeNull()
-    await user().click(screen.getByText('Relevé'))
-    const reader = await screen.findByRole('dialog')
-    expect(within(within(reader).getByRole('toolbar')).queryByRole('button', { name: 'Restaurer dans Gmail' })).toBeNull()
+    await user().click(within(screen.getByRole('toolbar', { name: 'Actions sur la sélection' })).getByRole('button', { name: 'Restaurer dans la boîte mail' }))
+    await waitFor(() => expect(archiveApi.restoreToMailbox).toHaveBeenCalledWith('acc-1', [MAIL.id]))
   })
 
   it('a failed tag deletion is reported', async () => {

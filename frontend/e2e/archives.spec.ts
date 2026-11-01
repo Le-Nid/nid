@@ -38,6 +38,23 @@ test.describe('Archives', () => {
     await expect(page.getByText(MORNING)).toHaveCount(0)
   })
 
+  test('filters by size and attachment type', async ({ page, isMobile }) => {
+    await page.goto('/archives')
+    await expect(results(page)).toHaveText('2 résultats · 0,12 s')
+    const scope = isMobile ? page.getByRole('dialog', { name: t('archives.filters') }) : page
+    if (isMobile) await page.getByRole('button', { name: t('archives.filters') }).click()
+    const search = page.waitForRequest((r) => is('GET', `/api/archive/${ACCOUNT}/mails`)(r) && new URL(r.url()).searchParams.get('attachment_type') === 'pdf')
+    await scope.getByLabel(t('archives.filter.sizeMin')).fill('2')
+    await scope.getByLabel(t('archives.filter.attachmentType')).fill('pdf')
+    const params = new URL((await search).url()).searchParams
+    expect(params.get('size_min')).toBe(String(2 * 1024 * 1024))
+    await expect(page).toHaveURL(/smin=2&atype=pdf/)
+    if (isMobile) {
+      await scope.getByRole('button', { name: t('archives.showResults') }).click()
+      await expect(page.getByRole('button', { name: 'Filtres (2)' })).toBeVisible()
+    }
+  })
+
   test('opens the reader and shares a link, then revokes it', async ({ page }) => {
     await page.goto('/archives')
     await page.getByRole('button', { name: MORNING, exact: true }).click()
@@ -77,13 +94,13 @@ test.describe('Archives', () => {
     await list
   })
 
-  test('« Restaurer dans Gmail » on the selection', async ({ page }) => {
+  test('« Restaurer dans la boîte mail » on the selection', async ({ page }) => {
     await page.goto('/archives')
     await page.getByRole('checkbox', { name: t('dataList.selectRow', { label: MORNING }) }).check()
-    const restore = page.waitForRequest(is('POST', `/api/archive/${ACCOUNT}/mails/restore-gmail`))
+    const restore = page.waitForRequest(is('POST', `/api/archive/${ACCOUNT}/mails/restore-mailbox`))
     await page.getByRole('toolbar', { name: t('bulkBar.label') }).getByRole('button', { name: t('archives.action.restore') }).click()
     expect((await restore).postDataJSON().mailIds).toHaveLength(1)
-    await expect(page.getByText('Restauration de 1 mail dans Gmail lancée')).toBeVisible()
+    await expect(page.getByText('Restauration de 1 mail dans la boîte mail lancée')).toBeVisible()
   })
 
   test('Contacts: a contact opens the mails it sent', async ({ page }) => {

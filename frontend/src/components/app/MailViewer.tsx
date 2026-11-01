@@ -166,7 +166,7 @@ type ViewerProps = {
 } & (
   | { source?: 'gmail'; onAction: (action: ViewerAction) => void; onOpenMail?: never }
   /** Archived EML (§7.5): Partager / Supprimer, and the other messages of its thread. */
-  | { source: 'archive'; onAction: (action: ArchiveViewerAction) => void; onOpenMail: (id: string) => void; canRestore?: boolean; readOnly?: boolean }
+  | { source: 'archive'; onAction: (action: ArchiveViewerAction) => void; onOpenMail: (id: string) => void; readOnly?: boolean }
 )
 
 /** Mail reader (§5.2), Gmail or archive: right sheet ≥md, full screen <md (artboard 4); actions in a bottom toolbar. */
@@ -262,7 +262,7 @@ export function MailViewer(props: Readonly<ViewerProps>) {
           aria-label={t('mails.viewer.actions')}
           className="flex border-t px-2 pt-1 pb-[max(8px,env(safe-area-inset-bottom))] md:justify-end md:gap-2 md:p-3"
         >
-          {ACTIONS[source].filter(({ action }) => props.source !== 'archive' || (!props.readOnly && (action !== 'restore' || props.canRestore))).map(({ action, icon: Icon }) => (
+          {ACTIONS[source].filter(() => props.source !== 'archive' || !props.readOnly).map(({ action, icon: Icon }) => (
             <Button
               key={action}
               variant="ghost"

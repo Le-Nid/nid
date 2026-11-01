@@ -109,6 +109,7 @@
     "backupFailed": "The backup could not be started.",
     "allMails": "All mails",
     "labelTree": "Labels",
+    "folderTree": "Folders",
     "search": "Search the archives",
     "searchPlaceholder": "Subject, sender, content — \"exact phrase\", -exclude, OR",
     "filters": "Filters",
@@ -122,7 +123,12 @@
       "from": "From",
       "to": "To",
       "attachments": "With attachment",
-      "tag": "Tag"
+      "tag": "Tag",
+      "folder": "Folder",
+      "sizeMin": "Min size (MB)",
+      "sizeMax": "Max size (MB)",
+      "attachmentType": "Attachment type",
+      "attachmentTypePlaceholder": "pdf, docx, image/…"
     },
     "results_one": "{{count, number}} result",
     "results_other": "{{count, number}} results",
@@ -137,7 +143,7 @@
       "open": "Open",
       "share": "Share",
       "trash": "Delete",
-      "restore": "Restore to Gmail"
+      "restore": "Restore to mailbox"
     },
     "loadError": "Could not load the archives.",
     "noMatch": "No archive matches",
@@ -286,10 +292,10 @@
       "loadError": "Could not load contacts."
     },
     "restore": {
-      "started_one": "Restoring {{count, number}} mail to Gmail",
-      "started_other": "Restoring {{count, number}} mails to Gmail",
+      "started_one": "Restoring {{count, number}} mail to the mailbox",
+      "started_other": "Restoring {{count, number}} mails to the mailbox",
       "startedHint": "A notification will tell you when it is done.",
-      "failed": "The restore to Gmail could not be started."
+      "failed": "The restore to the mailbox could not be started."
     }
   },
   "rules": {
@@ -484,6 +490,7 @@
     "applyRetention": "Retention run",
     "backfillBodyText": "Archive full-text indexing",
     "restoreGmail": "Restore to Gmail",
+    "restoreImap": "IMAP restore",
     "decryptArchives": "Archive decryption"
   },
   "settings": {
@@ -733,6 +740,11 @@
       "mbox": "Import an mbox file",
       "mboxHint": "Google Takeout or another mail client export, added to the archives of {{email}} (Gmail labels kept).",
       "mboxPick": "Choose an .mbox file",
+      "eml": "Import .eml files",
+      "emlHint": "One or more saved mails (Thunderbird, Outlook, Apple Mail…), added at once to the archives of {{email}}. Duplicates are skipped.",
+      "emlPick": "Choose or drop .eml files",
+      "emlDone_one": "{{count, number}} mail imported, {{skipped, number}} skipped, {{errors, number}} error(s)",
+      "emlDone_other": "{{count, number}} mails imported, {{skipped, number}} skipped, {{errors, number}} error(s)",
       "imap": "Import from an IMAP server",
       "imapHint": "Copies the mails of another mailbox (Outlook, Fastmail…) into the archives of {{email}}. The password is not kept.",
       "host": "Server",

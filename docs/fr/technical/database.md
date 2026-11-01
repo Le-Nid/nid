@@ -339,8 +339,8 @@ erDiagram
     mail_accounts ||--o{ gmail_api_usage : "suit"
 ```
 
-::: info Table `storage_configs`
-La migration 001 crée aussi `storage_configs` (une configuration de stockage `local | s3` par utilisateur). Elle n'est ni typée dans `types.ts` ni lue par le code actuel.
+::: info Table `storage_configs` (supprimée)
+La migration 001 créait `storage_configs` (stockage `local | s3` par utilisateur, avec une colonne pour une clé secrète S3), jamais lue ni écrite : la migration 020 la supprime (son `down` la recrée vide).
 :::
 
 ---

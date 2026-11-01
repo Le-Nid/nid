@@ -22,20 +22,18 @@ import { useArchiveMails, useArchiveTags, useDashboardArchiveStats, useDeleteArc
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useAccount } from '@/hooks/useAccount'
 import type { ApiLabel } from '@/utils/gmail'
+import { cn } from '@/lib/utils'
 import { ShareDialog } from './ShareDialog'
 import { TagDialog } from './TagDialog'
 import {
-  actionsHeader, col, DateCell, mailColumns, useArchiveFilters, useArchiveTrashWithUndo, useDebounced, useMboxExport, useRestoreToGmailAction,
+  actionsHeader, col, DateCell, mailColumns, useArchiveFilters, useArchiveTrashWithUndo, useDebounced, useMboxExport, useRestoreToMailboxAction,
   type ArchivedMail, type Filters,
 } from './shared'
 
 type RowAction = 'open' | ArchiveViewerAction
 const FIELD = 'h-11 text-base md:h-9 md:text-sm'
 
-const rowActions = (readOnly: boolean, canRestore: boolean): RowAction[] => {
-  if (readOnly) return ['open']
-  return canRestore ? ['open', 'share', 'restore', 'trash'] : ['open', 'share', 'trash']
-}
+const rowActions = (readOnly: boolean): RowAction[] => (readOnly ? ['open'] : ['open', 'share', 'restore', 'trash'])
 
 /** The label or tag tree as a select, for the filters sheet <md. */
 function TreeSelect({ id, label, nodes, value, onChange }: Readonly<{
@@ -55,15 +53,18 @@ function TreeSelect({ id, label, nodes, value, onChange }: Readonly<{
 }
 
 /** Expéditeur, Période, Avec pièce jointe (§7.5); inline ≥md, in the filters sheet <md with the label and tag selects. */
-function FilterFields({ filters, set, nodes, tagNodes }: Readonly<{
-  filters: Filters; set: (patch: Partial<Filters>) => void; nodes?: LabelNode[]; tagNodes?: LabelNode[]
+function FilterFields({ filters, set, nodes, tagNodes, folders }: Readonly<{
+  filters: Filters; set: (patch: Partial<Filters>) => void; nodes?: LabelNode[]; tagNodes?: LabelNode[]; folders?: boolean
 }>) {
   const { t } = useTranslation()
   const id = useId()
   const [sender, setSender] = useDebounced(filters.sender, (v) => set({ sender: v }))
+  const [smin, setSmin] = useDebounced(filters.smin, (v) => set({ smin: v }))
+  const [smax, setSmax] = useDebounced(filters.smax, (v) => set({ smax: v }))
+  const [atype, setAtype] = useDebounced(filters.atype, (v) => set({ atype: v }))
   return (
     <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-end">
-      {nodes && <TreeSelect id={`${id}-label`} label={t('archives.filter.label')} nodes={nodes} value={filters.label} onChange={(label) => set({ label })} />}
+      {nodes && <TreeSelect id={`${id}-label`} label={t(folders ? 'archives.filter.folder' : 'archives.filter.label')} nodes={nodes} value={filters.label} onChange={(label) => set({ label })} />}
       {tagNodes && tagNodes.length > 1 && (
         <TreeSelect id={`${id}-tag`} label={t('archives.filter.tag')} nodes={tagNodes} value={filters.tag} onChange={(tag) => set({ tag })} />
       )}
@@ -75,6 +76,15 @@ function FilterFields({ filters, set, nodes, tagNodes }: Readonly<{
       </FormField>
       <FormField id={`${id}-to`} label={t('archives.filter.to')}>
         <Input id={`${id}-to`} type="date" value={filters.to} min={filters.from || undefined} onChange={(e) => set({ to: e.target.value })} className={FIELD} />
+      </FormField>
+      <FormField id={`${id}-smin`} label={t('archives.filter.sizeMin')}>
+        <Input id={`${id}-smin`} type="number" inputMode="decimal" min={0} step="any" value={smin} onChange={(e) => setSmin(e.target.value)} className={cn(FIELD, 'md:w-28')} />
+      </FormField>
+      <FormField id={`${id}-smax`} label={t('archives.filter.sizeMax')}>
+        <Input id={`${id}-smax`} type="number" inputMode="decimal" min={0} step="any" value={smax} onChange={(e) => setSmax(e.target.value)} className={cn(FIELD, 'md:w-28')} />
+      </FormField>
+      <FormField id={`${id}-atype`} label={t('archives.filter.attachmentType')}>
+        <Input id={`${id}-atype`} type="text" autoComplete="off" placeholder={t('archives.filter.attachmentTypePlaceholder')} value={atype} onChange={(e) => setAtype(e.target.value)} className={cn(FIELD, 'md:w-40')} />
       </FormField>
       <div className="flex min-h-11 items-center gap-2 text-sm md:min-h-9">
         <Checkbox id={`${id}-att`} checked={!!filters.att} onCheckedChange={(v) => set({ att: v ? '1' : '' })} />
@@ -149,12 +159,10 @@ export function SearchTab({ accountId }: Readonly<{ accountId: string }>) {
   const search = useArchiveMails(accountId, apiParams)
   const exporter = useMboxExport(accountId)
   const trash = useArchiveTrashWithUndo(accountId)
-  const restore = useRestoreToGmailAction(accountId)
+  const restore = useRestoreToMailboxAction(accountId)
   const { account } = useAccount()
   // Shared by another user: read only (no selection, no action but « Ouvrir »)
   const readOnly = !!account?.shared_by
-  // An IMAP account has no Gmail mailbox to restore into
-  const canRestore = account?.provider !== 'imap' && !readOnly
   const [q, setQ] = useDebounced(filters.q, (v) => set({ q: v }))
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
   const [viewing, setViewing] = useState<string | null>(null)
@@ -187,8 +195,8 @@ export function SearchTab({ accountId }: Readonly<{ accountId: string }>) {
   const onRowRef = useRef<(action: RowAction, mail: ArchivedMail) => void>(() => {})
   onRowRef.current = (action, mail) => (action === 'open' ? setViewing(mail.id) : act(action, mail.id))
   const columns = useMemo(
-    () => buildColumns(t, rowActions(readOnly, canRestore), (a, m) => onRowRef.current(a, m)),
-    [t, readOnly, canRestore],
+    () => buildColumns(t, rowActions(readOnly), (a, m) => onRowRef.current(a, m)),
+    [t, readOnly],
   )
   const table = useTable({
     features: dataListFeatures,
@@ -205,14 +213,14 @@ export function SearchTab({ accountId }: Readonly<{ accountId: string }>) {
   const bulkActions: BulkAction[] = [
     { label: t('archives.export'), icon: <Download aria-hidden="true" />, onSelect: () => exporter.run(selected) },
     { label: t('archives.tags.title'), icon: <Tag aria-hidden="true" />, onSelect: () => setTagging(selected) },
-    ...(canRestore ? [{
+    {
       label: t('archives.action.restore'),
       icon: <MailPlus aria-hidden="true" />,
       onSelect: () => {
         restore.run(selected)
         setRowSelection({})
       },
-    }] : []),
+    },
     {
       label: t('archives.action.trash'),
       icon: <Trash2 aria-hidden="true" />,
@@ -223,8 +231,10 @@ export function SearchTab({ accountId }: Readonly<{ accountId: string }>) {
       },
     },
   ]
-  const activeFilters = [filters.sender, filters.from, filters.to, filters.att, filters.label, filters.tag].filter(Boolean).length
-  const clearAll = () => set({ q: '', sender: '', from: '', to: '', att: '', label: '', tag: '' })
+  const activeFilters = [filters.sender, filters.from, filters.to, filters.att, filters.label, filters.tag, filters.smin, filters.smax, filters.atype].filter(Boolean).length
+  const clearAll = () => set({ q: '', sender: '', from: '', to: '', att: '', label: '', tag: '', smin: '', smax: '', atype: '' })
+  // An IMAP account's labels are its folders
+  const folders = account?.provider === 'imap'
   const removeTag = (tag: string) => deleteTag.mutate(tag, {
     onSuccess: () => {
       set({ tag: '' })
@@ -237,7 +247,7 @@ export function SearchTab({ accountId }: Readonly<{ accountId: string }>) {
     <div className="flex flex-col gap-4 md:grid md:grid-cols-[13rem_minmax(0,1fr)] md:items-start md:gap-6">
       {!isMobile && (
         <div className="flex flex-col gap-4">
-          <LabelTree nodes={nodes} value={filters.label || null} onChange={(id) => set({ label: id ?? '' })} label={t('archives.labelTree')} />
+          <LabelTree nodes={nodes} value={filters.label || null} onChange={(id) => set({ label: id ?? '' })} label={t(folders ? 'archives.folderTree' : 'archives.labelTree')} />
           {tagNodes.length > 1 && (
             <LabelTree nodes={tagNodes} value={filters.tag || null} onChange={(id) => set({ tag: id ?? '' })} label={t('archives.tags.title')} />
           )}
@@ -314,7 +324,7 @@ export function SearchTab({ accountId }: Readonly<{ accountId: string }>) {
             <SheetTitle>{t('archives.filters')}</SheetTitle>
             <SheetDescription>{t('archives.filtersDescription')}</SheetDescription>
           </SheetHeader>
-          <div className="overflow-y-auto px-4"><FilterFields filters={filters} set={set} nodes={nodes} tagNodes={tagNodes} /></div>
+          <div className="overflow-y-auto px-4"><FilterFields filters={filters} set={set} nodes={nodes} tagNodes={tagNodes} folders={folders} /></div>
           <SheetFooter className="pb-[max(16px,env(safe-area-inset-bottom))]">
             <Button className="h-11" onClick={() => setFiltersOpen(false)}>{t('archives.showResults')}</Button>
           </SheetFooter>
@@ -329,7 +339,6 @@ export function SearchTab({ accountId }: Readonly<{ accountId: string }>) {
         onClose={() => setViewing(null)}
         onOpenMail={setViewing}
         onAction={(action) => viewing && act(action, viewing)}
-        canRestore={canRestore}
         readOnly={readOnly}
       />
       <TagDialog
