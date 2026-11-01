@@ -89,7 +89,7 @@ export async function extractAttachmentText(filename: string, mimeType: string |
   try {
     // pdf.js copies the bytes it is given: the caller's buffer stays intact
     const work = kind === 'pdf' ? pdfText(new Uint8Array(content), deadline) : Promise.resolve(docxText(content))
-    // shortcut: a single page that parses past the limit keeps the CPU until it ends; a worker thread would be needed to kill it
+    // shortcut: one page parses in one go on the main thread (shared with the API), so a huge page holds both past the limit; move to a worker thread if that shows up
     const timeout = new Promise<string>((_, reject) => { timer = setTimeout(() => reject(new Error('timeout')), TIME_LIMIT_MS) })
     return clean(await Promise.race([work, timeout]))
   } catch (err) {
