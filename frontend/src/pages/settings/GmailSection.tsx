@@ -3,7 +3,7 @@ import { useOutletContext, useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { toast } from 'sonner'
-import { Plus, RefreshCw } from 'lucide-react'
+import { FolderTree, Plus, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/app/ConfirmDialog'
 import { EmptyState } from '@/components/app/EmptyState'
@@ -17,6 +17,7 @@ import { formatRelative } from '@/utils/format'
 import { SettingsCard, SwitchRow, selectClass } from './shared'
 import { AccountSetupWizard } from './AccountSetupWizard'
 import { ImapAccountDialog } from './ImapAccountDialog'
+import { ImapScopeDialog } from './ImapScopeDialog'
 import { AccountSharesBlock, SharedWithMe } from './AccountShares'
 
 const INTERVALS: BackupInterval[] = ['1h', '6h', '24h']
@@ -81,6 +82,7 @@ function ActiveAccountControls({ account, onReconnect }: Readonly<{ account: Gma
   const disconnect = useDisconnectGmailAccount()
   const failed = () => toast.error(t('settings.saveFailed'))
   const save = (body: { backup_enabled?: boolean; backup_interval?: BackupInterval }) => update.mutate({ id: account.id, ...body }, { onError: failed })
+  const [scoping, setScoping] = useState(false)
 
   return (
     <>
@@ -112,6 +114,11 @@ function ActiveAccountControls({ account, onReconnect }: Readonly<{ account: Gma
         >
           <RefreshCw aria-hidden="true" />{t('settings.gmail.syncNow')}
         </Button>}
+        {imap && (
+          <Button variant="outline" className="h-11 md:h-9" disabled={account.needs_reauth} onClick={() => setScoping(true)}>
+            <FolderTree aria-hidden="true" />{t('settings.imap.scope.title')}
+          </Button>
+        )}
         <Button variant={account.needs_reauth ? 'default' : 'outline'} className="h-11 md:h-9" onClick={onReconnect}>
           {t(imap ? 'settings.imap.updateTitle' : 'settings.gmail.reconnect')}
         </Button>
@@ -127,6 +134,7 @@ function ActiveAccountControls({ account, onReconnect }: Readonly<{ account: Gma
           })}
         />
       </div>
+      {scoping && <ImapScopeDialog account={account} onClose={() => setScoping(false)} />}
     </>
   )
 }

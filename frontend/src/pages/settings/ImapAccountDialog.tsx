@@ -1,4 +1,4 @@
-import { useId, useState, type FormEvent } from 'react'
+import { useId, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/dialog'
 import { FormField } from '@/components/app/FormField'
 import { useCreateImapAccount, useUpdateImapAccount } from '@/hooks/queries'
+import { imapAccountsApi, type ImapDiscovery } from '@/api'
 import type { GmailAccount } from '@/store/auth.store'
 
 const inputClass = 'h-11 text-base md:h-9 md:text-sm'
@@ -36,8 +37,29 @@ export function ImapAccountDialog({ account, onClose, onCreated }: Readonly<{
   const [user, setUser] = useState(account?.imap_user ?? '')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  // Prefilled from the address until the user edits the server fields themselves
+  const serverEdited = useRef(!!account)
+  const [found, setFound] = useState<ImapDiscovery['source'] | null>(null)
   const pending = create.isPending || update.isPending
   const submitLabel = account ? 'settings.imap.save' : 'settings.imap.connect'
+
+  const discover = () => {
+    const address = email.trim()
+    if (serverEdited.current || !address.split('@')[1]?.includes('.')) return
+    imapAccountsApi.autoconfig(address).then((d) => {
+      // The user may have started typing the server while the lookup ran
+      if (serverEdited.current) return
+      setHost(d.host)
+      setPort(String(d.port))
+      setSecure(d.secure)
+      setFound(d.source)
+    }, () => {})
+  }
+  const editServer = <T,>(set: (v: T) => void) => (v: T) => {
+    serverEdited.current = true
+    setFound(null)
+    set(v)
+  }
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
@@ -58,19 +80,20 @@ export function ImapAccountDialog({ account, onClose, onCreated }: Readonly<{
         <form id={id} onSubmit={submit} className="flex flex-col gap-3">
           {!account && (
             <FormField id={`${id}-email`} label={t('settings.imap.email')}>
-              <Input id={`${id}-email`} type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
+              <Input id={`${id}-email`} type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={discover} className={inputClass} />
             </FormField>
           )}
           <div className="grid gap-3 sm:grid-cols-[1fr_7rem]">
             <FormField id={`${id}-host`} label={t('settings.imap.host')}>
-              <Input id={`${id}-host`} required placeholder="imap.example.com" value={host} onChange={(e) => setHost(e.target.value)} className={inputClass} />
+              <Input id={`${id}-host`} required placeholder="imap.example.com" value={host} onChange={(e) => editServer(setHost)(e.target.value)} className={inputClass} />
             </FormField>
             <FormField id={`${id}-port`} label={t('settings.imap.port')}>
-              <Input id={`${id}-port`} type="number" required min={1} max={65535} value={port} onChange={(e) => setPort(e.target.value)} className={inputClass} />
+              <Input id={`${id}-port`} type="number" required min={1} max={65535} value={port} onChange={(e) => editServer(setPort)(e.target.value)} className={inputClass} />
             </FormField>
           </div>
+          {found && <p role="status" className="text-sm text-muted-foreground">{t(found === 'guess' ? 'settings.imap.guessed' : 'settings.imap.found')}</p>}
           <label htmlFor={`${id}-secure`} className="flex min-h-11 items-center gap-3 text-sm md:min-h-0">
-            <Checkbox id={`${id}-secure`} checked={secure} onCheckedChange={(v) => setSecure(v === true)} />
+            <Checkbox id={`${id}-secure`} checked={secure} onCheckedChange={(v) => editServer(setSecure)(v === true)} />
             {t('settings.imap.secure')}
           </label>
           <FormField id={`${id}-user`} label={t('settings.imap.user')}>

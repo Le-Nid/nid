@@ -7,6 +7,7 @@ import {
   retentionApi, importApi,
   sharingApi, labelsApi, gmailAccountsApi, accountSharesApi, twoFactorApi, configApi, integrityApi, authApi, aboutApi, passkeysApi, apiTokensApi, imapAccountsApi,
 } from '../api'
+import type { ImapScope } from '../api'
 import { startRegistration } from '@simplewebauthn/browser'
 import { useAuthStore } from '../store/auth.store'
 
@@ -555,6 +556,16 @@ export const useDisconnectGmailAccount = () => useMeMutation(gmailAccountsApi.di
 export const useCreateImapAccount = () => useMeMutation(imapAccountsApi.create)
 export const useUpdateImapAccount = () =>
   useMeMutation(({ id, ...body }: { id: string } & Parameters<typeof imapAccountsApi.update>[1]) => imapAccountsApi.update(id, body))
+export function useImapFolders(accountId: string) {
+  return useQuery({ queryKey: ['imap-folders', accountId], queryFn: () => imapAccountsApi.folders(accountId), staleTime: 0, retry: false })
+}
+export function useSetImapScope(accountId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (scope: ImapScope) => imapAccountsApi.setScope(accountId, scope),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['imap-folders', accountId] }),
+  })
+}
 /** Who an account of one's own is shared with (Paramètres › Comptes). */
 export function useAccountShares(accountId: string) {
   return useQuery({ queryKey: ['account-shares', accountId], queryFn: () => accountSharesApi.list(accountId) })

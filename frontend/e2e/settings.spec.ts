@@ -130,3 +130,38 @@ test('imports several .eml files into the archives', async ({ page }) => {
   expect(body.match(/filename="[ab]\.eml"/g)).toHaveLength(2)
   await expect(page.getByText('2 mails importés, 0 ignoré(s), 0 erreur(s)')).toBeVisible()
 })
+
+test('adding an IMAP account prefills its server from the address', async ({ page }) => {
+  await page.route('**/api/auth/imap/autoconfig?*', (route) => route.fulfill({ json: { host: 'imap.gmx.net', port: 993, secure: true, source: 'ispdb' } }))
+  await page.goto('/settings/gmail')
+  await page.getByRole('button', { name: t('settings.imap.add') }).click()
+  const form = page.getByRole('dialog', { name: t('settings.imap.addTitle') })
+  await form.getByLabel(t('settings.imap.email')).fill('ana@gmx.fr')
+  await form.getByLabel(t('settings.imap.email')).blur()
+  await expect(form.getByLabel(t('settings.imap.host'))).toHaveValue('imap.gmx.net')
+  await expect(form.getByText(t('settings.imap.found'))).toBeVisible()
+})
+
+test('« Dossiers et période » of an IMAP account', async ({ page }) => {
+  const imap = { ...me.gmailAccounts[0], id: 'imap-1', email: 'ana@mail.fr', provider: 'imap', imap_host: 'imap.mail.fr', imap_port: 993, imap_secure: true, imap_user: 'ana' }
+  await page.route('**/api/auth/me', (route) => route.fulfill({ json: { ...me, gmailAccounts: [imap] } }))
+  await page.route('**/api/auth/imap/imap-1/folders', (route) => route.fulfill({ json: {
+    folders: [
+      { path: 'INBOX', name: 'INBOX', specialUse: null, syncedByDefault: true },
+      { path: 'Archives/2024/Factures et relevés bancaires', name: 'Factures et relevés bancaires', specialUse: null, syncedByDefault: true },
+      { path: 'Spam', name: 'Spam', specialUse: '\\Junk', syncedByDefault: false },
+    ],
+    chosen: null, since: null,
+  } }))
+  await page.route('**/api/auth/imap/imap-1/scope', (route) => route.fulfill({ json: route.request().postDataJSON() }))
+  await page.goto('/settings/gmail')
+  await page.getByRole('button', { name: t('settings.imap.scope.title') }).click()
+  const dialog = page.getByRole('dialog', { name: t('settings.imap.scope.title') })
+  await dialog.getByRole('radio', { name: t('settings.imap.scope.some') }).check()
+  await dialog.getByRole('checkbox', { name: 'INBOX' }).click()
+  await dialog.getByLabel(t('settings.imap.scope.since')).fill('2024-01-01')
+  const save = page.waitForRequest(is('PUT', '/api/auth/imap/imap-1/scope'))
+  await dialog.getByRole('button', { name: t('settings.imap.save') }).click()
+  expect((await save).postDataJSON()).toEqual({ folders: ['Archives/2024/Factures et relevés bancaires'], since: '2024-01-01' })
+  await expect(page.getByText(t('settings.imap.scope.saved'))).toBeVisible()
+})

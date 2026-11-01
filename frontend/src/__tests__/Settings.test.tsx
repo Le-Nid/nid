@@ -27,7 +27,7 @@ vi.mock('../api', () => ({
   gmailAccountsApi: { connectUrl: vi.fn(), update: vi.fn(), disconnect: vi.fn() },
   rulesApi: { getTemplates: vi.fn(), preview: vi.fn(), createFromTemplate: vi.fn() },
   archiveApi: { triggerArchive: vi.fn() },
-  imapAccountsApi: { create: vi.fn(), update: vi.fn() },
+  imapAccountsApi: { create: vi.fn(), update: vi.fn(), autoconfig: vi.fn(), folders: vi.fn(), setScope: vi.fn() },
 }))
 vi.mock('../utils/download', () => ({ saveBlob: vi.fn() }))
 const webauthn = vi.hoisted(() => ({ supported: false, startRegistration: vi.fn() }))
@@ -74,6 +74,7 @@ beforeEach(() => {
   vi.mocked(notificationsApi.getPreferences).mockResolvedValue(PREFS)
   vi.mocked(notificationsApi.updatePreferences).mockResolvedValue({ ok: true })
   vi.mocked(dashboardApi.getArchiveStats).mockResolvedValue({ total_mails: 24106, last_archived_at: '2026-10-21T03:00:00Z' })
+  vi.mocked(imapAccountsApi.autoconfig).mockRejectedValue(new Error('offline'))
   vi.mocked(sharingApi.list).mockResolvedValue([{ id: 's1' }, { id: 's2' }])
   vi.mocked(webhooksApi.list).mockResolvedValue([WEBHOOK])
   vi.mocked(apiTokensApi.list).mockResolvedValue([])
@@ -411,6 +412,73 @@ describe('Comptes Gmail', () => {
     await userEvent.click(within(wizard).getByRole('button', { name: 'Terminer' }))
     await waitFor(() => expect(archiveApi.triggerArchive).toHaveBeenCalledWith('acc-2', { differential: true }))
     fetchMe.mockImplementation(() => Promise.resolve())
+  })
+
+  it('prefills the IMAP server from the address, until the user types one', async () => {
+    vi.mocked(imapAccountsApi.autoconfig).mockResolvedValue({ host: 'imap.gmx.net', port: 143, secure: false, source: 'ispdb' })
+    setup('/settings/gmail')
+    await userEvent.click(screen.getByRole('button', { name: 'Ajouter un compte IMAP' }))
+    const form = await screen.findByRole('dialog', { name: 'Ajouter un compte IMAP' })
+    await userEvent.type(within(form).getByLabelText('Adresse e-mail'), 'ana@gmx.fr')
+    await userEvent.tab()
+    await waitFor(() => expect(within(form).getByLabelText('Serveur IMAP')).toHaveValue('imap.gmx.net'))
+    expect(imapAccountsApi.autoconfig).toHaveBeenCalledWith('ana@gmx.fr')
+    expect(within(form).getByLabelText('Port')).toHaveValue(143)
+    expect(within(form).getByRole('checkbox', { name: 'Connexion chiffrée (TLS)' })).not.toBeChecked()
+    expect(within(form).getByText('Serveur trouvé automatiquement pour cette adresse.')).toBeInTheDocument()
+
+    // Once the server is typed by hand, another address does not overwrite it
+    await userEvent.clear(within(form).getByLabelText('Serveur IMAP'))
+    await userEvent.type(within(form).getByLabelText('Serveur IMAP'), 'mail.perso.fr')
+    expect(within(form).queryByText('Serveur trouvé automatiquement pour cette adresse.')).not.toBeInTheDocument()
+    await userEvent.type(within(form).getByLabelText('Adresse e-mail'), 'x')
+    await userEvent.tab()
+    expect(imapAccountsApi.autoconfig).toHaveBeenCalledTimes(1)
+    expect(within(form).getByLabelText('Serveur IMAP')).toHaveValue('mail.perso.fr')
+  })
+
+  it('« Dossiers et période » of an IMAP account: chosen folders and a start date', async () => {
+    useAuthStore.setState({ gmailAccounts: [{ id: 'acc-2', email: 'ana@mail.fr', is_active: true, provider: 'imap', imap_host: 'imap.mail.fr', imap_port: 993, imap_secure: true, imap_user: 'ana' }] })
+    vi.mocked(imapAccountsApi.folders).mockResolvedValue({
+      folders: [
+        { path: 'INBOX', name: 'INBOX', specialUse: null, syncedByDefault: true },
+        { path: 'Factures', name: 'Factures', specialUse: null, syncedByDefault: true },
+        { path: 'Spam', name: 'Spam', specialUse: '\\Junk', syncedByDefault: false },
+      ],
+      chosen: null, since: null,
+    })
+    vi.mocked(imapAccountsApi.setScope).mockResolvedValue({ folders: ['INBOX'], since: '2024-01-01' })
+    setup('/settings/gmail')
+    await userEvent.click(screen.getByRole('button', { name: 'Dossiers et période' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Dossiers et période' })
+    expect(await within(dialog).findByRole('radio', { name: /Tous les dossiers/ })).toBeChecked()
+    await userEvent.click(within(dialog).getByRole('radio', { name: 'Seulement ces dossiers' }))
+    // Starts from what the backup covers today: every folder but junk
+    expect(within(dialog).getByRole('checkbox', { name: 'Factures' })).toBeChecked()
+    expect(within(dialog).getByRole('checkbox', { name: 'Spam' })).not.toBeChecked()
+    await userEvent.click(within(dialog).getByRole('checkbox', { name: 'Factures' }))
+    await userEvent.type(within(dialog).getByLabelText('Mails reçus depuis le'), '2024-01-01')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Enregistrer' }))
+    await waitFor(() => expect(imapAccountsApi.setScope).toHaveBeenCalledWith('acc-2', { folders: ['INBOX'], since: '2024-01-01' }))
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Dossiers et période enregistrés : appliqués à la prochaine sauvegarde'))
+  })
+
+  it('« Dossiers et période »: no folder chosen is refused; a server that cannot be read says so', async () => {
+    useAuthStore.setState({ gmailAccounts: [{ id: 'acc-2', email: 'ana@mail.fr', is_active: true, provider: 'imap', imap_host: 'imap.mail.fr', imap_port: 993, imap_secure: true, imap_user: 'ana' }] })
+    vi.mocked(imapAccountsApi.folders).mockResolvedValueOnce({ folders: [{ path: 'INBOX', name: 'INBOX', specialUse: null, syncedByDefault: true }], chosen: ['INBOX'], since: '2024-03-01' })
+    setup('/settings/gmail')
+    await userEvent.click(screen.getByRole('button', { name: 'Dossiers et période' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Dossiers et période' })
+    expect(await within(dialog).findByLabelText('Mails reçus depuis le')).toHaveValue('2024-03-01')
+    await userEvent.click(within(dialog).getByRole('checkbox', { name: 'INBOX' }))
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('Choisissez au moins un dossier.')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Enregistrer' }))
+    expect(imapAccountsApi.setScope).not.toHaveBeenCalled()
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Annuler' }))
+
+    vi.mocked(imapAccountsApi.folders).mockRejectedValueOnce(new Error('502'))
+    await userEvent.click(screen.getByRole('button', { name: 'Dossiers et période' }))
+    expect(await screen.findByText('Impossible de lire les dossiers du serveur IMAP.')).toBeInTheDocument()
   })
 
   it('shows the IMAP server reason when it refuses the login, and keeps the form open', async () => {

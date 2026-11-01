@@ -825,6 +825,8 @@
       "description": "For a provider other than Gmail (OVH, Infomaniak, Fastmail, Outlook…). The account is backed up to the NAS and searchable in Archives; Mail, Cleanup and Rules stay Gmail-only.",
       "email": "Email address",
       "host": "IMAP server",
+      "found": "Server found automatically for this address.",
+      "guessed": "Server guessed from the domain: check it.",
       "port": "Port",
       "secure": "Encrypted connection (TLS)",
       "user": "Username",
@@ -839,7 +841,20 @@
       "gmailOnlyPage": "{{email}} is an IMAP account",
       "gmailOnlyPageHint": "This page acts on Gmail. An IMAP account is archived only: its mails are in Archives.",
       "openArchives": "Open the archives",
-      "overviewHint": "IMAP account: backup and archives only."
+      "overviewHint": "IMAP account: backup and archives only.",
+      "scope": {
+        "title": "Folders and period",
+        "description": "What the backup of {{email}} copies to the NAS.",
+        "folders": "Folders",
+        "all": "Every folder (except junk, trash and “All Mail”)",
+        "some": "Only these folders",
+        "none": "Choose at least one folder.",
+        "since": "Mails received since",
+        "sinceHint": "Leave empty for the whole mailbox. Mails already archived stay in the archives.",
+        "loading": "Reading the folders on the server…",
+        "loadError": "Could not read the IMAP server's folders.",
+        "saved": "Folders and period saved: applied at the next backup"
+      }
     },
     "share": {
       "option": "{{email}} (shared by {{owner}})",
