@@ -55,6 +55,12 @@ export interface GmailAccountsTable {
 
 export type MailProvider = 'gmail' | 'imap'
 
+export interface AccountSharesTable {
+  account_id: string
+  user_id:    string
+  created_at: Generated<Date>
+}
+
 export interface ImapFolderStateTable {
   account_id:   string
   folder:       string
@@ -368,6 +374,7 @@ export interface Database {
   users:                UsersTable
   mail_accounts:       GmailAccountsTable
   imap_folder_state:   ImapFolderStateTable
+  account_shares:      AccountSharesTable
   archived_mails:       ArchivedMailsTable
   archived_attachments: ArchivedAttachmentsTable
   rules:                RulesTable

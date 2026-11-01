@@ -1,4 +1,6 @@
 import { FastifyInstance } from 'fastify'
+import type { Kysely } from 'kysely'
+import type { Database } from '../db/types'
 import cors from '@fastify/cors'
 import jwt from '@fastify/jwt'
 import cookie from '@fastify/cookie'
@@ -122,17 +124,8 @@ export async function registerPlugins(app: FastifyInstance) {
     const { accountId } = request.params as { accountId: string }
     if (!accountId) return // pas d'accountId dans cette route
 
-    const { db: database } = app
-    const account = await database
-      .selectFrom('mail_accounts')
-      .select('id')
-      .where('id', '=', accountId)
-      .where('user_id', '=', userId)
-      .executeTakeFirst()
-
-    if (!account) {
-      return reply.code(403).send({ error: 'Forbidden: account does not belong to you' })
-    }
+    if (await accountAccess(app.db, userId, accountId, request.method, request.routeOptions?.url ?? '')) return
+    return reply.code(403).send({ error: 'Forbidden: account does not belong to you' })
   })
 
   // Vérifie que l'utilisateur authentifié est admin
@@ -142,6 +135,34 @@ export async function registerPlugins(app: FastifyInstance) {
       return reply.code(403).send({ error: 'Admin access required' })
     }
   })
+}
+
+/** What a user an account is shared with may read (GET only): the archive, its labels and figures. */
+const SHARED_READ_ROUTES = new Set([
+  '/api/archive/:accountId/mails',
+  '/api/archive/:accountId/mails/:mailId',
+  '/api/archive/:accountId/attachments/:attachmentId/download',
+  '/api/archive/:accountId/threads',
+  '/api/archive/:accountId/threads/:threadId',
+  '/api/archive/:accountId/contacts',
+  '/api/archive/:accountId/tags',
+  '/api/labels/:accountId',
+  '/api/dashboard/:accountId/archive-stats',
+])
+
+/**
+ * The owner may do anything on the account; a user it is shared with (account_shares) only reads its archive,
+ * never Gmail nor any change.
+ */
+export async function accountAccess(db: Kysely<Database>, userId: string, accountId: string, method: string, route: string): Promise<boolean> {
+  const account = await db
+    .selectFrom('mail_accounts')
+    .leftJoin('account_shares', (j) => j.onRef('account_shares.account_id', '=', 'mail_accounts.id').on('account_shares.user_id', '=', userId))
+    .select(['mail_accounts.user_id as owner', 'account_shares.user_id as viewer'])
+    .where('mail_accounts.id', '=', accountId)
+    .executeTakeFirst()
+  if (account?.owner === userId) return true
+  return !!account?.viewer && method === 'GET' && SHARED_READ_ROUTES.has(route)
 }
 
 // Account security, tokens, administration, and what could leak or lock the archives stay session-only

@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react'
-import { useSearchParams } from 'react-router'
+import { Navigate, useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { createColumnHelper, useTable } from '@tanstack/react-table'
@@ -138,6 +138,13 @@ function Stat({ label, value, children }: Readonly<{ label: string; value: strin
 
 /** /attachments: archived attachments (server search and paging) or the largest Gmail ones (client paging), with dedup stats. Source, search and page in the URL (§3.3). */
 export default function AttachmentsPage() {
+  const { account } = useAccount()
+  // Shared read-only: Gmail attachments and dedup stats are the owner's; the Archives reader has the archived ones
+  if (account?.shared_by) return <Navigate to="/archives" replace />
+  return <AttachmentsContent />
+}
+
+function AttachmentsContent() {
   const { t } = useTranslation()
   const { accountId } = useAccount()
   const [params, setParams] = useSearchParams()

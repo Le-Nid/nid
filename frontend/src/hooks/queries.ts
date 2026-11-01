@@ -5,7 +5,7 @@ import {
   analyticsApi, notificationsApi,
   auditApi, webhooksApi, savedSearchesApi, unifiedApi, archiveThreadsApi,
   retentionApi, importApi,
-  sharingApi, labelsApi, gmailAccountsApi, twoFactorApi, configApi, integrityApi, authApi, aboutApi, passkeysApi, apiTokensApi, imapAccountsApi,
+  sharingApi, labelsApi, gmailAccountsApi, accountSharesApi, twoFactorApi, configApi, integrityApi, authApi, aboutApi, passkeysApi, apiTokensApi, imapAccountsApi,
 } from '../api'
 import { startRegistration } from '@simplewebauthn/browser'
 import { useAuthStore } from '../store/auth.store'
@@ -530,6 +530,28 @@ export const useDisconnectGmailAccount = () => useMeMutation(gmailAccountsApi.di
 export const useCreateImapAccount = () => useMeMutation(imapAccountsApi.create)
 export const useUpdateImapAccount = () =>
   useMeMutation(({ id, ...body }: { id: string } & Parameters<typeof imapAccountsApi.update>[1]) => imapAccountsApi.update(id, body))
+/** Who an account of one's own is shared with (Paramètres › Comptes). */
+export function useAccountShares(accountId: string) {
+  return useQuery({ queryKey: ['account-shares', accountId], queryFn: () => accountSharesApi.list(accountId) })
+}
+export function useAddAccountShare(accountId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (email: string) => accountSharesApi.add(accountId, email),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['account-shares', accountId] }),
+  })
+}
+export function useRemoveAccountShare(accountId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (userId: string) => accountSharesApi.remove(accountId, userId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['account-shares', accountId] }),
+  })
+}
+/** « Ne plus voir »: leaves an account shared with oneself; it disappears from /me. */
+export const useLeaveSharedAccount = () =>
+  useMeMutation(({ accountId, userId }: { accountId: string; userId: string }) => accountSharesApi.remove(accountId, userId))
+
 /** « Synchroniser maintenant »: labels read again from Gmail; last_sync_at comes back with /me. */
 export const useSyncGmailAccount = () => useMeMutation(labelsApi.sync)
 

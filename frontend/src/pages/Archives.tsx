@@ -65,15 +65,17 @@ function HeaderActions({ accountId, onJob }: Readonly<{ accountId: string; onJob
 /** /archives (§7.5): backup status, search with label tree and reader, then Corbeille, Rétention, Partages. Tab in the URL (§3.3). */
 export default function ArchivesPage() {
   const { t } = useTranslation()
-  const { accountId } = useAccount()
+  const { accountId, account } = useAccount()
+  // Shared by another user, read-only: searching and reading its archive only
+  const readOnly = !!account?.shared_by
   const [params, setParams] = useSearchParams()
-  const tab = TABS.find((k) => k === params.get('tab')) ?? 'mails'
+  const tab = TABS.slice(0, readOnly ? 2 : TABS.length).find((k) => k === params.get('tab')) ?? 'mails'
   const [job, setJob] = useState<string | null>(null)
   const stats = useDashboardArchiveStats(accountId)
 
   return (
     <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-4 p-4 md:px-6 md:pt-8">
-      <PageHeader title={t('archives.title')} actions={accountId && <HeaderActions accountId={accountId} onJob={setJob} />} />
+      <PageHeader title={t('archives.title')} actions={accountId && !readOnly && <HeaderActions accountId={accountId} onJob={setJob} />} />
       {accountId ? (
         <>
           <StatusBanner accountId={accountId} />
@@ -95,9 +97,12 @@ export default function ArchivesPage() {
             tabs={[
               { key: 'mails', label: t('archives.tab.mails'), content: <SearchTab accountId={accountId} /> },
               { key: 'contacts', label: t('archives.tab.contacts'), content: <ContactsTab accountId={accountId} /> },
-              { key: 'trash', label: t('archives.tab.trash'), content: <TrashTab accountId={accountId} /> },
-              { key: 'retention', label: t('archives.tab.retention'), content: <RetentionTab accountId={accountId} /> },
-              { key: 'shares', label: t('archives.tab.shares'), content: <SharesTab /> },
+              // Trash, retention and links belong to the owner
+              ...(readOnly ? [] : [
+                { key: 'trash', label: t('archives.tab.trash'), content: <TrashTab accountId={accountId} /> },
+                { key: 'retention', label: t('archives.tab.retention'), content: <RetentionTab accountId={accountId} /> },
+                { key: 'shares', label: t('archives.tab.shares'), content: <SharesTab /> },
+              ]),
             ]}
           />
         </>

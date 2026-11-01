@@ -16,7 +16,7 @@ Versions vérifiées le 2026-10-20 : `shadcn` 4.22.1 (CLI), `tailwindcss` 4.3.3,
 - Remplacer antd par shadcn/ui + Tailwind v4, page par page, sans big bang.
 
 **Non-objectifs**
-- Pas de nouvelle fonctionnalité métier hors de celles listées en §8 (prérequis backend). Exception décidée après comparaison avec bichon : assistant d'ajout de compte (§7.7) et enrichissement de la Vue d'ensemble (§7.1), sur des données existantes (B16, B17), tags d'archive, onglet Contacts et restauration dans Gmail (§7.5, B18, B19, B20).
+- Pas de nouvelle fonctionnalité métier hors de celles listées en §8 (prérequis backend). Exception décidée après comparaison avec bichon : assistant d'ajout de compte (§7.7) et enrichissement de la Vue d'ensemble (§7.1), sur des données existantes (B16, B17), tags d'archive, onglet Contacts, restauration dans Gmail et partage en lecture seule (§7.5, §7.7, B18–B21).
 - Pas de classification automatique par LLM (point ouvert §10).
 - Pas de virtualisation de listes (pagination serveur suffit).
 - Pas de refonte de la page publique `/shared/:token` au-delà du changement de composants.
@@ -522,6 +522,7 @@ Hypothèse à valider (H1) : page « Règles & libellés », onglets **Règles**
 | B18 | Tags d'archive | colonne `archived_mails.tags text[]` (index GIN, conservée au ré-archivage) ; filtre `tag` sur `GET …/mails` ; `GET …/tags` (compteurs hors corbeille), `POST …/mails/tags` (`add`/`remove`, 500 mails max), `DELETE …/tags/:tag` | Archives | S |
 | B19 | Contacts d'archive | `GET /api/archive/:id/contacts?q=&page=&limit=` : adresses des en-têtes From/To (regex, minuscules), compteurs from/to, dernier échange, adresse du compte exclue ; calcul à la volée (~0,3 s / 100k mails) | Archives > Contacts | S |
 | B20 | Restauration dans Gmail | `POST /api/archive/:id/mails/restore-gmail` → job `restore_gmail` : `messages.insert` (EML, date d'en-tête, libellés résolus/recréés), `untrash` si dans la corbeille Gmail, ignoré si présent ; `gmail_message_id` mis à jour ; 409 IMAP / à reconnecter | Archives | M |
+| B21 | Partage de compte en lecture seule (O16) | table `account_shares` ; `requireAccountOwnership` laisse passer un utilisateur partagé en `GET` sur une liste blanche (archive, libellés, archive-stats) ; `GET/POST/DELETE /api/auth/accounts/:id/shares` (session, audit) ; `/me` → `sharedAccounts` | Paramètres > Comptes (bloc Partage, « Partagés avec moi »), sélecteur de compte, Archives en lecture seule | M |
 
 Ordre : B1 → B5 → B3 → B4 → B6/B8/B9 → B2 → B7/B10 → B11–B15. Chaque prérequis = PR backend séparée avec tests Vitest, puis `graphify update .`.
 
@@ -576,6 +577,6 @@ Chaque lot : CI verte (`typecheck`, `test --coverage`, `build`, e2e), captures m
 | O13 | Plafond du select-all serveur (B5) | **Tranché** : `BULK_QUERY_MAX` = 50 000. Au-delà, action de masse = notification « Plafond atteint » + bouton « Relancer » (`POST /api/jobs/:id/retry`, pas de relance auto) ; sauvegarde NAS par requête = reprise différentielle automatique (15 min, 20 fois max). |
 | O14 | Préflight Tailwind vs antd | Stratégie exacte de cascade validée en L0. |
 | O15 | Admin : jobs de tous les utilisateurs, dédup PJ | Non dessinés dans l'artboard 18 : section Système ou 4e onglet. |
-| O16 | Compte Gmail « Partagé avec Julien Martin » (artboard 16) | Partage d'un compte entre utilisateurs Nid : n'existe pas au backend ; hors périmètre sauf décision. |
+| O16 | Compte Gmail « Partagé avec Julien Martin » (artboard 16) | **Tranché** : partage en lecture seule des archives d'un compte avec d'autres utilisateurs Nid (B21) ; pas d'accès Gmail ni d'écriture. |
 | O17 | Audit utilisateur | L'audit passe dans Admin ; un non-admin n'a plus de vue sur son propre journal (aujourd'hui dans Settings) : l'accepter ou l'ajouter à Activité. |
 | O18 | Planification de l'intégrité | Prototype « automatique chaque dimanche », planificateur actuel quotidien : aligner. |

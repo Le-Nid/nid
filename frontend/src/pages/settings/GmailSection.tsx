@@ -17,6 +17,7 @@ import { formatRelative } from '@/utils/format'
 import { SettingsCard, SwitchRow, selectClass } from './shared'
 import { AccountSetupWizard } from './AccountSetupWizard'
 import { ImapAccountDialog } from './ImapAccountDialog'
+import { AccountSharesBlock, SharedWithMe } from './AccountShares'
 
 const INTERVALS: BackupInterval[] = ['1h', '6h', '24h']
 
@@ -155,6 +156,7 @@ function AccountCard({ account, mails, onReconnect: reconnectGmail }: Readonly<{
         // Reconnecting the same address brings this account back, archives included (same row server-side)
         <Button className="h-11 w-fit md:h-9" onClick={onReconnect}>{t(imap ? 'settings.imap.updateTitle' : 'settings.gmail.reconnect')}</Button>
       )}
+      <AccountSharesBlock account={account} />
     </SettingsCard>
   )
 }
@@ -208,6 +210,7 @@ export function GmailSection() {
           </div>
         </>
       )}
+      <SharedWithMe />
     </div>
   )
 }

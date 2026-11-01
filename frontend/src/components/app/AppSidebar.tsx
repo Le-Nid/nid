@@ -8,6 +8,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Kbd } from '@/components/ui/kbd'
 import { useAuthStore } from '@/store/auth.store'
+import { accountLabel } from '@/hooks/useAccount'
 import { useThemeStore } from '@/store/theme.store'
 import type { LiveCounters } from '@/hooks/useLiveCounters'
 import { badgeClass, isActive, navBadge, visibleNav, type NavEntry } from './nav'
@@ -18,7 +19,8 @@ export default function AppSidebar({ onSearch, counters }: Readonly<{ onSearch: 
   const { t, i18n } = useTranslation()
   const { pathname } = useLocation()
   const { state, toggleSidebar } = useSidebar()
-  const { user, gmailAccounts, activeAccountId, setActiveAccount } = useAuthStore()
+  const { user, gmailAccounts, sharedAccounts, activeAccountId, setActiveAccount } = useAuthStore()
+  const accounts = [...gmailAccounts, ...sharedAccounts]
   const dark = useThemeStore((s) => s.mode) === 'dark'
   const collapsed = state === 'collapsed'
   const entries = visibleNav(user?.role)
@@ -59,7 +61,7 @@ export default function AppSidebar({ onSearch, counters }: Readonly<{ onSearch: 
           </Button>
         </div>
 
-        {!collapsed && gmailAccounts.length > 0 && (
+        {!collapsed && accounts.length > 0 && (
           <div className="flex flex-col gap-1 px-2">
             <label htmlFor="shell-account" className="text-xs text-muted-foreground">{t('layout.gmailAccount')}</label>
             {/* shortcut: native select until AccountSwitcher (§5.2, with "Tous les comptes") lands in L3 */}
@@ -69,7 +71,7 @@ export default function AppSidebar({ onSearch, counters }: Readonly<{ onSearch: 
               value={activeAccountId ?? ''}
               onChange={(e) => setActiveAccount(e.target.value)}
             >
-              {gmailAccounts.map((a) => <option key={a.id} value={a.id}>{a.is_active ? a.email : t('settings.gmail.disconnectedOption', { email: a.email })}</option>)}
+              {accounts.map((a) => <option key={a.id} value={a.id}>{accountLabel(a, t)}</option>)}
             </select>
           </div>
         )}

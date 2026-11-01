@@ -81,6 +81,13 @@ Every step can be skipped; **Later** closes the wizard without saving anything. 
 
 An IMAP account carries the **IMAP · archive** badge. Its folders are backed up to the NAS and become labels in [Archives](archives.md); the overview shows only its archive figures, and Mail, Cleanup and Rules point to Archives. When the server refuses the login (password changed), the account turns **Action required**: **Update the server or password**.
 
+### Share an account read-only
+
+Each account's **Sharing** block gives other users of **this Nid instance** access to its archives: type the address of their Nid account, then **Share**. They can search and read the archives (attachments, conversations, contacts, labels and tags), **without changing anything** or reaching Gmail: no delete, tags, restore, export, share link nor backup. A person's ✕ button removes their access.
+
+For the person it is shared with, the account shows in the account switcher with "(shared by …)": [Archives](archives.md) opens read-only (Mails and Contacts tabs) and the other pages say that only its archives are available. The **Shared with me** card lists these accounts; **Stop seeing** removes the share on their side.
+
+
 ---
 
 ## Notifications & webhooks

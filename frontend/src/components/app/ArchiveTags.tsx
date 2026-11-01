@@ -5,6 +5,7 @@ import { Tag, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useArchiveTags, useTagArchived } from '@/hooks/queries'
+import { cn } from '@/lib/utils'
 
 /** « factures, impôts » → ['factures', 'impôts']: trimmed, cut at the API's 50 characters, no empty or repeated tag. */
 export const parseTags = (text: string) => [...new Set(text.split(',').map((s) => s.trim().slice(0, 50).trim()).filter(Boolean))]
@@ -16,7 +17,7 @@ export function TagSuggestions({ id, accountId }: Readonly<{ id: string; account
 }
 
 /** Tags of one archived mail in the reader: remove one, or type new ones. Nid only, Gmail never sees them. */
-export function ArchiveTagEditor({ accountId, mailId, tags }: Readonly<{ accountId: string; mailId: string; tags: string[] }>) {
+export function ArchiveTagEditor({ accountId, mailId, tags, readOnly }: Readonly<{ accountId: string; mailId: string; tags: string[]; readOnly?: boolean }>) {
   const { t } = useTranslation()
   const id = useId()
   const [draft, setDraft] = useState('')
@@ -32,13 +33,14 @@ export function ArchiveTagEditor({ accountId, mailId, tags }: Readonly<{ account
     setDraft('')
   }
 
+  if (readOnly && !tags.length) return null
   return (
     <section aria-label={t('archives.tags.title')} className="flex flex-wrap items-center gap-1 border-b px-4 py-2">
       <Tag aria-hidden="true" className="size-4 text-muted-foreground" />
       {tags.map((name) => (
-        <span key={name} className="inline-flex h-[22px] items-center gap-0.5 rounded-full border pl-2 text-xs font-medium">
+        <span key={name} className={cn('inline-flex h-[22px] items-center gap-0.5 rounded-full border pl-2 text-xs font-medium', readOnly && 'pr-2')}>
           {name}
-          <Button
+          {!readOnly && <Button
             variant="ghost"
             size="icon"
             className="size-[22px] rounded-full"
@@ -47,10 +49,10 @@ export function ArchiveTagEditor({ accountId, mailId, tags }: Readonly<{ account
             onClick={() => change({ remove: [name] })}
           >
             <X aria-hidden="true" className="size-3" />
-          </Button>
+          </Button>}
         </span>
       ))}
-      <form onSubmit={submit} className="min-w-32 flex-1">
+      {!readOnly && <form onSubmit={submit} className="min-w-32 flex-1">
         <Input
           aria-label={t('archives.tags.add')}
           placeholder={t('archives.tags.addPlaceholder')}
@@ -61,7 +63,7 @@ export function ArchiveTagEditor({ accountId, mailId, tags }: Readonly<{ account
           className="h-11 border-none text-base shadow-none md:h-7 md:text-sm"
         />
         <TagSuggestions id={`${id}-tags`} accountId={accountId} />
-      </form>
+      </form>}
     </section>
   )
 }

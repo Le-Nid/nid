@@ -29,6 +29,8 @@ export interface GmailAccount {
   imap_port?: number | null
   imap_secure?: boolean | null
   imap_user?: string | null
+  /** Shared read-only by another Nid user (their email): only its archive can be read. */
+  shared_by?: string
 }
 
 interface AuthState {
@@ -36,6 +38,8 @@ interface AuthState {
   isAuthenticated: boolean
   user: User | null
   gmailAccounts: GmailAccount[]
+  /** Accounts other users share with this one, read-only (archive only). */
+  sharedAccounts: GmailAccount[]
   activeAccountId: string | null
   storageUsedBytes: number
 
@@ -53,6 +57,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isAuthenticated: false,
   user: null,
   gmailAccounts: [],
+  sharedAccounts: [],
   activeAccountId: localStorage.getItem('activeAccountId'),
   storageUsedBytes: 0,
 
@@ -81,22 +86,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       await api.post('/api/auth/logout')
     } catch { /* best-effort */ }
     localStorage.removeItem('activeAccountId')
-    set({ isAuthenticated: false, user: null, gmailAccounts: [], activeAccountId: null, storageUsedBytes: 0 })
+    set({ isAuthenticated: false, user: null, gmailAccounts: [], sharedAccounts: [], activeAccountId: null, storageUsedBytes: 0 })
   },
 
   fetchMe: async () => {
     try {
       const { data } = await api.get('/api/auth/me')
       const accounts: GmailAccount[] = data.gmailAccounts
+      const shared: GmailAccount[] = (data.sharedAccounts ?? []).map((a: GmailAccount) => ({ ...a, is_active: true }))
       const stored = get().activeAccountId
-      // Default to a connected account: a disconnected one only shows its archives
-      const active = stored && accounts.some((a) => a.id === stored) ? stored : (accounts.find((a) => a.is_active) ?? accounts[0])?.id ?? null
+      // Default to a connected account of one's own: a disconnected or shared one only shows its archives
+      const known = [...accounts, ...shared].some((a) => a.id === stored)
+      const active = stored && known ? stored : (accounts.find((a) => a.is_active) ?? accounts[0] ?? shared[0])?.id ?? null
       if (active) localStorage.setItem('activeAccountId', active)
       set({
         initialLoading: false,
         isAuthenticated: true,
         user: data.user,
         gmailAccounts: accounts,
+        sharedAccounts: shared,
         activeAccountId: active,
         storageUsedBytes: data.storageUsedBytes ?? 0,
       })

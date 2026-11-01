@@ -5,8 +5,8 @@ import { createMemoryRouter, RouterProvider } from 'react-router'
 import i18n from '../i18n'
 import { attachmentsApi } from '../api'
 
-const account = vi.hoisted(() => ({ id: 'acc-1' as string | null }))
-vi.mock('../hooks/useAccount', () => ({ useAccount: () => ({ accountId: account.id }) }))
+const account = vi.hoisted(() => ({ id: 'acc-1' as string | null, shared_by: undefined as string | undefined }))
+vi.mock('../hooks/useAccount', () => ({ useAccount: () => ({ accountId: account.id, account: { shared_by: account.shared_by } }) }))
 vi.mock('../api', () => ({
   attachmentsApi: {
     listLive: vi.fn(), listArchived: vi.fn(), getDedupStats: vi.fn(), runDedupBackfill: vi.fn(),
@@ -25,7 +25,10 @@ const live = (i: number) => ({ messageId: `m${i}`, filename: `file-${i}.zip`, mi
 
 function setup(url = '/attachments') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  const router = createMemoryRouter([{ path: '/attachments', element: <AttachmentsPage /> }], { initialEntries: [url] })
+  const router = createMemoryRouter([
+    { path: '/attachments', element: <AttachmentsPage /> },
+    { path: '/archives', element: <p>archives</p> },
+  ], { initialEntries: [url] })
   render(<QueryClientProvider client={client}><RouterProvider router={router} /></QueryClientProvider>)
   return router
 }
@@ -35,6 +38,7 @@ beforeAll(() => i18n.changeLanguage('fr'))
 beforeEach(() => {
   vi.clearAllMocks()
   account.id = 'acc-1'
+  account.shared_by = undefined
   vi.mocked(attachmentsApi.listArchived).mockResolvedValue({ attachments: ARCHIVED, total: 2, totalSizeBytes: 4096 })
   vi.mocked(attachmentsApi.listLive).mockResolvedValue({ attachments: [live(1)], totalSizeBytes: 999 })
   vi.mocked(attachmentsApi.getDedupStats).mockResolvedValue({ savedBytes: 1024, duplicateFiles: 3, hashCoverage: 0.5 })
@@ -42,6 +46,14 @@ beforeEach(() => {
 })
 
 describe('AttachmentsPage', () => {
+  it('an account shared read-only goes to Archives', async () => {
+    account.shared_by = 'ana@example.com'
+    const router = setup()
+    expect(await screen.findByText('archives')).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/archives')
+    expect(attachmentsApi.listArchived).not.toHaveBeenCalled()
+  })
+
   it('lists archived attachments with preview only for images and PDFs, and download for all', async () => {
     setup()
     expect(screen.getByRole('heading', { level: 1, name: 'Pièces jointes' })).toBeInTheDocument()
