@@ -25,7 +25,7 @@ Your data stays where it always should have been: **at home**.
 
 - 📊 **Overview** — live key figures, top senders, cleanup suggestions
 - 📬 **Bulk ops** — delete, label, archive thousands of emails in a few clicks
-- 📦 **NAS Archive** — differential EML storage on your NAS, full-text search, attachment preview
+- 📦 **NAS Archive** — differential EML storage on your NAS (Gmail and any IMAP account), full-text search including attached PDF/DOCX, restore to the mailbox, attachment preview
 - 🤖 **Automatic rules** — rule engine (Gmail conditions + actions), schedulable (hourly/daily/weekly/monthly)
 - 📰 **Newsletters** — scan `List-Unsubscribe` headers, one-click unsubscribe, bulk delete
 - 📎 **Attachments** — dedicated view of all attachments (live + archived), sort by size
@@ -119,7 +119,7 @@ Vos données restent là où elles ont toujours dû être : **chez vous**.
 
 - 📊 **Vue d'ensemble** — chiffres clés en temps réel, gros expéditeurs, suggestions de nettoyage
 - 📬 **Bulk ops** — supprimer, labelliser, archiver des milliers de mails en quelques clics
-- 📦 **Archive NAS** — stockage EML différentiel sur votre NAS, recherche full-text, preview pièces jointes
+- 📦 **Archive NAS** — stockage EML différentiel sur votre NAS (Gmail et tout compte IMAP), recherche full-text y compris dans les PDF/DOCX joints, restauration dans la boîte mail, preview pièces jointes
 - 🤖 **Règles automatiques** — moteur de règles (conditions Gmail + actions), planifiables (hourly/daily/weekly/monthly)
 - 📰 **Newsletters** — scanner les headers `List-Unsubscribe`, désabonnement en un clic, suppression en masse
 - 📎 **Pièces jointes** — vue dédiée de toutes les PJ (live + archives), tri par taille

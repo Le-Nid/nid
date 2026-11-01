@@ -136,6 +136,14 @@ Les webhooks de type `generic` incluent un header `X-Webhook-Signature` (`sha256
 
 Protection SSRF : les URL qui résolvent vers une adresse loopback, privée, link-local (métadonnées cloud), CGNAT ou non spécifiée sont refusées, sauf si `WEBHOOK_ALLOW_PRIVATE_NETWORKS=true` (ntfy, Home Assistant sur le LAN…).
 
+### Configuration automatique IMAP
+
+`GET /api/auth/imap/autoconfig` contacte `autoconfig.thunderbird.net` et `autoconfig.<domaine de l'adresse saisie>` : le même garde (`utils/net.ts`, `ipaddr.js`) s'applique, **sans contournement** (un hôte non public n'est jamais contacté, quelle que soit la configuration), sans suivre de redirection, 3 s et 64 Ko au plus par requête, 20 requêtes/min. Reste, comme pour les webhooks, la fenêtre de DNS rebinding entre la résolution et la requête.
+
+### Pièces jointes analysées
+
+Le texte des PDF (pdf.js via `unpdf`, sans `eval`) et des DOCX est extrait dans le processus Node, borné à 20 Mo, 100 pages, 50 000 caractères et 10 s ; un DOCX dont `word/document.xml` annonce plus de 20 Mo n'est pas décompressé (zip bomb). Un fichier illisible ou hostile donne un texte vide, jamais une erreur d'archivage.
+
 ### Contenu des mails
 
 Les images distantes des mails sont bloquées par défaut dans le lecteur (`notification_preferences.remote_images = 'block'`), ce qui évite les pixels de suivi.

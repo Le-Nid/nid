@@ -50,6 +50,74 @@ jobs:
           name: coverage-backend
           path: backend/coverage/lcov.info
 
+  backend-imap:
+    name: Backend — IMAP integration (Dovecot + PostgreSQL)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: nid
+          POSTGRES_PASSWORD: nid
+          POSTGRES_DB: nid
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U nid" --health-interval 2s --health-timeout 5s --health-retries 20
+    env:
+      DATABASE_URL: postgres://nid:nid@localhost:5432/nid
+      JWT_SECRET: ci-only-secret-not-used-anywhere-else
+      GOOGLE_CLIENT_ID: ci
+      GOOGLE_CLIENT_SECRET: ci
+      GOOGLE_REDIRECT_URI: http://localhost/ci
+      LOG_LEVEL: silent
+      ARCHIVE_PATH: ${{ runner.temp }}/archives
+      IMAP_TEST_HOST: 127.0.0.1
+      IMAP_TEST_PORT: '31143'
+      IMAP_TEST_PASSWORD: nid-ci
+      # The certificate made for 127.0.0.1 below: STARTTLS is verified, nothing is weakened
+      NODE_EXTRA_CA_CERTS: ${{ runner.temp }}/dovecot-ssl/tls.crt
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '26'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Started here, not as a service: it needs a certificate for 127.0.0.1 (the image's own is for its hostname)
+      - name: Start Dovecot
+        run: |
+          SSL="$RUNNER_TEMP/dovecot-ssl"
+          mkdir -p "$SSL"
+          openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj "/CN=127.0.0.1" \
+            -addext "subjectAltName=IP:127.0.0.1" -keyout "$SSL/tls.key" -out "$SSL/tls.crt"
+          chmod 644 "$SSL"/*
+          docker run -d --name dovecot -p 31143:31143 \
+            -e USER_PASSWORD='{PLAIN}nid-ci' \
+            -v "$SSL:/etc/dovecot/ssl:ro" \
+            dovecot/dovecot:2.4.5
+          for i in $(seq 1 30); do
+            if (exec 3<>/dev/tcp/127.0.0.1/31143) 2>/dev/null; then exit 0; fi
+            sleep 1
+          done
+          docker logs dovecot
+          exit 1
+
+      - name: IMAP integration tests
+        run: mkdir -p "$ARCHIVE_PATH" && npm run test:integration
+
+      - name: Dovecot logs
+        if: failure()
+        run: docker logs dovecot
+
   frontend:
     name: Frontend — lint / typecheck / tests
     runs-on: ubuntu-latest
