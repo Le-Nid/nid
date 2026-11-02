@@ -170,20 +170,25 @@ describe('Archives — search', () => {
     }))
   })
 
-  it('size range in Mo and attachment type; an IMAP account names its labels « Dossiers »', async () => {
+  // From the URL, no typing: the conversion (Mo → bytes) and the request, deterministic. Quick writes in two fields
+  // are covered by archives-filters.test.tsx; typing into a field below.
+  it('size range in Mo and attachment type from the URL; an IMAP account names its labels « Dossiers »', async () => {
     account.provider = 'imap'
-    const { router } = setup()
+    setup('/archives?smin=1.5&smax=10&atype=pdf')
     expect(await screen.findByRole('tree', { name: 'Dossiers' })).toBeInTheDocument()
-    // One input event per field (paste): typing key by key re-renders the whole search per key, minutes on a busy runner
-    for (const [label, value] of [['Taille min (Mo)', '1.5'], ['Taille max (Mo)', '10'], ['Type de pièce jointe', 'pdf']]) {
-      await user().click(screen.getByLabelText(label))
-      await user().paste(value)
-    }
-    // The last field is debounced (300 ms) before the request; a busy runner renders slowly
-    await waitFor(() => expect(archiveApi.listMails).toHaveBeenLastCalledWith('acc-1', {
+    await waitFor(() => expect(archiveApi.listMails).toHaveBeenCalledWith('acc-1', {
       size_min: '1572864', size_max: '10485760', attachment_type: 'pdf', page: 1, limit: 50,
-    }), { timeout: 5000 })
-    expect(router.state.location.search).toBe('?smin=1.5&smax=10&atype=pdf')
+    }))
+    expect(screen.getByLabelText('Taille min (Mo)')).toHaveValue(1.5)
+    expect(screen.getByLabelText('Type de pièce jointe')).toHaveValue('pdf')
+  })
+
+  it('a size typed in Mo reaches the URL', async () => {
+    const { router } = setup()
+    await user().click(await screen.findByLabelText('Taille max (Mo)'))
+    await user().paste('10')
+    await waitFor(() => expect(router.state.location.search).toBe('?smax=10'))
+    await waitFor(() => expect(archiveApi.listMails).toHaveBeenLastCalledWith('acc-1', { size_max: '10485760', page: 1, limit: 50 }))
   })
 
   it('debounces the search into ?q=, and offers to clear filters when nothing matches', async () => {
