@@ -40,7 +40,7 @@
     "ioredis": "^5.11.1",
     "ipaddr.js": "^2.5.0",
     "kysely": "^0.29.7",
-    "mailparser": "^3.12.4",
+    "mailparser": "^3.14.1",
     "nodemailer": "^10.1.1",
     "otplib": "^13.5.0",
     "pg": "^8.23.1",
