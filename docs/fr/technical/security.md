@@ -142,7 +142,7 @@ Protection SSRF : les URL qui résolvent vers une adresse loopback, privée, lin
 
 ### Pièces jointes analysées
 
-Le texte des PDF (pdf.js via `unpdf`, sans `eval`) et des DOCX est extrait dans le processus Node, borné à 20 Mo, 100 pages, 50 000 caractères et 10 s ; un DOCX dont `word/document.xml` annonce plus de 20 Mo n'est pas décompressé (zip bomb). Un fichier illisible ou hostile donne un texte vide, jamais une erreur d'archivage.
+Le texte des PDF (pdf.js via `unpdf`, sans `eval`) et des DOCX est extrait borné à 20 Mo, 100 pages, 50 000 caractères et 10 s. Chaque PDF est lu dans un worker thread (tas limité à 256 Mo, tué s'il dépasse 12 s) : une page interminable ou un fichier qui dévore la mémoire n'immobilise ni l'API ni les jobs ; un DOCX dont `word/document.xml` annonce plus de 20 Mo n'est pas décompressé (zip bomb). Un fichier illisible ou hostile donne un texte vide, jamais une erreur d'archivage.
 
 ### Contenu des mails
 

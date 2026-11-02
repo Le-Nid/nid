@@ -6,9 +6,10 @@ export default defineConfig({
     target:            'node24',
     outDir:            'dist',
     lib: {
-      entry:   'src/index.ts',
+      // pdf-worker: its own file, loaded by new Worker() (archive/attachment-text.ts)
+      entry:   { index: 'src/index.ts', 'pdf-worker': 'src/archive/pdf-worker.ts' },
       formats: ['es'],
-      fileName: () => 'index.js',
+      fileName: (_format, name) => `${name}.js`,
     },
     rolldownOptions: {
       external: [

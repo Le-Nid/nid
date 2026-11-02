@@ -66,6 +66,17 @@ describe('extractAttachmentText', () => {
     expect(await extractAttachmentText('huge.pdf', null, Buffer.alloc(20 * 1024 * 1024 + 1))).toBe('')
   })
 
+  it('a PDF still parsing past the limit: its worker thread is killed, the text is empty', async () => {
+    vi.useFakeTimers()
+    try {
+      const pending = extractAttachmentText('slow.pdf', 'application/pdf', makePdf('jamais lu'))
+      vi.advanceTimersByTime(12_000)
+      expect(await pending).toBe('')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('textKind and docxXmlText edge cases', () => {
     expect(textKind('a.DOCX', null)).toBe('docx')
     expect(textKind('a.doc', 'application/msword')).toBeNull()
