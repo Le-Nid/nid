@@ -8,6 +8,27 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
+  commits:
+    name: Commits — Conventional Commits
+    # semantic-release (release.yml) only publishes on feat / fix / perf: a free-form message ships nothing
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Commit subjects follow « type(scope) - description »
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          bad=$(git log --no-merges --format='%h %s' "$BASE..$HEAD" | grep -vE '^[0-9a-f]+ ((feat|fix|perf|refactor|docs|test|build|ci|chore|style|revert)(\([^)]+\))?!?: .+|Revert ")' || true)
+          if [ -n "$bad" ]; then
+            echo "::error::Commits hors Conventional Commits, type(portée): description (semantic-release ne publie que feat, fix et perf) :"
+            echo "$bad"
+            exit 1
+          fi
+
   backend:
     name: Backend — lint / typecheck / tests / SonarCloud
     runs-on: ubuntu-latest
