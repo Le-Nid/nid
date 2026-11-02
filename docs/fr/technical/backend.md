@@ -42,7 +42,7 @@ src/
 ├── events/             ← events.service.ts (flux SSE par utilisateur, Redis pub/sub)
 ├── gmail/              ← gmail.service.ts, gmail-throttle.ts, quota.service.ts
 ├── auth/               ← oauth.service.ts (Gmail), social.service.ts (login Arctic)
-├── archive/            ← archive, attachment-text, body-text, contacts, dedup, export, import, integrity, restore, retention, sharing, trash
+├── archive/            ← archive, attachment-text (+ pdf-worker), body-text, contacts, dedup, export, import, integrity, restore, retention, sharing, trash
 ├── imap/               ← imap.service.ts (connexion, synchro incrémentale, dossiers), autoconfig.ts (ISPDB / autoconfig du domaine)
 ├── rules/  labels/  unsubscribe/  expiration/  analytics/  dashboard/ (cache)
 ├── notifications/      ← notify.ts, notification-prefs.service.ts
@@ -161,4 +161,4 @@ Les sujets utilisant l'encodage RFC 2047 (`=?UTF-8?B?...?=`, `=?UTF-8?Q?...?=`) 
 - **Quoted-Printable** (`?Q?`) — remplacement des `=XX` et `_` (espace)
 - **Charsets multiples** — via `TextDecoder` (UTF-8, ISO-8859-1, etc.)
 
-Le texte brut du corps est extrait dans `archived_mails.body_text` (`archive/body-text.ts`) et celui des PDF/DOCX joints dans `archived_attachments.text_content` (`archive/attachment-text.ts`, bornes 20 Mo / 100 pages / 50 000 caractères / 10 s), tous deux indexés pour la recherche full-text (voir [Base de données](database.md)).
+Le texte brut du corps est extrait dans `archived_mails.body_text` (`archive/body-text.ts`) et celui des PDF/DOCX joints dans `archived_attachments.text_content` (`archive/attachment-text.ts`, bornes 20 Mo / 100 pages / 50 000 caractères / 10 s ; les PDF sont lus dans un worker thread, `archive/pdf-worker.ts`, seconde entrée du build Vite → `dist/pdf-worker.js`), tous deux indexés pour la recherche full-text (voir [Base de données](database.md)).

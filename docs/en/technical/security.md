@@ -142,7 +142,7 @@ SSRF protection: URLs resolving to a loopback, private, link-local (cloud metada
 
 ### Parsed attachments
 
-The text of PDFs (pdf.js through `unpdf`, no `eval`) and DOCX files is extracted in the Node process, bounded to 20 MB, 100 pages, 50,000 characters and 10 s; a DOCX whose `word/document.xml` claims more than 20 MB is not inflated (zip bomb). An unreadable or hostile file gives an empty text, never an archiving error.
+The text of PDFs (pdf.js through `unpdf`, no `eval`) and DOCX files is extracted within 20 MB, 100 pages, 50,000 characters and 10 s. Each PDF is read in a worker thread (heap capped at 256 MB, killed past 12 s): a never-ending page or a file that eats memory holds neither the API nor the jobs; a DOCX whose `word/document.xml` claims more than 20 MB is not inflated (zip bomb). An unreadable or hostile file gives an empty text, never an archiving error.
 
 ### Email Content
 
