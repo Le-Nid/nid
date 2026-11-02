@@ -65,6 +65,7 @@ Le script CI (`.github/workflows/ci.yml`) exécute : `npm ci` → `typecheck` �
 - Avant chaque ouverture de PR : `/ponytail-review` sur le diff complet de la branche, constats « Must fix » / « Should fix » traités (ou justifiés dans la PR) avant le push.
 - Une fois le travail terminé : commit, push sur la branche de travail, puis **ouvrir une Pull Request** vers `main` pour validation par le tech lead. Ne jamais merger soi-même.
 - Si la PR précédente de la branche est déjà mergée, repartir de `main` et ouvrir une nouvelle PR.
+- **Commits au format [Conventional Commits](https://www.conventionalcommits.org/fr/)** : `type(portée): description`, description en français acceptée (`feat(archives): filtres de taille`). La release (`release.yml`, semantic-release) ne publie que sur `feat` (mineure), `fix` / `perf` (corrective) ou `!` (majeure) ; `refactor`, `docs`, `test`, `ci`, `chore`… ne publient rien. Un message libre ne publie rien non plus : le job CI « Commits » refuse la PR.
 
 ## Outils agent (`.claude/`)
 
