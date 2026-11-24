@@ -29,7 +29,7 @@
     "@fastify/swagger": "^9.9.5",
     "@fastify/swagger-ui": "^6.1.4",
     "@simplewebauthn/server": "^14.1.0",
-    "archiver": "^7.0.1",
+    "archiver": "^8.0.0",
     "arctic": "^3.7.0",
     "bcrypt": "^6.0.0",
     "bullmq": "^5.81.5",
